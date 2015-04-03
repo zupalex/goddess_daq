@@ -1,0 +1,8 @@
+#Ignore tmeporary files
+*.swp
+*.swo
+
+#Ignore local build folders.
+build/
+exec/
+doc/
