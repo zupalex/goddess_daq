@@ -19,4 +19,4 @@ target_link_libraries(zzip ${ZLIB_LIBRARIES})
 add_executable(zunzip zunzip.c)
 target_link_libraries(zunzip ${ZLIB_LIBRARIES})
 
-install(TARGETS GTMerge3 mkMap zzip zunzip DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS DGSSort GTMerge3 mkMap zzip zunzip DESTINATION ${CMAKE_INSTALL_PREFIX})
