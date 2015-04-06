@@ -42,7 +42,7 @@ for (i = 0; i < CEvent.len; i++)
        if (e  < L14BITS)
 	CEvent.DGSEvent[i].ehi  = (int) (e + 0.5);
        else
-	 CEvent.DGSEvent[i].ehi =  INT_MAX;
+	 CEvent.DGSEvent[i].ehi =  SHRT_MAX;
 
        h2_genocalib->Fill(orig,CEvent.DGSEvent[i].tid);       
        h2_ge->Fill(e,CEvent.DGSEvent[i].tid);
@@ -65,7 +65,7 @@ for (i = 0; i < CEvent.len; i++)
        if (e  < L14BITS)
 	CEvent.DGSEvent[i].ehi  = (int) (e + 0.5);
        else
-	CEvent.DGSEvent[i].ehi =  INT_MAX;
+	CEvent.DGSEvent[i].ehi =  SHRT_MAX;
      }
     }
 
