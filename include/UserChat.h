@@ -1,3 +1,3 @@
-/* $Id: UserChat.h,v 1.1 2013/04/10 16:34:45 tl Exp $ */
+/* $Id: UserChat.h,v 1.1 2013/08/29 15:20:31 tl Exp $ */
 
 

@@ -1,12 +1,15 @@
-/* $Id: GTPrint.c,v 1.2 2013/04/11 21:41:37 tl Exp $ */
+/* $Id: GTPrint.c,v 1.1 2013/08/29 15:20:31 tl Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "GTMerge.h"
+#include "veto_pos.h"
+#include "GEBSort.h"
+#include "gdecomp.h"
 
-extern CONTROL control;
-
+//extern CONTROL control;
+extern PARS Pars;
 /*-----------------------------------------------------------------------------*/
 
 int
@@ -41,8 +44,6 @@ GTPrintEvent2 (FILE * fp, int ii, DGSEVENT * DGSEvent)
     fprintf (fp, "is FP");
   else if (DGSEvent->tpe == XARRAY)
     fprintf (fp, "is XARRAY");
-  else if (DGSEvent->tpe == CHICO2)
-    fprintf (fp, "is CHICO2");
   else
     printf ("is not assigned");
   fprintf (fp, "# %3i, ", DGSEvent->tid);
@@ -82,7 +83,7 @@ GTPrintEvent (FILE * fp, GTEVENT * Event, DGSEVENT * DGSEvent)
   /* print event */
 
   fprintf (fp, "-----------\n");
-  fprintf (fp, "ev %8i> ", control.CurEvNo);
+  fprintf (fp, "ev %8i> ", Pars.CurEvNo);
   fprintf (fp, "board= %8i; ", DGSEvent->board_id);
   fprintf (fp, "chan= %8i; ", DGSEvent->chan_id);
   fprintf (fp, "id= %8i; ", DGSEvent->id);
@@ -102,8 +103,6 @@ GTPrintEvent (FILE * fp, GTEVENT * Event, DGSEVENT * DGSEvent)
     fprintf (fp, "is FP");
   else if (DGSEvent->tpe == XARRAY)
     fprintf (fp, "is XARRAY");
-  else if (DGSEvent->tpe == CHICO2)
-    fprintf (fp, "is CHICO2");
   else
     printf ("is not assigned");
   fprintf (fp, "# %3i", DGSEvent->tid);
@@ -113,10 +112,10 @@ GTPrintEvent (FILE * fp, GTEVENT * Event, DGSEVENT * DGSEvent)
 
   fprintf (fp, "tr: ");
   for (i = 0; i < 5; i++)
-    fprintf (fp, "%6i ", DGSEvent->trace[i]);
+    fprintf (fp, "%6i ", Event->trace[i]);
   fprintf (fp, "...");
-  for (i = DGSEvent->traceLen / 2 - 5; i < DGSEvent->traceLen / 2; i++)
-    fprintf (fp, "%6i ", DGSEvent->trace[i]);
+  for (i = Event->traceLen / 2 - 5; i < Event->traceLen / 2; i++)
+    fprintf (fp, "%6i ", Event->trace[i]);
   fprintf (fp, ";\n");
 
   /* time stamps */
@@ -129,14 +128,14 @@ GTPrintEvent (FILE * fp, GTEVENT * Event, DGSEVENT * DGSEvent)
 
   /* bits */
 
-  fprintf (fp, "__pu=%i, ", Event->pu);
-  fprintf (fp, "CFDvalid=%i, ", Event->CFDvalid);
-  fprintf (fp, "ExtTrig=%i, ", Event->ExtTrig);
-  fprintf (fp, "LEDsign=%i\n", Event->LEDsign);
+//  fprintf (fp, "__pu=%i, ", Event->pu);
+//  fprintf (fp, "CFDvalid=%i, ", Event->CFDvalid);
+//  fprintf (fp, "ExtTrig=%i, ", Event->ExtTrig);
+//  fprintf (fp, "LEDsign=%i\n", Event->LEDsign);
 
   /* pos and such */
 
-  fprintf (fp, "__pos=%12i, len= %5i, tracelen=%6i\n", Event->pos, Event->len, DGSEvent->traceLen);
+//  fprintf (fp, "__pos=%12i, len= %5i, tracelen=%6i\n", Event->pos, Event->len, Event->traceLen);
 
   /* print the event id */
 

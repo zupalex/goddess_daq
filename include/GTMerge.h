@@ -2,7 +2,7 @@
 #define PMODE 0644
 #define LENSP 16384
 
-#define USEBREAD 1
+#define USEBREAD 0
 #define BREAD_BUFSIZE 16384
 #define USEZLIB 0
 
@@ -12,20 +12,19 @@
 #define NCHANNELS 1000*11
 #define MAXVALIDHIE 32000
 #define NGE 110
-#define MAXBIGBUFSIZ 100000
 #define MAXBOARDID 100000
 
 #define TRUE 1
 #define FALSE 0
 #define NOTDEF -1
-#define STRLEN 256
+
 
 #define EOE          0xaaaaaaaa
 #define HDRLENBYTES  28
 //#define HDRLENINTS    7
 #define HDRLENINTS  13  
 #define HDRLENWORDS  2*HDRLENINTS
-#define MAXLENINTS  519 
+#define MAXLENINTS  519
 
 #define LENEOVWORDS  2
 
@@ -66,7 +65,6 @@ typedef struct DGSEVENT
   unsigned long long int  PEAKts;
   char                    flag;  
   short int               baseline;
-  //short int pu;
   unsigned short int      traceLen;
   short int               trace[MAXTRACELEN];
 }  DGSEVENT;
@@ -78,27 +76,21 @@ typedef struct GTEVENT
   /* raw */
 
   unsigned short int      len;
-
+  short int               ehi;
+  short int               id;
+  short int               module;
+  unsigned short int      tpe, tid;
+  unsigned short int      board_id;
+  unsigned short int      chan_id;
+  unsigned long long int  LEDts;
+  unsigned long long int  CFDts;
+  unsigned long long int  PEAKts;
+  char                    flag;  
+  short int               baseline;
+  int                     rawE;
   unsigned int            hdr[HDRLENINTS];
   unsigned short int      traceLen;
   short int               trace[MAXTRACELEN];
-
-  /* position of event in data stream (in words) */
-  
-  unsigned int            pos;
-  int                     rawE;
-  char                    pu;
-  unsigned int            PreE;
-  unsigned int            PostE;
-
-  /* processed data */
-  
-  char                     CFDvalid;
-  char                     ExtTrig;
-  char                     LEDsign;
-  char		           CFDp1;
-  char			   CFDp2;
-  
 }  GTEVENT;
 
 /*--------------------*/
@@ -132,37 +124,23 @@ typedef struct CONTROL_struct
   int minGE;
   int minFP;
   int minDSSD;
-  int minCHICO2;
-  int minGS;
   int minmult;
-  int maxtracelen;
   int TSlistelen;
-  int TSlist_lo;
-  int TSlist_hi;
   int noverflowehi;
   int CurEvNo;
   long long int dts_min;
   long long int dts_max;
-  int zerosuppress;
-  int zerosuppresslim;
-  int noCoinData;
   int suppressBadAtRead;
   int zzipout;
-  int startTS;
-  long long int startTS_lo;
-  long long int startTS_hi;
   int dtsfabort;
   int dtsbabort;
+  long long int startTS_lo;
+  long long int startTS_hi;
+  int startTS;
+  int TSlist_lo;
+  int TSlist_hi;
   } CONTROL;
 
-typedef struct bigbuf_struct
-  {
-  int size;
-  int truesize;
-  int wosize;
-  int nused;
-  DGSEVENT *ev[MAXBIGBUFSIZ];
-  } BIGBUF;
 
 typedef struct stat_struct
   {
@@ -175,10 +153,12 @@ typedef struct stat_struct
   int nTSjumprecover_b[MAXTID];
   unsigned int in_hit[MAXTPE][MAXTID];
   unsigned int out_hit[MAXTPE][MAXTID];
-  int nbigbufreads;
-  long long int nswaps;
+  long long int nbigbufreads;
+  int nswaps;
   unsigned int id_hit[NCHANNELS];
-  } STAT;
+  unsigned int GEBIds[30];
+  long long int GEBlen[30];
+  } MSTAT;
 
 
 /*-----------------*/
@@ -192,5 +172,7 @@ typedef struct DGSHEADER_struct
   unsigned int      nfiles;
   char              dummy;
   } DGSHEADER;
+
+
 
 

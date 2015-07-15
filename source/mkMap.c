@@ -65,25 +65,25 @@ main (int argc, char **argv)
   /* DSSD IDs */
 
   i1 = 1;
-  for (i = 2010; i <= 2329; i++)
+  for (i = 2000; i <= 2319; i++)
     {
       printf ("%4i %4i %4i DSSD\n", i, DSSD, i1);
       i1++;
     };
 
-  /* FP IDs */
+  /* Focal Plane IDs */
 
   i1 = 1;
-  for (i = 2370; i <= 2379; i++)
+  for (i = 2320; i <= 2339; i++)
     {
       printf ("%4i %4i %4i FP\n", i, FP, i1);
       i1++;
     };
 
-  /* Xarray IDs */
+  /* Focal Plane IDs */
 
   i1 = 1;
-  for (i = 2380; i <= 2399; i++)
+  for (i = 2340; i <= 2359; i++)
     {
       printf ("%4i %4i %4i XARRAY\n", i, XARRAY, i1);
       i1++;

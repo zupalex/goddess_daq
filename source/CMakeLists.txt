@@ -1,22 +1,19 @@
-set(DGSSort_SOURCES DGSSort.cxx dgsHeader.c GTPrint.c time_stamp.c)
-set(GTMerge3_SOURCES GTMerge3.c GTPrint.c GTUtils.c 
-	dgsHeader.c get_a_seed.c spe_fun.c time_stamp.c)
+set (GEBSort_SOURCES GEBSort.cxx GTPrint.c time_stamp.c GEBHeader.c get_a_seed.c bin_mode1.c bin_mode3.c bin_mode2.c bin_template.c bin_dgs.c spe_fun.c bin_gtcal.c str_decomp.c)
+set (GEBMerge_SOURCES GEBMerge.c spe_fun.c get_a_seed.c time_stamp.c printEvent.c)
 #We force the compiler to treat .c files as c++.
 # (Seems the original authors used .c as a c++ extension?)
-set_source_files_properties(${GTMerge3_SOURCES} ${DGSSort_SOURCES} PROPERTIES LANGUAGE CXX)
+set_source_files_properties(${GEBSort_SOURCES} ${GEBMerge_SOURCES} ag2mode2.c PROPERTIES LANGUAGE CXX)
 
-add_executable(DGSSort ${DGSSort_SOURCES})
-target_link_libraries(DGSSort ${ZLIB_LIBRARIES} ${ROOT_LIBRARIES})
-
-add_executable(GTMerge3 ${GTMerge3_SOURCES})
-target_link_libraries(GTMerge3 ${ZLIB_LIBRARIES})
+add_executable(GEBSort ${GEBSort_SOURCES})
+target_link_libraries(GEBSort ${ROOT_LIBRARIES})
 
 add_executable(mkMap mkMap.c)
 
-add_executable(zzip zzip.c)
-target_link_libraries(zzip ${ZLIB_LIBRARIES})
+add_executable(GEBFilter GEBFilter.c GF_veto_cube.c)
 
-add_executable(zunzip zunzip.c)
-target_link_libraries(zunzip ${ZLIB_LIBRARIES})
+add_executable(GEBMerge ${GEBMerge_SOURCES})
+target_link_libraries(GEBMerge ${ZLIB_LIBRARIES})
 
-install(TARGETS DGSSort GTMerge3 mkMap zzip zunzip DESTINATION ${CMAKE_INSTALL_PREFIX})
+add_executable(ag2mode2 ag2mode2.c spe_fun.c)
+
+install(TARGETS GEBSort mkMap GEBFilter GEBMerge ag2mode2 DESTINATION ${CMAKE_INSTALL_PREFIX})

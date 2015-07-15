@@ -1,4 +1,3 @@
-/* $Id: 2d_fun.c,v 1.1 2013/04/10 16:34:45 tl Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +15,7 @@ read_dm (char *fn, int *nx, int *ny, char *machinetype, char *datatype)
 
   /* declarations */
 
-  int i;
+  int i, st;
   char str[132];
   FILE *fp;
 
@@ -28,23 +27,25 @@ read_dm (char *fn, int *nx, int *ny, char *machinetype, char *datatype)
   sprintf (str, "%s.dm", fn);
   printf ("[%s]\n", str);
   fflush (stdout);
-  if ((fp = fopen (str, "r")) == NULL)
+  if ( (fp = fopen (str, "r")) == NULL)
     {
       printf ("could not open <%s>\n", str);
       printf ("\n");
       return (-1);
     }
   else
+    {
     printf ("read_dm: .dm file: <%s> is open...\n", str);
+    };
   fflush (stdout);
 
   /* read dm file */
 
-  fscanf (fp, "\n%i", nx);
-  fscanf (fp, "\n%i", ny);
-  fscanf (fp, "\n%s", machinetype);
-  fscanf (fp, "\n%s", datatype);
-  fclose (fp);
+  st=fscanf (fp, "\n%i", nx);
+  st=fscanf (fp, "\n%i", ny);
+  st=fscanf (fp, "\n%s", machinetype);
+  st=fscanf (fp, "\n%s", datatype);
+  st=fclose (fp);
 
   printf ("x dim.......: %4i; ", *nx);
   printf ("y dim.......: %4i\n", *ny);
@@ -163,7 +164,7 @@ rd_mat (char *fn, int nx, int ny, float *mat, char *type)
       /* read and transfer */
 
       imat = (int *) calloc (nx, sizeof (int));
-      printf ("allocated %i bytes of temp read space\n", nx * sizeof (int));
+//      printf ("allocated %llu bytes of temp read space\n", nx * sizeof (int));
       fflush (stdout);
 
       /* read and transfer */
@@ -256,7 +257,7 @@ wr_mat (char *fn, int nx, int ny, float *mat, char *type)
 
   /* declarations */
 
-  int i, j, st;
+  int i, j, st=0;
   FILE *fp;
   float val;
   int *imat;
@@ -344,7 +345,7 @@ wr_mat (char *fn, int nx, int ny, float *mat, char *type)
 
   /* close output file */
 
-  st = fclose (fp);
+  fclose (fp);
 
   /* done */
 

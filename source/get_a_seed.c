@@ -1,4 +1,4 @@
-/* $Id: get_a_seed.c,v 1.1 2013/04/10 16:34:45 tl Exp $ */
+/* $Id: get_a_seed.c,v 1.1 2013/08/29 15:20:31 tl Exp $ */
 
 /* generate a randowm seed from the clock */
 
