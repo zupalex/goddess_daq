@@ -2,13 +2,14 @@
 #include <cmath>
 #include "TMath.h"
 
-superX3::superX3(TVector3 pos, float rotationAngle) :
+superX3::superX3(std::string name, TVector3 pos, float rotationAngle) :
+	siDet(name),
 	detPos(pos),
 	detRotation(rotationAngle)
 {
+	siDet::SetNumContacts(8,4);
 	ConstructBins();
 	Clear();
-	siDet::SetNumContacts(8,4);
 }
 
 superX3::~superX3() {}
@@ -25,7 +26,7 @@ void superX3::ConstructBins () {
 	float pStripPitch = 40.3 / 4; //mm
 	float nStripPitch = 75 / 4; //mm
 
-	for (int strip=0;strip<=4;strip++) {			
+	for (unsigned int strip=0; strip<=4; strip++) {			
 		//compute the binning along the p and n type strip directions in mm.
 		binsP[strip] = strip * pStripPitch;
 		binsN[strip] = strip * nStripPitch;
@@ -55,8 +56,10 @@ void superX3::Clear() {
 		stripContactMult[i] = 0;
 	}
 
-	pStripMult = 0;
-	nStripMult = 0;
+	enPtype = 0;
+	enNtype = 0;
+
+	multPstrip = 0;
 
 	eventPos.SetXYZ(0,0,0);
 }
@@ -66,6 +69,9 @@ void superX3::Clear() {
  * \f$ E = N + \sum_i p_i * F^i \f$, where \f$N\f$ and \f$F\f$ are the near and far 
  * contacts respectively and \f$p_i\f$ is the ith coefficient of the polynomial 
  * calibration function.
+ *
+ * \note The event position is only computed in the p strip multiplicity is 1. The 
+ * higher multiplicity events are not currently supported.
  *
  *	\param[in] strip The number of the strip to update the position.
  */
@@ -85,7 +91,7 @@ void superX3::UpdatePosition(int strip) {
 
 	//Compute the event position.
 	//If the p and n strip multiplicity is 1 we can easily find the position.
-	if (pStripMult == 1 && nStripMult == 1) {
+	if (multPstrip == 1) {
 		//We construct the event position from the following:
 		//	X: The middle point of the pStrip
 		//	Y: The middle point of the pStrip
@@ -94,6 +100,8 @@ void superX3::UpdatePosition(int strip) {
 		float yValue = (pStripEdgePos[strip].Y() + pStripEdgePos[strip + 1].Y()) / 2.;
 		eventPos.SetXYZ(xValue, yValue, enCalPstrip[strip]);
 	}
+	//Otherwise we just zero the vector.
+	else eventPos.SetXYZ(0,0,0);
 	
 }
 
@@ -117,8 +125,7 @@ void superX3::SetStripEnCalibPars(int strip, std::vector<float> pars) {
 }
 
 /**
- * \param[in] contact The strip number to validate.
- * \param[in] nType Whether the contact is n type.
+ * \param[in] strip The strip number to validate.
  *	\return True is strip exists.
  */
 bool superX3::ValidStrip(int strip) {
@@ -135,6 +142,7 @@ bool superX3::ValidStrip(int strip) {
  * and if so we make a call to compute the position the event occurred in the strip.
  *
  * \param[in] contact The number of the contact which was updated.
+ *	\param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
 void superX3::SetEnergy(unsigned int contact, int rawValue, bool nType) {
@@ -144,12 +152,25 @@ void superX3::SetEnergy(unsigned int contact, int rawValue, bool nType) {
 	siDet::SetEnergy(contact, rawValue, nType);
 
 	if (nType) {
-
+		//Set the energy value only if the multiplicity is 1.
+		if (GetContactMult(nType) == 1) 
+			enNtype = GetCalEnergy(contact, nType);
+		else enNtype = 0;
 	}
 	else {
+		//Determine which strip this contact is in.
 		int strip = GetStrip(contact);
 		stripContactMult[strip]++;
-		if (stripContactMult[strip] > 1) UpdatePosition(GetStrip(contact));
+
+		//If more than one contact fired we can compute position and energy. 
+		if (stripContactMult[strip] > 1) {
+			UpdatePosition(GetStrip(contact));
+			//Store the energy only if the multiplicity is one.
+			if (multPstrip == 1) 
+				enPtype = enCalPstrip[strip];
+			else
+				enPtype = 0;
+		}
 	}
 }
 
