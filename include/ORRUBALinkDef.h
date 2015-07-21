@@ -7,5 +7,6 @@
 
 #pragma link C++ class ORRUBA+;
 #pragma link C++ class superX3+;
+#pragma link C++ class BB10+;
 #pragma link C++ class siDet+;
 #endif
