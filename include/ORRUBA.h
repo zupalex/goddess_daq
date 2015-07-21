@@ -2,6 +2,7 @@
 #define ORRUBA_H
 
 #include "TObject.h"
+#include "TVector3.h"
 
 class ORRUBA : public TObject {
 	private:
@@ -12,27 +13,16 @@ class ORRUBA : public TObject {
 		///Energy deposited in third layer, may be zero if only two layers.
 		float E2;
 
-		///The horizontal position from the target.
-		float x;
-		///The vertical position from the target.
-		float y;
-		///The height z from the target position along the beam axis.
-		float z;
-
-		///Radial dimension in cylindrical coordinates.
-		float rho;
-		///The azimuthal angle originating from the upward direction.
-		float azi;
-
-		///Radial direction in spherical coordinates.
-		float r;
-		///The polar angle starting from the beam direction.
-		float pol;
+		///The event position.
+		TVector3 pos;
 
 		///A string specifying which quadrant the position occurred.
 		std::string quadrant;
 	public:
 		ORRUBA();
+			
+		///Set the event parameters;
+		void SetEvent(std::string quadrant_, float dE_, float E1_, float E2_, TVector3 pos_);
 
 	ClassDefNV(ORRUBA,1)
 };
