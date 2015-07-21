@@ -1,7 +1,8 @@
 #include "siDet.h"
 #include <cmath>
 
-siDet::siDet() {
+siDet::siDet(std::string detName) {
+	name = detName;
 	Clear();
 }
 siDet::~siDet() {
@@ -51,7 +52,7 @@ bool siDet::ValidContact(unsigned int contact, bool nType/*=false*/) {
  *
  *	\param[in] contact The contact to be adjusted.
  *	\param[in] rawValue The raw contact value in channels.
- *	\param[in] nType Whether the contact selected is nType.
+ *	\param[in] nType Whether the contact selected is n type.
  */
 void siDet::SetEnergy(int contact, int rawValue, bool nType/*=false*/) {
 	if (!ValidContact(contact)) return;
@@ -80,4 +81,8 @@ float siDet::GetCalEnergy(int contact, bool nType/*=false*/) {
 	if (!ValidContact(contact, nType)) return 0;
 	if (nType) return enCalN.at(contact);
 	return enCalP.at(contact);
+}
+int siDet::GetContactMult(bool nType/*=false*/) {
+	if (nType) return multN;
+	return multP;
 }
