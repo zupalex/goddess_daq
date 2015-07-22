@@ -28,9 +28,9 @@ class superX3 : public siDet {
 		Float_t binsN[5]; //!
 		///The bin edges along the z-axis in mm.	
 		Float_t binsZ[5]; //!
-		///The bin edges along the phi axis in radians.	
+		///The bin edges along the phi axis in degrees.	
 		Float_t binsAzimuthal[5]; //!
-		///The bin edges along the phi axis in radians.	
+		///The bin edges along the phi axis in degrees.	
 		Float_t binsPolar[5]; //!
 
 		///Calibrated energy of p type strips.
@@ -83,15 +83,15 @@ class superX3 : public siDet {
 
 		///Return the number of bins.
 		int GetNumBins() {return 4;}
-		///Return the bins boundaries of the dimension along the p type strips.
+		///Return the bins boundaries of the dimension along the p type strips in mm.
 		float* GetPtypeBins() {return binsP;};
-		///Return the bins boundaries of the dimension along the n type strips.
+		///Return the bins boundaries of the dimension along the n type strips in mm.
 		float* GetNtypeBins() {return binsN;};
-		///Return the bins boundaries along the z (beam) direction.
+		///Return the bins boundaries along the z (beam) direction in mm.
 		float* GetZbins() {return binsZ;};
-		///Return the bins along the azimuthal direction.
+		///Return the bins along the azimuthal direction in degrees.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
-		///Return the bins along the polar direction.
+		///Return the bins along the polar direction in degrees.
 		float* GetPolarBins() {return binsPolar;};
 		
 		///Returns true if strip number is valid.
