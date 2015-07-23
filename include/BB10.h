@@ -27,7 +27,7 @@ class BB10 : public siDet {
 
 	public:
 		///Default constructor.
-		BB10(TVector3 pos, float rotationAngle);
+		BB10(std::string name, TVector3 pos, float rotationAngle);
 		///Default destructor.
 		virtual ~BB10() {};
 

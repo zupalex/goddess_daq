@@ -4,7 +4,8 @@
 
 ClassImp(BB10)
 
-BB10::BB10(TVector3 pos, float rotationAngle) :
+BB10::BB10(std::string name, TVector3 pos, float rotationAngle) :
+	siDet(name),
 	detPos(pos),
 	detRotation(rotationAngle)
 {
