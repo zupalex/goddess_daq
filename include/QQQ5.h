@@ -15,20 +15,20 @@ class QQQ5 : public siDet {
 		float detRotation;
 
 		///Vector pointing to mid point of p type strip edge in mm.
-		TVector3 pStripEdgePos[32]; //!
+		TVector3 pStripEdgePos[33]; //!
 		///Vector pointing to mid point of n type strip edge in mm.
 		TVector3 nStripEdgePos[5]; //!
 
 		///The bin edges along the p-type strips in mm.	
-		Float_t binsP[32]; //!
+		Float_t binsP[33]; //!
 		///The bin edges along the n-type strips in mm.	
 		Float_t binsN[5]; //!
 		///The bin edges along the cylindrical radial directions rho in degrees.	
-		Float_t binsRho[32]; //!
+		Float_t binsRho[33]; //!
 		///The bin edges along the phi axis in degrees.	
 		Float_t binsAzimuthal[5]; //!
 		///The bin edges along the phi axis in degrees.	
-		Float_t binsPolar[32]; //!
+		Float_t binsPolar[33]; //!
 
 		///Calibrated energy of the p type side.
 		float enPtype;
@@ -56,9 +56,9 @@ class QQQ5 : public siDet {
 		void Clear();
 
 		///Return the number of bins.
-		int GetNumNtypeBins() {return 4;}
+		static int GetNumNtypeBins() {return 4;}
 		///Return the number of bins.
-		int GetNumPtypeBins() {return 32;}
+		static int GetNumPtypeBins() {return 32;}
 		///Return the bins boundaries of the dimension along the p type strips in mm.
 		float* GetPtypeBins() {return binsP;};
 		///Return the bins boundaries of the dimension along the n type strips in mm.

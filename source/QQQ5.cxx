@@ -49,7 +49,7 @@ void QQQ5::ConstructBins () {
 
 	//Compute the fraction of the radius in the x and y plane.
 	float xFrac = cos(binsN[2] + detRotation);
-	float yFrac = cos(binsN[2] + detRotation);
+	float yFrac = sin(binsN[2] + detRotation);
 
 	for (unsigned int strip=0; strip<=32; strip++) {			
 		binsP[strip] = pStripRad[strip];
@@ -62,7 +62,9 @@ void QQQ5::ConstructBins () {
 			detPos.Z());
 
 		binsRho[strip] = pStripEdgePos[strip].XYvector().Mod();
-		binsPolar[strip] = TMath::RadToDeg() * pStripEdgePos[strip].Theta();
+		int polarStrip = strip;
+		if (detPos.Z() < 0) polarStrip = 32 - strip;
+		binsPolar[polarStrip] = TMath::RadToDeg() * pStripEdgePos[strip].Theta();
 	}
 
 }
