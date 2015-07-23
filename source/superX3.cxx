@@ -2,10 +2,9 @@
 #include <cmath>
 #include "TMath.h"
 
-superX3::superX3(std::string name, TVector3 pos, float rotationAngle) :
-	siDet(name),
-	detPos(pos),
-	detRotation(rotationAngle)
+superX3::superX3(std::string serialNum, unsigned short sector, unsigned short depth,
+	TVector3 position, float rotationAngle) :
+	orrubaDet(serialNum, sector, depth, position, rotationAngle)
 {
 	siDet::SetNumContacts(8,4);
 	ConstructBins();

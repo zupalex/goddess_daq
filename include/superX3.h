@@ -1,7 +1,7 @@
 #ifndef SUPERX3_H
 #define SUPERX3_H
 
-#include "siDet.h"
+#include "orrubaDet.h"
 #include "TVector3.h"
 
 ///Class designed to compute hit information on a Micron Super X3 detector.
@@ -10,13 +10,8 @@
  * sensitive via a restive strip with contacts on each side of the strip. The 
  * detector has an active area of 40.3 x 75.0 mm^2.
  */
-class superX3 : public siDet {
+class superX3 : public orrubaDet {
 	private:
-		///The detector position.
-		TVector3 detPos; //!
-		///The detector rotation around the z-axis.
-		float detRotation;
-
 		///Vector pointing to mid point of p type strip edge in mm.
 		TVector3 pStripEdgePos[5]; //!
 		///Vector pointing to mid point of n type strip edge in mm.
@@ -63,7 +58,8 @@ class superX3 : public siDet {
 
 	public:
 		///Default constructor.
-		superX3(std::string name, TVector3 detPos, Float_t detRotation);
+		superX3(std::string serialNum, unsigned short sector, unsigned short depth,
+			TVector3 position, float rotationAngle);
 		///Default destructor.
 		virtual ~superX3();
 

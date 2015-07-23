@@ -1,19 +1,14 @@
 #ifndef QQQ5_H
 #define QQQ5_H
 
-#include "siDet.h"
+#include "orrubaDet.h"
 #include "TVector3.h"
 
 ///Class designed to compute hit information on a Micron QQQ5 detector.
 /**The QQQ5 is a annular detector.
  */
-class QQQ5 : public siDet {
+class QQQ5 : public orrubaDet {
 	private:
-		///The detector position.
-		TVector3 detPos; //!
-		///The detector rotation around the z-axis.
-		float detRotation;
-
 		///Vector pointing to mid point of p type strip edge in mm.
 		TVector3 pStripEdgePos[33]; //!
 		///Vector pointing to mid point of n type strip edge in mm.
@@ -48,7 +43,8 @@ class QQQ5 : public siDet {
 
 	public:
 		///Default constructor.
-		QQQ5(std::string name, TVector3 detPos, Float_t detRotation);
+		QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
+			TVector3 position, float rotationAngle);
 		///Default destructor.
 		virtual ~QQQ5();
 

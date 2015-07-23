@@ -5,10 +5,9 @@
 /**We assuming the position provided for the detector is at the radial center of the
  * detector and the clockwise is aligned at the rotation angle. 
  */
-QQQ5::QQQ5(std::string name, TVector3 pos, float rotationAngle) :
-	siDet(name),
-	detPos(pos),
-	detRotation(rotationAngle)
+QQQ5::QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
+	TVector3 position, float rotationAngle) :
+	orrubaDet(serialNum, sector, depth, position, rotationAngle)
 {
 	siDet::SetNumContacts(32,4);
 	ConstructBins();

@@ -6,8 +6,6 @@
 
 class siDet : public TObject {
 	private:
-		///Name assigned to the detector.
-		std::string name;
 		///Vector of raw energies for p type contacts.
 		std::vector<float> enRawP;
 		///Vector of raw energies for n type contacts.
@@ -18,9 +16,9 @@ class siDet : public TObject {
 		std::vector<float> enCalN;
 
 		///Multiplicity of p type contacts.
-		int multP;
+		unsigned int multP;
 		///Multiplicity of n type contacts.
-		int multN;
+		unsigned int multN;
 
 		///The calibration parameters for p type contacts
 		std::vector<std::vector<float>> parEnCalP; //!
@@ -29,7 +27,7 @@ class siDet : public TObject {
 
 	public:
 		///Default constructor.
-		siDet(std::string detName = "");
+		siDet();
 		///Default destructor.
 		virtual ~siDet();
 		///Clear the stored detector values.

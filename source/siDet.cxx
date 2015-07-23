@@ -1,8 +1,7 @@
 #include "siDet.h"
 #include <cmath>
 
-siDet::siDet(std::string detName) {
-	name = detName;
+siDet::siDet() {
 	Clear();
 }
 siDet::~siDet() {

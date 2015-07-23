@@ -1,16 +1,11 @@
 #ifndef BB10_H
 #define BB10_H
 
-#include "siDet.h"
+#include "orrubaDet.h"
 #include "TVector3.h"
 
-class BB10 : public siDet {
+class BB10 : public orrubaDet {
 	private:
-		///The detector position.
-		TVector3 detPos; //!
-		///The detector rotation around the z-axis.
-		float detRotation;
-
 		///Vector pointing to mid point of p type strip edge in mm.
 		TVector3 pStripEdgePos[9]; //!
 
@@ -27,7 +22,8 @@ class BB10 : public siDet {
 
 	public:
 		///Default constructor.
-		BB10(std::string name, TVector3 pos, float rotationAngle);
+		BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
+			TVector3 detPos, float rotationAngle);
 		///Default destructor.
 		virtual ~BB10() {};
 
