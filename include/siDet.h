@@ -4,6 +4,11 @@
 #include "TObject.h"
 #include <vector>
 
+///A class to handle basic silicon detectors.
+/**
+ * \author Karl Smith
+ * \date July 2015
+ */
 class siDet : public TObject {
 	private:
 		///Vector of raw energies for p type contacts.

@@ -6,6 +6,9 @@
 
 ///Class designed to compute hit information on a Micron QQQ5 detector.
 /**The QQQ5 is a annular detector.
+ *
+ * \author Karl Smith
+ * \date July 2015
  */
 class QQQ5 : public orrubaDet {
 	private:

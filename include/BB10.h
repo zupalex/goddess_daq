@@ -4,6 +4,13 @@
 #include "orrubaDet.h"
 #include "TVector3.h"
 
+///Class designed to compute hit information on a Micron BB10 detector.
+/**The BB10 is a single sided strip, rectangular, detector. It has eight strips.
+ *
+ * \author Karl Smith
+ * \date July 2015
+ */
+
 class BB10 : public orrubaDet {
 	private:
 		///Vector pointing to mid point of p type strip edge in mm.

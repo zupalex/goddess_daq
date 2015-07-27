@@ -85,3 +85,5 @@ int siDet::GetContactMult(bool nType/*=false*/) {
 	if (nType) return multN;
 	return multP;
 }
+
+ClassImp(siDet)

@@ -4,11 +4,17 @@
 #include "siDet.h"
 #include "TVector3.h"
 
+///A class to handle basic ORRUBA silicon detectors.
+/**This class builds on a basic siDet by adding detector position information and 
+ * serial number.
+ *
+ * \author Karl Smith
+ * \date July 2015
+ */
 class orrubaDet : public siDet {
 	private:
 		///Serial number assigned to the detector.
-		std::string serialNum;
-
+		const std::string serialNum;
 
 	protected:
 		///Which region of the barrel the detector is located.
@@ -19,11 +25,18 @@ class orrubaDet : public siDet {
 		///The detector position.
 		const TVector3 detPos; //!
 		///The detector rotation around the z-axis.
-		const float detRotation;
+		const float detRotation; //!
 		
 	public:
+		///Default constructor.
 		orrubaDet(std::string serialNum, unsigned short sector, unsigned short depth, 
 			TVector3 position, float rotationAngle);
+		///Default destructor.
+		virtual ~orrubaDet();
+
+	/// \cond This is just for ROOT and doesn't need to be documented
+	ClassDef(orrubaDet,1);
+	/// \endcond
 };
 
 

@@ -8,7 +8,10 @@
 /**The Super X3 (http://www.micronsemiconductor.co.uk/pdf/cat.pdf) is a double sided
  * silicon strip detector with four strips on each side. The p-type side is position 
  * sensitive via a restive strip with contacts on each side of the strip. The 
- * detector has an active area of 40.3 x 75.0 mm^2.
+ * detector has an active area of 40.3 x 75.0 mm&sup2;.
+ *
+ * \author Karl Smith
+ * \date July 2015
  */
 class superX3 : public orrubaDet {
 	private:

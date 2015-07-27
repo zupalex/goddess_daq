@@ -7,3 +7,10 @@ orrubaDet::orrubaDet(std::string serialNum, unsigned short sector,
 {
 
 }
+
+orrubaDet::~orrubaDet() {
+
+}
+
+ClassImp(orrubaDet)
+
