@@ -3,8 +3,8 @@
 #include "TMath.h"
 
 superX3::superX3(std::string serialNum, unsigned short sector, unsigned short depth,
-	TVector3 position, float rotationAngle) :
-	orrubaDet(serialNum, sector, depth, position, rotationAngle)
+	bool upStream, TVector3 position, float rotationAngle) :
+	orrubaDet(serialNum, sector, depth, upStream, position, rotationAngle)
 {
 	siDet::SetNumContacts(8,4);
 	ConstructBins();

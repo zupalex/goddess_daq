@@ -21,18 +21,24 @@ class orrubaDet : public siDet {
 		const unsigned short sector;
 		///The number of detectors between this one and the target.
 		const unsigned short depth;
+		///Whether the detector is upstream or downstream of the target.
+		const bool upStream;
+		
 		
 		///The detector position.
 		const TVector3 detPos; //!
 		///The detector rotation around the z-axis.
 		const float detRotation; //!
-		
+	
 	public:
 		///Default constructor.
 		orrubaDet(std::string serialNum, unsigned short sector, unsigned short depth, 
-			TVector3 position, float rotationAngle);
+			bool upStream, TVector3 position, float rotationAngle);
 		///Default destructor.
 		virtual ~orrubaDet();
+
+		///Get the detector's serial number.
+		std::string GetSerialNum() {return serialNum;}
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(orrubaDet,1);

@@ -5,8 +5,8 @@
 ClassImp(BB10)
 
 BB10::BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
-	TVector3 detPos, float rotationAngle) :
-	orrubaDet(serialNum, sector, depth, detPos, rotationAngle)
+	bool upStream, TVector3 detPos, float rotationAngle) :
+	orrubaDet(serialNum, sector, depth, upStream, detPos, rotationAngle)
 {
 	siDet::SetNumContacts(8,0);
 	ConstructBins();

@@ -30,7 +30,7 @@ class BB10 : public orrubaDet {
 	public:
 		///Default constructor.
 		BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
-			TVector3 detPos, float rotationAngle);
+			bool upStream, TVector3 detPos, float rotationAngle);
 		///Default destructor.
 		virtual ~BB10() {};
 

@@ -47,7 +47,7 @@ class QQQ5 : public orrubaDet {
 	public:
 		///Default constructor.
 		QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
-			TVector3 position, float rotationAngle);
+			bool upStream, TVector3 position, float rotationAngle);
 		///Default destructor.
 		virtual ~QQQ5();
 

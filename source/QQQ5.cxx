@@ -6,8 +6,8 @@
  * detector and the clockwise is aligned at the rotation angle. 
  */
 QQQ5::QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
-	TVector3 position, float rotationAngle) :
-	orrubaDet(serialNum, sector, depth, position, rotationAngle)
+	bool upStream, TVector3 position, float rotationAngle) :
+	orrubaDet(serialNum, sector, depth, upStream, position, rotationAngle)
 {
 	siDet::SetNumContacts(32,4);
 	ConstructBins();
