@@ -7,7 +7,7 @@ if (${ROOT_VERSION} VERSION_GREATER "6.0")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
-set (ORRUBA_SOURCES siDet.cxx orrubaDet.cxx ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx ORRUBADictionary.cxx)
+set (ORRUBA_SOURCES siDet.cxx orrubaDet.cxx ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx GoddessConfig.cxx ORRUBADictionary.cxx)
 
 add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 
