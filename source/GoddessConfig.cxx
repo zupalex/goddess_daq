@@ -8,8 +8,17 @@
 
 #include "superX3.h"
 
-GoddessConfig::GoddessConfig(std::string filename) {
-	ReadConfig(filename);
+/**
+ *
+ * \param[in] positionFile The configuration file specfying the central position 
+ *  of each sector.
+ * \param[in] configFile The configuration file specifying which detectors are where
+ *  and their calibration parameters.
+ *
+ */
+GoddessConfig::GoddessConfig(std::string positionFile, std::string configFile) {
+	ReadPosition(positionFile);
+	ReadConfig(configFile);
 }	
 
 GoddessConfig::~GoddessConfig() {
@@ -18,6 +27,43 @@ GoddessConfig::~GoddessConfig() {
 	}
 }
 
+/**The GODDESS configuration file specifies the silicon and ion/scint detector 
+ * configuration. 
+ *
+ * For the silicon detectors the supported types are: superX3, BB10, and QQQ5. A 
+ * typical configuration would read as follows:
+ * superX3 1234-56 U0dE
+ *  enCal p 0 1 2 3 
+ *  enCal p 1 1 2 3 
+ *  posCal resStrip 0 1 2 3 
+ *
+ * This configuration example defines a superX3 detector with serial number 1234-56
+ * in the upstream position of sector 0 as a energy loss detector. Following this 
+ * are a list of energy or position calibrations. Each calibration specifies the 
+ * subtype of the channel, either p, n or resStrip for a superX3. This is followed 
+ * by the subtype channel number and then the polynomial parameters. An arbitrary 
+ * number of parameters can be listed in increasing order. 
+ * \note The position calibration is only available for resStrip of superX3 
+ *  detectors.
+ *
+ * Also supported, is an ion detector with a built-in scintillator. An example of a
+ * typical configuration follows:
+ * ion 5 4 2 3 
+ *  enCal anode 0 0 1 2
+ *  posCal scint 0 4 5 6
+ *  timeCal scint 0 2 3 4
+ *
+ * This configuration defines an ion chamber with 5 anodes and 4 scintillator PMTs.
+ * The energy loss signal is composed of the first two anodes and the residual 
+ * energy is composed of the following 3 channels. There may be more anodes read out
+ * then used in computing these two values. Following this is a list of calibration
+ * parameters for energy, position and time. This calibration lines follow the same 
+ * format as the silicons with subtypes or anode and scint.
+ * \note The position and time calibration are only supported for the scint subtype.
+ *
+ *
+ * \param[in] filename The configuration file to be read.
+ */
 void GoddessConfig::ReadConfig(std::string filename) {
 	std::ifstream mapFile(filename);	
 
@@ -32,94 +78,131 @@ void GoddessConfig::ReadConfig(std::string filename) {
 	while (!error && std::getline(mapFile, line).good()) {
 		//Convert string to stream
 		std::istringstream lineStream(line);
-			
+
 		//Read the first line for a detector block
 		// This line specifies the following in order:
 		// 	type serialNum x y z angle daqCh
-		std::string type, serialNum, id;
+		std::string type, serialNum = "", id;
 		int daqCh;
+		orrubaDet *det = 0;
 
-		if (!(lineStream >> type >> serialNum >> id >> daqCh)) {
+		if (!(lineStream >> type)) {
 			error = true;
 			break;
 		}
+		//Report the one we are registering.
+		std::cout << "Registering " << type << " detector: ";
 
-		//Report the we successfully registered it
-		std::cout << "Registering " << type << " detector: " << serialNum;
-		std::cout << ", LocID: " << id;
-		std::cout << ", DAQ: " << daqCh << "+\n";
+		if (type == "ion") {
+			int numAnode, numScint, numDE, numEres;
+			if (!(lineStream >> numAnode >> numScint >> numDE >> numEres)) {
+				error = true;
+				break;
+			}
+			std::cout << " Anodes: " << numAnode << ", Scint PMTs: " << numScint;
+			std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
 
-		short sector, depth;
-		bool upStream;
-		if (!ParseID(id, sector, depth, upStream)) {
-			std::cerr << "ERROR: Unable to parse position id: " << id << " of detector " << serialNum << "!\n";
-			break;
+			ionChamber = new IonChamber(numAnode, numScint, numDE, numEres);
 		}
-		std::cout << " Upstream: ";
-		upStream ? std::cout << "U" : std::cout << "D";
-		std::cout << ", Sector: " << sector << ", Depth: " << depth;
+		else {
+			if (!(lineStream >> serialNum >> id >> daqCh)) {
+				error = true;
+				break;
+			}
 
-		float angle;
-		TVector3 pos = GetPosVector(type, sector, depth, upStream, angle);
+			std::cout << serialNum;
+			std::cout << ", LocID: " << id;
+			std::cout << ", DAQ: " << daqCh << "+\n";
 
-		std::cout << ", Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
-		std::cout << ", Angle: " << angle << "\n";
+			short sector, depth;
+			bool upStream;
+			if (!ParseID(id, sector, depth, upStream)) {
+				std::cerr << "ERROR: Unable to parse position id: " << id << " of detector " << serialNum << "!\n";
+				break;
+			}
+			std::cout << " Upstream: ";
+			upStream ? std::cout << "U" : std::cout << "D";
+			std::cout << ", Sector: " << sector << ", Depth: " << depth;
 
-		//Construct object for the specified type.
-		if (type == "superX3") {	
-			superX3s.push_back(new superX3(serialNum,sector,depth,upStream,pos,angle));
+			float angle;
+			TVector3 pos = GetPosVector(type, sector, depth, upStream, angle);
 
+			std::cout << ", Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
+			std::cout << ", Angle: " << angle << "\n";
+
+			//Construct object for the specified type.
+			if (type == "superX3") {	
+				superX3s.push_back(new superX3(serialNum,sector,depth,upStream,pos,angle));
+				det = superX3s.back();
+			}	
+			else if (type == "BB10") {	
+				bb10s.push_back(new BB10(serialNum,sector,depth,upStream,pos,angle));
+				det = bb10s.back();
+			}	
+			else if (type == "QQQ5") {	
+				qqq5s.push_back(new QQQ5(serialNum,sector,depth,upStream,pos,angle));
+				det = qqq5s.back();
+			}
+			else {
+				std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
+				std::cerr << " Valid options: ion, superX3, BB10, QQQ5.\n";
+				error = true;
+				break;
+			}
 			if (IsInsertable(daqCh,type)) chMap[daqCh] = superX3s.back();
 			else 
 				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
-		}	
-		else if (type == "BB10") {	
-			bb10s.push_back(new BB10(serialNum,sector,depth,upStream,pos,angle));
-
-			if (IsInsertable(daqCh,type)) chMap[daqCh] = bb10s.back();
-			else 
-				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
-		}	
-		else if (type == "QQQ5") {	
-			qqq5s.push_back(new QQQ5(serialNum,sector,depth,upStream,pos,angle));
-
-			if (IsInsertable(daqCh,type)) chMap[daqCh] = qqq5s.back();
-			else 
-				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
-		}
-		else {
-			std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
-			error = true;
-			break;
 		}
 
 		//Read calibration information.
 		while (std::getline(mapFile, line).good()) {
 			std::istringstream lineStream(line);
-			std::string calType;
-			if (!(lineStream >> calType)) break;
+			std::string calType, subType;
+			int detChannel;
+			if (!(lineStream >> calType >> subType >> detChannel)) break;
+
+			//Determine the calibration type.
 			bool posCal = false;
-			if (calType == "posCal") posCal = true;
+			bool timeCal = false;
+			if (calType == "posCal") {
+				if (!(type == "superX3" && subType == "resStrip") || !(type == "ion" && subType == "scint")) {
+					std::cout << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << type << " detector " << serialNum << "\n";
+					continue;
+				}
+				posCal = true;
+			}
+			else if (calType == "timeCal") {
+				if (!(type == "ion" && subType == "scint")) {
+					std::cout << " WARNING: Ignoring time calibration specified for " << subType << "-type part of " << type << " detector " << serialNum << "\n";
+					continue;
+				}
+				timeCal = true;
+			}
 			else if (calType != "enCal") { 
 				mapFile.seekg(-line.length()-1,std::ios_base::cur);
+				error = true;
 				break;
 			}
 
-			int contactNum;
-			std::string contactType;
-			if (!(lineStream >> contactType >> contactNum)) {
-				std::cerr << "ERROR: Unable to read calibration information!\n";
-				std::cerr << " " << line << "\n";
-				continue;
-			}
-
+			//Check that the subtype is valid
 			bool nType = false;
-			if (contactType == "n") nType = true;
-			else if (contactType != "p") {
-				std::cerr << "ERROR: Unknown contact type '" << contactType << "'!\n";
-				continue;
+			if (type == "ion") {
+				if (subType != "scint" && subType != "anode") {
+					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
+					std::cerr << "  Valid options: anode, strip.\n";
+					continue;
+				}
+			}
+			else {
+				if (subType == "n") nType = true;
+				else if (subType != "p" && subType != "resStrip") {
+					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
+					std::cerr << "  Valid options: p, n, resStrip.\n";
+					continue;
+				}
 			}
 
+			//Get the calibration parameters
 			float param;
 			std::vector< float > calParams;
 			while (lineStream >> param) calParams.push_back(param);
@@ -127,7 +210,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			//Print a line about the calibration function.
 			if (posCal) std::cout << " Pos. ";
 			else std::cout << " En. ";
-			std::cout << contactType << "-type contact " << contactNum << ", ";
+			std::cout << subType << "-type channel " << detChannel << ", ";
 			std::cout << calParams.size()-1 << " order calib.: "; 
 
 			for (auto itr=calParams.begin(); itr != calParams.end(); ++itr) {
@@ -136,7 +219,30 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			}
 			std::cout << "\n";
 
-			if (calParams.empty()) std::cerr << " WARNING: No calibration parameters specified for " << contactType << "-type contact " << contactNum << ".\n";
+			if (calParams.empty()) std::cerr << " WARNING: No calibration parameters specified for " << subType << "-type channel " << detChannel << ".\n";
+
+			///Assign the parameters to their respective container.
+			if (type == "ion") {	
+				if (subType == "scint") {
+					if (posCal) 
+						std::cout << " WARNING: No support for scint position calibration!\n";	
+					else if (timeCal) 
+						ionChamber->SetScintTimeCalPars(detChannel, calParams);	
+					else 
+						ionChamber->SetScintEnCalPars(detChannel, calParams);	
+				}
+				else {
+					ionChamber->SetAnodeEnCalPars(detChannel, calParams);	
+				}
+			}
+			else {
+				if (type == "superX3" && subType == "resStrip") {
+					if (posCal) 
+						superX3s.back()->SetStripPosCalibPars(detChannel, calParams);
+					else superX3s.back()->SetStripEnCalibPars(detChannel, calParams);
+				}
+				else det->SetEnergyCalib(calParams, detChannel, nType);
+			}
 
 		}
 	}
@@ -146,6 +252,10 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		std::cerr << "ERROR: Unable to read configuration file! Failed on the following line:\n";
 		std::cerr << line << "\n";
 	}
+}
+
+void GoddessConfig::ReadPosition(std::string filename) {
+
 }
 
 /**We check that at the insertion point the previous entry has sufficient 
@@ -241,60 +351,60 @@ bool GoddessConfig::ParseID(std::string id, short& sector, short& depth, bool& u
 	else {
 		std::cerr << "ERROR: Unexpected character '" << subStr << "' in sector position of id!\n";
 		return false;
+		}
+
+		//The depth index position depends on whether we read out a barrel or end cap.
+		subStr = id.substr(id.length() - 2, 2);
+		if (subStr == "dE") depth = 0;
+		else if (subStr == "E1") depth = 1;
+		else if (subStr == "E2") depth = 2;
+		else {
+			std::cerr << "ERROR: Unexpected depth '" << subStr << "' in id!\n";
+			return false;
+		}
+
+		return true;
 	}
 
-	//The depth index position depends on whether we read out a barrel or end cap.
-	subStr = id.substr(id.length() - 2, 2);
-	if (subStr == "dE") depth = 0;
-	else if (subStr == "E1") depth = 1;
-	else if (subStr == "E2") depth = 2;
-	else {
-		std::cerr << "ERROR: Unexpected depth '" << subStr << "' in id!\n";
-		return false;
+	/**Based on the detector type, sector, depth and whether the detector is up stream a
+	 * vector position is computed and the rotation angle of the detector is determined.
+	 * 
+	 * \param[in] type The detector type.
+	 * \param[in] sector The sector occupied by the detector.
+	 * \param[in] depth The depth of the detector in the stack.
+	 * \param[in] upStream Flag indicating if the detector is up stream of the target.
+	 * \param[out] angle The computed rotation angle.
+	 * \return A TVector3 pointing to the detector corner. 
+	 */
+	TVector3 GoddessConfig::GetPosVector(std::string type, short sector, short depth, bool upStream, float &angle) {
+		static float barrelRadius = 3.750 * 25.4; //mm
+		TVector3 pos(0,0,0);
+
+		//Compute position for barrel detectors.
+		if (type == "superX3" || type == "BB10") {
+			//The barrel is divided into twelve sectors with the zero sector in the 
+			// positive vertical (y-axis) direction. Therefore the 0 sector is at 90 
+			// degrees and we subtract for each additional sector and then offset by
+			// two pi if less than zero.
+			float azimuthal = - TMath::PiOver2() + sector / 12. * TMath::TwoPi();
+			if (azimuthal < 0) azimuthal += TMath::TwoPi();
+			//The rotation angle is also dependent on the sector with a rotation of zero 
+			// in the zero sector.
+			angle = (1 - sector / 12.) * TMath::TwoPi();
+			//The z position is oriented along the beam line and depends only on if the 
+			// detector is upstream or downstream of the target.
+			float z;
+			if (upStream) z = 0;
+			else z = 0;
+			//Set the computed x,y,z positions.
+			pos.SetXYZ(barrelRadius * sin(azimuthal), barrelRadius * cos(azimuthal), z);
+
+		}
+		else if (type == "QQQ5") {
+			angle = -(3 * TMath::PiOver4()) + sector / 4. * TMath::TwoPi();
+			pos.SetXYZ(0,0,(4.375-0.7)*25.4);
+
+		}
+
+		return pos;
 	}
-
-	return true;
-}
-
-/**Based on the detector type, sector, depth and whether the detector is up stream a
- * vector position is computed and the rotation angle of the detector is determined.
- * 
- * \param[in] type The detector type.
- * \param[in] sector The sector occupied by the detector.
- * \param[in] depth The depth of the detector in the stack.
- * \param[in] upStream Flag indicating if the detector is up stream of the target.
- * \param[out] angle The computed rotation angle.
- * \return A TVector3 pointing to the detector corner. 
- */
-TVector3 GoddessConfig::GetPosVector(std::string type, short sector, short depth, bool upStream, float &angle) {
-	static float barrelRadius = 3.750 * 25.4; //mm
-	TVector3 pos(0,0,0);
-
-	//Compute position for barrel detectors.
-	if (type == "superX3" || type == "BB10") {
-		//The barrel is divided into twelve sectors with the zero sector in the 
-		// positive vertical (y-axis) direction. Therefore the 0 sector is at 90 
-		// degrees and we subtract for each additional sector and then offset by
-		// two pi if less than zero.
-		float azimuthal = - TMath::PiOver2() + sector / 12. * TMath::TwoPi();
-		if (azimuthal < 0) azimuthal += TMath::TwoPi();
-		//The rotation angle is also dependent on the sector with a rotation of zero 
-		// in the zero sector.
-		angle = (1 - sector / 12.) * TMath::TwoPi();
-		//The z position is oriented along the beam line and depends only on if the 
-		// detector is upstream or downstream of the target.
-		float z;
-		if (upStream) z = 0;
-		else z = 0;
-		//Set the computed x,y,z positions.
-		pos.SetXYZ(barrelRadius * sin(azimuthal), barrelRadius * cos(azimuthal), z);
-
-	}
-	else if (type == "QQQ5") {
-		angle = -(3 * TMath::PiOver4()) + sector / 4. * TMath::TwoPi();
-		pos.SetXYZ(0,0,(4.375-0.7)*25.4);
-		
-	}
-
-	return pos;
-}

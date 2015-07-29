@@ -11,4 +11,5 @@
 #pragma link C++ class QQQ5+;
 #pragma link C++ class orrubaDet+;
 #pragma link C++ class siDet+;
+#pragma link C++ class IonChamber+;
 #endif

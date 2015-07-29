@@ -52,6 +52,9 @@ class siDet : public TObject {
 		///Return the number of fired contacts.
 		int GetContactMult(bool nType = false);
 
+		///Specify the polynomial calibration parameters of the specified contact.
+		void SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);
+
 
 	ClassDef(siDet,1)
 	
