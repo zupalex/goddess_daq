@@ -4,18 +4,19 @@
 /* (may be empty..........) */
 /*--------------------------*/
 
+config = new GoddessConfig("goddess.position","goddess.config");
 
 for (int det = 0; det < numQQQ5; det++) {
-	new(qqq5s[det]) QQQ5("serialNum",0,0,TVector3(0,0,(4.375-0.7)*25.4),0);
+	//new(qqq5s[det]) QQQ5("serialNum",0,0,TVector3(0,0,(4.375-0.7)*25.4),0);
 
 }
 for (int det = 0; det < numSX3; det++) {
-	new(superX3s[det]) superX3("derialNum",0,0,TVector3(43.3/2,7.85/2*25.4,0),0);
+	//new(superX3s[det]) superX3("derialNum",0,0,TVector3(43.3/2,7.85/2*25.4,0),0);
 	for (int contact = 0; contact < 12; contact++) 
 		hEnRawSX3[det][contact] = new TH1F(Form("hEnRawSX3_%d_%d",det,contact),Form("superX3 %s Raw Energy Det: %d Contact: %d","name",det,contact),1024,0,1024);
 }
 for (int det = 0; det < numBB10; det++) {
-	new(bb10s[det]) BB10("serialNum",0,0,TVector3(0,0,(4.375-0.7)*25.4),0);
+	//new(bb10s[det]) BB10("serialNum",0,0,TVector3(0,0,(4.375-0.7)*25.4),0);
 
 }
 

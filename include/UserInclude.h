@@ -5,6 +5,7 @@
 
 #include "TTree.h"
 #include "TClonesArray.h"
+#include "GoddessConfig.h"
 #include "ORRUBA.h"
 #include "superX3.h"
 #include "BB10.h"

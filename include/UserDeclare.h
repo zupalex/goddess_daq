@@ -4,12 +4,14 @@
 /* (may be empty.......) */
 /*-----------------------*/
 
-const int numSX3 = 8;
-const int numBB10 = 4;
-const int numQQQ5 = 12;
-const int numDetectors = numSX3 + numBB10 + numQQQ5;
+const char numSX3 = 8;
+const char numBB10 = 4;
+const char numQQQ5 = 12;
+const char numDetectors = numSX3 + numBB10 + numQQQ5;
 
 ORRUBA *orruba; 
+
+GoddessConfig *config;
 
 TClonesArray superX3s("superX3",numSX3);
 TClonesArray qqq5s("QQQ5",numQQQ5);
