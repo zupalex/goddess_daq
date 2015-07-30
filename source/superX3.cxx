@@ -167,7 +167,7 @@ bool superX3::ValidStrip(int strip) {
 }
 
 /**This method is called when a contact energy is updated. We call the parent 
- * siDet::SetEnergy to handle storing the raw and calibrated value. If the update
+ * siDet::SetRawValue to handle storing the raw and calibrated value. If the update
  * was a p type contact we check if another p contact in the same strip has been set
  * and if so we make a call to compute the position the event occurred in the strip.
  *
@@ -175,11 +175,11 @@ bool superX3::ValidStrip(int strip) {
  *	\param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
-void superX3::SetEnergy(unsigned int contact, int rawValue, bool nType) {
-	if (!ValidContact(contact)) return;
+void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
+	if (!ValidContact(contact, nType)) return;
 
 	//Call parent method to handle calibration.
-	siDet::SetEnergy(contact, rawValue, nType);
+	siDet::SetRawValue(contact, nType, rawValue);
 
 	if (nType) {
 		//Set the energy value only if the multiplicity is 1.

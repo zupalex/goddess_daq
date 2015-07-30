@@ -1,10 +1,10 @@
 #ifndef IONCHAMBER_H
 #define IONCHAMBER_H
 
-#include "TObject.h"
+#include "Detector.h"
 #include <vector>
 
-class IonChamber : public TObject {
+class IonChamber : public Detector {
 	private:
 		///The number of anode channels ganged together to make the energy loss signal.
 		const int numDE; //!
@@ -53,7 +53,7 @@ class IonChamber : public TObject {
 		void SetScintTimeCalPars(int ch, std::vector<float> pars);
 
 		///Set the raw energy of the contact and compute the calibrated value.
-		void SetEnergy(int channel, int rawValue);
+		virtual void SetRawValue(unsigned int channel, int rawValue);
 
 		///Check if the specified anode channel has been declared.
 		bool ValidAnode(int ch);

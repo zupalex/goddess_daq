@@ -6,6 +6,7 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class ORRUBA+;
+#pragma link C++ class Detector+;
 #pragma link C++ class superX3+;
 #pragma link C++ class BB10+;
 #pragma link C++ class QQQ5+;

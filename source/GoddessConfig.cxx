@@ -103,6 +103,9 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
 
 			ionChamber = new IonChamber(numAnode, numScint, numDE, numEres);
+			if (IsInsertable(daqCh,type)) chMap[daqCh] = ionChamber;
+			else 
+				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
 		}
 		else {
 			if (!(lineStream >> serialNum >> id >> daqCh)) {
@@ -148,7 +151,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				error = true;
 				break;
 			}
-			if (IsInsertable(daqCh,type)) chMap[daqCh] = superX3s.back();
+			if (IsInsertable(daqCh,type)) chMap[daqCh] = det;
 			else 
 				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
 		}
@@ -283,7 +286,11 @@ bool GoddessConfig::IsInsertable(int daqCh, std::string type) {
 			else if (type == "QQQ5") numCh = 36;
 
 			if (daqCh + numCh > mapItr->first) {
-				std::cerr << "ERROR: Specified starting DAQ channel conflict with detector " << mapItr->second->GetSerialNum() << "\n";
+				orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second);
+				if (siDet) 
+					std::cerr << "ERROR: Specified starting DAQ channel conflict with detector " << siDet->GetSerialNum() << "\n";
+				else
+					std::cerr << "ERROR: Specified starting DAQ channel conflict with ion chamber.\n";
 				insertable = false;
 			}
 		}
@@ -299,7 +306,11 @@ bool GoddessConfig::IsInsertable(int daqCh, std::string type) {
 
 			std::cout << mapItr->first << " " << numCh << " " << daqCh << "\n";
 			if (mapItr->first + numCh > daqCh) {
-				std::cerr << "ERROR: Specified starting DAQ channel conflict with detector " << mapItr->second->GetSerialNum() << "\n";
+				orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second);
+				if (siDet) 
+					std::cerr << "ERROR: Specified starting DAQ channel conflict with detector " << siDet->GetSerialNum() << "\n";
+				else
+					std::cerr << "ERROR: Specified starting DAQ channel conflict with ion chamber.\n";
 				insertable = false;
 			}
 		}
@@ -308,8 +319,30 @@ bool GoddessConfig::IsInsertable(int daqCh, std::string type) {
 	return insertable;
 }
 
-void GoddessConfig::GetMappedCh(short daqCh, orrubaDet *det, short &contactNum) {
-
+/**
+ * \param[in] daqCh The DAQ channel to find corresponding detector channel.
+ * \param[out] det The corresponding detector.
+ * \param[out] channelNum The corresponding detector channel.
+ * \param[out] nType If the channel is corresponding to a silicon detector and is 
+ *  n-type.
+ *
+ */
+short GoddessConfig::GetMappedCh(short digitizerCh) {
+	auto mapItr = chMap.upper_bound(digitizerCh);
+	if (mapItr == chMap.begin()) {
+		std::cerr << "ERROR: Unable to find mapped channel for DAQ ch: " << digitizerCh << "\n!";
+		return false;
+	}
+	--mapItr;
+	std::string type = mapItr->second->IsA()->GetName();
+	int numCh = 0;
+	if (type == "superX3") numCh = 12;
+	else if (type == "BB10") numCh = 8;
+	else if (type == "QQQ5") numCh = 36;
+	else {
+		std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
+	}
+	
 }
 
 /**Parse the id string describing the detector position int he barrel. The id is 

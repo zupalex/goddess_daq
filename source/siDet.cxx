@@ -1,5 +1,6 @@
 #include "siDet.h"
 #include <cmath>
+#include <iostream>
 
 siDet::siDet() {
 	Clear();
@@ -49,12 +50,26 @@ bool siDet::ValidContact(unsigned int contact, bool nType/*=false*/) {
 /**The raw value is stored and the calibrated value is computed based on the loaded
  * calibration parameters.
  *
+ *	\param[in] channel The channel to be adjusted.
+ *	\param[in] rawValue The raw contact value in channels.
+ */
+void siDet::SetRawValue(unsigned int channel, int rawValue) {
+	if (channel < enRawP.size())
+		SetRawValue(channel,false,rawValue);
+	else if (channel < enRawP.size() + enRawN.size()) 
+		SetRawValue(channel,true,rawValue);
+	else
+		std::cerr << "ERROR: Cannot set raw value for invalid channel: " << channel << "!\n";
+}
+/**The raw value is stored and the calibrated value is computed based on the loaded
+ * calibration parameters.
+ *
  *	\param[in] contact The contact to be adjusted.
  *	\param[in] rawValue The raw contact value in channels.
  *	\param[in] nType Whether the contact selected is n type.
  */
-void siDet::SetEnergy(int contact, int rawValue, bool nType/*=false*/) {
-	if (!ValidContact(contact)) return;
+void siDet::SetRawValue(unsigned int contact, bool nType, int rawValue) {
+	if (!ValidContact(contact, nType)) return;
 
 	//Get pointer to the raw an calibrated storage location.
 	float *enRaw, *enCal;
@@ -75,6 +90,7 @@ void siDet::SetEnergy(int contact, int rawValue, bool nType/*=false*/) {
 	for (size_t power = 0; power < parEnCal->size(); power++)
 		*enCal += parEnCal->at(power) * pow(*enRaw,power);
 }
+		
 
 float siDet::GetCalEnergy(int contact, bool nType/*=false*/) {
 	if (!ValidContact(contact, nType)) return 0;

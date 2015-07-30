@@ -106,7 +106,7 @@ class superX3 : public orrubaDet {
 		float GetNtypeEnergy() {return enNtype;};
 
 		///Set the raw energy of the contact and compute the calibrated value.
-		virtual void SetEnergy(unsigned int contact, int rawValue, bool nType = false);
+		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
 
 		/// \cond This is just for ROOT and doesn't need to be documented
 		ClassDef(superX3,1);

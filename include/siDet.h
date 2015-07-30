@@ -1,15 +1,15 @@
 #ifndef SIDET_H
 #define SIDET_H
 
-#include "TObject.h"
 #include <vector>
+#include "Detector.h"
 
 ///A class to handle basic silicon detectors.
 /**
  * \author Karl Smith
  * \date July 2015
  */
-class siDet : public TObject {
+class siDet : public Detector {
 	private:
 		///Vector of raw energies for p type contacts.
 		std::vector<float> enRawP;
@@ -41,19 +41,23 @@ class siDet : public TObject {
 		void SetNumContacts(int pType, int nType = 0);
 
 		///Check if specified contact has been declared.
-		bool ValidContact(unsigned int contact, bool nType = false);
+		bool ValidContact(unsigned int contact, bool nType);
 		
+		///Set the raw energy of the channel.
+		virtual void SetRawValue(unsigned int channel, int rawValue);
 		///Set the raw energy of the contact and compute the calibrated value.
-		virtual void SetEnergy(int contact, int rawValue, bool nType = false);
+		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
 
+		///Get the contant number and type froma  detector channel number.
+		void GetChannel(const unsigned int detChannel, int& contactNum, bool &nType);
 		///Get the calibrated energy of the contact specified.
 		float GetCalEnergy(int contact, bool nType = false);
-		
 		///Return the number of fired contacts.
 		int GetContactMult(bool nType = false);
 
 		///Specify the polynomial calibration parameters of the specified contact.
 		void SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);
+
 
 
 	ClassDef(siDet,1)

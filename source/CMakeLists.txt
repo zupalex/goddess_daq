@@ -1,13 +1,13 @@
 #The ORRUBA dictionary must be Position Independent Code
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 #root_generate_dictionary(
-root_generate_dictionary(ORRUBADictionary ORRUBA.h siDet.h orrubaDet.h superX3.h BB10.h QQQ5.h IonChamber.h LINKDEF ORRUBALinkDef.h)
+root_generate_dictionary(ORRUBADictionary ORRUBA.h Detector.h siDet.h orrubaDet.h superX3.h BB10.h QQQ5.h IonChamber.h LINKDEF ORRUBALinkDef.h)
 
 if (${ROOT_VERSION} VERSION_GREATER "6.0")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
-set (ORRUBA_SOURCES SolidVector.cxx siDet.cxx orrubaDet.cxx ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx GoddessConfig.cxx IonChamber.cxx ORRUBADictionary.cxx)
+set (ORRUBA_SOURCES SolidVector.cxx Detector.cxx siDet.cxx orrubaDet.cxx ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx GoddessConfig.cxx IonChamber.cxx ORRUBADictionary.cxx)
 
 add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 

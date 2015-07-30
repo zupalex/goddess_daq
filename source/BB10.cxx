@@ -44,7 +44,7 @@ void BB10::Clear() {
 }
 
 /**This method is called when a contact energy is updated. We call the parent 
- * siDet::SetEnergy to handle storing the raw and calibrated value. If the update
+ * siDet::SetRawValue to handle storing the raw and calibrated value. If the update
  * was a p type contact we check if another p contact in the same strip has been set
  * and if so we make a call to compute the position the event occurred in the strip.
  *
@@ -52,8 +52,8 @@ void BB10::Clear() {
  *	\param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
-void BB10::SetEnergy(unsigned int contact, int rawValue, bool nType) {
-	siDet::SetEnergy(contact, rawValue, nType);
+void BB10::SetRawValue(unsigned int contact, bool nType, int rawValue) {
+	siDet::SetRawValue(contact, nType, rawValue);
 
 	if (!nType) {
 		//Set the energy value only if the multiplicity is 1.
