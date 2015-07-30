@@ -40,6 +40,8 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #Include our headers and continue in the source directory
+include_directories(goddess/include)
+add_subdirectory(goddess/source)
 include_directories(include)
 add_subdirectory(source)
 
