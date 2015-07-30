@@ -35,10 +35,10 @@ add_executable(ag2mode2 ag2mode2.c spe_fun.c)
 
 install(TARGETS GEBSort mkMap GEBFilter GEBMerge ag2mode2 DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-if(${CMAKE_BUILD_TYPE}=="Debug")
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 	add_executable(goddessTest goddessTest.cxx $<TARGET_OBJECTS:ORRUBA_OBJECT>)
-	install(TARGETS goddesTest DESTINATION ${CMAKE_INSTALL_PREFIX})
 	target_link_libraries(goddessTest ${ROOT_LIBRARIES})
+	install(TARGETS goddessTest DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 endif()
