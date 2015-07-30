@@ -6,8 +6,8 @@
  * detector and the clockwise is aligned at the rotation angle. 
  */
 QQQ5::QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
-	bool upStream, TVector3 position, float rotationAngle) :
-	orrubaDet(serialNum, sector, depth, upStream, position, rotationAngle)
+	bool upStream, SolidVector position) :
+	orrubaDet(serialNum, sector, depth, upStream, position)
 {
 	siDet::SetNumContacts(32,4);
 	ConstructBins();
@@ -38,8 +38,8 @@ void QQQ5::ConstructBins () {
 		binsN[strip] = strip * nStripPitch;
 
 		nStripEdgePos[strip].SetXYZ(
-			detPos.X() + nTypeRadius * cos(binsN[strip] + detRotation),
-			detPos.Y() + nTypeRadius * sin(binsN[strip] + detRotation),
+			detPos.X() + nTypeRadius * cos(binsN[strip] + detPos.RotZ()),
+			detPos.Y() + nTypeRadius * sin(binsN[strip] + detPos.RotZ()),
 			detPos.Z());
 
 		//Azimuthal angle 
@@ -47,8 +47,8 @@ void QQQ5::ConstructBins () {
 	}
 
 	//Compute the fraction of the radius in the x and y plane.
-	float xFrac = cos(binsN[2] + detRotation);
-	float yFrac = sin(binsN[2] + detRotation);
+	float xFrac = cos(binsN[2] + detPos.RotZ());
+	float yFrac = sin(binsN[2] + detPos.RotZ());
 
 	for (unsigned int strip=0; strip<=32; strip++) {			
 		binsP[strip] = pStripRad[strip];

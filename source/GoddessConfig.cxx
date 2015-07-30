@@ -124,23 +124,22 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			upStream ? std::cout << "U" : std::cout << "D";
 			std::cout << ", Sector: " << sector << ", Depth: " << depth;
 
-			float angle;
-			TVector3 pos = GetPosVector(type, sector, depth, upStream, angle);
+			SolidVector pos = GetPosVector(type, sector, depth, upStream);
 
 			std::cout << ", Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
-			std::cout << ", Angle: " << angle << "\n";
+			std::cout << ", Angle: " << pos.RotZ() << "\n";
 
 			//Construct object for the specified type.
 			if (type == "superX3") {	
-				superX3s.push_back(new superX3(serialNum,sector,depth,upStream,pos,angle));
+				superX3s.push_back(new superX3(serialNum,sector,depth,upStream,pos));
 				det = superX3s.back();
 			}	
 			else if (type == "BB10") {	
-				bb10s.push_back(new BB10(serialNum,sector,depth,upStream,pos,angle));
+				bb10s.push_back(new BB10(serialNum,sector,depth,upStream,pos));
 				det = bb10s.back();
 			}	
 			else if (type == "QQQ5") {	
-				qqq5s.push_back(new QQQ5(serialNum,sector,depth,upStream,pos,angle));
+				qqq5s.push_back(new QQQ5(serialNum,sector,depth,upStream,pos));
 				det = qqq5s.back();
 			}
 			else {
@@ -159,13 +158,16 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			std::istringstream lineStream(line);
 			std::string calType, subType;
 			int detChannel;
-			if (!(lineStream >> calType >> subType >> detChannel)) break;
+			if (!(lineStream >> calType >> subType >> detChannel)) {
+				mapFile.seekg(-line.length()-1,std::ios_base::cur);
+				break;
+			}
 
 			//Determine the calibration type.
 			bool posCal = false;
 			bool timeCal = false;
 			if (calType == "posCal") {
-				if (!(type == "superX3" && subType == "resStrip") || !(type == "ion" && subType == "scint")) {
+				if (!(type == "superX3" && subType == "resStrip") && !(type == "ion" && subType == "scint")) {
 					std::cout << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << type << " detector " << serialNum << "\n";
 					continue;
 				}
@@ -180,7 +182,6 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			}
 			else if (calType != "enCal") { 
 				mapFile.seekg(-line.length()-1,std::ios_base::cur);
-				error = true;
 				break;
 			}
 
@@ -351,60 +352,65 @@ bool GoddessConfig::ParseID(std::string id, short& sector, short& depth, bool& u
 	else {
 		std::cerr << "ERROR: Unexpected character '" << subStr << "' in sector position of id!\n";
 		return false;
-		}
-
-		//The depth index position depends on whether we read out a barrel or end cap.
-		subStr = id.substr(id.length() - 2, 2);
-		if (subStr == "dE") depth = 0;
-		else if (subStr == "E1") depth = 1;
-		else if (subStr == "E2") depth = 2;
-		else {
-			std::cerr << "ERROR: Unexpected depth '" << subStr << "' in id!\n";
-			return false;
-		}
-
-		return true;
 	}
 
-	/**Based on the detector type, sector, depth and whether the detector is up stream a
-	 * vector position is computed and the rotation angle of the detector is determined.
-	 * 
-	 * \param[in] type The detector type.
-	 * \param[in] sector The sector occupied by the detector.
-	 * \param[in] depth The depth of the detector in the stack.
-	 * \param[in] upStream Flag indicating if the detector is up stream of the target.
-	 * \param[out] angle The computed rotation angle.
-	 * \return A TVector3 pointing to the detector corner. 
-	 */
-	TVector3 GoddessConfig::GetPosVector(std::string type, short sector, short depth, bool upStream, float &angle) {
-		static float barrelRadius = 3.750 * 25.4; //mm
-		TVector3 pos(0,0,0);
-
-		//Compute position for barrel detectors.
-		if (type == "superX3" || type == "BB10") {
-			//The barrel is divided into twelve sectors with the zero sector in the 
-			// positive vertical (y-axis) direction. Therefore the 0 sector is at 90 
-			// degrees and we subtract for each additional sector and then offset by
-			// two pi if less than zero.
-			float azimuthal = - TMath::PiOver2() + sector / 12. * TMath::TwoPi();
-			if (azimuthal < 0) azimuthal += TMath::TwoPi();
-			//The rotation angle is also dependent on the sector with a rotation of zero 
-			// in the zero sector.
-			angle = (1 - sector / 12.) * TMath::TwoPi();
-			//The z position is oriented along the beam line and depends only on if the 
-			// detector is upstream or downstream of the target.
-			float z;
-			if (upStream) z = 0;
-			else z = 0;
-			//Set the computed x,y,z positions.
-			pos.SetXYZ(barrelRadius * sin(azimuthal), barrelRadius * cos(azimuthal), z);
-
-		}
-		else if (type == "QQQ5") {
-			angle = -(3 * TMath::PiOver4()) + sector / 4. * TMath::TwoPi();
-			pos.SetXYZ(0,0,(4.375-0.7)*25.4);
-
-		}
-
-		return pos;
+	//The depth index position depends on whether we read out a barrel or end cap.
+	subStr = id.substr(id.length() - 2, 2);
+	if (subStr == "dE") depth = 0;
+	else if (subStr == "E1") depth = 1;
+	else if (subStr == "E2") depth = 2;
+	else {
+		std::cerr << "ERROR: Unexpected depth '" << subStr << "' in id!\n";
+		return false;
 	}
+
+	return true;
+}
+
+/**Based on the detector type, sector, depth and whether the detector is up stream a
+ * vector position is computed and the rotation angle of the detector is determined.
+ * 
+ * \param[in] type The detector type.
+ * \param[in] sector The sector occupied by the detector.
+ * \param[in] depth The depth of the detector in the stack.
+ * \param[in] upStream Flag indicating if the detector is up stream of the target.
+ * \param[out] angle The computed rotation angle.
+ * \return A TVector3 pointing to the detector corner. 
+ */
+SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short depth, bool upStream) {
+	static float barrelRadius = 3.750 * 25.4; //mm
+	static float halfBarrelLength = (4.375 - 0.7) * 25.4; //mm
+	SolidVector pos(0,0,0);
+
+	//Compute position for barrel detectors.
+	if (type == "superX3" || type == "BB10") {
+		//The barrel is divided into twelve sectors with the zero sector in the 
+		// positive vertical (y-axis) direction. Therefore the 0 sector is at 90 
+		// degrees and we subtract for each additional sector and then offset by
+		// two pi if less than zero.
+		float azimuthal = TMath::PiOver2() - sector / 12. * TMath::TwoPi();
+		if (azimuthal < 0) azimuthal += TMath::TwoPi();
+		std::cout << azimuthal;
+		//The rotation angle is also dependent on the sector with a rotation of zero 
+		// in the zero sector.
+		float rotZ = azimuthal + TMath::PiOver2();
+		if (rotZ > TMath::TwoPi()) rotZ -= TMath::TwoPi();
+		//The z position is oriented along the beam line and depends only on if the 
+		// detector is upstream or downstream of the target.
+		float z;
+		if (upStream) z = halfBarrelLength / 2;
+		else z = -halfBarrelLength / 2;
+		//Set the computed x,y,z positions.
+		pos.SetXYZ(barrelRadius * cos(azimuthal), barrelRadius * sin(azimuthal), z);
+		pos.SetRotationZ(rotZ);
+
+	}
+	else if (type == "QQQ5") {
+		float rotZ = -(3 * TMath::PiOver4()) + sector / 4. * TMath::TwoPi();
+		pos.SetXYZ(0,0,halfBarrelLength);
+		pos.SetRotationZ(rotZ);
+
+	}
+
+	return pos;
+}

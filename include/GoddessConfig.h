@@ -10,6 +10,8 @@
 #include "QQQ5.h"
 #include "IonChamber.h"
 
+#include "SolidVector.h"
+
 class GoddessConfig {
 	private:
 		///Read the configuration file.
@@ -40,7 +42,7 @@ class GoddessConfig {
 		bool ParseID(std::string id, short& sector, short& depth, bool& upStream);
 
 		///Compute vector and rotation angle to detector.
-		TVector3 GetPosVector(std::string type, short sector, short depth, bool upStream, float &angle); 
+		SolidVector GetPosVector(const std::string type, const short sector, const short depth, const bool upStream); 
 		
 
 };

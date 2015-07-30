@@ -7,7 +7,7 @@ if (${ROOT_VERSION} VERSION_GREATER "6.0")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
-set (ORRUBA_SOURCES siDet.cxx orrubaDet.cxx ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx GoddessConfig.cxx IonChamber.cxx ORRUBADictionary.cxx)
+set (ORRUBA_SOURCES SolidVector.cxx siDet.cxx orrubaDet.cxx ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx GoddessConfig.cxx IonChamber.cxx ORRUBADictionary.cxx)
 
 add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 
@@ -34,3 +34,11 @@ target_link_libraries(GEBMerge ${ZLIB_LIBRARIES})
 add_executable(ag2mode2 ag2mode2.c spe_fun.c)
 
 install(TARGETS GEBSort mkMap GEBFilter GEBMerge ag2mode2 DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+if(${CMAKE_BUILD_TYPE}=="Debug")
+
+	add_executable(goddessTest goddessTest.cxx $<TARGET_OBJECTS:ORRUBA_OBJECT>)
+	install(TARGETS goddesTest DESTINATION ${CMAKE_INSTALL_PREFIX})
+	target_link_libraries(goddessTest ${ROOT_LIBRARIES})
+
+endif()

@@ -5,8 +5,8 @@
 ClassImp(BB10)
 
 BB10::BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
-	bool upStream, TVector3 detPos, float rotationAngle) :
-	orrubaDet(serialNum, sector, depth, upStream, detPos, rotationAngle)
+	bool upStream, SolidVector detPos) :
+	orrubaDet(serialNum, sector, depth, upStream, detPos)
 {
 	siDet::SetNumContacts(8,0);
 	ConstructBins();
@@ -31,7 +31,7 @@ void BB10::ConstructBins () {
 
 		//The strips have x and y computed from detector vector projected onto the 
 		//XY vector from the detector origin to the strip edge.
-		pStripEdgePos[strip].SetXYZ(detPos.X() + binsP[strip] * cos(detRotation), detPos.Y() + binsP[strip] * sin(detRotation), detPos.Z() + halfLength);
+		pStripEdgePos[strip].SetXYZ(detPos.X() + binsP[strip] * cos(detPos.RotZ()), detPos.Y() + binsP[strip] * sin(detPos.RotZ()), detPos.Z() + halfLength);
 
 		//Azimuthal angle 
 		binsAzimuthal[strip] = TMath::RadToDeg() * pStripEdgePos[strip].Phi();

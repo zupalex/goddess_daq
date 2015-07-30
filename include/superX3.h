@@ -1,6 +1,8 @@
 #ifndef SUPERX3_H
 #define SUPERX3_H
 
+#define VERBOSE
+
 #include "orrubaDet.h"
 #include "TVector3.h"
 
@@ -62,7 +64,7 @@ class superX3 : public orrubaDet {
 	public:
 		///Default constructor.
 		superX3(std::string serialNum, unsigned short sector, unsigned short depth,
-			bool upStream, TVector3 position, float rotationAngle);
+			bool upStream, SolidVector position);
 		///Default destructor.
 		virtual ~superX3();
 
