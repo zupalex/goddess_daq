@@ -15,10 +15,25 @@ for (int det = 0;det < qqq5Vect.size(); det++) {
 
 superX3Vect = config->GetSuperX3s();
 superX3s = new TClonesArray("superX3",superX3Vect.size());
-for (int det = 0; det < superX3Vect.size(); det++) {
-	superX3s->AddAt(superX3Vect.at(det),det);
-//	for (int contact = 0; contact < 12; contact++) 
-//		hEnRawSX3[det][contact] = new TH1F(Form("hEnRawSX3_%d_%d",det,contact),Form("superX3 %s Raw Energy Det: %d Contact: %d","name",det,contact),1024,0,1024);
+hEnRawSX3 = new TH1F**[superX3Vect.size()];
+
+for (int detNum = 0; detNum < superX3Vect.size(); detNum++) {
+	superX3* det = superX3Vect.at(detNum);
+	superX3s->AddAt(superX3Vect.at(detNum),detNum);
+	hEnRawSX3[detNum] = new TH1F*[12];
+	for (int contact = 0; contact < 12; contact++) {
+		bool nType = false;
+		std::string typeString = "p-type";
+		if (contact >= 8) {
+			nType = true;
+			typeString = "n-type";
+		}
+			hEnRawSX3[detNum][contact] = new TH1F(
+				Form("hEnRawSX3_%d_%d",detNum,contact),
+				Form("superX3 %s Raw Energy Det: %d Contact: %d %s",
+					det->GetSerialNum().c_str(),detNum,contact,typeString.c_str()),
+				1024,0,1024);
+	}
 }
 
 bb10Vect = config->GetBB10s();

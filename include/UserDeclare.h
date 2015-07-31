@@ -17,5 +17,5 @@ TClonesArray *qqq5s;
 
 TTree data("data","Data");
 
-//TH1F* hEnRawSX3[numSX3][12];
+TH1F ***hEnRawSX3;
 
