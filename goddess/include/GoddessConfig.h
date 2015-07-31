@@ -5,9 +5,6 @@
 #include <string>
 #include "orrubaDet.h"
 #include "TClonesArray.h"
-#include "superX3.h"
-#include "BB10.h"
-#include "QQQ5.h"
 #include "IonChamber.h"
 
 #include "SolidVector.h"
@@ -22,12 +19,12 @@ class GoddessConfig {
 		///Map of channels to silicon detector.
 		std::map<short, Detector*> chMap;
 
-		///Vector of registered superX3 detectors.
-		std::vector<superX3*> superX3s;
-		///Vector of registered BB10 detectors.
-		std::vector<BB10*> bb10s;
-		///Vector of registered QQQ5 detectors.
-		std::vector<QQQ5*> qqq5s;
+		///Pointer to array of registered superX3 detectors.
+		TClonesArray *superX3s;
+		///Pointer to array of registered BB10 detectors.
+		TClonesArray *bb10s;
+		///Pointer to array of registered QQQ5 detectors.
+		TClonesArray *qqq5s;
 		///Pointer to the registered ion chamber.
 		IonChamber *ionChamber;
 		
@@ -48,7 +45,13 @@ class GoddessConfig {
 
 		///Compute vector and rotation angle to detector.
 		SolidVector GetPosVector(const std::string type, const short sector, const short depth, const bool upStream); 
-		
+
+		///Get a vector of all registered SuperX3s.
+		TClonesArray* GetSuperX3s() {return superX3s;}
+		///Get a vector of all registered BB10s.
+		TClonesArray* GetBB10s() {return bb10s;}
+		///Get a vector of all registered QQQ5s.
+		TClonesArray* GetQQQ5s() {return qqq5s;}
 
 };
 

@@ -18,21 +18,22 @@ class orrubaDet : public siDet {
 
 	protected:
 		///Serial number assigned to the detector.
-		const std::string serialNum;
+		std::string serialNum;
 
 		///Which region of the barrel the detector is located.
-		const unsigned short sector;
+		unsigned short sector;
 		///The number of detectors between this one and the target.
-		const unsigned short depth;
+		unsigned short depth;
 		///Whether the detector is upstream or downstream of the target.
-		const bool upStream;
+		bool upStream;
 		
 		
 		///The detector position defining the center of the active silicon area.
-		const SolidVector detPos; //!
+		SolidVector detPos; //!
 	
 	public:
 		///Default constructor.
+		orrubaDet();
 		orrubaDet(std::string serialNum, unsigned short sector, unsigned short depth, 
 			bool upStream, SolidVector position);
 		///Default destructor.
@@ -40,6 +41,10 @@ class orrubaDet : public siDet {
 
 		///Get the detector's serial number.
 		std::string GetSerialNum() {return serialNum;}
+
+		std::string GetPosID();
+
+		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(orrubaDet,1);
