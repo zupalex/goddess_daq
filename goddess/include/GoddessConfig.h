@@ -48,6 +48,13 @@ class GoddessConfig {
 
 		///Compute vector and rotation angle to detector.
 		SolidVector GetPosVector(const std::string type, const short sector, const short depth, const bool upStream); 
+
+		///Get a vector of all registered SuperX3s.
+		std::vector<superX3*> GetSuperX3s() {return superX3s;}
+		///Get a vector of all registered BB10s.
+		std::vector<BB10*> GetBB10s() {return bb10s;}
+		///Get a vector of all registered QQQ5s.
+		std::vector<QQQ5*> GetQQQ5s() {return qqq5s;}
 		
 
 };

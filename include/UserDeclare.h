@@ -4,20 +4,18 @@
 /* (may be empty.......) */
 /*-----------------------*/
 
-const char numSX3 = 8;
-const char numBB10 = 4;
-const char numQQQ5 = 12;
-const char numDetectors = numSX3 + numBB10 + numQQQ5;
-
 ORRUBA *orruba; 
 
 GoddessConfig *config;
 
-TClonesArray superX3s("superX3",numSX3);
-TClonesArray qqq5s("QQQ5",numQQQ5);
-TClonesArray bb10s("BB10",numBB10);
+std::vector<superX3*> superX3Vect;
+std::vector<BB10*> bb10Vect;
+std::vector<QQQ5*> qqq5Vect;
+TClonesArray *superX3s;
+TClonesArray *bb10s;
+TClonesArray *qqq5s;
 
 TTree data("data","Data");
 
-TH1F* hEnRawSX3[numSX3][12];
+//TH1F* hEnRawSX3[numSX3][12];
 

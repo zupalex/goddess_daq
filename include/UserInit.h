@@ -6,17 +6,25 @@
 
 config = new GoddessConfig("goddess.position","goddess.config");
 
-for (int det = 0; det < numQQQ5; det++) {
-	//new(qqq5s[det]) QQQ5("serialNum",0,0,TVector3(0,0,(4.375-0.7)*25.4),0);
+qqq5Vect = config->GetQQQ5s();
+qqq5s = new TClonesArray("QQQ5",qqq5Vect.size());
 
+for (int det = 0;det < qqq5Vect.size(); det++) {
+	qqq5s->AddAt(qqq5Vect.at(det),det);
 }
-for (int det = 0; det < numSX3; det++) {
-	//new(superX3s[det]) superX3("derialNum",0,0,TVector3(43.3/2,7.85/2*25.4,0),0);
-	for (int contact = 0; contact < 12; contact++) 
-		hEnRawSX3[det][contact] = new TH1F(Form("hEnRawSX3_%d_%d",det,contact),Form("superX3 %s Raw Energy Det: %d Contact: %d","name",det,contact),1024,0,1024);
+
+superX3Vect = config->GetSuperX3s();
+superX3s = new TClonesArray("superX3",superX3Vect.size());
+for (int det = 0; det < superX3Vect.size(); det++) {
+	superX3s->AddAt(superX3Vect.at(det),det);
+//	for (int contact = 0; contact < 12; contact++) 
+//		hEnRawSX3[det][contact] = new TH1F(Form("hEnRawSX3_%d_%d",det,contact),Form("superX3 %s Raw Energy Det: %d Contact: %d","name",det,contact),1024,0,1024);
 }
-for (int det = 0; det < numBB10; det++) {
-	//new(bb10s[det]) BB10("serialNum",0,0,TVector3(0,0,(4.375-0.7)*25.4),0);
+
+bb10Vect = config->GetBB10s();
+bb10s = new TClonesArray("BB10",bb10Vect.size());
+for (int det = 0; det < bb10Vect.size(); det++) {
+	bb10s->AddAt(bb10Vect.at(det),det);
 
 }
 
