@@ -7,6 +7,7 @@
 
 superX3::superX3() {
 	siDet::SetNumContacts(8,4);
+	Clear();
 }
 
 superX3::superX3(std::string serialNum, unsigned short sector, unsigned short depth,
@@ -36,9 +37,9 @@ void superX3::ConstructBins () {
 	if (fabs(detPos.RotZ() - (TMath::PiOver2() + detPos.Phi())) > 0.001) 
 		std::cerr << "WARNING: Detector " << serialNum << " is not normal to the XY radial direction! " << detPos.RotZ() << " != " << TMath::PiOver2() + detPos.Phi() << "\n";
 
-	SolidVector cornerPos(detPos.X() - 2 * pStripPitch * cos(detPos.RotZ()),
-		detPos.Y() - 2 * pStripPitch * sin(detPos.RotZ()),
-		detPos.Z() - 2 * nStripPitch,
+	SolidVector cornerPos(detPos.X() - 2 * pStripPitch * cos(detPos.RotZ()) * cos(detPos.RotPhi()),
+		detPos.Y() - 2 * pStripPitch * sin(detPos.RotZ()) * cos(detPos.RotPhi()),
+		detPos.Z() - 2 * nStripPitch * cos(detPos.RotPhi()),
 		detPos.RotZ(),
 		detPos.RotPhi());
 
@@ -63,6 +64,7 @@ void superX3::ConstructBins () {
 		//	angles and the list must be in ascending order.
 		binsPolar[4-strip] = TMath::RadToDeg() * nStripEdgePos[strip].Theta();
 	}
+
 
 #ifdef VERBOSE
 	std::cout << serialNum << "\tcenter:\t";

@@ -45,6 +45,7 @@ class orrubaDet : public siDet {
 		std::string GetPosID();
 
 		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
+		virtual void ConstructBins() = 0;
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(orrubaDet,1);
