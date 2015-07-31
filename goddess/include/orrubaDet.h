@@ -1,6 +1,8 @@
 #ifndef ORRUBADET_H
 #define ORRUBADET_H
 
+#define VERBOSE
+
 #include "siDet.h"
 #include "SolidVector.h"
 
@@ -26,7 +28,7 @@ class orrubaDet : public siDet {
 		const bool upStream;
 		
 		
-		///The detector position.
+		///The detector position defining the center of the active silicon area.
 		const SolidVector detPos; //!
 	
 	public:

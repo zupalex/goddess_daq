@@ -431,11 +431,16 @@ SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short de
 		//The z position is oriented along the beam line and depends only on if the 
 		// detector is upstream or downstream of the target.
 		float z;
-		if (upStream) z = halfBarrelLength / 2;
-		else z = -halfBarrelLength / 2;
+		if (upStream) z = -halfBarrelLength / 2;
+		else z = halfBarrelLength / 2;
 		//Set the computed x,y,z positions.
+		float rotphi;
+		if (upStream) rotphi = 0;
+ 		else rotphi = TMath::Pi();
+
 		pos.SetXYZ(barrelRadius * cos(azimuthal), barrelRadius * sin(azimuthal), z);
 		pos.SetRotationZ(rotZ);
+		pos.SetRotationPhi(rotphi);
 
 	}
 	else if (type == "QQQ5") {
