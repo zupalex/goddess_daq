@@ -5,6 +5,10 @@
 
 #include "TMath.h"
 
+superX3::superX3() {
+	siDet::SetNumContacts(8,4);
+}
+
 superX3::superX3(std::string serialNum, unsigned short sector, unsigned short depth,
 	bool upStream, SolidVector position) :
 	orrubaDet(serialNum, sector, depth, upStream, position)

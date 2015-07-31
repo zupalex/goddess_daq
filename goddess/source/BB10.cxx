@@ -4,6 +4,9 @@
 
 ClassImp(BB10)
 
+BB10::BB10() {
+	siDet::SetNumContacts(8,0);
+}
 BB10::BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
 	bool upStream, SolidVector detPos) :
 	orrubaDet(serialNum, sector, depth, upStream, detPos)

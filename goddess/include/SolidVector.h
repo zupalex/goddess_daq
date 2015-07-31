@@ -8,7 +8,7 @@ class SolidVector : public TVector3 {
 		double rotZ;
 		double rotPhi;
 	public:
-		SolidVector(double x, double y, double z, double rotZ = 0, double rotPhi = 0);
+		SolidVector(double x=0, double y=0, double z=0, double rotZ = 0, double rotPhi = 0);
 
 		///Returns the rotation angle around the z-axis.
 		double RotZ() const {return rotZ;};

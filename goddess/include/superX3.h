@@ -63,6 +63,7 @@ class superX3 : public orrubaDet {
 
 	public:
 		///Default constructor.
+		superX3();
 		superX3(std::string serialNum, unsigned short sector, unsigned short depth,
 			bool upStream, SolidVector position);
 		///Default destructor.

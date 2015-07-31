@@ -7,6 +7,8 @@
 #include "TMath.h"
 
 #include "superX3.h"
+#include "BB10.h"
+#include "QQQ5.h"
 
 /**
  *
@@ -17,6 +19,11 @@
  *
  */
 GoddessConfig::GoddessConfig(std::string positionFile, std::string configFile) {
+
+	superX3s = new TClonesArray("superX3",0);
+	bb10s = new TClonesArray("BB10",0);
+	qqq5s = new TClonesArray("QQQ5",0);
+
 	ReadPosition(positionFile);
 	ReadConfig(configFile);
 }	
@@ -134,16 +141,13 @@ void GoddessConfig::ReadConfig(std::string filename) {
 
 			//Construct object for the specified type.
 			if (type == "superX3") {	
-				superX3s.push_back(new superX3(serialNum,sector,depth,upStream,pos));
-				det = superX3s.back();
+				det = (orrubaDet*) superX3s->ConstructedAt(superX3s->GetEntries());
 			}	
 			else if (type == "BB10") {	
-				bb10s.push_back(new BB10(serialNum,sector,depth,upStream,pos));
-				det = bb10s.back();
+				det = (orrubaDet*) bb10s->ConstructedAt(bb10s->GetEntries());
 			}	
 			else if (type == "QQQ5") {	
-				qqq5s.push_back(new QQQ5(serialNum,sector,depth,upStream,pos));
-				det = qqq5s.back();
+				det = (orrubaDet*) qqq5s->ConstructedAt(qqq5s->GetEntries());
 			}
 			else {
 				std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
@@ -151,6 +155,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				error = true;
 				break;
 			}
+			det->SetDetector(serialNum,sector,depth,upStream, pos);
 			if (IsInsertable(daqCh,type)) chMap[daqCh] = det;
 			else 
 				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
@@ -242,8 +247,8 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			else {
 				if (type == "superX3" && subType == "resStrip") {
 					if (posCal) 
-						superX3s.back()->SetStripPosCalibPars(detChannel, calParams);
-					else superX3s.back()->SetStripEnCalibPars(detChannel, calParams);
+						((superX3*) det)->SetStripPosCalibPars(detChannel, calParams);
+					else ((superX3*) det)->SetStripEnCalibPars(detChannel, calParams);
 				}
 				else det->SetEnergyCalib(calParams, detChannel, nType);
 			}
