@@ -49,12 +49,14 @@ void superX3::ConstructBins () {
 		binsN[strip] = strip * nStripPitch;
 
 		nStripEdgePos[strip].SetXYZ(
-			cornerPos.X() + 2 * pStripPitch * cos(cornerPos.RotZ()),
-			cornerPos.Y() + 2 * pStripPitch * sin(cornerPos.RotZ()),
-			cornerPos.Z() + binsN[strip]);
+			cornerPos.X() + 2 * pStripPitch * cos(cornerPos.RotZ()) * cos(detPos.RotPhi()),
+			cornerPos.Y() + 2 * pStripPitch * sin(cornerPos.RotZ()) * cos(detPos.RotPhi()),
+			cornerPos.Z() + binsN[strip] * cos(detPos.RotPhi()));
 		//The strips have x and y computed from detector vector projected onto the 
 		//XY vector from the detector origin to the strip edge.
-		pStripEdgePos[strip].SetXYZ(cornerPos.X() + binsP[strip] * cos(cornerPos.RotZ()), cornerPos.Y() + binsP[strip] * sin(cornerPos.RotZ()), cornerPos.Z() + 2 * nStripPitch);
+		pStripEdgePos[strip].SetXYZ(cornerPos.X() + binsP[strip] * cos(cornerPos.RotZ()) * cos(detPos.RotPhi()), 
+			cornerPos.Y() + binsP[strip] * sin(cornerPos.RotZ()) * cos(detPos.RotPhi()), 
+			cornerPos.Z() + 2 * nStripPitch * cos(detPos.RotPhi()));
 
 		//Z Position of each nStrip edge
 		binsZ[strip] = nStripEdgePos[strip].Z();
