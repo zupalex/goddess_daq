@@ -1,6 +1,8 @@
 #ifndef ORRUBADET_H
 #define ORRUBADET_H
 
+#define VERBOSE
+
 #include "siDet.h"
 #include "SolidVector.h"
 
@@ -26,7 +28,7 @@ class orrubaDet : public siDet {
 		bool upStream;
 		
 		
-		///The detector position.
+		///The detector position defining the center of the active silicon area.
 		SolidVector detPos; //!
 	
 	public:
@@ -43,6 +45,7 @@ class orrubaDet : public siDet {
 		std::string GetPosID();
 
 		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
+		virtual void ConstructBins() = 0;
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(orrubaDet,1);

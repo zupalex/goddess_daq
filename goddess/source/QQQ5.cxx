@@ -1,7 +1,13 @@
 #include "QQQ5.h"
 #include <cmath>
+#include <iostream>
+
 #include "TMath.h"
 
+QQQ5::QQQ5() {
+	siDet::SetNumContacts(32,4);
+	Clear();
+}
 /**We assuming the position provided for the detector is at the radial center of the
  * detector and the clockwise is aligned at the rotation angle. 
  */
@@ -30,16 +36,20 @@ void QQQ5::ConstructBins () {
 		 44.2, 46.35, 48.45, 50.5, 52.5, 54.45, 56.35, 58.2,
 		 60.0, 61.75, 63.45, 65.1, 66.7, 68.25, 69.75, 71.2,
 		 72.6, 73.95, 75.25, 76.5, 77.7, 78.85, 79.95, 81.0, 82.0}; //mm
-	float nStripPitch = 90 / 4; //deg
+	
+	//float nStripPitch = 90 / 4; //deg
+	float nStripPitch = TMath::PiOver2() / 4;//rad
 
 	float nTypeRadius = pStripRad[32] / 2;
 	for (unsigned int strip=0; strip<=4; strip++) {			
 		//compute the binning along the p and n type strip directions in mm.
-		binsN[strip] = strip * nStripPitch;
+		// strip 0 is furthest clockwise
+		binsN[strip] = strip * nStripPitch; // recall actual channel numbers for backside strips go like 0,2,1,3
 
 		nStripEdgePos[strip].SetXYZ(
-			detPos.X() + nTypeRadius * cos(binsN[strip] + detPos.RotZ()),
-			detPos.Y() + nTypeRadius * sin(binsN[strip] + detPos.RotZ()),
+			// added the offset 2*nStripPitch to compensate for detPos pointing to the center of the detector
+			detPos.X() + nTypeRadius * cos(binsN[strip] + detPos.RotZ() - 2*nStripPitch),
+			detPos.Y() + nTypeRadius * sin(binsN[strip] + detPos.RotZ() - 2*nStripPitch),		
 			detPos.Z());
 
 		//Azimuthal angle 
@@ -47,8 +57,8 @@ void QQQ5::ConstructBins () {
 	}
 
 	//Compute the fraction of the radius in the x and y plane.
-	float xFrac = cos(binsN[2] + detPos.RotZ());
-	float yFrac = sin(binsN[2] + detPos.RotZ());
+	float xFrac = cos(detPos.RotZ());//points to center of detector
+	float yFrac = sin(detPos.RotZ());
 
 	for (unsigned int strip=0; strip<=32; strip++) {			
 		binsP[strip] = pStripRad[strip];
@@ -65,6 +75,27 @@ void QQQ5::ConstructBins () {
 		if (detPos.Z() < 0) polarStrip = 32 - strip;
 		binsPolar[polarStrip] = TMath::RadToDeg() * pStripEdgePos[strip].Theta();
 	}
+
+#ifdef VERBOSE
+	std::cout << serialNum << "\tcenter:\t";
+	detPos.Print();
+	std::cout << "\tpStrip:\t";
+	pStripEdgePos[0].Print();
+	std::cout << "\t       \t";
+	pStripEdgePos[31].Print();	
+	std::cout << "\t       \t";
+	pStripEdgePos[32].Print();
+	std::cout << "\tnStrip:\t";
+	nStripEdgePos[0].Print();
+	std::cout << "\t       \t";
+	nStripEdgePos[1].Print();
+	std::cout << "\t       \t";
+	nStripEdgePos[2].Print();
+	std::cout << "\t       \t";
+	nStripEdgePos[3].Print();
+	std::cout << "\t       \t";
+	nStripEdgePos[4].Print();
+#endif
 
 }
 

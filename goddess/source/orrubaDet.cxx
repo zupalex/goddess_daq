@@ -35,6 +35,9 @@ void orrubaDet::SetDetector(std::string serialNum_, unsigned short sector_, unsi
 	depth = depth_;
 	upStream = upStream_;
 	detPos = position_;
+
+	ConstructBins();
+
 }
 
 ClassImp(orrubaDet)

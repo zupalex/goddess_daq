@@ -45,7 +45,7 @@ GoddessConfig::~GoddessConfig() {
  *  posCal resStrip 0 1 2 3 
  *
  * This configuration example defines a superX3 detector with serial number 1234-56
- * in the upstream position of sector 0 as a energy loss detector. Following this 
+ * in the upstream position of sector 0 as an energy-loss detector. Following this 
  * are a list of energy or position calibrations. Each calibration specifies the 
  * subtype of the channel, either p, n or resStrip for a superX3. This is followed 
  * by the subtype channel number and then the polynomial parameters. An arbitrary 
@@ -436,17 +436,27 @@ SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short de
 		//The z position is oriented along the beam line and depends only on if the 
 		// detector is upstream or downstream of the target.
 		float z;
-		if (upStream) z = halfBarrelLength / 2;
-		else z = -halfBarrelLength / 2;
+		if (upStream) z = -halfBarrelLength / 2;
+		else z = halfBarrelLength / 2;
 		//Set the computed x,y,z positions.
+		float rotphi;
+		if (upStream) rotphi = 0;
+ 		else rotphi = TMath::Pi();
+
 		pos.SetXYZ(barrelRadius * cos(azimuthal), barrelRadius * sin(azimuthal), z);
 		pos.SetRotationZ(rotZ);
+		pos.SetRotationPhi(rotphi);
 
 	}
 	else if (type == "QQQ5") {
-		float rotZ = -(3 * TMath::PiOver4()) + sector / 4. * TMath::TwoPi();
-		pos.SetXYZ(0,0,halfBarrelLength);
+		// Make the pos vector point to middle of QQQ5 with the 0 sector at rotZ=90deg then sector 1 moving clockwise at rotZ=0
+		float rotZ = (TMath::PiOver2()) - sector / 4. * TMath::TwoPi();
+		// need offset because detPos will not be exaclty pointing at origin
+		// number based on edge of the detectors separated by 6.35mm
+		float offset = 4.49;//mm 
+		pos.SetXYZ(offset * cos( rotZ ) , offset * sin( rotZ ) , halfBarrelLength);
 		pos.SetRotationZ(rotZ);
+		// Still need to correct for depth in stack (i.e. dE, E1,E2)
 
 	}
 

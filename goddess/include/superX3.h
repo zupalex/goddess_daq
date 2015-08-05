@@ -1,8 +1,6 @@
 #ifndef SUPERX3_H
 #define SUPERX3_H
 
-#define VERBOSE
-
 #include "orrubaDet.h"
 #include "TVector3.h"
 

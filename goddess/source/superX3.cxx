@@ -7,6 +7,7 @@
 
 superX3::superX3() {
 	siDet::SetNumContacts(8,4);
+	Clear();
 }
 
 superX3::superX3(std::string serialNum, unsigned short sector, unsigned short depth,
@@ -36,9 +37,9 @@ void superX3::ConstructBins () {
 	if (fabs(detPos.RotZ() - (TMath::PiOver2() + detPos.Phi())) > 0.001) 
 		std::cerr << "WARNING: Detector " << serialNum << " is not normal to the XY radial direction! " << detPos.RotZ() << " != " << TMath::PiOver2() + detPos.Phi() << "\n";
 
-	SolidVector cornerPos(detPos.X() - 2 * pStripPitch * cos(detPos.RotZ()),
-		detPos.Y() - 2 * pStripPitch * sin(detPos.RotZ()),
-		detPos.Z() - 2 * nStripPitch,
+	SolidVector cornerPos(detPos.X() - 2 * pStripPitch * cos(detPos.RotZ()) * cos(detPos.RotPhi()),
+		detPos.Y() - 2 * pStripPitch * sin(detPos.RotZ()) * cos(detPos.RotPhi()),
+		detPos.Z() - 2 * nStripPitch * cos(detPos.RotPhi()),
 		detPos.RotZ(),
 		detPos.RotPhi());
 
@@ -48,12 +49,14 @@ void superX3::ConstructBins () {
 		binsN[strip] = strip * nStripPitch;
 
 		nStripEdgePos[strip].SetXYZ(
-			cornerPos.X() + 2 * pStripPitch * cos(cornerPos.RotZ()),
-			cornerPos.Y() + 2 * pStripPitch * sin(cornerPos.RotZ()),
-			cornerPos.Z() + binsN[strip]);
+			cornerPos.X() + 2 * pStripPitch * cos(cornerPos.RotZ()) * cos(detPos.RotPhi()),
+			cornerPos.Y() + 2 * pStripPitch * sin(cornerPos.RotZ()) * cos(detPos.RotPhi()),
+			cornerPos.Z() + binsN[strip] * cos(detPos.RotPhi()));
 		//The strips have x and y computed from detector vector projected onto the 
 		//XY vector from the detector origin to the strip edge.
-		pStripEdgePos[strip].SetXYZ(cornerPos.X() + binsP[strip] * cos(cornerPos.RotZ()), cornerPos.Y() + binsP[strip] * sin(cornerPos.RotZ()), cornerPos.Z() + 2 * nStripPitch);
+		pStripEdgePos[strip].SetXYZ(cornerPos.X() + binsP[strip] * cos(cornerPos.RotZ()) * cos(detPos.RotPhi()), 
+			cornerPos.Y() + binsP[strip] * sin(cornerPos.RotZ()) * cos(detPos.RotPhi()), 
+			cornerPos.Z() + 2 * nStripPitch * cos(detPos.RotPhi()));
 
 		//Z Position of each nStrip edge
 		binsZ[strip] = nStripEdgePos[strip].Z();
@@ -63,6 +66,7 @@ void superX3::ConstructBins () {
 		//	angles and the list must be in ascending order.
 		binsPolar[4-strip] = TMath::RadToDeg() * nStripEdgePos[strip].Theta();
 	}
+
 
 #ifdef VERBOSE
 	std::cout << serialNum << "\tcenter:\t";
