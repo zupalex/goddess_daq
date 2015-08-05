@@ -2,6 +2,10 @@
 #include <cmath>
 #include "TMath.h"
 
+QQQ5::QQQ5() {
+	siDet::SetNumContacts(32,4);
+	Clear();
+}
 /**We assuming the position provided for the detector is at the radial center of the
  * detector and the clockwise is aligned at the rotation angle. 
  */

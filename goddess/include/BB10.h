@@ -29,6 +29,7 @@ class BB10 : public orrubaDet {
 
 	public:
 		///Default constructor.
+		BB10();
 		BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
 			bool upStream, SolidVector detPos);
 		///Default destructor.
