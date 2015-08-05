@@ -449,9 +449,14 @@ SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short de
 
 	}
 	else if (type == "QQQ5") {
-		float rotZ = -(3 * TMath::PiOver4()) + sector / 4. * TMath::TwoPi();
-		pos.SetXYZ(0,0,halfBarrelLength);
+		// Make the pos vector point to middle of QQQ5 with the 0 sector at rotZ=90deg then sector 1 moving clockwise at rotZ=0
+		float rotZ = (TMath::PiOver2()) - sector / 4. * TMath::TwoPi();
+		// need offset because detPos will not be exaclty pointing at origin
+		// number based on edge of the detectors separated by 6.35mm
+		float offset = 4.49;//mm 
+		pos.SetXYZ(offset * cos( rotZ ) , offset * sin( rotZ ) , halfBarrelLength);
 		pos.SetRotationZ(rotZ);
+		// Still need to correct for depth in stack (i.e. dE, E1,E2)
 
 	}
 
