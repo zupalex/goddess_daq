@@ -21,7 +21,7 @@ FILE *fp;
 
 /*-----------------------------------------------------------------------------*/
 
-type_identity (unsigned int eventNo)
+void type_identity (unsigned int eventNo)
 {
   if (eventNo == 0xfa010311)
     fprintf (fp, "algo:ccrystal");
