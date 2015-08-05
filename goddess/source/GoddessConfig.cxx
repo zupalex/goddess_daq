@@ -45,7 +45,7 @@ GoddessConfig::~GoddessConfig() {
  *  posCal resStrip 0 1 2 3 
  *
  * This configuration example defines a superX3 detector with serial number 1234-56
- * in the upstream position of sector 0 as a energy loss detector. Following this 
+ * in the upstream position of sector 0 as an energy-loss detector. Following this 
  * are a list of energy or position calibrations. Each calibration specifies the 
  * subtype of the channel, either p, n or resStrip for a superX3. This is followed 
  * by the subtype channel number and then the polynomial parameters. An arbitrary 
