@@ -16,8 +16,7 @@ fi
 if [ ! -e rootfiles ]; then
 	mkdir rootfiles
 fi
-./GEBSort_nogeb -input disk $DIR/GEBMerged_run$RUN.gtd -rootfile
-rootfiles/run$RUN.root RECREATE -chat chatfiles/GEBSort.chat > log/GEBSort_run$RUN.log
+./GEBSort_nogeb -input disk $DIR/GEBMerged_run$RUN.gtd_000 -rootfile rootfiles/run$RUN.root RECREATE -chat chatfiles/GEBSort.chat > log/GEBSort_run$RUN.log
 echo "GEBSort DONE at `date`"
 
 #exit
