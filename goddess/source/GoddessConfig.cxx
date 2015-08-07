@@ -355,7 +355,8 @@ short GoddessConfig::GetMappedCh(short digitizerCh) {
  * 1. U/D: Indicating whether the detector is up/down stream of the target.
  * 2. A-D or 0-11: Indicating which sector of the barrel the detector occupies, 
  * 	letters and numbers denote end cap and barrel sectors respectively.
- * 3. dE, E1, or E2: Indicating the depthe of the detector in the stack.
+ * 3. A dash, '-'.
+ * 4. dE, E1, or E2: Indicating the depthe of the detector in the stack.
  *
  *	\param[in] id The id string to be parsed.
  *	\param[out] sector The sector occupied by the detector.
@@ -374,7 +375,7 @@ bool GoddessConfig::ParseID(std::string id, short& sector, short& depth, bool& u
 	}
 
 	bool barrel = false;
-	subStr = id.substr(1,id.length() - 3);
+	subStr = id.substr(1,id.length() - 4);
 	if (subStr == "A") sector = 0;
 	else if (subStr == "B") sector = 1;
 	else if (subStr == "C") sector = 2;
