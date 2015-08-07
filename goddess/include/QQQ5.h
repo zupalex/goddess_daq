@@ -70,9 +70,6 @@ class QQQ5 : public orrubaDet {
 		///Return the bins along the polar direction in degrees.
 		float* GetPolarBins() {return binsPolar;};
 		
-		///Returns true if strip number is valid.
-		bool ValidStrip(int strip);
-
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
 		///Return the energy from the p type side.

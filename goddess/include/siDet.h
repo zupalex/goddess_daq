@@ -48,8 +48,6 @@ class siDet : public Detector {
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
 
-		///Get the contant number and type froma  detector channel number.
-		void GetChannel(const unsigned int detChannel, int& contactNum, bool &nType);
 		///Get the calibrated energy of the contact specified.
 		float GetCalEnergy(int contact, bool nType = false);
 		///Return the number of fired contacts.

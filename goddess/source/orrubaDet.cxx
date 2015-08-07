@@ -20,7 +20,7 @@ std::string orrubaDet::GetPosID() {
 	if (upStream) id.append("U");
 	else id.append("D");
 	
-	id.append(std::to_string(sector));
+	id.append(std::to_string((long long int)sector));
 
 	if (depth == 0) id.append("dE");
 	else if (depth == 1) id.append("E1");
