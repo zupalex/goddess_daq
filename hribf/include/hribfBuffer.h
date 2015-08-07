@@ -23,7 +23,7 @@ class hribfBuffer : public mainBuffer {
 		///Reads "PAC" Buffer
 		void ReadPAC(bool verbose = false);
 	
-		std::map<short, short> values;
+		std::map<unsigned short, unsigned short> values;
 
 
 	public:
@@ -79,7 +79,7 @@ class hribfBuffer : public mainBuffer {
 		void PrintBufferHeader();
 
 		void ClearEvent() {values.clear();};
-		std::map<short,short> *GetMap() {return &values;};
+		std::map<unsigned short, unsigned short> *GetMap() {return &values;};
 };
 
 #undef WORD_SIZE

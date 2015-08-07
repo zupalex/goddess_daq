@@ -9,6 +9,8 @@ int usage(std::string executable) {
 }
 
 int main(int argc, char *argv[]) {
+	const bool verbose = false;
+
 	if (argc != 3) {return usage(argv[0]);}
 	std::string inputName = argv[1];
 	std::string outputName = argv[2];
@@ -18,10 +20,15 @@ int main(int argc, char *argv[]) {
 	std::ofstream output(outputName,std::ofstream::binary);
 
 	const int type = 19;
+
+	//The parameter numbers of the MYRIAD timestamp, low to high bits.
+	const unsigned short myriadParam[3]  = {246,245,244};
 	
-	int cnt=0;
-	std::map<short, short> *values = buffer.GetMap();
+	unsigned int eventCnt=0;
+	unsigned int myriadFailCnt = 0;
+	std::map<unsigned short, unsigned short> *values = buffer.GetMap();
 	while (buffer.ReadNextBuffer() > 0) {
+
 		//Print a buffer counter so the user sees that it is working.
 		printf("Buffer: %d File: %5.2f%%\r",buffer.GetBufferNumber(),buffer.GetFilePositionPercentage());
 		if (buffer.GetBufferNumber() % 100 == 0) {
@@ -30,11 +37,41 @@ int main(int argc, char *argv[]) {
 
 		if (buffer.GetBufferType() == hribfBuffer::BUFFER_TYPE_DATA) {
 			while (buffer.GetEventsRemaining()) {
+				eventCnt++;
+
 				buffer.ReadEvent();
 
-				long long timestamp = 0;
-				//timestamp = (values[500] << 32) | (values[501] << 16) | values[502];
-				timestamp = ((long long) values->at(1) << 32) | (values->at(2) << 16) | values->at(3);
+				unsigned long long int timestamp = 0;
+				bool myriadFail = false;
+				for (int i=0;i<3;i++) {
+					if (values->find(myriadParam[i]) == values->end()) {
+						std::cerr << "ERROR: Timestamp not found in event! Parameters checked: 244-246.\n";
+						std::cerr << "\tFor your reading pleasure an event dump:\n";
+						for (auto itr=values->begin(); itr != values->end(); ++itr) {
+							std::cerr << "\tValue[" << itr->first << "]=" << itr->second << "\n";
+						}
+						myriadFail = true;
+						break;
+					}
+
+					timestamp |= (unsigned long long) values->at(myriadParam[i]) << (i * 16);
+				}
+
+				if (myriadFail) continue;
+
+				if (values->at(myriadParam[2]) == 0xAAAA) {
+					myriadFailCnt++;
+
+					if (verbose) {
+						std::cout << "\n";
+						for (auto itr=values->begin(); itr != values->end(); ++itr) {
+							std::cout << "\tValue[" << itr->first << "]=" << std::hex << itr->second << "\n";
+						}
+						std::cout << std::hex << timestamp << "\n";
+					}
+
+					continue;
+				}
 
 				int length = values->size() * 2 * sizeof(short);
 				output.write((char*) &type,sizeof(int));
@@ -44,13 +81,13 @@ int main(int argc, char *argv[]) {
 					output.write((char*)&(itr->first), sizeof(short));
 					output.write((char*)&(itr->second), sizeof(short));
 				}
-					
-				cnt++;
+
 			}
 		}
 
 	}
-	std::cout << "Converted " << cnt << " events.           \n";
+	std::cout << "Converted " << eventCnt << " events.           \n";
+	std::cout << "Malformed Myriad Events: " << myriadFailCnt << "\n";
 
 	return 0;
 }
