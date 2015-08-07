@@ -46,5 +46,6 @@ include_directories(include)
 include_directories(goddess/include)
 add_subdirectory(goddess/source)
 add_subdirectory(source)
+add_subdirectory(scripts)
 
 install(FILES share/crmat.LINUX share/GEBSort.chat DESTINATION ${CMAKE_INSTALL_PREFIX})
