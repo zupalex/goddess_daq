@@ -36,19 +36,29 @@ fi
 
 # data from DGS, new data format (firmware) 9/25/2012
 
-echo "GEBMerge started at `date`"
 
 #convert ldf to a format that can be merged.
-./hribfConvert `ls $DIR/run$RUN.ldf` .run$RUN.geb
+echo "Converting ldf to GEB format."
+./hribfConvert `ls $DATA_DIR/run$RUN.ldf` .run$RUN.geb
 
 #Check if previous command was successfull
 if [ $? != 0 ]; then 
 	exit 1
 fi
 
+DFMA_FILES=`ls $DATA_DIR/run_gsfma330_$RUN.* 2>/dev/null`
+if [ $? != 0 ]; then
+	echo "WARNING: No DFMA files found!"
+fi
+DGS_FILES=`ls $DATA_DIR/run_$RUN.dgs* 2>/dev/null`
+if [ $? != 0 ]; then
+	echo "WARNING: No DGS files found!"
+fi
+
+echo "GEBMerge started at `date`"
 #Run the merge program
 ./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd \
-	`ls $DATA_DIR/run_gsfma330_$RUN.*` `ls $DATA_DIR/run_$RUN.dgs*` .run$RUN.geb \
+	$DFMA_FILES $DGS_FILES .run$RUN.geb \
 	 > log/GEBMerge_run$RUN.log
 
 #Remove intermediate converted file
