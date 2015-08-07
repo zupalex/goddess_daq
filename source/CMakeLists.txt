@@ -9,7 +9,7 @@ set_source_files_properties(${GEBSort_SOURCES} ${GEBMerge_SOURCES} ag2mode2.c PR
 add_executable(GEBSort_nogeb ${GEBSort_SOURCES} $<TARGET_OBJECTS:ORRUBA_OBJECT>)
 target_link_libraries(GEBSort_nogeb ${ROOT_LIBRARIES})
 
-#add_executable(mkMap mkMap.c)
+add_executable(mkMap mkMap.c)
 
 #add_executable(GEBFilter GEBFilter.c GF_veto_cube.c)
 
@@ -19,4 +19,4 @@ target_link_libraries(GEBMerge ${ZLIB_LIBRARIES})
 #add_executable(ag2mode2 ag2mode2.c spe_fun.c)
 
 #install(TARGETS GEBSort_nogeb mkMap GEBFilter GEBMerge ag2mode2 DESTINATION ${CMAKE_INSTALL_PREFIX})
-install(TARGETS GEBSort_nogeb GEBMerge DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS GEBSort_nogeb GEBMerge mkMap DESTINATION ${CMAKE_INSTALL_PREFIX})
