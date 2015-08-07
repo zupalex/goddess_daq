@@ -10,8 +10,14 @@ RUN=$2
 DIR=$1
 
 echo "GEBSort started sorting run $RUN at `date`"
+if [ ! -e log ]; then
+	mkdir log
+fi
+if [ ! -e rootfile ]; then
+	mkdir rootfile
+fi
 ./GEBSort_nogeb -input disk $DIR/GEBMerged_run$RUN.gtd -rootfile
-./ROOT_FILES/run$RUN.root RECREATE -chat chatfiles/GEBSort.chat > ./LOG_FILES/GEBSort_run$RUN.log
+rootfiles/run$RUN.root RECREATE -chat chatfiles/GEBSort.chat > log/GEBSort_run$RUN.log
 echo "GEBSort DONE at `date`"
 
 #exit
