@@ -128,12 +128,13 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			}
 			std::cout << " Upstream: ";
 			upStream ? std::cout << "U" : std::cout << "D";
-			std::cout << ", Sector: " << sector << ", Depth: " << depth;
+			std::cout << ", Sector: " << sector << ", Depth: " << depth << "\n";
 
 			SolidVector pos = GetPosVector(type, sector, depth, upStream);
 
-			std::cout << ", Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
-			std::cout << ", Angle: " << pos.RotZ() << "\n";
+			std::cout << " Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
+			std::cout << ", RotZ: " << pos.RotZ() * TMath::RadToDeg();
+			std::cout << ", RotPhi: " << pos.RotPhi() * TMath::RadToDeg() << "\n";
 
 			//Construct object for the specified type.
 			if (type == "superX3") {	
