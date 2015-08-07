@@ -1,5 +1,6 @@
 #include "TFile.h"
 #include "gdecomp.h"
+#include "veto_pos.h"
 
 
 #define TAPE 0

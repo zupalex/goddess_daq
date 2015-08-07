@@ -6,7 +6,7 @@
 #define BREAD_BUFSIZE 16384
 #define USEZLIB 0
 
-#define MAXFILES 200
+#define MAXFILES 500
 #define MAXCOINEV 500
 #define DEBUG1 0
 #define NCHANNELS 1000*11
@@ -45,17 +45,89 @@
 #define FP 6
 #define XARRAY 7
 #define CHICO2 8
+#define SSD 9
+#define CLOVER 10
+#define SPARE 11
 
-#define MAXTPE 9
+#define MAXTPE 12
 #define MAXTID 1000
 
 /*---------------*/
 /* single events */
 /*---------------*/
 
+
 typedef struct DGSEVENT
 {
-  short int               ehi;
+  float                   ehi;
+  short int               id;
+  //short int               id_pw[MAXPW];
+  unsigned short int      tpe, tid;
+  unsigned short int      flag;
+  unsigned short int      board_id;
+  unsigned short int      chan_id;
+  unsigned short int      geo_addr;
+  unsigned short int      packet_length;
+
+  unsigned short int      header_type;
+  unsigned short int      event_type;
+  unsigned short int      header_length;
+
+  unsigned long long int  event_timestamp;
+  unsigned long long int  last_disc_timestamp;
+  unsigned long long int  peak_timestamp;
+
+  unsigned short int      timestamp_match_flag;
+  unsigned short int      external_disc_flag;
+  unsigned short int      cfd_valid_flag;
+  unsigned short int      pileup_only_flag;
+  unsigned short int      offset_flag;
+  unsigned short int      sync_error_flag;
+  unsigned short int      general_error_flag;
+
+  unsigned short int      peak_valid_flag;
+  unsigned short int      pileup_flag ;
+
+  int                     sampled_baseline;
+  int                     cfd_sample_0;
+  int                     cfd_sample_1;
+  int                     cfd_sample_2;
+  int                     pre_rise_energy;
+  int                     post_rise_energy;
+  
+  unsigned short int      m1_begin_sample;
+  unsigned short int      m1_end_sample;
+  unsigned short int      m2_begin_sample;
+  unsigned short int      m2_end_sample;
+  unsigned short int      peak_sample;
+  unsigned short int      base_sample;
+  
+  int                     baseline;
+  
+  unsigned short int      traceLen;
+  short int               trace[MAXTRACELEN];  
+
+
+  //unsigned short int      A[MAXPW];
+  //unsigned short int      B[MAXPW];
+  //unsigned short int      C[MAXPW];
+  //unsigned short int      T[MAXPW];
+
+
+  unsigned long long int  LEDts;
+  unsigned long long int  CFDts;
+  //unsigned long long int  PEAKts;
+  //char                    flag;  
+  //short int               baseline;
+  //unsigned short int      traceLen;
+  //short int               trace[MAXTRACELEN];
+}  DGSEVENT;
+
+#define DGSEVENT_BASELEN sizeof(DGSEVENT)-MAXTRACELEN*sizeof(short int)
+
+typedef struct DFMAEVENT
+{
+  int               ehi;    // WAS SHORT INT
   short int               id;
   unsigned short int      tpe, tid;
   unsigned short int      board_id;
@@ -64,12 +136,24 @@ typedef struct DGSEVENT
   unsigned long long int  CFDts;
   unsigned long long int  PEAKts;
   char                    flag;  
-  short int               baseline;
+  char 			  pu;
+  int			  d2t0;
+  int			  d2t1;
+  int                     d2t2;
+  unsigned long long int  prevTS;
+  int               baseline;
+  int               postrisebeg;
+  int               prerisebeg;
+  int               postriseend;
+  int               preriseend;
+  int               peaksample;
+  int               basesample;
+  int		    prerisesum;
   unsigned short int      traceLen;
   short int               trace[MAXTRACELEN];
-}  DGSEVENT;
+}  DFMAEVENT;
 
-#define DGSEVENT_BASELEN sizeof(DGSEVENT)-MAXTRACELEN*sizeof(short int)
+#define DFMAEVENT_BASELEN sizeof(DFMAEVENT)-MAXTRACELEN*sizeof(short int)
 
 typedef struct GTEVENT
 {
@@ -93,6 +177,9 @@ typedef struct GTEVENT
   short int               trace[MAXTRACELEN];
 }  GTEVENT;
 
+
+
+
 /*--------------------*/
 /* coincidence events */
 /*--------------------*/
@@ -106,6 +193,7 @@ typedef struct COINEV_struct
   unsigned char      lenaux;
   GTEVENT  GTEvent[MAXCOINEV];
   DGSEVENT DGSEvent[MAXCOINEV];
+  DFMAEVENT DFMAEvent[MAXCOINEV];
   } COINEV;
 
 
@@ -153,11 +241,9 @@ typedef struct stat_struct
   int nTSjumprecover_b[MAXTID];
   unsigned int in_hit[MAXTPE][MAXTID];
   unsigned int out_hit[MAXTPE][MAXTID];
-  long long int nbigbufreads;
+  int nbigbufreads;
   int nswaps;
   unsigned int id_hit[NCHANNELS];
-  unsigned int GEBIds[30];
-  long long int GEBlen[30];
   } MSTAT;
 
 

@@ -28,9 +28,7 @@
 #include "GTMerge.h"
 
 #define MAXNFIX 10000
-#define MAXPAYLOADSIZE 20000
-
-int get_GEB_Type_str (int type, char str[]);
+#define MAXPAYLOADSIZE 10000
 
 /* globals */
 
@@ -194,15 +192,13 @@ GTGetDiskEv (int FileNo, int storeNo)
 
   /* declarations */
 
-  static int nn = 0;
-  static long long int mm = 0;
+  static int nn = 0, mm = 0;
   int siz, i, i1, k;
   unsigned int j;
   unsigned int testPattern = 0, bufPos = 0;
   unsigned int PMET[MAXLENINTS];
   unsigned int t1, t2, t3, t4;
   float r1;
-  char str[128];
 
 #if(0)
   printf ("entered GTGetDiskEv, mm=%i\n", mm);
@@ -229,8 +225,6 @@ GTGetDiskEv (int FileNo, int storeNo)
     };
   nstat->inbytes += siz;
   control.filesiz[FileNo] += siz;
-  nstat->GEBIds[Event[storeNo].gd->type]++;
-  nstat->GEBlen[Event[storeNo].gd->type]+=(Event[storeNo].gd->length+sizeof (GEBDATA));
 
   if (mm < 10)
     printf ("\ngot initial header, TS=%lli for storeNo=%i\n", Event[storeNo].gd->timestamp, storeNo);
@@ -238,16 +232,6 @@ GTGetDiskEv (int FileNo, int storeNo)
   /* attempt to read payload */
 
   i1 = Event[storeNo].gd->length;
-  if (i1>=MAXPAYLOADSIZE)
-    {
-    printf("Event[storeNo].gd->length=%i > MAXPAYLOADSIZE=%i\n", Event[storeNo].gd->length, MAXPAYLOADSIZE);
-    get_GEB_Type_str (Event[storeNo].gd->type, str);
-    printf("Event[storeNo].gd->type=%i, %s\n", Event[storeNo].gd->type, str);
-    printf("cannot continue\n");
-    exit(1);
-    };
-
-  assert(i1<MAXPAYLOADSIZE);
 #if (USEBREAD)
   siz =
     bread (inData[FileNo], (char *) Event[storeNo].payload, &bread_pos[FileNo], bread_buf[FileNo],
@@ -441,8 +425,7 @@ main (int argc, char **argv)
   char str[132], str1[512];
   unsigned int seed = 0;
   struct tms timesThen;
-  int i7, i8, nGE = 0, nFP = 0, nDSSD = 0, nCHICO2 = 0, nBGO = 0, nGS = 0;
-  long long int reportinterval;
+  int i7, i8, nGE = 0, nFP = 0, nDSSD = 0, nCHICO2 = 0, nBGO = 0, reportinterval, nGS = 0;
   char *p, *pc;
   int echo = 0, nni, nret, ncib = 0;
   double d1;
@@ -455,7 +438,7 @@ main (int argc, char **argv)
 
   /* prototypes */
 
-  int wr_spe (char *, int *, float *);
+  //int wr_spe (char *, int *, float *); DS change 7/31/2015
   int printDgsHeader (DGSHEADER);
   int GTPrintHeader (FILE *, GTEVENT *);
   int get_a_seed (unsigned int *);
@@ -550,7 +533,7 @@ main (int argc, char **argv)
         }
       else if ((p = strstr (str, "reportinterval")) != NULL)
         {
-          nret = sscanf (str, "%s %lli", str1, &reportinterval);
+          nret = sscanf (str, "%s %i", str1, &reportinterval);
           CheckNoArgs (nret, 2, str);
         }
       else if ((p = strstr (str, "chunksiz")) != NULL)
@@ -1407,7 +1390,7 @@ done:
 
 
   i = LENSP;
-  wr_spe ("dtbtev.spe", &i, dtbtev);
+  //wr_spe ("dtbtev.spe", &i, dtbtev); DS change 7/31/2015
   printf ("wrote \"dtbtev.spe\"\n");
   printf ("\n");
   reportStats (&timesThen, nfiles, 0.0);
@@ -1471,15 +1454,6 @@ done:
 #if(USEZLIB==1)
   gzclose (zFile[i]);
 #endif
-
-  printf ("\n");
-  for (i=0;i<30;i++)
-    if ( nstat->GEBIds[i]>0)
-      {
-      d1=(double)nstat->GEBlen[i]/(double)nstat->GEBIds[i];
-      printf("GEBID %2i, had %10i hits, mean length %8.2f bytes\n", i, nstat->GEBIds[i],(float)d1);
-      };
-  printf ("\n");
 
   printf ("\n");
   printf ("Boniva Sancta ;-) >> GEBMerge did not crash << !!\n");
