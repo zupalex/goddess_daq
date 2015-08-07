@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
 	}
 	std::cout << "Converted " << eventCnt << " events.           \n";
-	std::cout << "Malformed Myriad Events: " << myriadFailCnt << "\n";
+	std::cout << "Malformed Myriad Events: " << myriadFailCnt << " " << (float)myriadFailCnt*100/eventCnt << "%\n";
 
 	return 0;
 }
