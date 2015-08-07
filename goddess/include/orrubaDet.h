@@ -1,8 +1,6 @@
 #ifndef ORRUBADET_H
 #define ORRUBADET_H
 
-#define VERBOSE
-
 #include "siDet.h"
 #include "SolidVector.h"
 
