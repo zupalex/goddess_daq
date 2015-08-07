@@ -5,12 +5,15 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
-#pragma link C++ class ORRUBA+;
 #pragma link C++ class Detector+;
+#pragma link C++ class siDet+;
+#pragma link C++ class orrubaDet+;
+
 #pragma link C++ class superX3+;
 #pragma link C++ class BB10+;
 #pragma link C++ class QQQ5+;
-#pragma link C++ class orrubaDet+;
-#pragma link C++ class siDet+;
 #pragma link C++ class IonChamber+;
+
+#pragma link C++ class ORRUBA+;
+
 #endif
