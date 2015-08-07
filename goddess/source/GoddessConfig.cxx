@@ -80,9 +80,8 @@ void GoddessConfig::ReadConfig(std::string filename) {
 	}
 
 	std::string line;
-	bool error = false;
 	//Loop over every line in the config file
-	while (!error && std::getline(mapFile, line).good()) {
+	while (std::getline(mapFile, line).good()) {
 		//Convert string to stream
 		std::istringstream lineStream(line);
 
@@ -94,7 +93,6 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		orrubaDet *det = 0;
 
 		if (!(lineStream >> type)) {
-			error = true;
 			break;
 		}
 		//Report the one we are registering.
@@ -103,7 +101,6 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		if (type == "ion") {
 			int numAnode, numScint, numDE, numEres;
 			if (!(lineStream >> numAnode >> numScint >> numDE >> numEres)) {
-				error = true;
 				break;
 			}
 			std::cout << " Anodes: " << numAnode << ", Scint PMTs: " << numScint;
@@ -116,7 +113,6 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		}
 		else {
 			if (!(lineStream >> serialNum >> id >> daqCh)) {
-				error = true;
 				break;
 			}
 
@@ -152,7 +148,6 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			else {
 				std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
 				std::cerr << " Valid options: ion, superX3, BB10, QQQ5.\n";
-				error = true;
 				break;
 			}
 			det->SetDetector(serialNum,sector,depth,upStream, pos);
@@ -162,12 +157,14 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		}
 
 		//Read calibration information.
+		std::istream::streampos prevPos = mapFile.tellg();
 		while (std::getline(mapFile, line).good()) {
 			std::istringstream lineStream(line);
 			std::string calType, subType;
 			int detChannel;
+			//If we don't understand this line we rewind the stream and let the first parsing section have a chance.
 			if (!(lineStream >> calType >> subType >> detChannel)) {
-				mapFile.seekg(-line.length()-1,std::ios_base::cur);
+				mapFile.seekg(prevPos);
 				break;
 			}
 
@@ -309,7 +306,6 @@ bool GoddessConfig::IsInsertable(int daqCh, std::string type) {
 			else if (checkType == "BB10") numCh = 8;
 			else if (checkType == "QQQ5") numCh = 36;
 
-			std::cout << mapItr->first << " " << numCh << " " << daqCh << "\n";
 			if (mapItr->first + numCh > daqCh) {
 				orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second);
 				if (siDet) 
