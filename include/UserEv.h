@@ -20,6 +20,6 @@
 //	compute event coordinates
 //	compute event energies: dE, E1, E2
 
-orruba->SetEvent("", 0, 0, 0, TVector3(0,0,0));
+//orruba->SetEvent("", 0, 0, 0, TVector3(0,0,0));
 
-data.Fill();
+//data.Fill();
