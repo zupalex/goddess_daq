@@ -22,12 +22,8 @@
 
 #include "GEBSort.h"
 #include "GTMerge.h"
-#define NGSGE 110
 #include "gsang.h"
-
-
-
-
+#define NGSGE 110
 #if(0)
 typedef struct PAYLOAD
 {
@@ -43,12 +39,12 @@ typedef struct TRACK_STRUCT
 #endif
 
 /* Gain Calibrtation */
-float M=350.0;// changed from 350.0
+float M=350.0;
 float ehigain[NGE + 1];
 float ehioffset[NGE + 1];
 float ehibase[NGE + 1];
 float ehiPZ[NGE+1];
-void SetBeta ();
+extern void SetBeta ();
 
 /* Other variables */
 unsigned long long int  EvTimeStam0=0;
@@ -59,20 +55,24 @@ TH1D *hEventCounter;
 TH2F *hGeCounter,*hBGOCounter;
 TH2F *hEhiRaw,*hEhiCln,*hEhiDrty;
 TH2F *hGeBGO_DT;
-TH2F *hTrB, *hFwB;//,*hE_TrB[NGE+1];
+TH2F *hTrB, *hFwB;
+//TH2F *hE_TrB[NGE+1];
 
-extern TH1D *ehi[MAXDETPOS + 1];
+//extern TH1D *ehi[MAXDETPOS + 1];  // Mike removed
+
+/* Conicidence based spectra */
+
+TH1D *hEventTimeWindow;
+TH2F *hGeTAC,*hEgEg;
 
 /* parameters */
+
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern int ng;
 extern PARS Pars;
 int tlkup[NCHANNELS];
 int tid[NCHANNELS];
 
-double angle[NGSGE], anglephi[NGSGE];
-
-double DopCorFac[NGSGE], ACFac[NGSGE];
 
 /*-----------------------------------------------------*/
 
@@ -88,7 +88,7 @@ sup_dgs ()
   
   void getcal(char *);
 
-  char file_name[]="./dgscal.dat.350";        // place this is sort directory
+  char file_name[]="./dgscal.dat";        // place this is sort directory
 
 // functions for making root histograms 
 
@@ -116,10 +116,20 @@ sup_dgs ()
   hTrB = make2D("TrBase",4096,0,4096,110,1,111);
   hFwB = make2D("FwBase",4096,0,4096,110,1,111);
   
+// diagnostic 2-D's of each individual detector.
+
+/*
   for (i = 1; i < NGE+1; i++ ){
     sprintf(str, "E_TrB%i", i) ;
-    //hE_TrB[i] = make2D(str,2500,0,5000,1024,0,8192);
+    hE_TrB[i] = make2D(str,2500,0,5000,1024,0,8192);  // used for PZ setting
   }
+*/
+
+// Spectra for conicidence data
+
+  hEventTimeWindow = make1D("EvntTimeWin",500,0,500);
+  hGeTAC   = make2D("EventTAC",600,-300,300,110,1,111);
+  hEgEg    = make2D("EgEg",4096,0,4096,4096,0,4096);
 
 /* list what we have */
 
@@ -138,14 +148,14 @@ sup_dgs ()
       tid[i] = NOTHING;
     };
 
-  fp = fopen ("map_gsfma322.dat", "r");
+  fp = fopen ("map.dat", "r");
   if (fp == NULL)
     {
       printf ("need a \"map.dat\" file to run\n");
-      //system("./mkMap > map.dat");
-      //printf("just made you one...\n");
-      //fp = fopen ("map.dat", "r");
-      //assert(fp != NULL);
+      system("./mkMap > map.dat");
+      printf("just made you one...\n");
+      fp = fopen ("map.dat", "r");
+      assert(fp != NULL);
      };
 
   printf ("\nmapping - started\n");
@@ -176,6 +186,17 @@ sup_dgs ()
  // This is the DGS calibration file
 
     getcal(file_name);
+
+
+ // Reset calibration parameters to turn off
+ 
+   for (i = 0; i <= NGE+1; i++) {
+    //ehigain[i] = 1.0;
+    //ehioffset[i] = 0.0;
+    //ehiPZ[i]=1.0;
+    //ehibase[i]=0.0;
+  };  
+  
   
     printf ("\nsup_dgs done!!\n");
     
@@ -410,6 +431,7 @@ bin_dgs (GEB_EVENT * GEB_event)
   /* declarations */
 
   char str[128];
+  //int i, j, i1, ng, gsid;
   int i, j, i1, gsid;
   unsigned int ui1;
   //DGSEVENT DGSEvent[MAXCOINEV];
@@ -450,12 +472,6 @@ bin_dgs (GEB_EVENT * GEB_event)
   // Initialize EvTimeStam0
   
   //printf("Stat 1 \n");
-   if(Pars.CurEvNo < 100){
-   printf("\n\nCurEvNo: %i",Pars.CurEvNo);
-   for(i=0;i<ng;i++)printf("\n DGSEvent[%i].event_timestamp: %llu",i,DGSEvent[i].event_timestamp);
-   }
-
-#if(1)
 
   if(EvTimeStam0==0) EvTimeStam0=DGSEvent[0].event_timestamp;
   RelEvT = (int)((DGSEvent[0].event_timestamp-EvTimeStam0)/100000000); // overflow?
@@ -464,16 +480,10 @@ bin_dgs (GEB_EVENT * GEB_event)
 
 // GS ENERGY CALIBRATION 
 
-//unsigned short int GSMAP[500]={0};
-//unsigned short int MODMAP[20]={0};
-
-//#include "GSMAP.h"
-//#include "GSII_angles.h"
-
-  double r, d1;
-  int orig, e;
-
-  /* Compton Suppression Loop */
+  double d1;
+  int e;
+  
+  /* Compton Suppression Loop + raw energy loop*/
 
   for (i = 0; i < ng; i++){
     if (DGSEvent[i].tpe==GE)  {
@@ -481,9 +491,10 @@ bin_dgs (GEB_EVENT * GEB_event)
       hGeCounter->Fill( (int)((DGSEvent[0].event_timestamp-EvTimeStam0)/100000000), gsid);
       Energy = ((float)(DGSEvent[i].post_rise_energy)-(float)(DGSEvent[i].pre_rise_energy)*ehiPZ[gsid])/M*ehigain[gsid];
       Energy = Energy - ehibase[gsid]*(1.-ehiPZ[gsid])*ehigain[gsid] + ehioffset[gsid]; 
-      if(Pars.beta!=0) {
-        d1 = angtheta[gsid-1]/57.29577951;
-        Energy = Energy*(1 - Pars.beta * cos(d1) ) / sqrt (1 - Pars.beta * Pars.beta);
+      // doppler correction if beta > 0.0
+      if(Pars.beta!=0.0) {
+       d1 = angtheta[gsid-1]/57.29577951;
+       Energy = Energy*(1 - Pars.beta * cos(d1) ) / sqrt (1 - Pars.beta * Pars.beta);
       }
       DGSEvent[i].ehi = Energy;
       for(j=0; j< ng; j++){
@@ -519,29 +530,78 @@ bin_dgs (GEB_EVENT * GEB_event)
       gsid = DGSEvent[i].tid;
       hTrB->Fill(DGSEvent[i].baseline,gsid);
       hFwB->Fill(DGSEvent[i].base_sample,gsid);
-      //hE_TrB[gsid]->Fill(DGSEvent[i].ehi,DGSEvent[i].baseline);
+      //hE_TrB[gsid]->Fill(DGSEvent[i].ehi,DGSEvent[i].baseline);  // this is for calibration
     }
   }
   
-#if(0) //DOPPLER CORRECTION
+// GE COINCIDENCE STUFF 
+  
+// Let us determine T0 (first implement simple DT min algorithm);
 
-  SetBeta();
+  int nGe, nGeCl, GeDTmin;
+  unsigned long long int prevTS,eventT0;
 
-  //printf("\nPars.beta: %f\n",Pars.beta);
+  int event_tw = (int)(DGSEvent[ng-1].event_timestamp - DGSEvent[0].event_timestamp);
 
-  for (i = 0; i < ng; i++) {
-    if (DGSEvent[i].tpe==GE) {
-      r = (float) rand() / RAND_MAX - 0.5;
-      e = DGSEvent[i].ehi;
-      // e =e*DopCorFac[GSMAP[DGSEvent[i].tid]] + r;
-      e =e*DopCorFac[GSMAP[DGSEvent[i].id -1000]] + r;
-      if (e  < L14BITS)
-	    DGSEvent[i].ehi  = (int) (e + 0.5);
-      else
-	    DGSEvent[i].ehi =  INT_MAX-1;
+  if(ng > 1) hEventTimeWindow->Fill(event_tw);
+
+  prevTS = 0;
+  nGe = 0;
+  nGeCl = 0;
+ 
+  for (i = 0; i < ng; i++){
+    if (DGSEvent[i].tpe==GE && DGSEvent[i].ehi>50){
+      if(prevTS == 0){  // First Ge found
+        prevTS = DGSEvent[i].event_timestamp;
+        nGe = nGe+1;
+        if(DGSEvent[i].flag == 0) nGeCl = nGeCl+1;
+        eventT0 = prevTS;
+        GeDTmin=10000;
+      }
+      else {
+        int dt = (int)(DGSEvent[i].event_timestamp-prevTS);
+        if(dt < GeDTmin){
+          eventT0 = (DGSEvent[i].event_timestamp+prevTS)/2;
+          GeDTmin = dt;
+          prevTS = DGSEvent[i].event_timestamp;
+          nGe = nGe+1;
+          if(DGSEvent[i].flag == 0) nGeCl = nGeCl+1;
+        }
+      }
     }
   }
-#endif
+
+// Indvidual TAC spectra relative to eventT0
+
+  if(nGe > 1) {
+    for (i = 0; i < ng; i++){
+      if (DGSEvent[i].tpe==GE){
+        gsid = (int)DGSEvent[i].tid;
+        int dt = (int)(DGSEvent[i].event_timestamp-eventT0);
+        hGeTAC->Fill(dt,gsid);
+      }
+    }
+  }
+
+
+// Gamma Gamma
+
+   if(nGeCl>1){
+     for (i=0; i < ng-1; i++){
+       int dt = (int)(DGSEvent[i].event_timestamp-eventT0);
+       if (DGSEvent[i].tpe==GE && DGSEvent[i].flag==0 && abs(dt)<20){
+         int ie = (int)(DGSEvent[i].ehi/3);
+         for (j=i+1; j < ng; j++){
+           dt = (int)(DGSEvent[j].event_timestamp-eventT0);
+             if (DGSEvent[j].tpe==GE && DGSEvent[j].flag==0 && abs(dt)<20){
+               int je = (int)(DGSEvent[j].ehi/3);
+               hEgEg->Fill(ie,je);
+               hEgEg->Fill(je,ie);
+             }
+           }
+         }
+       }
+     }
 
 /* debug list the gamma rays we found */
 
@@ -560,39 +620,10 @@ bin_dgs (GEB_EVENT * GEB_event)
       fflush (stdout);
     };
 
-    /* simple bin */
-/*
-    for (i = 0; i < ng; i++)
-      if (DGSEvent[i].tpe == GE) {
-        if (DGSEvent[i].ehi > 0 && DGSEvent[i].ehi < LONGLEN) {
-          dgs_sumehi->Fill ((double) DGSEvent[i].ehi, 1);
-          ehi[DGSEvent[i].tid]->Fill ((double) DGSEvent[i].ehi, 1);
-        };
-      };
-
-      if (DGSEvent[i].id > 0 && DGSEvent[i].id < NCHANNELS)
-        dgshitpat->Fill ((double) DGSEvent[i].id, 1);
-
-      if (DGSEvent[i].tpe == GE && !DGSEvent[i].flag)
-        if (DGSEvent[i].tid > 0 && DGSEvent[i].tid < NGE)
-          if (DGSEvent[i].ehi > 5) {
-            hitpatge->Fill ((double) DGSEvent[i].tid, 1);
-          };
-
-      if (DGSEvent[i].tpe == BGO)
-        if (DGSEvent[i].tid > 0 && DGSEvent[i].tid < NGE)
-          hitpatbgo->Fill ((double) DGSEvent[i].tid, 1);
-*/
-  /* done */
-
-#endif
-
   if (Pars.CurEvNo <= Pars.NumToPrint)
     printf ("exit bin_dgs\n");
 
   return (0);
-
-
 
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -669,36 +700,4 @@ void getcal(char *file)
   } 
   fclose(fp);
 }
-
-/*--------------------------------------------------------*/
-void
-SetBeta ()
-{
-
-  /* delarations */
-
-  int i;
-  double d1;
-
-  /*-------------------------------------*/
-  /* find Doppler and aberration factors */
-  /*-------------------------------------*/
-
-  for (i = 0; i < NGSGE; i++)
-    {
-      //printf("det %3.3i-> ", i);
-      d1 = angle[i] / 57.29577951;
-      DopCorFac[i] = (1 - Pars.beta * cos (d1)) / sqrt (1 - Pars.beta * Pars.beta);
-      //printf("dop cor fac: %6.4f; ", DopCorFac[i]);
-      ACFac[i] = DopCorFac[i] * DopCorFac[i];
-      //printf("aberration cor fac: %6.4f\n", ACFac[i]);
-
-    };
-  fflush (stdout);
-
-  /* done */
-
-}
-
-/*-----------------------------------------------------------*/
 
