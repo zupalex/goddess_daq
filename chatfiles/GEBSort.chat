@@ -11,7 +11,7 @@
 
 nevents           100000000000000
 printevents       10
-beta              0.0485
+beta              0
 modwrite          1000000000
 tsnumwrites       50
 gglen             2600
