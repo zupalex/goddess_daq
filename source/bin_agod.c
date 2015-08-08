@@ -139,7 +139,7 @@ int bin_agod (GEB_EVENT * GEB_event)
   dTg_agod = 0.0;
 
   for(int i=0;i<nsubev;i++) {
-	  if((AGODEvent[i].timestamp > 0) && (ng > 0)) {
+	  if(ng > 0) {
 		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 			  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
 			  h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[j]);
@@ -149,12 +149,14 @@ int bin_agod (GEB_EVENT * GEB_event)
 
   for(int i=0;i<nsubev;i++) {
 	  for(int j=0;j<ng;j++) {
+		if (DGSEvent[j].tpe == GE) {
 		  dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
-		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
-			  if ((AGODEvent[i].channels[j]==10)&&(dTg_agod>430)&(dTg_agod<455)) {
-				  h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[j]);
+		  for (size_t k=0;k<AGODEvent[i].values.size();k++) {
+			  if ((AGODEvent[i].channels[k]==40)&&(dTg_agod>430)&(dTg_agod<455)) {
+				  h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[k]);
 			  }
 		  }
+		}
 	  }
   }
 
