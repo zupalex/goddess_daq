@@ -194,8 +194,9 @@ struct crys_intpts {
 #define GEB_TYPE_DFMA          16
 #define GEB_TYPE_PHOSWICH      17
 #define GEB_TYPE_PHOSWICHAUX   18
+#define GEB_TYPE_AGOD          19
 
-#define MAX_GEB_TYPE           19   
+#define MAX_GEB_TYPE           20   
 
 /* this structure tells what follows */
 

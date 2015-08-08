@@ -357,6 +357,8 @@ GebTypeStr (int type, char str[])
     sprintf (str, "GEB_TYPE_DGSTRIG     ");
   else if (type == GEB_TYPE_DFMA)
     sprintf (str, "GEB_TYPE_DFMA        ");
+  else if (type == GEB_TYPE_AGOD)
+    sprintf (str, "GEB_TYPE_AGOD        ");
   //else if (type == GEB_TYPE_PHOSWICH)
     //sprintf (str, "GEB_TYPE_PHOSWICH    ");
   //else if (type == GEB_TYPE_PHOSWICHAUX)
