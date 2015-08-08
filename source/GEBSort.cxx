@@ -1608,7 +1608,7 @@ GEBacq (char *ChatFileName)
   int sup_dgs ();
   //int sup_dfma ();
   int sup_dgod ();
-  int sup_agod ();
+  void sup_agod ();
   //int sup_phoswich ();
 
   int exit_dfma();

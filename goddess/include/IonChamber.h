@@ -56,9 +56,9 @@ class IonChamber : public Detector {
 		virtual void SetRawValue(unsigned int channel, int rawValue);
 
 		///Check if the specified anode channel has been declared.
-		bool ValidAnode(int ch);
+		bool ValidAnode(size_t ch);
 		///Check if the specified scintillator channel has been declared.
-		bool ValidScint(int ch);
+		bool ValidScint(size_t ch);
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(IonChamber, 1)

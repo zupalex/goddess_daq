@@ -57,7 +57,7 @@ void IonChamber::Clear() {
 void IonChamber::SetRawValue(unsigned int channel, int rawValue) {
 	if (channel	< anodeRaw.size()) {
 		anodeRaw.at(channel) = rawValue;
-		for (int power=0;power < parAnodeEnCal.size(); power++)
+		for (size_t power=0;power < parAnodeEnCal.size(); power++)
 			anodeCal.at(channel) += parAnodeEnCal.at(channel).at(power) * pow(rawValue, power);
 
 		//Compute the dE values	
@@ -78,14 +78,14 @@ void IonChamber::SetRawValue(unsigned int channel, int rawValue) {
 			//We perform integer division to get the appropriate PMT number.
 			channel /= 2;
 			scintRawE.at(channel) = rawValue;
-			for (int power=0;power < parScintEnCal.size(); power++)
+			for (size_t power=0;power < parScintEnCal.size(); power++)
 				scintCalE.at(channel) += parScintEnCal.at(channel).at(power) * pow(rawValue, power);
 		}
 		else {
 			//We perform integer division to get the appropriate PMT number.
 			channel /= 2;
 			scintRawT.at(channel) = rawValue;
-			for (int power=0;power < parScintTimeCal.size(); power++)
+			for (size_t power=0;power < parScintTimeCal.size(); power++)
 				scintCalT.at(channel) += parScintTimeCal.at(channel).at(power) * pow(rawValue, power);
 		}
 	}
@@ -95,7 +95,7 @@ void IonChamber::SetRawValue(unsigned int channel, int rawValue) {
 	}
 }
 
-bool IonChamber::ValidAnode(int ch) {	
+bool IonChamber::ValidAnode(size_t ch) {	
 	if (ch < 0 || ch >= anodeRaw.size()) {
 		std::cerr << "ERROR: Invalid anode channel: " << ch << "\n";
 		return false;
@@ -103,7 +103,7 @@ bool IonChamber::ValidAnode(int ch) {
 	return true;
 }
 
-bool IonChamber::ValidScint(int ch) {	
+bool IonChamber::ValidScint(size_t ch) {	
 	if (ch < 0 || ch >= scintRawE.size()) {
 		std::cerr << "ERROR: Invalid scintillator channel: " << ch << "\n";
 		return false;

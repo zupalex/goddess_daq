@@ -34,7 +34,7 @@ struct AGODEVENT {
 	unsigned long long timestamp;
 };
 
-int AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
+void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
 	AGODEvent->channels.clear();
 	AGODEvent->values.clear();
 
@@ -69,7 +69,7 @@ TH2F *h2_g_agod;
 
 /*-----------------------------------------------------*/
 
-int sup_agod()
+void sup_agod()
 {
   /* declarations */
 
@@ -89,8 +89,7 @@ int sup_agod()
 
   Pars.wlist = gDirectory->GetList ();
   Pars.wlist->Print ();
-
-};
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -100,9 +99,6 @@ int bin_agod (GEB_EVENT * GEB_event)
   /* declarations */
 
   char str[128];
-  int ndssd;
-  int ndfma;
-  int nfp;
   int nsubev;
 
   /* prototypes */
@@ -112,10 +108,7 @@ int bin_agod (GEB_EVENT * GEB_event)
   if (Pars.CurEvNo <= Pars.NumToPrint)
     printf ("entered bin_agod:\n");
 
-  ndfma = 0;
-  ndssd = 0;
   nsubev = 0;
-  nfp = 0;
 
   /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
 
@@ -134,7 +127,7 @@ int bin_agod (GEB_EVENT * GEB_event)
 
   // histogram incrementation 
   for (int i=0;i<nsubev;i++) {
-	  for (int j=0;j<AGODEvent[i].values.size();j++) {
+	  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 		  h2_agod_en->Fill(AGODEvent[i].values[j],AGODEvent[i].channels[j]);
 		  h1_agod_en->Fill(AGODEvent[i].values[j]);
 	  }
@@ -147,7 +140,7 @@ int bin_agod (GEB_EVENT * GEB_event)
 
   for(int i=0;i<nsubev;i++) {
 	  if((AGODEvent[i].timestamp > 0) && (ng > 0)) {
-		  for (int j=0;j<AGODEvent[i].values.size();j++) {
+		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 			  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
 			  h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[j]);
 		  }
@@ -157,7 +150,7 @@ int bin_agod (GEB_EVENT * GEB_event)
   for(int i=0;i<nsubev;i++) {
 	  for(int j=0;j<ng;j++) {
 		  dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
-		  for (int j=0;j<AGODEvent[i].values.size();j++) {
+		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 			  if ((AGODEvent[i].channels[j]==10)&&(dTg_agod>260)&(dTg_agod<300)) {
 				  h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[j]);
 			  }
