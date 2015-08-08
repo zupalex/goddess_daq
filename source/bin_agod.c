@@ -151,7 +151,7 @@ int bin_agod (GEB_EVENT * GEB_event)
 	  for(int j=0;j<ng;j++) {
 		  dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
 		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
-			  if ((AGODEvent[i].channels[j]==10)&&(dTg_agod>260)&(dTg_agod<300)) {
+			  if ((AGODEvent[i].channels[j]==10)&&(dTg_agod>430)&(dTg_agod<455)) {
 				  h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[j]);
 			  }
 		  }

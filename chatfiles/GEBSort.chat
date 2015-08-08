@@ -16,7 +16,7 @@ modwrite          1000000000
 tsnumwrites       50
 gglen             2600
 
-timewin           300
+timewin           500
 
 #################################################
 # data type; default is GRETINA
