@@ -425,15 +425,16 @@ int numDFMA = 0;
 int numDGS = 0;
 // external parameters 
 
-TFile *treef;//TREES...
-TTree *tree;//TREES...
+extern TFile *treef;//TREES...
+extern TTree *tree;//TREES...
+
 extern PARS Pars;
-int ng;
-DGSEVENT DGSEvent[MAXCOINEV];
+extern int ng;
+extern DGSEVENT DGSEvent[MAXCOINEV];
 extern int tlkup[NCHANNELS];
 extern int tid[NCHANNELS];
-int DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent); 
-DFMAEVENT DFMAEvent[MAXCOINEV];
+extern int DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent); 
+extern DFMAEVENT DFMAEvent[MAXCOINEV];
 
 // DEFINE HISTOGRAMS HERE!!!! (LIKE USERDECLARE.H)
 

@@ -49,4 +49,4 @@ add_subdirectory(source)
 add_subdirectory(scripts)
 install(DIRECTORY chatfiles DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-install(FILES share/crmat.LINUX share/goddess.config DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES share/crmat.LINUX share/AGATA_crmat.dat share/goddess.config share/dgscal.dat.350 share/map_gsfma322.dat DESTINATION ${CMAKE_INSTALL_PREFIX})

@@ -18,6 +18,7 @@
 #include <time.h>
 #include <stddef.h>
 #include <zlib.h>
+
 #include "Rtypes.h"
 #include "TROOT.h"
 #include "TFile.h"
@@ -35,7 +36,6 @@
 #include "TMapFile.h"
 
 #include "gdecomp.h"
-#include "veto_pos.h"
 #include "GEBSort.h"
 #include "GTMerge.h"
 
@@ -81,8 +81,16 @@ int minid = MAXINT, maxid = -MAXINT;
 char CommandFileName[STRLEN] = "GEBSort.command";
 
 int time_stamp ();
+
 TH1D *mkTH1D (char *, char *, int, double, double);
 TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
+
+//TH2I *mkTH2I (char *, char *, int, int, int, int, int, int);
+
+
+//these two are for Phoswall
+//TH1I *mkTH1I (char *, char *, int, double, double);
+//TH2I *mkTH2I (char *, char *, int, double, double, int, double, double);
 
 TH1D *ehi[MAXDETPOS + 1];
 
@@ -98,16 +106,28 @@ TH1D *ehi[MAXDETPOS + 1];
 
 #define NGSGE 110
 
+
+
 float cal_off[NGSGE], cal_gain[NGSGE];
-double angle[NGSGE], anglephi[NGSGE];
+//double angle[NGSGE], anglephi[NGSGE];
 
-double DopCorFac[NGSGE], ACFac[NGSGE];
+//double DopCorFac[NGSGE], ACFac[NGSGE];
 
-void SetBeta ();
+//void SetBeta ();
+
+//#include "GSMAP.h"
+//#include "GSII_angles.h"
 
 /* parameters */
 
+TFile *treef;//TREES...
+TTree *tree;//TREES...
+
 PARS Pars;
+int ng;
+DGSEVENT DGSEvent[MAXCOINEV];
+DFMAEVENT DFMAEvent[MAXCOINEV];
+
 
 static const int ConnectionRetryWait = 2 * 100; /* usec between con. retries. */
 static const int ConnectionRetryCount = 150;    /* Times we retry connect. */
@@ -116,8 +136,6 @@ struct gretTap *pTap;
 struct GEBData *pData;
 
 int nn1 = 0;
-
-unsigned int *veto_cube;
 
 /*----------------------------------------------------*/
 
@@ -141,6 +159,28 @@ mkTH1D (char *str1, char *str2, int nn, double lo, double hi)
 
 }
 
+
+/*
+TH1I *
+mkTH1I (char *str1, char *str2, int nn, double lo, double hi)
+{
+  TH1I *tmppt;
+
+  if (!Pars.UpdateRootFile)
+    {
+      tmppt = new TH1I (str1, str2, nn, lo, hi);
+      printf ("Created Object \"%s\", %p\n, \"%s\"", str1, tmppt, str2);
+    }
+  else
+    {
+      tmppt = (TH1I *) gROOT->FindObject (str1);
+      printf ("Found Object \"%s\", %p\n", str1, tmppt);
+    }
+
+  return (tmppt);
+
+}
+*/
 /*----------------------------------------------------*/
 
 TH2F *
@@ -163,6 +203,25 @@ mkTH2F (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double
 
 }
 
+TH2I *
+mkTH2I (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double lo2, double hi2)
+{
+  TH2I *tmppt;
+
+  if (!Pars.UpdateRootFile)
+    {
+      tmppt = new TH2I (str1, str2, nn1, lo1, hi1, nn2, lo2, hi2);
+      printf ("Created Object \"%s\", %p\n", str1, tmppt);
+    }
+  else
+    {
+      tmppt = (TH2I *) gROOT->FindObject (str1);
+      printf ("Found Object \"%s\", %p\n", str1, tmppt);
+    };
+
+  return (tmppt);
+
+}
 
 
 /*--------------------------------------------------------*/
@@ -183,6 +242,7 @@ CheckNoArgs (int required, int actual, char *str)
 
 }
 
+#if(0)
 /*--------------------------------------------------------*/
 void
 SetBeta ()
@@ -212,7 +272,7 @@ SetBeta ()
   /* done */
 
 }
-
+#endif
 /*-----------------------------------------------------------*/
 
 float
@@ -297,10 +357,10 @@ GebTypeStr (int type, char str[])
     sprintf (str, "GEB_TYPE_DGSTRIG     ");
   else if (type == GEB_TYPE_DFMA)
     sprintf (str, "GEB_TYPE_DFMA        ");
-  else if (type == GEB_TYPE_PHOSWICH)
-    sprintf (str, "GEB_TYPE_PHOSWICH    ");
-  else if (type == GEB_TYPE_PHOSWICHAUX)
-    sprintf (str, "GEB_TYPE_PHOSWICHAUX ");
+  //else if (type == GEB_TYPE_PHOSWICH)
+    //sprintf (str, "GEB_TYPE_PHOSWICH    ");
+  //else if (type == GEB_TYPE_PHOSWICHAUX)
+    //sprintf (str, "GEB_TYPE_PHOSWICHAUX ");
 
   else
     {
@@ -888,23 +948,17 @@ main (int argc, char **argv)
   Pars.GGMAX = 2000;
   Pars.ndetlimlo = 1;
   Pars.ndetlimhi = 8;
-  for (i = 0; i < MAXNOSEG; i++)
-    {
-      Pars.fomlo[i] = 0;
-      Pars.fomhi[i] = 2.0;
-    }
+  Pars.fomlo[1] = 0;
+  Pars.fomhi[1] = 2.0;
   Pars.UpdateRootFile = 0;
   Pars.UseShareMemFile = FALSE;
   Pars.StartMapAddress = 0;
   sprintf (Pars.ShareMemFile, "GTSort.map");
-  Pars.maxsnglintrE = 2000.0;
-  Pars.maxsnglintrEFOM = 1.81;
 
   for (i = 0; i < MAXDETNO; i++)
     {
       Pars.CCcal_offset[i] = 0;
       Pars.CCcal_gain[i] = 1.0;
-      Pars.enabled[i] = 1;
       for (j = 0; j <= MAXCRYSTALNO; j++)
         {
           Pars.SEGcal_gain[i][j] = 1.0;
@@ -1134,12 +1188,11 @@ GEBSort_read_chat (char *name)
   char str3[STRLEN], str4[STRLEN], str5[STRLEN], str6[STRLEN];
   int nn = 0, nni = 0, st, PType;
   char *p;
-  int i, j, k, l, m, n, i1, i2, i3, i4, i5, i6;
+  int i, k, i1, i2, i3, i4, i5, i6;
   int j1, j2, j3, j4, j5, j6, j7;
-  float f1, f2, f3, f4, pi, r1, r2, r3, r4, rr;
+  float f1, f2, f3, f4, pi, r1, r2, rr;
   int echo = 0, nret;
   double d1;
-  unsigned int ui1;
 
   /* prototypes */
 
@@ -1225,17 +1278,6 @@ GEBSort_read_chat (char *name)
           Pars.nocrystaltoworldrot = 1;
           CheckNoArgs (nret, 1, str);
         }
-      else if ((p = strstr (str, "enabled")) != NULL)
-        {
-          nret = sscanf (str, "%s %s", str1, str2);
-          CheckNoArgs (nret, 2, str);
-          str_decomp (str2, MAXDETNO + 1, Pars.enabled);
-          for (j = 0; j < MAXDETNO; j++)
-            if (!Pars.enabled[j])
-              printf ("detector %3i is disabled\n", j);
-            else
-              printf ("detector %3i is enabled\n", j);
-        }
       else if ((p = strstr (str, "firstEvent")) != NULL)
         {
           nret = sscanf (str, "%s %i", str1, &Pars.firstEvent);
@@ -1244,69 +1286,12 @@ GEBSort_read_chat (char *name)
           fflush (stdout);
 
         }
-      else if ((p = strstr (str, "maxsnglintrE")) != NULL)
-        {
-          nret = sscanf (str, "%s %f %f", str1, &Pars.maxsnglintrE, &Pars.maxsnglintrEFOM);
-          CheckNoArgs (nret, 3, str);
-        }
-      else if ((p = strstr (str, "target_x")) != NULL)
-        {
-          nret = sscanf (str, "%s %f", str1, &Pars.target_x);
-          CheckNoArgs (nret, 2, str);
-        }
-      else if ((p = strstr (str, "target_y")) != NULL)
-        {
-          nret = sscanf (str, "%s %f", str1, &Pars.target_y);
-          CheckNoArgs (nret, 2, str);
-        }
-      else if ((p = strstr (str, "target_z")) != NULL)
-        {
-          nret = sscanf (str, "%s %f", str1, &Pars.target_z);
-          CheckNoArgs (nret, 2, str);
-        }
-      else if ((p = strstr (str, "vetospotsFind")) != NULL)
-        {
-          nret = sscanf (str, "%s %s %f %f %f", str1, str2, &r1, &r2, &r3);
-          CheckNoArgs (nret, 3, str);
-          strcpy (Pars.vetoSpotsfn, str2);
-          printf ("will write vetoSpots to %s\n", Pars.vetoSpotsfn);
-          Pars.vetocutfac[0] = r1;
-          Pars.vetocutfac[VETO_NZ - 1] = r2;
-          printf ("will mark cubes with more than %f x the average counts at front\n", Pars.vetocutfac[0]);
-          printf ("will mark cubes with more than %f x the average counts at back\n", Pars.vetocutfac[VETO_NZ - 1]);
-          r4 = (r2 - r1) / VETO_NZ;
-          for (i = 1; i < (VETO_NZ - 1); i++)
-            Pars.vetocutfac[i] = Pars.vetocutfac[i - 1] + r4;
-//          for (i=0;i<VETO_NZ;i++)
-//            printf("%i %f\n", i, Pars.vetocutfac[i]);
-//if(1)exit(0);
-          Pars.vetoecut = r3;
-          printf ("will only count interaction with less than %f energy\n", Pars.vetoecut);
-          fflush (stdout);
-          Pars.vetoSpots = 1;
-
-          /* allocate and zero out the veto cube */
-
-          ui1 =
-            (MAXGTMODNO + 1) * (MAXCRYSTALNO + 1) * (VETO_NX + 1) * (VETO_NY + 1) * (VETO_NZ +
-                                                                                     1) * sizeof (unsigned int);
-          veto_cube = (unsigned int *) calloc (ui1, 1);
-          printf ("allocated %11u bytes  for veto_cube\n", ui1);
-          printf ("       or %11u Mbytes for veto_cube\n", ui1 / 1024 / 1024);
-          ui1 = MAXGTMODNO * MAXCRYSTALNO * VETO_NX * VETO_NY * VETO_NZ;
-          printf ("max index: %u\n", ui1);
-
-          for (i = 0; i <= MAXGTMODNO; i++)
-            for (j = 0; j <= MAXCRYSTALNO; j++)
-              printf ("VETO_INDX (%2i, %2i, 0, 0, 0) = %i\n", i, j, VETO_INDX (i, j, 0, 0, 0));
-        }
       else if ((p = strstr (str, "AGATA_data")) != NULL)
         {
-          nret = sscanf (str, "%s %s", str1, Pars.AGATA_data_fn);
-          CheckNoArgs (nret, 2, str);
+          nret = sscanf (str, "%s", str1);
+          CheckNoArgs (nret, 1, str);
           Pars.AGATA_data = 1;
           printf ("Pars.AGATA_data=%i, process AGATA geometry\n", Pars.AGATA_data);
-          printf ("crmat file: %s\n", Pars.AGATA_data_fn);
         }
       else if ((p = strstr (str, "timewin")) != NULL)
         {
@@ -1354,35 +1339,6 @@ GEBSort_read_chat (char *name)
           nret = sscanf (str, "%s %i", str1, &Pars.requiretracked);
           CheckNoArgs (nret, 2, str);
           printf ("will require tracked data before mode2 binning\n");
-        }
-      else if ((p = strstr (str, "gg-gates")) != NULL)
-        {
-          nret = sscanf (str, "%s %s", str1, str2);
-          CheckNoArgs (nret, 2, str);
-          printf ("will read %i gates from file %s\n", str2);
-          fp1 = fopen (str2, "r");
-          if (fp1 == NULL)
-            {
-              printf ("WARNING: could not open gate file \"%s\", quit\n", str2);
-            }
-          else
-            {
-              printf ("reading gate file \"%s\"\n", str2);
-              nn = 0;
-              st = fscanf (fp1, "%i %i", &Pars.gg_gate_pos[nn], &Pars.gg_gate_width[nn]);
-              while (st == 2)
-                {
-                  printf ("gate %2i at %4i, ", nn, Pars.gg_gate_pos[nn]);
-                  printf ("from %4i to %4i\n", Pars.gg_gate_pos[nn] - Pars.gg_gate_width[nn],
-                          Pars.gg_gate_pos[nn] + Pars.gg_gate_width[nn]);
-                  nn++;
-                  st = fscanf (fp1, "%i %i", &Pars.gg_gate_pos[nn], &Pars.gg_gate_width[nn]);
-                };
-              Pars.numgggates = nn;
-              printf ("done, read %i gates \n", Pars.numgggates);
-              fclose (fp1);
-            };
-
         }
       else if ((p = strstr (str, "tsnumwrites")) != NULL)
         {
@@ -1640,7 +1596,7 @@ GEBacq (char *ChatFileName)
   /* prototypes */
 
   int GEBSort_read_chat (char *);
-  int wr_spe (char *, int *, float *);
+  //int wr_spe (char *, int *, float *); DS change 7/31/2015
 
   /* data type binners sup==setup, bin_==binner */
 
@@ -1650,17 +1606,24 @@ GEBacq (char *ChatFileName)
   int sup_mode3 ();
   int sup_gtcal ();
   int sup_dgs ();
+  //int sup_dfma ();
+  int sup_dgod ();
+  int sup_agod ();
+  //int sup_phoswich ();
+
+  int exit_dfma();
+
   int sup_template ();
-	int sup_dgod ();
-	int sup_agod ();
   int bin_mode1 (GEB_EVENT *);
   int bin_mode2 (GEB_EVENT *);
   int bin_mode3 (GEB_EVENT *);
   int bin_gtcal (GEB_EVENT *);
   int bin_dgs (GEB_EVENT *);
-  int bin_template (GEB_EVENT *);
+  int bin_dfma (GEB_EVENT *);
   int bin_dgod (GEB_EVENT *);
   int bin_agod (GEB_EVENT *);
+  //int bin_phoswich (GEB_EVENT *);
+  int bin_template (GEB_EVENT *);
 
   /* allow user to declare variables here */
 
@@ -1709,10 +1672,6 @@ GEBacq (char *ChatFileName)
   Pars.multlo = 1;
   Pars.multhi = 20;
   Pars.requiretracked = 0;
-  Pars.vetoSpots = 0;
-  Pars.target_x = 0;
-  Pars.target_y = 0;
-  Pars.target_z = 0;
 
   for (i = 0; i < MAXGEBS; i++)
     {
@@ -1737,69 +1696,61 @@ GEBacq (char *ChatFileName)
   printf ("read %i bytes into Pars.crmat\n", siz);
   close (in);
 
+  /* get the AGATA rotational matrices */
+
+  printf ("read in AGATA rotation and translation data\n");
+
+  fp0 = fopen ("AGATA_crmat.dat", "r");
+  if (fp0 != NULL)
+    {
+      printf ("AGATA_crmat.dat is open for reading\n");
+
+      j = 0;
+      for (i = 0; i < 180; i++)
+        {
+
+          memset (buffer, zero, sizeof (buffer));
+          fgets (buffer, 150, fp0);
+          sscanf (buffer, "%d %d %lf %lf %lf ", &ir, &dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
+
+          memset (buffer, zero, sizeof (buffer));
+          fgets (buffer, 150, fp0);
+          sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
+
+          memset (buffer, zero, sizeof (buffer));
+          fgets (buffer, 150, fp0);
+          sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
+
+          memset (buffer, zero, sizeof (buffer));
+          fgets (buffer, 150, fp0);
+          sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
+
+          j++;
+        }
+      printf ("read %i AGATA rotational/translational matrices\n", j);
+    }
+  else
+    {
+      printf ("Error: ascii AGATA_crmat.dat not found, quit\n");
+      exit (1);
+    };
+
+#if(0)
+  for (j = 0; j < 180; j++)
+    {
+      printf ("%2i: \n", j);
+      printf ("Tr?: %10.5f %10.5f %10.5f\n", Pars.TrX[j], Pars.TrX[j], Pars.TrZ[j]);
+      printf ("rx?: %10.5f %10.5f %10.5f\n", Pars.rotxx[j], Pars.rotxy[j], Pars.rotxz[j]);
+      printf ("ry?: %10.5f %10.5f %10.5f\n", Pars.rotyx[j], Pars.rotyy[j], Pars.rotyz[j]);
+      printf ("rz?: %10.5f %10.5f %10.5f\n", Pars.rotzx[j], Pars.rotzy[j], Pars.rotzz[j]);
+    }
+#endif
+
   /*------------------*/
   /* read chat script */
   /*------------------*/
 
   GEBSort_read_chat (ChatFileName);
-
-
-  /* get the AGATA rotational matrices */
-
-
-  if (Pars.AGATA_data)
-    {
-
-      printf ("read in AGATA rotation and translation data\n");
-
-      fp0 = fopen (Pars.AGATA_data_fn, "r");
-      if (fp0 != NULL)
-        {
-          printf ("%s is open for reading\n", Pars.AGATA_data_fn);
-
-          j = 0;
-          for (i = 0; i < 180; i++)
-            {
-
-              memset (buffer, zero, sizeof (buffer));
-              fgets (buffer, 150, fp0);
-              sscanf (buffer, "%d %d %lf %lf %lf ", &ir, &dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
-
-              memset (buffer, zero, sizeof (buffer));
-              fgets (buffer, 150, fp0);
-              sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
-
-              memset (buffer, zero, sizeof (buffer));
-              fgets (buffer, 150, fp0);
-              sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
-
-              memset (buffer, zero, sizeof (buffer));
-              fgets (buffer, 150, fp0);
-              sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
-
-              j++;
-            }
-          printf ("read %i AGATA rotational/translational matrices\n", j);
-        }
-      else
-        {
-          printf ("Error: %s not found, quit\n", Pars.AGATA_data_fn);
-          exit (1);
-        };
-
-#if(0)
-      for (j = 0; j < 180; j++)
-        {
-          printf ("%2i: \n", j);
-          printf ("Tr?: %10.5f %10.5f %10.5f\n", Pars.TrX[j], Pars.TrX[j], Pars.TrZ[j]);
-          printf ("rx?: %10.5f %10.5f %10.5f\n", Pars.rotxx[j], Pars.rotxy[j], Pars.rotxz[j]);
-          printf ("ry?: %10.5f %10.5f %10.5f\n", Pars.rotyx[j], Pars.rotyy[j], Pars.rotyz[j]);
-          printf ("rz?: %10.5f %10.5f %10.5f\n", Pars.rotzx[j], Pars.rotzy[j], Pars.rotzz[j]);
-        }
-#endif
-
-    };
-
 
 
   printf ("checking proper input of chat file...\n");
@@ -2115,9 +2066,11 @@ GEBacq (char *ChatFileName)
   sup_mode3 ();
   sup_gtcal ();
   sup_dgs ();
-  sup_template ();
+  //sup_dfma ();
   sup_dgod ();
   sup_agod ();
+  //sup_phoswich ();
+  sup_template ();
 
   printf ("we have define the following ROOT spectra:\n");
 
@@ -2148,7 +2101,7 @@ GEBacq (char *ChatFileName)
             Pars.modCCang[i][j] = acosf (r2);
             printf ("pol %7.2f ,  ", Pars.modCCang[i][j] / M_PI * 180);
             r3 = atan2f (Pars.crmat[i][j][1][3], Pars.crmat[i][j][2][3]);
-            printf ("azi %7.2f; ", r3 / M_PI * 180);
+            printf("azi %7.2f; ", r3 / M_PI * 180);
 
             r1 = 1.0 - Pars.beta * Pars.beta;
             Pars.modCCdopfac[4 * i + j] = sqrtf (r1) / (1.0 - Pars.beta * cosf (Pars.modCCang[i][j]));
@@ -2167,13 +2120,11 @@ GEBacq (char *ChatFileName)
           r1 = sqrtf (r1);
           printf ("%3i: %10.5f %10.5f %10.5f; ", i, Pars.TrX[i], Pars.TrY[i], Pars.TrZ[i]);
 
-          r2 =
-            Pars.beamdir[0] * Pars.TrX[i] / r1 + Pars.beamdir[1] * Pars.TrY[i] / r1 +
-            Pars.beamdir[2] * Pars.TrZ[i] / r1;
-          if (r2 < -1.0 || r2 > 1.0)
+          r2 = Pars.beamdir[0] * Pars.TrX[i]/r1 + Pars.beamdir[1] * Pars.TrY[i]/r1 + Pars.beamdir[2] * Pars.TrZ[i]/r1;
+          if(r2< -1.0 || r2>1.0)
             {
-              printf ("r2 out of range=%f\n", r2);
-              exit (1);
+            printf("r2 out of range=%f\n",r2);
+            exit(1);
             };
           i1 = i / 3;
           i2 = i - i1;
@@ -2181,7 +2132,7 @@ GEBacq (char *ChatFileName)
           Pars.modCCang[i1][i2] = acosf (r2);
           printf ("pol %7.2f , ", Pars.modCCang[i1][i2] / M_PI * 180);
           r3 = atan2f (Pars.TrY[i], Pars.TrX[i]);
-          printf ("azi %7.2f; ", r3 / M_PI * 180);
+          printf("azi %7.2f; ", r3 / M_PI * 180);
 
           r1 = 1.0 - Pars.beta * Pars.beta;
           Pars.modCCdopfac[i] = sqrtf (r1) / (1.0 - Pars.beta * cosf (Pars.modCCang[i1][i2]));
@@ -2192,14 +2143,14 @@ GEBacq (char *ChatFileName)
         };
 
 #if(0)
-      printf ("\ntable\n\n");
-      r1 = 0;
-      while (r1 <= M_PI)
-        {
-          r2 = cosf (r1);
-          printf ("r1=%frad %fdeg, cosf(r1)=r2=%f, acosf(r2)=%f\n", r1, r1 * 57.2958, r2, acosf (r2));
-          r1 += M_PI / 100.0;
-        };
+       printf("\ntable\n\n");
+       r1=0;
+       while (r1<=M_PI)
+         {
+         r2=cosf(r1);
+         printf("r1=%frad %fdeg, cosf(r1)=r2=%f, acosf(r2)=%f\n",r1, r1*57.2958, r2, acosf(r2));
+         r1+=M_PI/100.0;
+         };
 #endif
 
     };
@@ -2215,12 +2166,6 @@ GEBacq (char *ChatFileName)
   sigset (SIGHUP, signal_catcher);
 #endif
   printf ("setup signal catcher\n");
-
-
-
-
-
-
 
   /*---------------*/
   /* start sorting */
@@ -2399,35 +2344,35 @@ GEBacq (char *ChatFileName)
 
           /* bin GT mode 3 data  (== raw data with traces) */
 
-          bin_mode3 (&GEB_event);
+          //bin_mode3 (&GEB_event);
 
           /* bin GT mode 2 data  (== decomposed data) */
 
-          bin_mode2 (&GEB_event);
+          //bin_mode2 (&GEB_event);
 
           /* bin mode 1 data (==tracked data) */
 
-          bin_mode1 (&GEB_event);
+          //bin_mode1 (&GEB_event);
 
           /* bin DGS data */
 
           bin_dgs (&GEB_event);
+          bin_dgod  (&GEB_event);
+          bin_agod  (&GEB_event);
+          //bin_dfma (&GEB_event);
+
+
+	  //bin_phoswich (&GEB_event);
+	  //added by JK 08/26/2014
 
           /* bin GT data for calibration */
 
-          bin_gtcal (&GEB_event);
+          //bin_gtcal (&GEB_event);
 
           /* bin other stuff in template */
 
-          bin_template (&GEB_event);
+          //bin_template (&GEB_event);
 
-			// Digital Goddess
-
-			 bin_dgod (&GEB_event);
-
-			// Analog Goddess
-
-			 bin_agod (&GEB_event);
       /*-------------------------*/
           /* execute user event code */
       /*-------------------------*/
@@ -2648,7 +2593,7 @@ GEBacq (char *ChatFileName)
       rr[i] = (float) sumTrackE->GetBinContent (i);;
     };
   sprintf (str, "sumTrackE.spe");
-  wr_spe (str, &dim, rr);
+  //wr_spe (str, &dim, rr); DS change 7/31/2015
 
   /* if we were using shared memory */
 
@@ -2689,6 +2634,7 @@ GEBacq (char *ChatFileName)
   showStatus ();
 
 #include "UserExit.h"
+  //exit_dfma();
 
   /* done */
 
