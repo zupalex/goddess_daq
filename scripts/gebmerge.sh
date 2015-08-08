@@ -36,10 +36,14 @@ fi
 
 # data from DGS, new data format (firmware) 9/25/2012
 
-
 #convert ldf to a format that can be merged.
-echo "Converting ldf to GEB format."
-./hribfConvert `ls $DATA_DIR/run$RUN.ldf` .run$RUN.geb
+if [ -e "$DATA_DIR/run$RUN.ldf" ]; then
+	echo "Converting ldf to GEB format."
+	ORNL_FILES=.run$RUN.geb
+	./hribfConvert `ls $DATA_DIR/run$RUN.ldf` .run$RUN.geb
+else
+	echo "WARNING: No ORNL ldfs found!"
+fi
 
 #Check if previous command was successfull
 if [ $? != 0 ]; then 
@@ -58,13 +62,15 @@ fi
 echo "GEBMerge started at `date`"
 #Run the merge program
 ./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd \
-	$DFMA_FILES $DGS_FILES .run$RUN.geb \
+	$DFMA_FILES $DGS_FILES $ORNL_FILES \
 	 > log/GEBMerge_run$RUN.log
 
 #Remove intermediate converted file
 rm -f .run$RUN.geb
 
 echo "GEBMerge DONE at `date`"
+
+tail log/GEBMerge_run$RUN.log -n 3
 
 exit
 

@@ -9,60 +9,21 @@
 #-------------------------------------------
 # basic sort parameters 
 
-nevents           2000000000
+nevents           100000000000000
 printevents       10
-beta              0.0
-modwrite          50000
+beta              0.0485
+modwrite          1000000000
 tsnumwrites       50
 gglen             2600
 
-#                  +----- max singel interaction energy
-#                  |    +--- mark with this FOM value
-maxsnglintrE      800 1.81
-
-#  +--- simple TS time window
-timewin           30
-
-##########################################
-# experimental veto cube generation
-# note: cube size is a compiler option
-
-#                  +---- file name for bad cubes
-#                  |         +---- x mean=cutlevel front
-#                  |         |   +---- x mean=cutlevel back
-#                  |         |   |    +---- e below this only interactions
-#                  |         |   |    |
-;vetospotsFind vetospots.dat 8   7   140
-
-##########################################
-# target position (in mm) 
-# always subtracted in the code
-
-target_x 0
-target_y 0
-target_z 0
-
-#################################################
-# single/double/tripple gates for gg (Amel addition)
-#################################################
-# 
-;gg-gates ggfile.gat
-
-# gate file has one line per gate
-# with 'gate position' and '+/- gate width'
-
-#################################################
-# enabled list, only affects mode2 data. For mode1
-# data, specify in track_GT.chat
-
-enabled "1-180"
+timewin           300
 
 #################################################
 # data type; default is GRETINA
-# but you can specify AGATA_data and crmat file
+# you can specify AGATA_data
 #################################################
 
-;AGATA_data GANIL_AGATA_crmat.dat
+;AGATA_data
 
 #-------------------------------------------
 # mode2 calibration pars. 
@@ -82,8 +43,6 @@ beamdir 0 0 1
 ;-- for BGS setup
 ;beamdir 0.2764 0.8507 -0.4472
 
-;-- for AGATA at Ganil Novembre 2014
-;beamdir .4277991913 -.5630163332 .7071067809
 
 #----------------------------
 # mode 1 data sort parameters 
@@ -95,7 +54,7 @@ beamdir 0 0 1
 # 2: double interaction
 # etc
 
-ndetlimits 1 8
+ndetlimits 2 8
 
 #---------------------------------
 # mode1 and mode2 multiplicity limits
