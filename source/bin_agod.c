@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "gdecomp.h"
 #include "GEBSort.h"
 #include "GTMerge.h"
@@ -44,7 +46,7 @@ int AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
 		unsigned short value = (datum >> 16) & 0xFFFF;
 
 		if (channel >= 244 && channel <=246) {
-			timestamp |= value << 16 * (246-channel);
+			timestamp |= (unsigned long long) value << (16 * (246-channel));
 		}
 		else {
 			AGODEvent->channels.push_back(channel);	
@@ -145,8 +147,10 @@ int bin_agod (GEB_EVENT * GEB_event)
 
   for(int i=0;i<nsubev;i++) {
 	  if((AGODEvent[i].timestamp > 0) && (ng > 0)) {
-		  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
-		  h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[0]);
+		  for (int j=0;j<AGODEvent[i].values.size();j++) {
+			  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
+			  h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[j]);
+		  }
 	  }
   }
 
