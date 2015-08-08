@@ -144,25 +144,27 @@ int bin_agod (GEB_EVENT * GEB_event)
   dTg_agod = 0.0;
 
   for(int i=0;i<nsubev;i++) {
-   if((AGODEvent[i].timestamp > 0) && (ng > 0)) {
-    dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
-    h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[0]);
-   }
+	  if((AGODEvent[i].timestamp > 0) && (ng > 0)) {
+		  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
+		  h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[0]);
+	  }
   }
 
   for(int i=0;i<nsubev;i++) {
-   for(int j=0;j<ng;j++) {
-    dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
-    if ((AGODEvent[i].channels[0]==10)&&(dTg_agod>260)&(dTg_agod<300)) {
-     h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[0]);
-    }
-   }
+	  for(int j=0;j<ng;j++) {
+		  dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
+		  for (int j=0;j<AGODEvent[i].values.size();j++) {
+			  if ((AGODEvent[i].channels[j]==10)&&(dTg_agod>260)&(dTg_agod<300)) {
+				  h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[j]);
+			  }
+		  }
+	  }
   }
 
   /* done */
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
-   printf ("exit bin_agod\n");
+	  printf ("exit bin_agod\n");
 
   return (0);
 
