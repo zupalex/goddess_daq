@@ -1652,6 +1652,7 @@ GEBacq (char *ChatFileName)
   int sup_dgs ();
   int sup_template ();
 	int sup_dgod ();
+	int sup_agod ();
   int bin_mode1 (GEB_EVENT *);
   int bin_mode2 (GEB_EVENT *);
   int bin_mode3 (GEB_EVENT *);
@@ -1659,6 +1660,7 @@ GEBacq (char *ChatFileName)
   int bin_dgs (GEB_EVENT *);
   int bin_template (GEB_EVENT *);
   int bin_dgod (GEB_EVENT *);
+  int bin_agod (GEB_EVENT *);
 
   /* allow user to declare variables here */
 
@@ -2115,6 +2117,7 @@ GEBacq (char *ChatFileName)
   sup_dgs ();
   sup_template ();
   sup_dgod ();
+  sup_agod ();
 
   printf ("we have define the following ROOT spectra:\n");
 
@@ -2422,6 +2425,9 @@ GEBacq (char *ChatFileName)
 
 			 bin_dgod (&GEB_event);
 
+			// Analog Goddess
+
+			 bin_agod (&GEB_event);
       /*-------------------------*/
           /* execute user event code */
       /*-------------------------*/

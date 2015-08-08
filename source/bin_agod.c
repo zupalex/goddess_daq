@@ -26,35 +26,60 @@ typedef struct TRACK_STRUCT
 
 extern PARS Pars;
 
-int DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent); 
-extern DFMAEVENT DFMAEvent[MAXCOINEV];
+struct AGODEVENT {
+	std::vector<short> channels;
+	std::vector<short> values;
+	unsigned long long timestamp;
+};
 
-extern int tlkup[NCHANNELS];
-extern int tid[NCHANNELS];
+int AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
+	AGODEvent->channels.clear();
+	AGODEvent->values.clear();
+
+	unsigned int readWords = 0;
+	unsigned long long timestamp = 0;
+	for (int i=0;i<len;i++) {
+		unsigned int datum = *ev++;
+		unsigned short channel = datum & 0xFFFF;
+		unsigned short value = (datum >> 16) & 0xFFFF;
+
+		if (channel >= 244 && channel <=246) {
+			timestamp |= value << 16 * (246-channel);
+		}
+		else {
+			AGODEvent->channels.push_back(channel);	
+			AGODEvent->values.push_back(value);	
+			readWords++;
+		}
+	}	
+	AGODEvent->timestamp = timestamp;	
+}
+
+AGODEVENT AGODEvent[MAXCOINEV];
+
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern int ng;
 
-TH1D *h1_god_en;
-TH2F *h2_god_en;
-TH2F *h2_dTg_god;
-TH2F *h2_g_god;
+TH1D *h1_agod_en;
+TH2F *h2_agod_en;
+TH2F *h2_dTg_agod;
+TH2F *h2_g_agod;
 
 /*-----------------------------------------------------*/
 
-int
-sup_dgod ()
+int sup_agod()
 {
   /* declarations */
 
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
-  h1_god_en = mkTH1D((char *)"god_all_en",(char *)"god_all_en",16000,0,1600000);
-  h2_god_en = mkTH2F((char *)"god_en",(char *)"god_en",16000,0,1600000,400,0,400);
+  h1_agod_en = mkTH1D((char *)"agod_all_en",(char *)"agod_all_en",4096,0,4096);
+  h2_agod_en = mkTH2F((char *)"agod_en",(char *)"agod_en",4096,0,4096,400,0,400);
 
-  h2_dTg_god = mkTH2F((char *)"dTg_god",(char *)"dTg_god",4000,-2000,2000,400,0,400);
+  h2_dTg_agod = mkTH2F((char *)"dTg_agod",(char *)"dTg_agod",4000,-2000,2000,400,0,400);
 
-  h2_g_god  = mkTH2F((char *)"g_god",(char *)"g_god",4000,0,4000,4000,0,400000);
+  h2_g_agod  = mkTH2F((char *)"g_agod",(char *)"g_agod",4000,0,4000,4000,0,400000);
 
   /* list what we have */
 
@@ -67,14 +92,12 @@ sup_dgod ()
 
 /* ----------------------------------------------------------------- */
 
-int
-bin_dgod (GEB_EVENT * GEB_event)
+int bin_agod (GEB_EVENT * GEB_event)
 {
 
   /* declarations */
 
   char str[128];
-  int i, j;
   int ndssd;
   int ndfma;
   int nfp;
@@ -84,88 +107,62 @@ bin_dgod (GEB_EVENT * GEB_event)
 
   int GebTypeStr (int type, char str[]);
 
-//if(1)return(0);
-
   if (Pars.CurEvNo <= Pars.NumToPrint)
-    printf ("entered bin_god:\n");
+    printf ("entered bin_agod:\n");
 
   ndfma = 0;
   ndssd = 0;
   nsubev = 0;
   nfp = 0;
 
+  /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
 
-
-  /* loop through the coincidence event and fish out GEB_TYPE_DFMA data */
-
-  for (i = 0; i < GEB_event->mult; i++)
-    {
-
-      if (GEB_event->ptgd[i]->type == 16)
-        {
-
-          if (Pars.CurEvNo <= Pars.NumToPrint)
-            {
-              GebTypeStr (GEB_event->ptgd[i]->type, str);
-              printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str,
-                      GEB_event->ptgd[i]->timestamp);
-            }
-
-          DFMAEvDecompose_v3 ((unsigned int *) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof (unsigned int),
-                             &DFMAEvent[nsubev]);
-
-      if(DFMAEvent[nsubev].tpe == DSSD){
-             ndssd++;
-             ndfma++;
+  for (int i = 0; i < GEB_event->mult; i++) {
+    // look for analog marker 0x13 = 19
+    if (GEB_event->ptgd[i]->type == 19) {
+      if (Pars.CurEvNo <= Pars.NumToPrint) {
+        GebTypeStr (GEB_event->ptgd[i]->type, str);
+        printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp);
       }
-      if(DFMAEvent[nsubev].tpe == FP){
-             nfp++;
-             ndfma++;
-      }
-           nsubev++;
+      AGODEvDecompose ((unsigned int *) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof (unsigned int), &AGODEvent[nsubev]);
 
-        };
-
-    };
-
-  // histogram incremantation 
-
-  for (i=0;i<nsubev;i++) {
-
-    if(DFMAEvent[i].tpe == DSSD){
-      h2_god_en->Fill(DFMAEvent[i].ehi,DFMAEvent[i].tid);
-      h1_god_en->Fill(DFMAEvent[i].ehi);
+      nsubev++;
     }
+  }
+
+  // histogram incrementation 
+  for (int i=0;i<nsubev;i++) {
+	  for (int j=0;j<AGODEvent[i].values.size();j++) {
+		  h2_agod_en->Fill(AGODEvent[i].values[j],AGODEvent[i].channels[j]);
+		  h1_agod_en->Fill(AGODEvent[i].values[j]);
+	  }
   }
 
   // time differences 
 
-  double dTg_god;
-  dTg_god = 0.0;
+  double dTg_agod;
+  dTg_agod = 0.0;
 
-  for(i=0;i<nsubev;i++){
-   if((DFMAEvent[i].LEDts > 0) && (DFMAEvent[i].tpe == DSSD) && (ng > 0)){
-
-        dTg_god = double(DGSEvent[0].event_timestamp) - double(DFMAEvent[i].LEDts);
-        h2_dTg_god->Fill(dTg_god,DFMAEvent[i].tid);
-
-     }
-    }
-
- for(i=0;i<nsubev;i++){
-  for(j=0;j<ng;j++){
-
-    dTg_god = double(DGSEvent[j].event_timestamp) - double(DFMAEvent[i].LEDts);
-    if ((DFMAEvent[i].tid==10)&&(dTg_god>260)&(dTg_god<300)) h2_g_god->Fill(DGSEvent[j].ehi,DFMAEvent[i].ehi);
-
+  for(int i=0;i<nsubev;i++) {
+   if((AGODEvent[i].timestamp > 0) && (ng > 0)) {
+    dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
+    h2_dTg_agod->Fill(dTg_agod,AGODEvent[i].channels[0]);
    }
   }
 
+  for(int i=0;i<nsubev;i++) {
+   for(int j=0;j<ng;j++) {
+    dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
+    if ((AGODEvent[i].channels[0]==10)&&(dTg_agod>260)&(dTg_agod<300)) {
+     h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[0]);
+    }
+   }
+  }
 
   /* done */
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
-    printf ("exit bin_dgod\n");
+   printf ("exit bin_agod\n");
 
   return (0);
 
