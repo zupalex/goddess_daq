@@ -1,10 +1,3 @@
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <stddef.h>
-//#include <math.h>
-//#include <string.h>
-//#include <assert.h>
-
 #include "gdecomp.h"
 #include "GEBSort.h"
 #include "GTMerge.h"
@@ -33,14 +26,18 @@ typedef struct TRACK_STRUCT
 
 extern PARS Pars;
 
-extern DFMAEVENT DFMAEvent[MAXCOINEV];
 int DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent); 
+extern DFMAEVENT DFMAEvent[MAXCOINEV];
 
 extern int tlkup[NCHANNELS];
 extern int tid[NCHANNELS];
+extern DGSEVENT DGSEvent[MAXCOINEV];
+extern int ng;
 
 TH1D *h1_god_en;
 TH2F *h2_god_en;
+TH2F *h2_dTg_god;
+TH2F *h2_g_god;
 
 /*-----------------------------------------------------*/
 
@@ -49,15 +46,15 @@ sup_dgod ()
 {
   /* declarations */
 
-  char str1[STRLEN], str2[STRLEN];
-  float pi;
-  int i;
-
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
-  h1_god_en = mkTH1D((char *)"god_all_en",(char *)"god_all_en",16000,0,160000);
-  h2_god_en = mkTH2F((char *)"god_en",(char *)"god_en",16000,0,160000,400,0,400);
+  h1_god_en = mkTH1D((char *)"god_all_en",(char *)"god_all_en",16000,0,1600000);
+  h2_god_en = mkTH2F((char *)"god_en",(char *)"god_en",16000,0,1600000,400,0,400);
+
+  h2_dTg_god = mkTH2F((char *)"dTg_god",(char *)"dTg_god",4000,-2000,2000,400,0,400);
+
+  h2_g_god  = mkTH2F((char *)"g_god",(char *)"g_god",4000,0,4000,4000,0,400000);
 
   /* list what we have */
 
@@ -77,7 +74,7 @@ bin_dgod (GEB_EVENT * GEB_event)
   /* declarations */
 
   char str[128];
-  int i;
+  int i, j;
   int ndssd;
   int ndfma;
   int nfp;
@@ -131,7 +128,7 @@ bin_dgod (GEB_EVENT * GEB_event)
 
     };
 
-  /* histogram incremantation */
+  // histogram incremantation 
 
   for (i=0;i<nsubev;i++) {
 
@@ -140,6 +137,30 @@ bin_dgod (GEB_EVENT * GEB_event)
       h1_god_en->Fill(DFMAEvent[i].ehi);
     }
   }
+
+  // time differences 
+
+  double dTg_god;
+  dTg_god = 0.0;
+
+  for(i=0;i<nsubev;i++){
+   if((DFMAEvent[i].LEDts > 0) && (DFMAEvent[i].tpe == DSSD) && (ng > 0)){
+
+        dTg_god = double(DGSEvent[0].event_timestamp) - double(DFMAEvent[i].LEDts);
+        h2_dTg_god->Fill(dTg_god,DFMAEvent[i].tid);
+
+     }
+    }
+
+ for(i=0;i<nsubev;i++){
+  for(j=0;j<ng;j++){
+
+    dTg_god = double(DGSEvent[j].event_timestamp) - double(DFMAEvent[i].LEDts);
+    if ((DFMAEvent[i].tid==10)&&(dTg_god>260)&(dTg_god<300)) h2_g_god->Fill(DGSEvent[j].ehi,DFMAEvent[i].ehi);
+
+   }
+  }
+
 
   /* done */
 
