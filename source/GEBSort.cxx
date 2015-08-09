@@ -694,7 +694,7 @@ GEBGetEv (GEB_EVENT * GEV_event, int curEvNo)
       siz = buf_read (inData, (char *) GEV_event->ptgd[ii], sizeof (GEBDATA));
       if (siz != sizeof (GEBDATA))
         {
-          printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
+          printf ("failed to read %u bytes for header, got %i\n", sizeof (GEBDATA), siz);
           return (1);
         };
       Pars.nbytes += siz;
@@ -785,7 +785,7 @@ GEBGetEv (GEB_EVENT * GEV_event, int curEvNo)
       siz = buf_read (inData, (char *) GEV_event->ptgd[ii], sizeof (GEBDATA));
       if (siz != sizeof (GEBDATA))
         {
-          printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
+          printf ("failed to read %u bytes for header, got %i\n", sizeof (GEBDATA), siz);
           return (1);
         };
       nn2++;
@@ -1765,7 +1765,7 @@ GEBacq (char *ChatFileName)
           exit (1);
         }
       else
-        printf ("input file \"%s\" is open, inData=%li\n", Pars.GTSortInputFile, inData);
+        printf ("input file \"%s\" is open, inData=%lli\n", Pars.GTSortInputFile, inData);
 
       /* find the very first GEB header to find start TS */
 
@@ -1784,7 +1784,7 @@ GEBacq (char *ChatFileName)
 
       close (inData);
       inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
-      printf ("reopened input file, inData=%li \n", inData);
+      printf ("reopened input file, inData=%lli \n", inData);
 
 #endif
 
