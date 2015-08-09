@@ -61,7 +61,8 @@ get_GEB_Type_str (int type, char str[])
     sprintf (str, "unknown");
 //      printf("type: %s\n",str);
 
-};
+  return(0);
+}
 
 /*----------------------------------------------------------------------------*/
 
@@ -187,7 +188,7 @@ print_tracked_gamma_rays (FILE * fp, TRACKED_GAMMA_HIT * grh)
 
   return (0);
 
-};
+}
 
 
 /*-----------------------------------------------------*/
@@ -200,11 +201,11 @@ printEvent (FILE * fp, int evno, TRACK_STRUCT * track)
 
   /* declarations */
 
-  int i, j, ncomptonloss = 0, i1, i2;
+  int i, j, i1, i2;
   PAYLOAD *ptinp;
   GEBDATA *ptgd;
   CRYS_INTPTS *gtinp;
-  float sum = 0, diff, r1;
+  float sum = 0, r1;
 
   /* print an event out in human readable form */
 
