@@ -28,11 +28,11 @@ typedef struct TRACK_STRUCT
 
 extern PARS Pars;
 
-struct AGODEVENT {
-	std::vector<short> channels;
-	std::vector<short> values;
-	unsigned long long timestamp;
-};
+extern AGODEVENT AGODEvent[MAXCOINEV];
+extern unsigned int numAGOD;
+
+extern DGSEVENT DGSEvent[MAXCOINEV];
+extern int ng;
 
 void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
 	AGODEvent->channels.clear();
@@ -56,11 +56,6 @@ void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
 	}	
 	AGODEvent->timestamp = timestamp;	
 }
-
-AGODEVENT AGODEvent[MAXCOINEV];
-
-extern DGSEVENT DGSEvent[MAXCOINEV];
-extern int ng;
 
 TH1D *h1_agod_en;
 TH2F *h2_agod_en;
@@ -99,7 +94,6 @@ int bin_agod (GEB_EVENT * GEB_event)
   /* declarations */
 
   char str[128];
-  int nsubev;
 
   /* prototypes */
 
@@ -108,7 +102,7 @@ int bin_agod (GEB_EVENT * GEB_event)
   if (Pars.CurEvNo <= Pars.NumToPrint)
     printf ("entered bin_agod:\n");
 
-  nsubev = 0;
+  numAGOD = 0;
 
   /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
 
@@ -117,16 +111,16 @@ int bin_agod (GEB_EVENT * GEB_event)
     if (GEB_event->ptgd[i]->type == 19) {
       if (Pars.CurEvNo <= Pars.NumToPrint) {
         GebTypeStr (GEB_event->ptgd[i]->type, str);
-        printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp);
+        //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp);
       }
-      AGODEvDecompose ((unsigned int *) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof (unsigned int), &AGODEvent[nsubev]);
+      AGODEvDecompose ((unsigned int *) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof (unsigned int), &AGODEvent[numAGOD]);
 
-      nsubev++;
+      numAGOD++;
     }
   }
 
   // histogram incrementation 
-  for (int i=0;i<nsubev;i++) {
+  for (unsigned int i=0;i<numAGOD;i++) {
 	  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 		  h2_agod_en->Fill(AGODEvent[i].values[j],AGODEvent[i].channels[j]);
 		  h1_agod_en->Fill(AGODEvent[i].values[j]);
@@ -138,7 +132,8 @@ int bin_agod (GEB_EVENT * GEB_event)
   double dTg_agod;
   dTg_agod = 0.0;
 
-  for(int i=0;i<nsubev;i++) {
+  for(unsigned int i=0;i<numAGOD;i++) {
+	//printf("AGOD: %d %d %d %d\n", i, numAGOD, ng, AGODEvent[i].values.size());
 	  if(ng > 0) {
 		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 			  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
@@ -147,7 +142,7 @@ int bin_agod (GEB_EVENT * GEB_event)
 	  }
   }
 
-  for(int i=0;i<nsubev;i++) {
+  for(unsigned int i=0;i<numAGOD;i++) {
 	  for(int j=0;j<ng;j++) {
 		if (DGSEvent[j].tpe == GE) {
 		  dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);

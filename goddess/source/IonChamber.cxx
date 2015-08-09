@@ -54,8 +54,8 @@ void IonChamber::Clear() {
  * \param[in] channel The channel of the ion chamber.
  * \param[in] rawValue The raw DAQ value.
  */
-void IonChamber::SetRawValue(unsigned int channel, int rawValue) {
-	if (channel	< anodeRaw.size()) {
+void IonChamber::SetRawValue(unsigned int channel, bool scintType, int rawValue) {
+	if (!scintType && channel	< anodeRaw.size()) {
 		anodeRaw.at(channel) = rawValue;
 		for (size_t power=0;power < parAnodeEnCal.size(); power++)
 			anodeCal.at(channel) += parAnodeEnCal.at(channel).at(power) * pow(rawValue, power);
@@ -71,8 +71,7 @@ void IonChamber::SetRawValue(unsigned int channel, int rawValue) {
 
 		E = dE + resE;
 	}
-	else if (channel < anodeRaw.size() + 2 * scintRawE.size()) {
-		channel -= anodeRaw.size();
+	else if (scintType && channel < scintRawE.size()) {
 		//We expect the energy signal and then the time.
 		if (channel % 2 == 0) {
 			//We perform integer division to get the appropriate PMT number.

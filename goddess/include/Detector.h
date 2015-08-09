@@ -13,7 +13,7 @@ class Detector : public TObject {
 		virtual ~Detector();
 
 		///Set the raw energy of the channel.
-		virtual void SetRawValue(unsigned int detectorChannel, int rawValue) = 0;
+		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, int rawValue) = 0;
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(Detector,1)

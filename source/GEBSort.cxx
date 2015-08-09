@@ -125,8 +125,10 @@ TTree *tree;//TREES...
 
 PARS Pars;
 int ng;
+unsigned int numAGOD;
 DGSEVENT DGSEvent[MAXCOINEV];
 DFMAEVENT DFMAEvent[MAXCOINEV];
+AGODEVENT AGODEvent[MAXCOINEV];
 
 
 static const int ConnectionRetryWait = 2 * 100; /* usec between con. retries. */
@@ -1596,6 +1598,7 @@ GEBacq (char *ChatFileName)
   int sup_gtcal ();
   int sup_dgs ();
   //int sup_dfma ();
+	void sup_god();
   int sup_dgod ();
   void sup_agod ();
   //int sup_phoswich ();
@@ -1609,6 +1612,7 @@ GEBacq (char *ChatFileName)
   int bin_gtcal (GEB_EVENT *);
   int bin_dgs (GEB_EVENT *);
   int bin_dfma (GEB_EVENT *);
+  void bin_god (GEB_EVENT *);
   int bin_dgod (GEB_EVENT *);
   int bin_agod (GEB_EVENT *);
   //int bin_phoswich (GEB_EVENT *);
@@ -2056,6 +2060,7 @@ GEBacq (char *ChatFileName)
   sup_gtcal ();
   sup_dgs ();
   //sup_dfma ();
+  sup_god();
   sup_dgod ();
   sup_agod ();
   //sup_phoswich ();
@@ -2348,6 +2353,9 @@ GEBacq (char *ChatFileName)
           bin_dgs (&GEB_event);
           bin_dgod  (&GEB_event);
           bin_agod  (&GEB_event);
+
+			//bin_god must come after unpacking of dgod and agod.
+			bin_god(&GEB_event);
           //bin_dfma (&GEB_event);
 
 

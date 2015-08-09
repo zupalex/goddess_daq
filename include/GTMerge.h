@@ -1,3 +1,7 @@
+#ifndef GTMERGE_H
+#define GTMERGE_H
+
+#include <vector> 
 
 #define PMODE 0644
 #define LENSP 16384
@@ -55,6 +59,12 @@
 /*---------------*/
 /* single events */
 /*---------------*/
+
+typedef struct AGODEVENT {
+	std::vector<short> channels;
+	std::vector<short> values;
+	unsigned long long timestamp;
+} AGODEVENT;
 
 
 typedef struct DGSEVENT
@@ -261,4 +271,4 @@ typedef struct DGSHEADER_struct
 
 
 
-
+#endif

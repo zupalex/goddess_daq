@@ -4,6 +4,7 @@
 /* (may be empty..........) */
 /*--------------------------*/
 
+/*
 config = new GoddessConfig("goddess.position","goddess.config");
 
 
@@ -38,4 +39,6 @@ data.Branch("orruba","ORRUBA",&orruba);
 data.Branch("sX3",superX3s);
 data.Branch("bb10",bb10s);
 data.Branch("qqq5",qqq5s);
+
+*/
 

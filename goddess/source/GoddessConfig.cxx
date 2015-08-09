@@ -30,7 +30,7 @@ GoddessConfig::GoddessConfig(std::string positionFile, std::string configFile) {
 
 GoddessConfig::~GoddessConfig() {
 	for(auto iterator = chMap.begin(); iterator != chMap.end(); iterator++) {	
-		delete (*iterator).second;
+		delete (*iterator).second.first;
 	}
 	chMap.clear();
 }
@@ -40,15 +40,16 @@ GoddessConfig::~GoddessConfig() {
  *
  * For the silicon detectors the supported types are: superX3, BB10, and QQQ5. A 
  * typical configuration would read as follows:
- * superX3 1234-56 U0dE
+ * superX3 1234-56 U0dE 13 0 19 8
  *  enCal p 0 1 2 3 
  *  enCal p 1 1 2 3 
  *  posCal resStrip 0 1 2 3 
  *
  * This configuration example defines a superX3 detector with serial number 1234-56
- * in the upstream position of sector 0 as an energy-loss detector. Following this 
- * are a list of energy or position calibrations. Each calibration specifies the 
- * subtype of the channel, either p, n or resStrip for a superX3. This is followed 
+ * in the upstream position of sector 0 as an energy-loss detector. The detctor p-type sides are
+ * connected to DAQ type 13, channel 0, and the n-type  channels are connected to DAQ type 19, 
+ * channel 8. Following this are a list of energy or position calibrations. Each calibration 
+ * specifies the subtype of the channel, either p, n or resStrip for a superX3. This is followed 
  * by the subtype channel number and then the polynomial parameters. An arbitrary 
  * number of parameters can be listed in increasing order. 
  * \note The position calibration is only available for resStrip of superX3 
@@ -56,7 +57,7 @@ GoddessConfig::~GoddessConfig() {
  *
  * Also supported, is an ion detector with a built-in scintillator. An example of a
  * typical configuration follows:
- * ion 5 4 2 3 
+ * ion 5 4 2 3 13 0 19 16 
  *  enCal anode 0 0 1 2
  *  posCal scint 0 4 5 6
  *  timeCal scint 0 2 3 4
@@ -64,7 +65,8 @@ GoddessConfig::~GoddessConfig() {
  * This configuration defines an ion chamber with 5 anodes and 4 scintillator PMTs.
  * The energy loss signal is composed of the first two anodes and the residual 
  * energy is composed of the following 3 channels. There may be more anodes read out
- * then used in computing these two values. Following this is a list of calibration
+ * then used in computing these two values. We then have the DAQ type 13, channel 0, for the anodes
+ * then DAQ type 19, channel 16, for the scintillators. Following this is a list of calibration
  * parameters for energy, position and time. This calibration lines follow the same 
  * format as the silicons with subtypes or anode and scint.
  * \note The position and time calibration are only supported for the scint subtype.
@@ -89,39 +91,44 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		//Read the first line for a detector block
 		// This line specifies the following in order:
 		// 	type serialNum positionID daqType daqCh
-		std::string type, serialNum = "", id;
-		short daqType; 
-		int daqCh;
+		std::string detType, serialNum = "", id;
 		orrubaDet *det = 0;
 
-		if (!(lineStream >> type)) {
+		if (!(lineStream >> detType)) {
 			break;
 		}
 		//Report the one we are registering.
-		std::cout << "Registering " << type << " detector: ";
+		std::cout << "Registering " << detType << " detector: ";
 
-		if (type == "ion") {
+		if (detType == "ion") {
 			int numAnode, numScint, numDE, numEres;
-			if (!(lineStream >> numAnode >> numScint >> numDE >> numEres)) {
+			int anodeDaqType, anodeDaqCh;
+			int scintDaqType, scintDaqCh;
+			if (!(lineStream >> numAnode >> numScint >> numDE >> numEres >> anodeDaqType >> anodeDaqCh >> scintDaqType >> scintDaqCh)) {
 				break;
 			}
 			std::cout << " Anodes: " << numAnode << ", Scint PMTs: " << numScint;
 			std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
 
 			ionChamber = new IonChamber(numAnode, numScint, numDE, numEres);
-			if (IsInsertable(daqType, daqCh,type)) chMap[std::make_pair(daqType,daqCh)] = ionChamber;
+			if (IsInsertable(anodeDaqType, anodeDaqCh, detType, false) && IsInsertable(scintDaqType, scintDaqCh, detType, true)) {
+				chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber,false);
+				chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber,true);
+			}
 			else 
 				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
 		}
 		else {
-			if (!(lineStream >> serialNum >> id >> daqType >> daqCh)) {
+			int pTypeDaqType, nTypeDaqType;
+			int pTypeDaqCh, nTypeDaqCh;
+			if (!(lineStream >> serialNum >> id >> pTypeDaqType >> pTypeDaqCh >> nTypeDaqType >> nTypeDaqCh)) {
 				break;
 			}
 
 			std::cout << serialNum;
 			std::cout << ", LocID: " << id;
-			std::cout << ", DAQ Type: " << daqType;
-			std::cout << ", DAQ: " << daqCh << "+\n";
+			std::cout << ", pDAQ: " << pTypeDaqType << "-" << pTypeDaqCh;
+			std::cout << ", nDAQ: " << nTypeDaqType << "-" << nTypeDaqCh << "\n";
 
 			short sector, depth;
 			bool upStream;
@@ -133,29 +140,32 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			upStream ? std::cout << "U" : std::cout << "D";
 			std::cout << ", Sector: " << sector << ", Depth: " << depth << "\n";
 
-			SolidVector pos = GetPosVector(type, sector, depth, upStream);
+			SolidVector pos = GetPosVector(detType, sector, depth, upStream);
 
 			std::cout << " Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
 			std::cout << ", RotZ: " << pos.RotZ() * TMath::RadToDeg();
 			std::cout << ", RotPhi: " << pos.RotPhi() * TMath::RadToDeg() << "\n";
 
 			//Construct object for the specified type.
-			if (type == "superX3") {	
+			if (detType == "superX3") {	
 				det = (orrubaDet*) superX3s->ConstructedAt(superX3s->GetEntries());
 			}	
-			else if (type == "BB10") {	
+			else if (detType == "BB10") {	
 				det = (orrubaDet*) bb10s->ConstructedAt(bb10s->GetEntries());
 			}	
-			else if (type == "QQQ5") {	
+			else if (detType == "QQQ5") {	
 				det = (orrubaDet*) qqq5s->ConstructedAt(qqq5s->GetEntries());
 			}
 			else {
-				std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
+				std::cerr << "ERROR: Unknown detector type: " << detType << "!\n";
 				std::cerr << " Valid options: ion, superX3, BB10, QQQ5.\n";
 				break;
 			}
 			det->SetDetector(serialNum,sector,depth,upStream, pos);
-			if (IsInsertable(daqType, daqCh,type)) chMap[std::make_pair(daqType,daqCh)] = det;
+			if (IsInsertable(pTypeDaqType, pTypeDaqCh,detType,false) && IsInsertable(nTypeDaqType, nTypeDaqCh, detType,true)) {
+				chMap[std::make_pair(pTypeDaqType,pTypeDaqCh)] = std::make_pair(det,false);
+				chMap[std::make_pair(nTypeDaqType,nTypeDaqCh)] = std::make_pair(det,true);
+			}
 			else 
 				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
 		}
@@ -176,15 +186,15 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			bool posCal = false;
 			bool timeCal = false;
 			if (calType == "posCal") {
-				if (!(type == "superX3" && subType == "resStrip") && !(type == "ion" && subType == "scint")) {
-					std::cout << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << type << " detector " << serialNum << "\n";
+				if (!(detType == "superX3" && subType == "resStrip") && !(detType == "ion" && subType == "scint")) {
+					std::cout << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
 					continue;
 				}
 				posCal = true;
 			}
 			else if (calType == "timeCal") {
-				if (!(type == "ion" && subType == "scint")) {
-					std::cout << " WARNING: Ignoring time calibration specified for " << subType << "-type part of " << type << " detector " << serialNum << "\n";
+				if (!(detType == "ion" && subType == "scint")) {
+					std::cout << " WARNING: Ignoring time calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
 					continue;
 				}
 				timeCal = true;
@@ -195,8 +205,8 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			}
 
 			//Check that the subtype is valid
-			bool nType = false;
-			if (type == "ion") {
+			bool secondaryType = false;
+			if (detType == "ion") {
 				if (subType != "scint" && subType != "anode") {
 					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
 					std::cerr << "  Valid options: anode, strip.\n";
@@ -204,7 +214,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				}
 			}
 			else {
-				if (subType == "n") nType = true;
+				if (subType == "n") secondaryType = true;
 				else if (subType != "p" && subType != "resStrip") {
 					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
 					std::cerr << "  Valid options: p, n, resStrip.\n";
@@ -232,7 +242,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			if (calParams.empty()) std::cerr << " WARNING: No calibration parameters specified for " << subType << "-type channel " << detChannel << ".\n";
 
 			///Assign the parameters to their respective container.
-			if (type == "ion") {	
+			if (detType == "ion") {	
 				if (subType == "scint") {
 					if (posCal) 
 						std::cout << " WARNING: No support for scint position calibration!\n";	
@@ -246,12 +256,12 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				}
 			}
 			else {
-				if (type == "superX3" && subType == "resStrip") {
+				if (detType == "superX3" && subType == "resStrip") {
 					if (posCal) 
 						((superX3*) det)->SetStripPosCalibPars(detChannel, calParams);
 					else ((superX3*) det)->SetStripEnCalibPars(detChannel, calParams);
 				}
-				else det->SetEnergyCalib(calParams, detChannel, nType);
+				else det->SetEnergyCalib(calParams, detChannel, secondaryType);
 			}
 
 		}
@@ -278,7 +288,7 @@ void GoddessConfig::ReadPosition(std::string filename) {
  * \param[in] type The type of detector to insert into the map.
  * \return True if there is no overlapping channels already loaded in the map.
  */
-bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string type) {
+bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, bool secondaryType) {
 	bool insertable = true;
 	std::pair<short, short> key = std::make_pair(daqType, daqCh);
 
@@ -289,12 +299,12 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string type) {
 			if (mapItr->first.first == daqType) {
 				//Get the number of channels needed for each detector.
 				int numCh = 1;
-				if (type == "superX3") numCh = 12;
-				else if (type == "BB10") numCh = 8;
-				else if (type == "QQQ5") numCh = 36;
+				if (detType == "superX3") numCh = 12;
+				else if (detType == "BB10") numCh = 8;
+				else if (detType == "QQQ5") numCh = 36;
 
 				if (daqCh + numCh > mapItr->first.second) {
-					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second);
+					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second.first);
 					if (siDet) 
 						std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " conflicts with detector " << siDet->GetSerialNum() << "\n";
 					else
@@ -309,13 +319,13 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string type) {
 			--mapItr;
 			if (mapItr->first.first == daqType)  {
 				int numCh = 1;
-				std::string checkType = mapItr->second->IsA()->GetName();
+				std::string checkType = mapItr->second.first->IsA()->GetName();
 				if (checkType == "superX3") numCh = 12;
 				else if (checkType == "BB10") numCh = 8;
 				else if (checkType == "QQQ5") numCh = 36;
 
 				if (mapItr->first.second + numCh > daqCh) {
-					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second);
+					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second.first);
 					if (siDet) 
 						std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " conflicts with detector " << siDet->GetSerialNum() << "\n";
 					else
@@ -329,40 +339,28 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string type) {
 	return insertable;
 }
 
-#if 0
-//This function is currently incomplete
 
 /**
- * \param[in] daqCh The DAQ channel to find corresponding detector channel.
- * \param[out] det The corresponding detector.
- * \param[out] channelNum The corresponding detector channel.
- * \param[out] nType If the channel is corresponding to a silicon detector and is 
- *  n-type.
  *
  */
-
-
-
-short GoddessConfig::GetMappedCh(short daqType, short digitizerCh) {
-	auto mapItr = chMap.upper_bound(std::make_pair(daqType,digitizerCh));
+Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, int rawValue) {
+	MapKey key = std::make_pair(daqType, digitizerCh);
+	auto mapItr = chMap.upper_bound(key);
 	if (mapItr == chMap.begin()) {
-		std::cerr << "ERROR: Unable to find mapped channel for DAQ ch: " << digitizerCh << "\n!";
-		return false;
+		std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << "\n!";
+		return NULL;
 	}
+
 	--mapItr;
-	std::string type = mapItr->second->IsA()->GetName();
-	int numCh = 0;
-	if (type == "superX3") numCh = 12;
-	else if (type == "BB10") numCh = 8;
-	else if (type == "QQQ5") numCh = 36;
-	else {
-		std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
-	}
-	
-	return(0);
+	Detector *det = mapItr->second.first;
+	bool secondaryType = mapItr->second.second;
+	int detCh = digitizerCh - mapItr->first.second;
+
+	det->SetRawValue(detCh, secondaryType, rawValue);
+
+	return det;
 	
 }
-#endif
 
 /**Parse the id string describing the detector position int he barrel. The id is 
  * composed of the following:

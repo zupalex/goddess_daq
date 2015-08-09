@@ -4,7 +4,7 @@
 #include <map>
 #include <utility>
 #include <string>
-#include "orrubaDet.h"
+#include "Detector.h"
 #include "TClonesArray.h"
 #include "IonChamber.h"
 
@@ -18,7 +18,8 @@ class GoddessConfig {
 		void ReadPosition(std::string filename);
 
 		///Map of channels to silicon detector.
-		std::map<std::pair<short, short>, Detector*> chMap;
+		std::map<std::pair<short, short>, std::pair<Detector*, bool>> chMap;
+		typedef std::pair<short, short> MapKey;
 
 		///Pointer to array of registered superX3 detectors.
 		TClonesArray *superX3s;
@@ -30,7 +31,7 @@ class GoddessConfig {
 		IonChamber *ionChamber;
 		
 		///Check if this type of detector is insertable in the channel map at the specified postion.
-		bool IsInsertable(short daqType, int daqCh, std::string type);
+		bool IsInsertable(short daqType, int daqCh, std::string type, bool secondaryType);
 
 	public:
 		///Default constructor.
@@ -39,7 +40,7 @@ class GoddessConfig {
 		~GoddessConfig();
 
 		///Gets the detector and contact number for the specified digitizer channel.
-		short GetMappedCh(short daqType, short digitizerCh);
+		Detector* SetRawValue(short daqType, short digitizerCh, int rawValue);
 
 		///Parse and id string to get position details.
 		bool ParseID(std::string id, short& sector, short& depth, bool& upStream);
