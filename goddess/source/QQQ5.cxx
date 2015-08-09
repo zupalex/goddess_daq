@@ -120,7 +120,11 @@ void QQQ5::Clear() {
  * \param[in] nType Whether the contact was n Type.
  */
 void QQQ5::SetRawValue(unsigned int contact, bool nType, int rawValue) {
-	if (!ValidContact(contact, nType)) return;
+	if (!ValidContact(contact, nType)) {;
+		char type = 'p';
+		if (nType) type = 'n';
+		std::cerr << "ERROR: Unable to set raw value for QQQ5 " << serialNum << " " << type << "-type contact: " << contact << "!\n";
+	}
 
 	//Call parent method to handle calibration.
 	siDet::SetRawValue(contact, nType, rawValue);

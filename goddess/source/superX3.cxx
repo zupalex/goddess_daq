@@ -188,7 +188,7 @@ void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 	if (!ValidContact(contact, nType)) {
 		char type = 'p';
 		if (nType) type = 'n';
-		std::cerr << "ERROR: Unable to set raw value for " << type << "-type contact: " << contact << "!\n";
+		std::cerr << "ERROR: Unable to set raw value for Super X3 " << serialNum << " " << type << "-type contact: " << contact << "!\n";
 		return;
 	}
 
