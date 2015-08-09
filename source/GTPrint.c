@@ -18,7 +18,7 @@ GTPrintEvent2 (FILE * fp, int ii, DGSEVENT * DGSEvent)
 
   /* declarations */
 
-  int i;
+  //int i; //not used in this function, fixing warning
 
   /* print event */
 
@@ -187,7 +187,7 @@ GTPrintHeader (FILE * fp, GTEVENT * Event)
       fprintf (fp, "|");
       for (k = 0; k < 16; k++)
         {
-          if ((Event->hdr[i] & j) == j)
+          if ((static_cast<int>(Event->hdr[i]) & j) == j)
             fprintf (fp, "1");
           else
             fprintf (fp, "0");
