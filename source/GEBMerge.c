@@ -214,7 +214,7 @@ GTGetDiskEv (int FileNo, int storeNo)
 #endif
   if (siz != sizeof (GEBDATA))
     {
-      printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
+      printf ("failed to read %u bytes for header, got %i\n", sizeof (GEBDATA), siz);
 
       return (1);
     };
@@ -544,7 +544,7 @@ main (int argc, char **argv)
           CheckNoArgs (nret, 2, str);
           assert (size <= MAXBIGBUFSIZ);
           //r1 = (size * sizeof (EVENT) + (size + 1) * sizeof (int)) / 1024.0 / 1024.0;
-          printf ("sizeof(EVENT)= %lu\n", sizeof (EVENT));
+          printf ("sizeof(EVENT)= %u\n", sizeof (EVENT));
           printf ("will use a bigbuffer size of %i, or %7.3f MBytes\n", size, r1);
         }
       else if ((p = strstr (str, "nprint")) != NULL)
