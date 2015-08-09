@@ -23,7 +23,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 #Use nice color output
 if (CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-but-set-variable -pedantic")
 endif()
 
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")

@@ -177,8 +177,8 @@ void getEn2(int t0, short int trace[], int trlen, float &e0, int m, int k, int n
 
   int i;
   float ebl;
-  float s1,s2;
-  float corr;
+  //float s1,s2;//unused
+  //float corr;//unused
 
   
   ebl=0;
@@ -217,8 +217,8 @@ void GetPUEn(int t1, int t0, int trace[], int trlen, float &e0, float &e1, int m
 
    //int tr[1000];
    float ebl;
-   float s1, s2;
-   float corr;
+   //float s1, s2;//unused
+   //float corr;//unused
    float dt;
    int iw0, iw1;
    int i;

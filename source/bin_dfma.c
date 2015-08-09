@@ -222,8 +222,8 @@ struct pixel_type dssd_back[NUMBA+1];
 
 
 
-//>>>>>>>>>>>>>>>>>>\\
-// RING BUFFER CODE \\
+//>>>>>>>>>>>>>>>>>>
+// RING BUFFER CODE 
 
 #define RBUFFSIZE 5
 
@@ -301,7 +301,7 @@ struct pixel_buffer_type pixel_buff[101][101];
 struct pixel_buffer_type front_buff[101];
 struct pixel_buffer_type back_buff[101];
 
-//*********************************************************\\
+//*********************************************************
 
 
 void DSSDBuffer_put (dssd_buffer_type *_this, dssd_type &c)
@@ -316,9 +316,9 @@ void DSSDBuffer_put (dssd_buffer_type *_this, dssd_type &c)
    
 }
 
-//*********************************************************\\
+//*********************************************************
 
-//*********************************************************\\
+//**********************************************************
 
 void RBuffer_init (recoil_buffer_type *_this)
 {
@@ -332,7 +332,7 @@ void RBuffer_init (recoil_buffer_type *_this)
     memset (_this, 0, sizeof (*_this));
 
 }
-//*********************************************************\\
+//**********************************************************
 
 void DBuffer_init (decay_buffer_type *_this)
 {
@@ -347,7 +347,7 @@ void DBuffer_init (decay_buffer_type *_this)
 
 }
 
-//*********************************************************\\
+//**********************************************************
 
 int RBuffer_empty (recoil_buffer_type *_this)
 {
@@ -356,7 +356,7 @@ int RBuffer_empty (recoil_buffer_type *_this)
 }
 
 
-//*********************************************************\\
+//**********************************************************
 
 int RBuffer_full (recoil_buffer_type *_this)
 {    
@@ -364,7 +364,7 @@ int RBuffer_full (recoil_buffer_type *_this)
     return (_this->count>=RBUFFSIZE);
 }
 
-//*********************************************************\\
+//**********************************************************
 
 void RBuffer_put (recoil_buffer_type *_this, recoil_type &c)
 {
@@ -378,7 +378,7 @@ void RBuffer_put (recoil_buffer_type *_this, recoil_type &c)
    
 }
 
-//*********************************************************\\
+//**********************************************************
 
 void DBuffer_put (decay_buffer_type *_this, decay_type &c)
 {
@@ -392,7 +392,7 @@ void DBuffer_put (decay_buffer_type *_this, decay_type &c)
    
 }
 
-//*********************************************************\\
+//**********************************************************
 
 int lookback (int P, int M){
 
@@ -546,7 +546,7 @@ Pars.f1->cd();
 treef->Close();
 #endif
 
-
+ return (0);
 }
 
 /*-----------------------------------------------------*/
@@ -556,11 +556,11 @@ sup_dfma ()
 {
 
 #if(1)
-  // declarations \\
+  // declarations *
 
 
-  char str1[STRLEN], str2[STRLEN];
-  float pi;
+  //char str1[STRLEN], str2[STRLEN];//unused
+  //float pi;//unused
   int i,j;
 
   TH1D *mkTH1D (char *, char *, int, double, double);
@@ -585,7 +585,7 @@ strcpy(presortFile,"TREE_FILES/new_presort.");
     i--;
   }
 
-for (j=i+1;j<strlen(Pars.ROOTFile);j++) {
+  for (j=i+1;j< static_cast<int>(strlen(Pars.ROOTFile)) ;j++) {
   onechar[0]=Pars.ROOTFile[j];
   onechar[1]='\0';
   strcat(presortFile,onechar);
@@ -624,9 +624,9 @@ tree->Branch("dec3",&chain.decay[2],"ts/l:en/i:pu_fr/i:pu_ba/i:time/l:traceLen/i
 
 ////TREES...
 
-//**************************\\
-// Histogram initialisation \\
-//**************************\\
+//***************************
+// Histogram initialisation *
+//***************************
 
 // LIKE USERINIT.H!!!
 
@@ -766,13 +766,13 @@ h2_e3t3log = mkTH2F((char *)"e3t3log",(char *)"e3t3log",600,-30000,30000,200,0,2
 //h2_e3t3c4 = mkTH2F((char *)"e3t3c4",(char *)"e3t3c4",600,-30000,30000,1000,0,1000);
 
 
-//<><><><><><><><><><><><>\\
-//        MAPFILES        \\ 
-//<><><><><><><><><><><><>\\
+//<><><><><><><><><><><><>*
+//        MAPFILES        * 
+//<><><><><><><><><><><><>*
 
 
 FILE *fmap1;
-char fmapname1[32];
+//char fmapname1[32];//unused
 
 int strip, phystrip, thr, baseline;
 float off, gain;
@@ -840,9 +840,9 @@ fclose(fmap1);
 
 
 
-//******************\\
-// MAP FILE map.dat \\
-//******************\\
+//*******************
+// MAP FILE map.dat *
+//*******************
 
   char str[STRLEN];
   int i1, i2, i7, i8;
@@ -883,8 +883,8 @@ fclose(fmap1);
 
 #endif
 
-
-};
+  return (0);
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -899,8 +899,8 @@ DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent)
  /* firmware circa Sept 2014 */
 
   /* declarations */
-
-  int i, k, i1;
+  //int il;//unused
+  int i, k;
   unsigned int ui0 = 0, ui1 = 0, ui2 = 0;
   unsigned int PRE_RISE_SUM = 0, POST_RISE_SUM = 0;
   int rawE;
@@ -1135,7 +1135,7 @@ DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent)
 }
 
 
-//*********************************************************\\
+//**********************************************************
 
 
 int
@@ -1161,16 +1161,17 @@ bin_dfma (GEB_EVENT * GEB_event)
   float cal_e;
 
   char strg[128];
-  int i, j, ii, jj;
+  //int ii;//unused
+  int i, j, jj;
   int ndssd;
   int ndfma;
   int nfp;
   int nsubev;
-  int trn[100];
-
-  for(i=0;i<100;i++){
-    trn[i] = 0;
-  }
+  //int trn[100];//unused
+ 
+  //for(i=0;i<100;i++){
+  // trn[i] = 0;
+  //}
 
   int GebTypeStr (int type, char strg[]);
 
@@ -1179,9 +1180,9 @@ bin_dfma (GEB_EVENT * GEB_event)
     printf ("entered bin_dfma:\n");
   }
 
-  //********************************************************************\\
-  // loop through the coincidence event and fish out GEB_TYPE_DFMA data \\
-  //********************************************************************\\
+  //*********************************************************************
+  // loop through the coincidence event and fish out GEB_TYPE_DFMA data *
+  //*********************************************************************
 
   ndfma = 0;
   ndssd = 0;
@@ -1231,7 +1232,7 @@ if(Pars.CurEvNo%10000 == 0) printf("Processing event number %i with timestamp %l
 
 if(firstge) { t_firstge = DGSEvent[0].event_timestamp; firstge = false; }
 
-long long int tmp1, tmp2;
+//long long int tmp1, tmp2;//unused
 
 
 
@@ -1244,23 +1245,23 @@ long long int tmp1, tmp2;
 
 
    // NEW STUFF HERE>>>>>>>>>>
-int l_num_bkgd, l_num_sig;
-l_num_bkgd = 95;
-l_num_sig = 400;
-float l_bkgdsum, l_signal, l_avgbkgd;
-l_bkgdsum = 0.0;
-l_signal = 0.0;
-l_avgbkgd = 0.0;
+//int l_num_bkgd, l_num_sig;//unused
+//l_num_bkgd = 95;//unused
+//l_num_sig = 400;//unused
+//float l_bkgdsum, l_signal, l_avgbkgd;//unused
+//l_bkgdsum = 0.0;//unused
+//l_signal = 0.0;//unused
+//l_avgbkgd = 0.0;//unused
 float cl_int;
 cl_int = 0;
 
-int r_num_bkgd, r_num_sig;
-r_num_bkgd = 95;
-r_num_sig = 350;
-float r_bkgdsum, r_signal, r_avgbkgd;
-r_bkgdsum = 0.0;
-r_signal = 0.0;
-r_avgbkgd = 0.0;
+//int r_num_bkgd, r_num_sig; //unused
+//r_num_bkgd = 95;//unused
+//r_num_sig = 350;//unused
+//float r_bkgdsum, r_signal, r_avgbkgd;//unused
+//r_bkgdsum = 0.0;//unused
+//r_signal = 0.0;//unused
+//r_avgbkgd = 0.0;//unused
 float cr_int;
 cr_int = 0;
 
@@ -1292,9 +1293,9 @@ int gate = 0;
 
 
 
-//<><><><><><><><><><><><><><><><><>\\
-// Dig out DSSD event and calibrate \\
-//<><><><><><><><><><><><><><><><><>\\
+//<><><><><><><><><><><><><><><><><>*
+// Dig out DSSD event and calibrate *
+//<><><><><><><><><><><><><><><><><>*
 
 
 for (i=0;i<nsubev;i++) {
@@ -1339,9 +1340,9 @@ for (i=0;i<nsubev;i++) {
 }
 
 
-//<><><><><><><><><><><><><><><><><><><><><><><\\
-// Time difference between DSSD front and back \\
-//<><><><><><><><><><><><><><><><><><><><><><><\\
+//<><><><><><><><><><><><><><><><><><><><><><><*
+// Time difference between DSSD front and back *
+//<><><><><><><><><><><><><><><><><><><><><><><*
 
 signed long long int tdssd_fr;
 signed long long int tdssd_ba;
@@ -1370,9 +1371,9 @@ if(dssd_fr_emax != 0 && dssd_ba_emax != 0){
 
 
 
-//<><><><><><><><><><><><><>\\
-// Dig out focal plane data \\
-//<><><><><><><><><><><><><>\\
+//<><><><><><><><><><><><><>*
+// Dig out focal plane data *
+//<><><><><><><><><><><><><>*
 
 
 signed long long int tdssdmcp_fr;
@@ -1388,9 +1389,9 @@ tdssdmcp_ba_r = 0;
 int left_subev = 0;
 int right_subev = 0;
 
-int letrace[MCPTRLEN+1];
-int let0 = 0;
-int let1 = 0;
+//int letrace[MCPTRLEN+1];//unused
+//int let0 = 0;//unused
+//int let1 = 0;//unused
 
 #if(1)
 
@@ -1398,9 +1399,9 @@ for (i=0;i<nsubev;i++) {
   
   switch (DFMAEvent[i].tpe) {
     
-         //-------------\\
-         // Focal Plane \\
-         //-------------\\
+         //-------------*
+         // Focal Plane *
+         //-------------*
 
 	 case FP:
 
@@ -1555,9 +1556,9 @@ for (i=0;i<nsubev;i++) {
 
 #endif
 
-//<><><><><><><><><><><><><><><><><><>\\
-//  Make deltaT between DGS and DFMA  \\
-//<><><><><><><><><><><><><><><><><><>\\
+//<><><><><><><><><><><><><><><><><><>*
+//  Make deltaT between DGS and DFMA  *
+//<><><><><><><><><><><><><><><><><><>*
 
 double dTgdssd;
 dTgdssd = 0.0;
@@ -1658,9 +1659,9 @@ if(DFMAEvent[right_subev].LEDts > 0){
 
 
 
-//<><><>\\
-// MWPC \\
-//<><><>\\
+//<><><>*
+// MWPC *
+//<><><>*
 
 h1_esi->Fill(esi);
 
@@ -1756,9 +1757,9 @@ if(cl != 0 || cr != 0){
   // printf("\nTest2, event number %i\n",Pars.CurEvNo);
 
 
-//********************************\\
-// Now decide if recoil or decay! \\
-//********************************\\
+//*********************************
+// Now decide if recoil or decay! *
+//*********************************
 
 int r_fr_emax, r_ba_emax;
 int s_r_fr, s_r_ba;
@@ -1794,7 +1795,7 @@ int fd_fr_emax2;
 
 
 fd_fr_ts = 0;
-fd_fr_ts2;
+fd_fr_ts2 = 0;
 fd_fr_emax2 = 0;
 fd_fr_emax = 0;
 fd_ba_emax = 0;
@@ -1804,17 +1805,17 @@ r_ba_emax = 0;
 s_r_fr = 0;
 s_r_ba = 0;
 r_fr_subev = 0;
-r_ba_subev = 0;
+r_ba_subev = 0; 
 r_fr_PU = 0;
 r_ba_PU = 0;
 r_fr_trace_len = 0;
-r_ba_trace_len = 0;
+r_ba_trace_len = 0; 
 r_fr_d2t0 = 0;
-r_ba_d2t0 = 0;
+r_ba_d2t0 = 0; 
 r_fr_d2t1 = 0;
-r_ba_d2t1 = 0;
+r_ba_d2t1 = 0; 
 r_fr_d2t2 = 0;
-r_ba_d2t2 = 0;
+r_ba_d2t2 = 0; 
 for(i=0;i<1000;i++){
   r_fr_trace[i] = 0;
   r_ba_trace[i] = 0;
@@ -1822,20 +1823,20 @@ for(i=0;i<1000;i++){
   d_ba_trace[i] = 0;
 } 
 r_fr_ts = 0;
-r_ba_ts = 0;
+r_ba_ts = 0; 
 
 d_fr_emax = 0;
 d_ba_emax = 0;
 s_d_fr = 0;
 s_d_ba = 0;
-s_d_fr_phys = 0;
-s_d_ba_phys = 0;
-d_fr_subev = 0;
-d_ba_subev = 0;
+s_d_fr_phys = 0; 
+s_d_ba_phys = 0; 
+d_fr_subev = 0; 
+d_ba_subev = 0; 
 d_fr_PU = 0;
 d_ba_PU = 0;
-d_fr_trace_len = 0;
-d_ba_trace_len = 0;
+d_fr_trace_len = 0; 
+d_ba_trace_len = 0; 
 d_fr_d2t0 = 0;
 d_ba_d2t0 = 0;
 d_fr_d2t1 = 0;
@@ -1856,9 +1857,9 @@ s_fd_ba = 0;
 
 if((dssd_fr_emax != 0) && (dssd_ba_emax != 0)){
 
-   //**********************\\
-   // Condition for recoil \\
-   //**********************\\
+   //***********************
+   // Condition for recoil *
+   //***********************
 
    if((cl != 0) || (cr != 0)){
    //if((dssd_fr_emax >= 15000) && (dssd_ba_emax >= 15000)){
@@ -1887,13 +1888,13 @@ if((dssd_fr_emax != 0) && (dssd_ba_emax != 0)){
       for (j=0;j<DFMAEvent[dssd_ba_subev].traceLen;j++) r_ba_trace[j]= DFMAEvent[dssd_ba_subev].trace[j];
    
 
-               //****************************\\
-               // DEALING WITH RECOIL PILEUP \\
-               //****************************\\
+               //*****************************
+               // DEALING WITH RECOIL PILEUP *
+               //*****************************
 
-               //****************************\\
+               //*****************************
                // TWO-SIDED CORRELATIONS...
-               //****************************\\
+               //*****************************
 
                /*
 
@@ -1987,9 +1988,9 @@ if((dssd_fr_emax != 0) && (dssd_ba_emax != 0)){
     
         }
 
-   //*************************\\
-   // Condition for decays..  \\
-   //*************************\\
+   //**************************
+   // Condition for decays..  *
+   //**************************
 
    if((cl == 0) && (cr == 0)){
    //if(dssd_fr_emax < 8000){
@@ -2017,9 +2018,9 @@ if((dssd_fr_emax != 0) && (dssd_ba_emax != 0)){
    
            
             
-               //***************************\\
-               // DEALING WITH DECAY PILEUP \\
-               //***************************\\
+               //****************************
+               // DEALING WITH DECAY PILEUP *
+               //****************************
 
                /*
                if ((d_fr_PU > 1)&&(d_ba_PU > 1))  dec_PU = 1; 
@@ -2052,7 +2053,6 @@ if((dssd_fr_emax != 0) && (dssd_ba_emax != 0)){
                   fd_fr_ts=d_fr_ts+curt1s[s_d_fr]-curt0s[s_d_fr];
 
 
-                 //******************
                  // back energies
 
 
@@ -2081,9 +2081,9 @@ if((dssd_fr_emax != 0) && (dssd_ba_emax != 0)){
 
 #endif
 
-//<><><><><><><><><><><><><><><><>\\
-// DSSD hit patterns and energies \\
-//<><><><><><><><><><><><><><><><>\\
+//<><><><><><><><><><><><><><><><>*
+// DSSD hit patterns and energies *
+//<><><><><><><><><><><><><><><><>*
 
 if(s_r_fr != 0 && s_r_ba != 0) h2_r_hitxy->Fill(s_r_fr,s_r_ba);
 if(s_d_fr != 0 && s_d_ba != 0) h2_d_hitxy->Fill(s_d_fr,s_d_ba);
@@ -2142,15 +2142,15 @@ printf("s_d_fr: %i, s_d_ba: %i\n",s_d_fr,s_d_ba);
 
 
 
-//<><><><><><><><><><><><><><><><><><><>\\
-//				        \\
-// ******** Correlations Code ********* \\
-//				        \\
-//<><><><><><><><><><><><><><><><><><><>\\
+//<><><><><><><><><><><><><><><><><><><>*
+//				        *
+// ******** Correlations Code ********* *
+//				        *
+//<><><><><><><><><><><><><><><><><><><>*
 
-//<><><><><><><><><><>\\
-// Recoil correlation \\
-//<><><><><><><><><><>\\
+//<><><><><><><><><><>*
+// Recoil correlation *
+//<><><><><><><><><><>*
 
 if((s_r_fr != 0) && (s_r_ba != 0)){
 
@@ -2298,9 +2298,9 @@ if((s_r_fr != 0) && (s_r_ba != 0)){
 
 
 
-//<><><><><><><><><><>\\
-// Decay correlations \\
-//<><><><><><><><><><>\\
+//<><><><><><><><><><>*
+// Decay correlations *
+//<><><><><><><><><><>*
 
 int dtmin = 80; // 200;// was 80 //50 for 2us
 int dtmax = 130; // 250;// was 130  // 90 for 2us
@@ -2630,9 +2630,9 @@ while (decEv==1||fdecEv!=0) {
 
 
 
-//<><><><><><><><>\\
-// Singles gammas \\
-//<><><><><><><><>\\
+//<><><><><><><><>*
+// Singles gammas *
+//<><><><><><><><>*
 
   // printf("\nTest4, event number %i\n",Pars.CurEvNo);
 
@@ -2654,9 +2654,9 @@ for(i=0;i<ng;i++){
 #endif
 
 
-//<><><><><><><><><><><><><>\\
-// Recoil-correlated gammas \\
-//<><><><><><><><><><><><><>\\
+//<><><><><><><><><><><><><>*
+// Recoil-correlated gammas *
+//<><><><><><><><><><><><><>*
 
 
 
@@ -2715,9 +2715,9 @@ if(cl != 0 || cr != 0){
 #endif
 
 
-//<><><><><><><><><>\\
-// Print statements \\
-//<><><><><><><><><>\\
+//<><><><><><><><><>*
+// Print statements *
+//<><><><><><><><><>*
 
 if (Pars.CurEvNo <= Pars.NumToPrint){
 
@@ -2734,7 +2734,7 @@ printf("Print statements at end of bin_dfma\n");
       printf ("tpe=%i; ", DGSEvent[i].tpe);
       printf ("tid=%i; ", DGSEvent[i].tid);
       printf ("EventTS=%llu; ", DGSEvent[i].event_timestamp);
-      printf ("ehi=%i ", DGSEvent[i].ehi);
+      printf ("ehi=%f ", DGSEvent[i].ehi);
       printf ("\n\n\n");
 
    
@@ -2772,6 +2772,8 @@ printf("Print statements at end of bin_dfma\n");
  
 
 #endif
+
+  return (0);
 }
 
 
