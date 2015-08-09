@@ -38,7 +38,7 @@ int hribfBuffer::ReadEvent(bool verbose) {
 			if (verbose) printf("\t%#06X Trailer\n",datum);
 			break;
 		}
-		UShort_t channel = datum & 0xFF;
+		UShort_t channel = datum & 0x7FFF;
 		UShort_t value = datum >> 16;
 
 		if (verbose) {

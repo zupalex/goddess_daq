@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	const int type = 19;
 
 	//The parameter numbers of the MYRIAD timestamp, low to high bits.
-	const unsigned short myriadParam[3]  = {246,245,244};
+	const unsigned short myriadParam[3]  = {502,501,500};
 	
 	unsigned int eventCnt=0;
 	unsigned int myriadFailCnt = 0;
