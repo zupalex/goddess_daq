@@ -123,4 +123,9 @@ void IonChamber::SetScintTimeCalPars(int ch, std::vector<float> pars) {
 		parScintTimeCal.at(ch) = pars;
 }
 
+int IonChamber::GetNumChannels(bool scintType) {
+	if (scintType) return scintRawE.size();
+	return anodeRaw.size();
+}
+
 ClassImp(IonChamber)

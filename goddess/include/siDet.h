@@ -52,6 +52,9 @@ class siDet : public Detector {
 		float GetCalEnergy(int contact, bool nType = false);
 		///Return the number of fired contacts.
 		int GetContactMult(bool nType = false);
+	
+		///Return the number of channels of the type specified.
+		int GetNumChannels(bool nType);
 
 		///Specify the polynomial calibration parameters of the specified contact.
 		bool SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);

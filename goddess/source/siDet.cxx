@@ -112,5 +112,10 @@ bool siDet::SetEnergyCalib(std::vector<float> par, int contact, bool nType/*=fal
 	return true;
 }
 
+int siDet::GetNumChannels(bool nType) {
+	if (nType) return enRawN.size();
+	return enRawP.size();
+}
+
 
 ClassImp(siDet)
