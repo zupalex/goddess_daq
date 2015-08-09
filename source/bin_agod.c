@@ -81,7 +81,7 @@ void sup_agod()
 
   h2_dTg_agod = mkTH2F((char *)"dTg_agod",(char *)"dTg_agod",4000,-2000,2000,400,0,400);
 
-  h2_g_agod  = mkTH2F((char *)"g_agod",(char *)"g_agod",4000,0,4000,4000,0,400000);
+  h2_g_agod  = mkTH2F((char *)"g_agod",(char *)"g_agod",4000,0,4000,4096,0,4096);
 
   /* list what we have */
 
