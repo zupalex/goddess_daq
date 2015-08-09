@@ -373,7 +373,7 @@ GebTypeStr (int type, char str[])
 
   return (0);
 
-};
+}
 
 /*----------------------------------------------------------------------------*/
 int
@@ -386,14 +386,11 @@ buf_read (off_t inData, char *buf, int nbytes)
 
 /* declarations */
 
-  ssize_t st;
-  int partread, l, ntries;
-  struct GEBData *tmpData, *tmpStore;
+
+  int partread;
+  struct GEBData;
   static int bpos = RBUFSIZE, ActualBufSize;
   static int bleft = 0;
-  char str[64];
-  unsigned int *pi4;
-  int i, bstart;
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
     printf ("buf_read called, asked for %i byte, have %i bytes left in buffer, bpos=%i\n", nbytes, bleft, bpos);
@@ -660,7 +657,7 @@ buf_read (off_t inData, char *buf, int nbytes)
 
   return (nbytes);
 
-};
+}
 
 /*----------------------------------------------------------------------------*/
 
@@ -670,9 +667,9 @@ GEBGetEv (GEB_EVENT * GEV_event, int curEvNo)
 
   /* declarations */
 
-  static int nn = 0, ii = 0, nx = 0, nbadTS = 0, firsttime = 1;
-  int siz, val, i1, i, stType;
-  static int newbuf = 1, *pos;
+  static int nn = 0, ii = 0, nbadTS = 0, firsttime = 1;
+  int siz, i1;
+  int stType = 0;
   long long int TS, dTS;
   char str[256];
 
@@ -927,7 +924,7 @@ main (int argc, char **argv)
   char ChatFileName[STRLEN];
   int GEBacq (char *);
   int time_stamp ();
-  char str2[STRLEN], str3[STRLEN], str4[STRLEN];
+  char str2[STRLEN], str3[STRLEN];
 
 
   /*------*/
@@ -966,7 +963,7 @@ main (int argc, char **argv)
           Pars.SEGcal_gain[i][j] = 1.0;
           Pars.SEGcal_offset[i][j] = 0.0;
         };
-    }
+    };
 
   /*--------------------*/
   /* Parse command line */
@@ -1182,19 +1179,19 @@ GEBSort_read_chat (char *name)
   /* declarations */
 
   FILE *fp, *fp1;
-  char *pc, *pc1, str[STRLEN] = { '0' }, str1[STRLEN] =
+  char *pc, str[STRLEN] = { '0' }, str1[STRLEN] =
   {
   '0'}, str2[STRLEN] =
   {
   '0'};
-  char str3[STRLEN], str4[STRLEN], str5[STRLEN], str6[STRLEN];
-  int nn = 0, nni = 0, st, PType;
+ 
+  int nn = 0, nni = 0, st;
   char *p;
-  int i, k, i1, i2, i3, i4, i5, i6;
-  int j1, j2, j3, j4, j5, j6, j7;
-  float f1, f2, f3, f4, pi, r1, r2, rr;
+  int i1, i2;
+  
+  float r1, r2, rr;
   int echo = 0, nret;
-  double d1;
+
 
   /* prototypes */
 
@@ -1514,7 +1511,7 @@ GEBSort_read_chat (char *name)
   fflush (stdout);
   return (0);
 
-};
+}
 
 
 /*----------------------------------------------------------------------------*/
@@ -1535,7 +1532,7 @@ showStatus ()
 
   return (0);
 
-};
+}
 
 /*----------------------------------------------------------------------------*/
 
@@ -1554,19 +1551,14 @@ GEBacq (char *ChatFileName)
 
   int NprintEvNo = 0, in, zero = 0;
   GEB_EVENT GEB_event;
-  int st = 0, eov = 0, nWords = 0, i1, i2, i, j, nret, siz;
-  int ii, jj;
+  int st = 0, eov = 0, i1, i2, i, j, nret, siz;
   char str[256], str1[256], str2[246];
   FILE *fp;
   time_t t1, t2;
-  Int_t ComPressLevel = NOTDEF;
   char *p, buffer[512];
   FILE *fp0;
   int ir[NUMAGATAPOS], dummy_i[NUMAGATAPOS];;
-  double rn, dtmpehi, d1, nsec;
-  DGSHEADER dgsHeader;
-  long long int tac, tFP;
-  int nFP;
+  double d1, nsec;
   float r1, r2, r3;
   static int firsttime = 1;
   static long long int t0, TSprev = 0;
@@ -1575,8 +1567,8 @@ GEBacq (char *ChatFileName)
   FILE *TSfile;
   TH2F *dtbtev;
   long long int firtsTSinEvent, dTS;
-  int dim;
-  float rr[LONGLEN + 1];
+//  int dim;
+//  float rr[LONGLEN + 1];
 
 //  ConnectionRetryCount = 10;
 
@@ -1589,11 +1581,6 @@ GEBacq (char *ChatFileName)
   TIterator *hiterator;
 
   TMapFile *mfile;
-
-  TH1D *tmpTH1D = NULL;
-  TH2F *tmpTH2F = NULL;
-
-
 
   /* prototypes */
 
@@ -1774,7 +1761,7 @@ GEBacq (char *ChatFileName)
           exit (1);
         }
       else
-        printf ("input file \"%s\" is open, inData=%lli\n", Pars.GTSortInputFile, inData);
+        printf ("input file \"%s\" is open, inData=%li\n", Pars.GTSortInputFile, inData);
 
       /* find the very first GEB header to find start TS */
 
@@ -1793,7 +1780,7 @@ GEBacq (char *ChatFileName)
 
       close (inData);
       inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
-      printf ("reopened input file, inData=%lli \n", inData);
+      printf ("reopened input file, inData=%li \n", inData);
 
 #endif
 
@@ -1965,7 +1952,7 @@ GEBacq (char *ChatFileName)
   /*------------------------------------------*/
 
 
-  if (!Pars.UseShareMemFile)
+  if (!Pars.UseShareMemFile){
     if (Pars.UpdateRootFile)
       {
 	
@@ -2011,11 +1998,11 @@ GEBacq (char *ChatFileName)
 	printf ("base=<%s>\n", Pars.f1->GetPath ());
 	Pars.f1->Print ();
       };
-  
+  }
   printf ("\n");
   printf ("executing UserInit.h code\n");
   printf ("\n");
-#include "UserInit.h"
+
 
   /* update shared mem with minimal info       */
   /* so it is not empty before the first update */
@@ -2469,7 +2456,7 @@ GEBacq (char *ChatFileName)
                     {
                       zlist = mfile->GetDirectory ()->GetList ();
                       hiterator = zlist->MakeIterator ();
-                      while (hhtemp = (TH1 *) hiterator->Next ())
+                      while ((hhtemp = (TH1 *) hiterator->Next ()))
                         {
                           hhtemp->Reset ();
                         }
@@ -2588,12 +2575,14 @@ GEBacq (char *ChatFileName)
   fflush (stdout);
 
   /* write the tracked spectrum in spe format as well */
-
+/*
   dim = LONGLEN;
+
   for (i = 0; i < dim; i++)
     {
       rr[i] = (float) sumTrackE->GetBinContent (i);;
     };
+*/
   sprintf (str, "sumTrackE.spe");
   //wr_spe (str, &dim, rr); DS change 7/31/2015
 

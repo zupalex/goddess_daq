@@ -177,7 +177,7 @@ typedef struct TRACKED_GAMMA_HIT {
   t2 = time(NULL); \
   printf("done! "); \
   printf("shared memory size: %i\n", mfile->GetSize()); \
-  printf("update time: %i seconds ", t2 - t1); \
+  printf("update time: %li seconds ", t2 - t1); \
   printf("at %7.2f Mbytes/sec\n", (float) mfile->GetSize() / (t2 - t1) / 1000000.0); \
   printf("to mapfile [%s] on ",Pars.ShareMemFile); \
   time_stamp(); \
