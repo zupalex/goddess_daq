@@ -52,10 +52,6 @@ sup_template ()
 {
   /* declarations */
 
-  char str1[STRLEN], str2[STRLEN];
-  float pi;
-  int i;
-
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
@@ -66,7 +62,9 @@ sup_template ()
   Pars.wlist = gDirectory->GetList ();
   Pars.wlist->Print ();
 
-};
+  return(0);
+
+}
 
 /* ----------------------------------------------------------------- */
 

@@ -1562,7 +1562,7 @@ GEBacq (char *ChatFileName)
   float r1, r2, r3;
   static int firsttime = 1;
   static long long int t0, TSprev = 0;
-  long long int tcur;
+  long long int tcur = 0;
   unsigned int typehit[MAX_GEB_TYPE];
   FILE *TSfile;
   TH2F *dtbtev;
