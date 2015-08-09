@@ -45,7 +45,12 @@ class orrubaDet : public siDet {
 		///Get the detector's serial number.
 		std::string GetSerialNum() {return serialNum;}
 
+		///Return the position id string of the detector.
 		std::string GetPosID() {return posID;};
+		///Return the depth of the detector.
+		/**Depth dE = 0, E1 =1, E2 = 2.
+ 		 */
+		unsigned short GetDepth() {return depth;}
 
 		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
 		virtual void ConstructBins() = 0;
