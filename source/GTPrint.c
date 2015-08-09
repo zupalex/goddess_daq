@@ -48,7 +48,7 @@ GTPrintEvent2 (FILE * fp, int ii, DGSEVENT * DGSEvent)
     printf ("is not assigned");
   fprintf (fp, "# %3i, ", DGSEvent->tid);
 
-  fprintf (fp, "e= %6i; ", DGSEvent->ehi);
+  fprintf (fp, "e= %6f; ", DGSEvent->ehi);
 
   fprintf (fp, " baseline %i ", DGSEvent->baseline);
   fprintf (fp, "\n");
@@ -87,7 +87,7 @@ GTPrintEvent (FILE * fp, GTEVENT * Event, DGSEVENT * DGSEvent)
   fprintf (fp, "board= %8i; ", DGSEvent->board_id);
   fprintf (fp, "chan= %8i; ", DGSEvent->chan_id);
   fprintf (fp, "id= %8i; ", DGSEvent->id);
-  fprintf (fp, "e= %6i; ", DGSEvent->ehi);
+  fprintf (fp, "e= %6f; ", DGSEvent->ehi);
 
   if (DGSEvent->tpe == GE)
     fprintf (fp, "is germanium (%x)", DGSEvent->flag);
