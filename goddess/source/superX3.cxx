@@ -185,7 +185,12 @@ bool superX3::ValidStrip(int strip) {
  * \param[in] nType Whether the contact was n Type.
  */
 void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
-	if (!ValidContact(contact, nType)) return;
+	if (!ValidContact(contact, nType)) {
+		char type = 'p';
+		if (nType) type = 'n';
+		std::cerr << "ERROR: Unable to set raw value for " << type << "-type contact: " << contact << "!\n";
+		return;
+	}
 
 	//Call parent method to handle calibration.
 	siDet::SetRawValue(contact, nType, rawValue);
