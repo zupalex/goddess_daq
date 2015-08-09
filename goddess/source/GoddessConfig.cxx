@@ -329,6 +329,9 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string type) {
 	return insertable;
 }
 
+#if 0
+//This function is currently incomplete
+
 /**
  * \param[in] daqCh The DAQ channel to find corresponding detector channel.
  * \param[out] det The corresponding detector.
@@ -337,6 +340,9 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string type) {
  *  n-type.
  *
  */
+
+
+
 short GoddessConfig::GetMappedCh(short daqType, short digitizerCh) {
 	auto mapItr = chMap.upper_bound(std::make_pair(daqType,digitizerCh));
 	if (mapItr == chMap.begin()) {
@@ -353,7 +359,10 @@ short GoddessConfig::GetMappedCh(short daqType, short digitizerCh) {
 		std::cerr << "ERROR: Unknown detector type: " << type << "!\n";
 	}
 	
+	return(0);
+	
 }
+#endif
 
 /**Parse the id string describing the detector position int he barrel. The id is 
  * composed of the following:
@@ -379,7 +388,7 @@ bool GoddessConfig::ParseID(std::string id, short& sector, short& depth, bool& u
 		return false;
 	}
 
-	bool barrel = false;
+//	bool barrel = false;
 	subStr = id.substr(1,id.length() - 4);
 	if (subStr == "A") sector = 0;
 	else if (subStr == "B") sector = 1;
@@ -391,7 +400,7 @@ bool GoddessConfig::ParseID(std::string id, short& sector, short& depth, bool& u
 			std::cerr << "ERROR: Unexpected sector '" << subStr << "' in id!\n";
 			return false;
 		}
-		barrel = true;
+//		barrel = true;
 	}
 	else {
 		std::cerr << "ERROR: Unexpected character '" << subStr << "' in sector position of id!\n";
