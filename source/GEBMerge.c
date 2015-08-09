@@ -175,7 +175,7 @@ bread (gzFile in, int *val, int *pos, int *buf, int *bufsiz)
 
   return (sizeof (int));
 
-};
+}
 
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
@@ -192,13 +192,8 @@ GTGetDiskEv (int FileNo, int storeNo)
 
   /* declarations */
 
-  static int nn = 0, mm = 0;
-  int siz, i, i1, k;
-  unsigned int j;
-  unsigned int testPattern = 0, bufPos = 0;
-  unsigned int PMET[MAXLENINTS];
-  unsigned int t1, t2, t3, t4;
-  float r1;
+  static int mm = 0;
+  int siz, i1;
 
 #if(0)
   printf ("entered GTGetDiskEv, mm=%i\n", mm);
@@ -219,7 +214,7 @@ GTGetDiskEv (int FileNo, int storeNo)
 #endif
   if (siz != sizeof (GEBDATA))
     {
-      printf ("failed to read %i bytes for header, got %i\n", sizeof (GEBDATA), siz);
+      printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
 
       return (1);
     };
@@ -413,28 +408,30 @@ main (int argc, char **argv)
 
   off_t outData;                /* input file */
   gzFile zoutData;
-  int nfiles = 0, maxNoEvents = 0, nPoolEvents = 0, siz, firsttime, nbad;
-  int i1, i2, i3, i4, badRead, nfe, ii, njb = 0, njf = 0;
+  int nfiles = 0, maxNoEvents = 0, nPoolEvents = 0, siz;
+  int i1, i2, badRead, nfe, ii, njb = 0, njf = 0;
   int i, j, st, nextTSpoolIndex, nn, argcoffset = 0;
-  DGSHEADER outheader;
-  long long int oldListTS, dTS, lltmp, oldTS, lli1;
+  
+  long long int oldListTS = 0;
+  long long int dTS, lltmp, oldTS, lli1;
   unsigned long long int nextTS, ulli1, ulli2;
-  float dtbtev[LENSP];
-  float ehigain[NGE + 1], ehioffset[NGE + 1], r1, r2, rn;
-  FILE *fp1, *fp3, *fp;
+  float dtbtev[LENSP]; 
+  float r1;
+  FILE *fp;
   char str[132], str1[512];
   unsigned int seed = 0;
   struct tms timesThen;
-  int i7, i8, nGE = 0, nFP = 0, nDSSD = 0, nCHICO2 = 0, nBGO = 0, reportinterval, nGS = 0;
+  int i7, i8, reportinterval;
   char *p, *pc;
-  int echo = 0, nni, nret, ncib = 0;
+  int echo = 0, nni, nret;
   double d1;
   char *tmp_ev;
   int size;
   int truesize;
-  int wosize;
+  int wosize = 0;
   int nused;
   int nprint;
+  int ret_val = 0;
 
   /* prototypes */
 
@@ -472,8 +469,8 @@ main (int argc, char **argv)
 
   for (i = 0; i <= NGE; i++)
     {
-      ehigain[i] = 1;
-      ehioffset[i] = 0;
+//      ehigain[i] = 1;
+//      ehioffset[i] = 0;
     };
 
   /* open chat file */
@@ -546,8 +543,8 @@ main (int argc, char **argv)
           nret = sscanf (str, "%s %i", str1, &size);
           CheckNoArgs (nret, 2, str);
           assert (size <= MAXBIGBUFSIZ);
-          r1 = (size * sizeof (EVENT) + (size + 1) * sizeof (int)) / 1024.0 / 1024.0;
-          printf ("sizeof(EVENT)= %i\n", sizeof (EVENT));
+          //r1 = (size * sizeof (EVENT) + (size + 1) * sizeof (int)) / 1024.0 / 1024.0;
+          printf ("sizeof(EVENT)= %lu\n", sizeof (EVENT));
           printf ("will use a bigbuffer size of %i, or %7.3f MBytes\n", size, r1);
         }
       else if ((p = strstr (str, "nprint")) != NULL)
@@ -600,12 +597,12 @@ main (int argc, char **argv)
         }
       else if ((p = strstr (str, "dtsfabort")) != NULL)
         {
-          nret = sscanf (str, "%s %lli", str1, &control.dtsfabort);
+          nret = sscanf (str, "%s %i", str1, &control.dtsfabort);
           CheckNoArgs (nret, 2, str);
         }
       else if ((p = strstr (str, "dtsbabort")) != NULL)
         {
-          nret = sscanf (str, "%s %lli", str1, &control.dtsbabort);
+          nret = sscanf (str, "%s %i", str1, &control.dtsbabort);
           CheckNoArgs (nret, 2, str);
         }
       else
@@ -763,8 +760,12 @@ main (int argc, char **argv)
   if (fp == NULL)
     {
       printf ("need a \"map.dat\" file to run\n");
-      system ("./mkMap > map.dat");
-      printf ("just made you one...\n");
+      ret_val = system ("./mkMap > map.dat");
+      if (ret_val == -1){
+	printf("error creating file \"map.dat\"\n");
+      }else{
+        printf ("just made you one...\n");
+      }
       fp = fopen ("map.dat", "r");
       assert (fp != NULL);
     };
@@ -906,7 +907,7 @@ main (int argc, char **argv)
                     printf ("2: GTGetDiskEv returned %i\n", st);
                   }
               }
-            printf ("[2]Event[%i].gd->type=%lli\n", i, Event[i].gd->type);
+            printf ("[2]Event[%i].gd->type=%i\n", i, Event[i].gd->type);
             oldFileTS[i] = Event[i].gd->timestamp;
           };
 
@@ -929,7 +930,7 @@ main (int argc, char **argv)
 #if(DEBUG1 ||1)
       printf ("Event[%i].gd->timestamp=%lli\n ", i, Event[i].gd->timestamp);
 #endif
-      if (Event[i].gd->timestamp < nextTS)
+      if (static_cast<unsigned int>(Event[i].gd->timestamp) < nextTS)
         {
           nextTS = Event[i].gd->timestamp;
           nextTSpoolIndex = i;
@@ -962,7 +963,7 @@ main (int argc, char **argv)
       for (i = 0; i < nPoolEvents; i++)
         {
 //          printf("Event[%i].gd->timestamp=%lli\n",i,Event[i].gd->timestamp);
-          if (Event[i].gd->timestamp < nextTS)
+          if (static_cast<unsigned int>(Event[i].gd->timestamp) < nextTS)
             {
               nextTS = Event[i].gd->timestamp;
               nextTSpoolIndex = i;
@@ -1297,7 +1298,7 @@ main (int argc, char **argv)
 
       i1 = size - nused;
       i2 = size;
-      truesize == i1;
+ //     truesize == i1;
 //      printf ("refill into %i...%i\n", i1, i2 - 1);
 
       for (nfe = i1; nfe < i2; nfe++)
@@ -1311,7 +1312,7 @@ main (int argc, char **argv)
           nextTSpoolIndex = -1;
           for (i = 0; i < nPoolEvents; i++)
             {
-              if (Event[i].gd->timestamp < nextTS)
+              if (static_cast<unsigned int>(Event[i].gd->timestamp) < nextTS)
                 {
                   nextTS = Event[i].gd->timestamp;
                   nextTSpoolIndex = i;
@@ -1433,10 +1434,16 @@ done:
     };
   control.CurEvNo += truesize;
   control.nwritten += truesize;
-  printf ("wrote %i events and %i bytes\n", control.nwritten,nstat->outbytes );
+  printf ("wrote %i events and %lli bytes\n", control.nwritten,nstat->outbytes );
   sprintf (str, "file %s_*; ls -l %s_*", argv[2], argv[2]);
   printf("executing \"%s\"", str);
-  system (str);
+  ret_val = 0;
+  ret_val = system (str);
+  if (ret_val == -1){
+	printf("error executing \"%s\"\n",str);
+  }else{
+        printf ("\"%s\" executed\n",str);
+  }
   fflush (stdout);
   printf ("\n");
   fflush (stdout);
