@@ -39,7 +39,7 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
-#define MAXFLOAT 3.40282347e+38
+//#define MAXFLOAT 3.40282347e+38 //already defined in math.h
 #define MAXINT   2147483647
 
 
@@ -695,7 +695,7 @@ GEBGetEv (GEB_EVENT * GEV_event, int curEvNo)
       siz = buf_read (inData, (char *) GEV_event->ptgd[ii], sizeof (GEBDATA));
       if (siz != sizeof (GEBDATA))
         {
-          printf ("failed to read %i bytes for header, got %i\n", sizeof (GEBDATA), siz);
+          printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
           return (1);
         };
       Pars.nbytes += siz;
@@ -786,7 +786,7 @@ GEBGetEv (GEB_EVENT * GEV_event, int curEvNo)
       siz = buf_read (inData, (char *) GEV_event->ptgd[ii], sizeof (GEBDATA));
       if (siz != sizeof (GEBDATA))
         {
-          printf ("failed to read %i bytes for header, got %i\n", sizeof (GEBDATA), siz);
+          printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
           return (1);
         };
       nn2++;
@@ -1713,19 +1713,19 @@ GEBacq (char *ChatFileName)
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%d %d %lf %lf %lf ", &ir, &dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
+          sscanf (buffer, "%i %i %lf %lf %lf ", &ir, &dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
+          sscanf (buffer, "%i %lf %lf %lf  ", &dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
+          sscanf (buffer, "%i %lf %lf %lf  ", &dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%d %lf %lf %lf  ", &dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
+          sscanf (buffer, "%i %lf %lf %lf  ", &dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
 
           j++;
         }
@@ -1774,7 +1774,7 @@ GEBacq (char *ChatFileName)
           exit (1);
         }
       else
-        printf ("input file \"%s\" is open, inData=%i\n", Pars.GTSortInputFile, inData);
+        printf ("input file \"%s\" is open, inData=%lli\n", Pars.GTSortInputFile, inData);
 
       /* find the very first GEB header to find start TS */
 
@@ -1793,7 +1793,7 @@ GEBacq (char *ChatFileName)
 
       close (inData);
       inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
-      printf ("reopened input file, inData=%i \n", inData);
+      printf ("reopened input file, inData=%lli \n", inData);
 
 #endif
 
@@ -1934,7 +1934,7 @@ GEBacq (char *ChatFileName)
           exit (-1);
         };
 
-      printf ("shared memory [%s] created, size: %i bytes\n", Pars.ShareMemFile, Pars.ShareMemFile);
+      printf ("shared memory [%s] created, size: %s bytes\n", Pars.ShareMemFile, Pars.ShareMemFile);
       fflush (stdout);
       mfile->Print ();
       printf ("\n");
@@ -1968,9 +1968,9 @@ GEBacq (char *ChatFileName)
   if (!Pars.UseShareMemFile)
     if (Pars.UpdateRootFile)
       {
-
+	
         /* check here whether the old root file exists */
-
+	
         fp = fopen (Pars.ROOTFile, "r");
         if (fp == NULL)
           {
@@ -1981,9 +1981,9 @@ GEBacq (char *ChatFileName)
             exit (0);
           };
         fclose (fp);
-
+	
         /* read in old root file */
-
+	
         Pars.f1 = NULL;
         Pars.f1 = new TFile (Pars.ROOTFile, "UPDATE");
         printf ("read old root file <%s>\n", Pars.ROOTFile);
@@ -1994,24 +1994,24 @@ GEBacq (char *ChatFileName)
           };
         printf ("base=<%s>\n", Pars.f1->GetPath ());
         Pars.f1->Print ();
-
+	
       }
     else
       {
-        /* create the rootfile */
-
-        Pars.f1 = NULL;
-        Pars.f1 = new TFile (Pars.ROOTFile, "RECREATE");
-        printf ("root file <%s>\n", Pars.ROOTFile);
-        if (!Pars.f1->IsOpen ())
-          {
-            printf ("could not open file....\n\n");
-            exit (-1);
-          };
-        printf ("base=<%s>\n", Pars.f1->GetPath ());
-        Pars.f1->Print ();
+	/* create the rootfile */
+	
+	Pars.f1 = NULL;
+	Pars.f1 = new TFile (Pars.ROOTFile, "RECREATE");
+	printf ("root file <%s>\n", Pars.ROOTFile);
+	if (!Pars.f1->IsOpen ())
+	  {
+	    printf ("could not open file....\n\n");
+	    exit (-1);
+	  };
+	printf ("base=<%s>\n", Pars.f1->GetPath ());
+	Pars.f1->Print ();
       };
-
+  
   printf ("\n");
   printf ("executing UserInit.h code\n");
   printf ("\n");
@@ -2281,7 +2281,7 @@ GEBacq (char *ChatFileName)
       if (st != 0)
         {
           printf (" GEBGetEv returned %i\n", st);
-          printf ("we have read %i bytes; ", Pars.nbytes);
+          printf ("we have read %lli bytes; ", Pars.nbytes);
           printf ("CurEvNo=%i\n", Pars.CurEvNo);
           fflush (stdout);
 
@@ -2315,7 +2315,7 @@ GEBacq (char *ChatFileName)
           if (Pars.CurEvNo <= Pars.NumToPrint)
             {
               printf ("GEBGetEv returned st=%i\n", st);
-              printf ("we have read %i bytes; ", Pars.nbytes);
+              printf ("we have read %lli bytes; ", Pars.nbytes);
               printf ("CurEvNo=%i\n", Pars.CurEvNo);
               fflush (stdout);
             };
