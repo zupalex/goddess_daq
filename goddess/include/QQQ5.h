@@ -32,6 +32,8 @@ class QQQ5 : public orrubaDet {
 		float enPtype;
 		///Calibrated energy of the n type side.
 		float enNtype;
+		///The total deposited energy in the detector.
+		float enCal;
 
 		///Computed raw position of event.
 		float stripPosRaw[4];
@@ -76,6 +78,8 @@ class QQQ5 : public orrubaDet {
 		float GetPtypeEnergy() {return enPtype;};
 		///Return the energy from the n type side.
 		float GetNtypeEnergy() {return enNtype;};
+		///Return the total energy deposited in the detector.
+		float GetEnergy() {return enCal;};
 
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);

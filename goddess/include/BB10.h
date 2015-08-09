@@ -24,6 +24,9 @@ class BB10 : public orrubaDet {
 		///Energy of the p type side.
 		Float_t enPtype;
 	
+		///The constructed position of the event.
+		TVector3 eventPos; 
+
 		///Construct array of bin edges.
 		void ConstructBins();
 
@@ -45,8 +48,12 @@ class BB10 : public orrubaDet {
 		///Return the bins along the azimuthal direction.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
 
+		///Return the computed event position.
+		TVector3 GetEventPosition() {return eventPos;};
 		///Return the energy from the p type side.
 		float GetPtypeEnergy() {return enPtype;};
+		///Return the total energy deposited in the detector.
+		float GetEnergy() {return enPtype;};
 
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);

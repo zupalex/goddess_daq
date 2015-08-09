@@ -51,6 +51,10 @@ class orrubaDet : public siDet {
 		/**Depth dE = 0, E1 =1, E2 = 2.
  		 */
 		unsigned short GetDepth() {return depth;}
+		///Abstract definition of a funtion to get the depositied energy of a strip.
+		virtual float GetEnergy() = 0;
+		///Abstract defintion of a function to get the position of an event on the detector.
+		virtual TVector3 GetEventPosition() = 0;
 
 		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
 		virtual void ConstructBins() = 0;

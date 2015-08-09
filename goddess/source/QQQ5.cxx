@@ -104,6 +104,7 @@ void QQQ5::Clear() {
 
 	enPtype = 0;
 	enNtype = 0;
+	enCal = 0;
 
 	eventPos.SetXYZ(0,0,0);
 }
@@ -125,18 +126,12 @@ void QQQ5::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 	siDet::SetRawValue(contact, nType, rawValue);
 
 	if (nType) {
-		//Set the energy value only if the multiplicity is 1.
-		if (GetContactMult(nType) == 1) 
-			enNtype = GetCalEnergy(contact, nType);
-		else enNtype = 0;
+		enNtype += GetCalEnergy(contact, nType);
+		enCal += GetCalEnergy(contact, nType);
 	}
 	else {
-
-		//Store the energy only if the multiplicity is one.
-		if (GetContactMult(nType) == 1) 
-			enNtype = GetCalEnergy(contact, nType);
-		else
-			enPtype = 0;
+		enPtype += GetCalEnergy(contact, nType);
+		enCal += GetCalEnergy(contact, nType);
 	}
 }
 

@@ -96,6 +96,7 @@ void superX3::Clear() {
 
 	enPtype = 0;
 	enNtype = 0;
+	enCal = 0;
 
 	multPstrip = 0;
 
@@ -191,9 +192,8 @@ void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 
 	if (nType) {
 		//Set the energy value only if the multiplicity is 1.
-		if (GetContactMult(nType) == 1) 
-			enNtype = GetCalEnergy(contact, nType);
-		else enNtype = 0;
+		enNtype += GetCalEnergy(contact, nType);
+		enCal += GetCalEnergy(contact, nType);
 	}
 	else {
 		//Determine which strip this contact is in.
@@ -204,10 +204,8 @@ void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 		if (stripContactMult[strip] > 1) {
 			UpdatePosition(GetStrip(contact));
 			//Store the energy only if the multiplicity is one.
-			if (multPstrip == 1) 
-				enPtype = enCalPstrip[strip];
-			else
-				enPtype = 0;
+			enPtype += enCalPstrip[strip];
+			enCal += GetCalEnergy(contact, nType);
 		}
 	}
 }

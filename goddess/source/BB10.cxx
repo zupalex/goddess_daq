@@ -74,6 +74,8 @@ void BB10::ConstructBins () {
 void BB10::Clear() {
 	siDet::Clear();
 	enPtype = 0;
+	
+	eventPos.SetXYZ(0,0,0);
 }
 
 /**This method is called when a contact energy is updated. We call the parent 
@@ -89,10 +91,7 @@ void BB10::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 	siDet::SetRawValue(contact, nType, rawValue);
 
 	if (!nType) {
-		//Set the energy value only if the multiplicity is 1.
-		if (GetContactMult(nType) == 1) 
-			enPtype = GetCalEnergy(contact, nType);
-		else enPtype = 0;
+		enPtype += GetCalEnergy(contact, nType);
 	}
 
 
