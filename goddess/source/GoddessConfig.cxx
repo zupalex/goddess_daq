@@ -261,7 +261,11 @@ void GoddessConfig::ReadConfig(std::string filename) {
 						((superX3*) det)->SetStripPosCalibPars(detChannel, calParams);
 					else ((superX3*) det)->SetStripEnCalibPars(detChannel, calParams);
 				}
-				else det->SetEnergyCalib(calParams, detChannel, secondaryType);
+				else {
+					if (!det->SetEnergyCalib(calParams, detChannel, secondaryType)) {
+						std::cerr << "ERROR: Unable to set calibration for " << subType << "-type part of " << detType << " detector " << serialNum << "!\n";
+					}
+				}
 			}
 
 		}

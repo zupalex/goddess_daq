@@ -54,7 +54,7 @@ class siDet : public Detector {
 		int GetContactMult(bool nType = false);
 
 		///Specify the polynomial calibration parameters of the specified contact.
-		void SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);
+		bool SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);
 
 
 

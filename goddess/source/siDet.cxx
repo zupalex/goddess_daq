@@ -102,10 +102,14 @@ int siDet::GetContactMult(bool nType/*=false*/) {
 	return multP;
 }
 
-void siDet::SetEnergyCalib(std::vector<float> par, int contact, bool nType/*=false*/) {
-	if (!ValidContact(contact,nType)) return;
+/*
+ * \return True if successful.
+ */
+bool siDet::SetEnergyCalib(std::vector<float> par, int contact, bool nType/*=false*/) {
+	if (!ValidContact(contact,nType)) return false;
 	if (nType) parEnCalP.at(contact) = par;
 	else parEnCalP.at(contact) = par;
+	return true;
 }
 
 
