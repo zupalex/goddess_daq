@@ -357,7 +357,7 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
           /* store original/calibrated segment energy for later use */
 
-          orig_seg_e = ptinp->intpts[0].e;
+          //orig_seg_e = ptinp->intpts[0].e;//unused
 
           /* hit pattern */
 
