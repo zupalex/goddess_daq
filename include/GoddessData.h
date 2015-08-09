@@ -2,6 +2,7 @@
 #define GODDESSDATA_H
 
 #include "GoddessConfig.h"
+#include "ORRUBA.h"
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -10,6 +11,9 @@
 #include "GTMerge.h"
 
 #include <vector>
+#include <map>
+#include <utility>
+
 
 class GoddessData {
 	public:
@@ -19,6 +23,11 @@ class GoddessData {
 	
 	private:
 	GoddessConfig *config;
+
+	ORRUBA *orruba;
+
+	//Map of channels to suppress, This occurs if they were not found in the map.
+	std::map<std::pair<short, short>, bool> suppressCh;
 
 	TH2F* enRawA;
 	TH2F* enRawD;

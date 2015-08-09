@@ -351,7 +351,7 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, int rawVa
 	MapKey key = std::make_pair(daqType, digitizerCh);
 	auto mapItr = chMap.upper_bound(key);
 	if (mapItr == chMap.begin()) {
-		std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << "\n!";
+		std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << "!\n";
 		return NULL;
 	}
 
