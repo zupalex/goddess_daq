@@ -63,7 +63,9 @@ sup_dgod ()
   Pars.wlist = gDirectory->GetList ();
   Pars.wlist->Print ();
 
-};
+  return (0);
+
+}
 
 /* ----------------------------------------------------------------- */
 
