@@ -8,6 +8,7 @@ orrubaDet::orrubaDet(std::string serialNum, unsigned short sector,
 	serialNum(serialNum), sector(sector), depth(depth), upStream(upStream),
 	detPos(position)
 {
+	SetPosID();
 
 }
 
@@ -15,18 +16,17 @@ orrubaDet::~orrubaDet() {
 
 }
 
-std::string orrubaDet::GetPosID() {
-	std::string id;
-	if (upStream) id.append("U");
-	else id.append("D");
+void orrubaDet::SetPosID() {
+	if (upStream) posID.append("U");
+	else posID.append("D");
 	
-	id.append(std::to_string((long long int)sector));
+	posID.append(std::to_string((long long int)sector));
 
-	if (depth == 0) id.append("dE");
-	else if (depth == 1) id.append("E1");
-	else if (depth == 2) id.append("E2");
-	
-	return id;
+	posID.append("-");
+
+	if (depth == 0) posID.append("dE");
+	else if (depth == 1) posID.append("E1");
+	else if (depth == 2) posID.append("E2");
 }
 
 void orrubaDet::SetDetector(std::string serialNum_, unsigned short sector_, unsigned short depth_, bool upStream_, SolidVector position_) {

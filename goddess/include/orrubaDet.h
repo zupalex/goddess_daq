@@ -25,9 +25,14 @@ class orrubaDet : public siDet {
 		///Whether the detector is upstream or downstream of the target.
 		bool upStream;
 		
+		///The string form of the position ID.
+		std::string posID;
 		
 		///The detector position defining the center of the active silicon area.
 		SolidVector detPos; //!
+
+		///Determines the position ID string.
+		void SetPosID();
 	
 	public:
 		///Default constructor.
@@ -40,7 +45,7 @@ class orrubaDet : public siDet {
 		///Get the detector's serial number.
 		std::string GetSerialNum() {return serialNum;}
 
-		std::string GetPosID();
+		std::string GetPosID() {return posID;};
 
 		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
 		virtual void ConstructBins() = 0;
