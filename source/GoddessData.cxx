@@ -19,7 +19,17 @@ GoddessData::GoddessData(std::string configFilename)
 	tree=new TTree("god","GODDESS Tree");
 	tree->Branch("orruba",&orruba);
 
+	// ORRUBA histograms
+	// dorectories to keep things organized
+	gDirectory->mkdir("ORRUBA");
+	gDirectory->mkdir("ORRUBA/analog");
+	gDirectory->cd("ORRUBA/analog");
+
 	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",4096,0,4096,400,0,400);
+
+	gDirectory->cd("/");
+	
+	
 }
 
 void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts)

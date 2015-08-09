@@ -82,6 +82,7 @@ char CommandFileName[STRLEN] = "GEBSort.command";
 
 int time_stamp ();
 
+
 TH1D *mkTH1D (char *, char *, int, double, double);
 TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
@@ -2032,9 +2033,10 @@ GEBacq (char *ChatFileName)
   /*--------------------------------*/
   /* setup the root spectra we need */
   /*--------------------------------*/
-
+	
+	gDirectory->mkdir("GEBSort");
+	gDirectory->cd("GEBSort");
   /* spectra that are always there */
-
   for (i = 0; i <= NGE; i++)
     {
       sprintf (str2, "CC");
@@ -2047,6 +2049,7 @@ GEBacq (char *ChatFileName)
   sprintf (str1, "dtbtev");
   sprintf (str2, "dtbtev");
   dtbtev = mkTH2F (str1, str2, DTBTEVLEN / 2, 0, DTBTEVLEN, MAX_GEB_TYPE, 1, MAX_GEB_TYPE);
+	gDirectory->cd("/");
   sprintf (str1, "delta t");
   dtbtev->SetXTitle (str1);
   sprintf (str1, "type");

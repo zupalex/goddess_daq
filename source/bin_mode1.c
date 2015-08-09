@@ -122,6 +122,9 @@ sup_mode1 ()
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
   int get_a_seed (unsigned int *);
 
+	gDirectory->mkdir("bin_mode1");
+	gDirectory->cd("bin_mode1");
+
   /* define spectra */
 
   sprintf (str1, "ecos_raw");
@@ -255,6 +258,7 @@ sup_mode1 ()
   evsr_first->SetYTitle (str1);
 
 
+	gDirectory->cd("/");
   /* list what we have */
 
 //  printf (" we have define the following spectra:\n");

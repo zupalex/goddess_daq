@@ -46,6 +46,8 @@ sup_dgod ()
 {
   /* declarations */
 
+	gDirectory->mkdir("bin_dgod");
+	gDirectory->cd("bin_dgod");
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
@@ -55,6 +57,7 @@ sup_dgod ()
   h2_dTg_god = mkTH2F((char *)"dTg_god",(char *)"dTg_god",4000,-2000,2000,400,0,400);
 
   h2_g_god  = mkTH2F((char *)"g_god",(char *)"g_god",4000,0,4000,4000,0,400000);
+	gDirectory->cd("/");
 
   /* list what we have */
 

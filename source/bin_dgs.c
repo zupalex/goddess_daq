@@ -50,7 +50,6 @@ extern void SetBeta ();
 unsigned long long int  EvTimeStam0=0;
 
 /* pointers to ROOT spectra */
-
 TH1D *hEventCounter;
 TH2F *hGeCounter,*hBGOCounter;
 TH2F *hEhiRaw,*hEhiCln,*hEhiDrty;
@@ -74,6 +73,11 @@ int tlkup[NCHANNELS];
 int tid[NCHANNELS];
 
 
+
+// directory for Gammasphere spectra
+
+
+
 /*-----------------------------------------------------*/
 
 int
@@ -89,6 +93,10 @@ sup_dgs ()
   void getcal(char *);
 
   char file_name[]="./dgscal.dat";        // place this is sort directory
+
+	
+	gDirectory->mkdir("bin_dgs");
+	gDirectory->cd("bin_dgs");
 
 // functions for making root histograms 
 
@@ -130,7 +138,7 @@ sup_dgs ()
   hEventTimeWindow = make1D("EvntTimeWin",500,0,500);
   hGeTAC   = make2D("EventTAC",600,-300,300,110,1,111);
   hEgEg    = make2D("EgEg",4096,0,4096,4096,0,4096);
-
+	gDirectory->cd("/");
 /* list what we have */
 
   //printf (" we have define the following spectra:\n");

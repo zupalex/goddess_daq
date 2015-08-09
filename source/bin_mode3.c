@@ -53,6 +53,10 @@ sup_mode3 ()
   /* initialize */
 
 
+	gDirectory->mkdir("bin_mode3");
+	gDirectory->cd("bin_mode3");
+
+
   /* define spectra */
 
   sprintf (str1, "ehi_sum_mode3");
@@ -65,6 +69,8 @@ sup_mode3 ()
   SegE = mkTH2F (str1, str2, MAXSEGNO, 1, MAXSEGNO, SHORTLEN, 1, LONGLEN);
   SegE->SetXTitle ("Crystal#*36+seg#");
   SegE->SetYTitle ("segment energy");
+
+	gDirectory->cd("/");
 
   /* list what we have */
 

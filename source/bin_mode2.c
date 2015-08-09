@@ -79,6 +79,9 @@ sup_mode2 ()
       ndethits[i] = 0;
     };
 
+	gDirectory->mkdir("bin_mode2");
+	gDirectory->cd("bin_mode2");
+
   /* define spectra */
 
   sprintf (str1, "hitpat");
@@ -171,7 +174,7 @@ sup_mode2 ()
   sprintf (str1, "z values");
   xy_plot->SetYTitle (str1);
 
-
+	gDirectory->cd("/");
 
   /* list what we have */
 
