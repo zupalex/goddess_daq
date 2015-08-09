@@ -44,8 +44,8 @@ sup_mode3 ()
   /* declarations */
 
   char str1[STRLEN], str2[STRLEN];
-  float pi;
-  int i, i1;
+  //float pi;//unused
+  //int i, i1;//unused
 
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
@@ -71,7 +71,7 @@ sup_mode3 ()
 //  Pars.wlist = gDirectory->GetList ();
 //  Pars.wlist->Print ();
 
-
+  return (0);
 }
 
 /* ----------------------------------------------------------------- */
@@ -81,26 +81,27 @@ bin_mode3 (GEB_EVENT * GEB_event)
 {
 
   /* declarations */
+  // int j, il, crystalno, moduleno, detno, pos;//unused
 
-  int i, j, i1, crystalno, moduleno, detno, pos, nseghits = 0;
-  float sX, sY, polAng, aziAng, rr, xx, yy, zz;
-  double d1;
+  int i, nseghits = 0;
+  //float sX, sY, polAng, aziAng, rr, xx, yy, zz;//unused
+  //double d1;
   char str[128];
   int GebTypeStr (int type, char str[]);
-  float detDopFac, dp;
-  float RAD2DEG = 0.0174532925;
-  static int firsttime = 1;
-  static long long int t0;
-  float polang[MAX_GAMMA_RAYS];
-  float doppler_factor[MAX_GAMMA_RAYS];
+  //float detDopFac, dp;//unused
+  //float RAD2DEG = 0.0174532925;//unused
+  //static int firsttime = 1;//unused
+  //static long long int t0;
+  //float polang[MAX_GAMMA_RAYS];
+  //float doppler_factor[MAX_GAMMA_RAYS];
   unsigned int *testPattern;
   static int nBadTestPat = 0;
   unsigned short int *i2;
   GTEVENT Event;
   unsigned short int t1, t2;
 
-  CRYS_INTPTS *ptinp;
-  GEBDATA *ptgd;
+  //CRYS_INTPTS *ptinp;
+  //GEBDATA *ptgd;
 
   /* prototypes */
 
@@ -132,7 +133,7 @@ bin_mode3 (GEB_EVENT * GEB_event)
 
               if (nBadTestPat < 10)
                 {
-                  printf ("ooops: testPattern=%8.8x after event # %lld ", *testPattern, Pars.CurEvNo);
+                  printf ("ooops: testPattern=%8.8x after event # %i ", *testPattern, Pars.CurEvNo);
                   fflush (stdout);
                   exit (1);
                 };

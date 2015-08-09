@@ -104,7 +104,7 @@ print_tracked_gamma_rays (FILE * fp, TRACKED_GAMMA_HIT * grh)
 
   return (0);
 
-};
+}
 
 /*-----------------------------------------------------*/
 
@@ -114,8 +114,8 @@ sup_mode1 ()
   /* declarations */
 
   char str1[STRLEN], str2[STRLEN];
-  float pi;
-  int i;
+  //float pi; //unused
+  //int i; //unused
   unsigned int seed;
 
   TH1D *mkTH1D (char *, char *, int, double, double);
@@ -265,7 +265,8 @@ sup_mode1 ()
   get_a_seed (&seed);
   srand (seed);
 
-};
+  return (0);
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -274,29 +275,31 @@ bin_mode1 (GEB_EVENT * GEB_event)
 {
 
   /* declarations */
-
-  int k, l, i, j, ii, jj, m, crystalno, moduleno, detno, nMode1 = 0, nMode2 = 0;
-  float sX, sY, polAng, aziAng, rr, xx, yy, zz, dp, rn;
+  //int m, crystalno, moduleno,detno, nMode2 = 0; //unused
+  //int xx, yy, zz; //unused
+  int k, l, i, j, ii, jj, nMode1 = 0;
+  float sX, sY, polAng, aziAng, rr, dp, rn;
   double d1, d2, d3;
   float RAD2DEG = 0.01745329;
   char str[128];
-  float detDopFac;
+  //float detDopFac; //unused
   TRACKED_GAMMA_HIT *grh;
-  PAYLOAD *ptinp;
-  GEBDATA *ptgd;
+  //PAYLOAD *ptinp; //unused
+  //GEBDATA *ptgd; //unused
   static long long int t0;
   static int firsttime = 1;
   float polang[MAX_GAMMA_RAYS];
   float doppler_factor[MAX_GAMMA_RAYS];
-  int ngamInEvent = 0;
+  //int ngamInEvent = 0;//unused
 
 /* define the gates */
 
-  int ngate, numgate, mult_g, e1, gate_spe[4000], num_sp1, newgat, imult;
+  //int numgate, num_sp1;//unused
+  int ngate, mult_g, e1, gate_spe[4000], newgat, imult;
   float e_good[40];
   int ener_l[40], ener_h[40];
-  num_sp1 = 1;
-  numgate = Pars.numgggates;
+  //num_sp1 = 1;
+  //numgate = Pars.numgggates;
 
 
   /* prototypes */
