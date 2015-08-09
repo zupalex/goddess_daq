@@ -46,10 +46,6 @@ sup_gtcal ()
 {
   /* declarations */
 
-  char str1[STRLEN], str2[STRLEN];
-  float pi;
-  int i, i1;
-
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
@@ -63,6 +59,7 @@ sup_gtcal ()
 //  ehi_sum_mode3 = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
 //  ehi_sum_mode3->SetXTitle (str1);
 
+  return(0);
 }
 
 /* ----------------------------------------------------------------- */
@@ -75,8 +72,6 @@ bin_gtcal (GEB_EVENT * GEB_event)
 
   int i;
   char str[128];
-  CRYS_INTPTS *ptinp;
-  GEBDATA *ptgd;
 
   /* prototypes */
 
