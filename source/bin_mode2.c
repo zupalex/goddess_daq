@@ -64,8 +64,8 @@ sup_mode2 ()
    */
 
   char str1[STRLEN], str2[STRLEN];
-  float pi;
-  int i, i1;
+  //float pi, il;//unused
+  int i;
 
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
@@ -183,6 +183,8 @@ sup_mode2 ()
   printf ("MAXDETPOS=%i\n", MAXDETPOS);
   fflush (stdout);
 
+  return (0);
+
 }
 
 /* ----------------------------------------------------------------- */
@@ -217,6 +219,8 @@ exit_mode2 (void)
   printf ("------------------------------------------\n");
   printf ("\n");
 
+  return (0); 
+
 }
 
 /* ----------------------------------------------------------------- */
@@ -226,26 +230,29 @@ bin_mode2 (GEB_EVENT * GEB_event)
 {
 
   /* declarations */
-
-  int i, j, crystalno, moduleno, detno, nn;
-  float sX, sY, polAng, aziAng, rr, xx, yy, zz, r1, rmax, rmin;
-  double d1, d2;
+  //int nn, rmax,rmin;//unused
+  int i, j, crystalno, moduleno, detno;
+  float sX, sY, polAng, aziAng, rr, xx, yy, zz, r1;
+  //double d2;//unused
+  double d1;
   char str[128];
   int GebTypeStr (int type, char str[]);
-  float detDopFac, dp, addedEnergy = 0, r2, orig_seg_e;
+  //float detDpFac, orig_seg_e;//unused
+  float dp, addedEnergy = 0, r2;
   float RAD2DEG = 0.0174532925;
   float CCenergies[MAX_GAMMA_RAYS];
   static int firsttime = 1;
   static long long int t0;
   float polang[MAX_GAMMA_RAYS];
   float doppler_factor[MAX_GAMMA_RAYS];
-  float xar[MAXCOINEV], yar[MAXCOINEV], zar[MAXCOINEV];
-  int detectorPosition, crystalNumber, i1, ndecomp;
+  //float xar[MAXCOINEV], yar[MAXCOINEV], zar[MAXCOINEV];//unused
+  //int detectorPosition, crystalNumber;//unused
+  int i1, ndecomp;
   int nCCenergies;
   static int nperrors = 0;
 
   CRYS_INTPTS *ptinp;
-  GEBDATA *ptgd;
+  //GEBDATA *ptgd;//unused
 
   /* prototypes */
 
