@@ -81,8 +81,8 @@ sup_dgs ()
 {
   /* declarations */
 
-  char str1[STRLEN], str2[STRLEN], str[STRLEN];
-  float pi;
+  char str[STRLEN];
+ 
   int i, i1, i2, i7, i8;
   FILE *fp;
   
@@ -202,7 +202,7 @@ sup_dgs ()
     
     return(0);
 
-};
+}
 
 int
 DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
@@ -212,9 +212,8 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
 
   /* declarations */
 
-  int i, k, i1;
-  unsigned int ui0 = 0, ui1 = 0, ui2 = 0;
-  unsigned int PRE_RISE_SUM = 0, POST_RISE_SUM = 0;
+  int i, k;
+  unsigned int ui0 = 0;
   int rawE;
   unsigned int t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   unsigned long long int ulli1;
@@ -246,7 +245,7 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
     {
-      printf ("event len=%i (%i bytes) >\n", len, len * sizeof (unsigned int));
+      printf ("event len=%i (%lu bytes) >\n", len, len * sizeof (unsigned int));
       for (i = 0; i < len; i++)
         {
           printf ("%3i[doc: %3i]: %12u, 0x%8.8x; ", i, i + 1, *(ev + i), *(ev + i));
@@ -299,8 +298,8 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
       printf ("chan_id = %i, board_id=%i, id=%i\n", DGSEvent->chan_id, DGSEvent->board_id, DGSEvent->id);
     }
 
-  /* extract the energy */
-
+  //extract the energy
+  */
   switch(DGSEvent->header_type)
   {
     case 0:                // Original LED header (Compatibility mode)
@@ -411,7 +410,7 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
   //DGSEvent->ehi = rawE / 800;
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
-    printf ("rawE = 0x%8.8x %i, DGSEvent->ehi= %i\n", rawE, rawE, DGSEvent->ehi);
+    printf ("rawE = 0x%8.8x %i, DGSEvent->ehi= %f\n", rawE, rawE, DGSEvent->ehi);
 
   /* done */
 
@@ -432,11 +431,10 @@ bin_dgs (GEB_EVENT * GEB_event)
 
   char str[128];
   //int i, j, i1, ng, gsid;
-  int i, j, i1, gsid;
-  unsigned int ui1;
+  int i, j, gsid;
   //DGSEVENT DGSEvent[MAXCOINEV];
   
-  int RelEvT=0,DEvT=0,DTrT=0,tdiff=0;
+  int RelEvT=0,tdiff=0;
   float Energy;
 
   /* prototypes */
@@ -615,7 +613,7 @@ bin_dgs (GEB_EVENT * GEB_event)
       printf ("tpe=%i; ", DGSEvent[i].tpe);
       printf ("tid=%i; ", DGSEvent[i].tid);
       printf ("EventTS=%llu; ", DGSEvent[i].event_timestamp);
-      printf ("ehi=%8i ", DGSEvent[i].ehi);
+      printf ("ehi=%f ", DGSEvent[i].ehi);
       printf ("\n");
       fflush (stdout);
     };
@@ -630,7 +628,7 @@ bin_dgs (GEB_EVENT * GEB_event)
 TH2F *make2D (const char* txt, int xln,int xlo,int xhi,int yln,int ylo,int yhi)
 {
 char str[STRLEN];
-char fn[STRLEN];
+
 
 TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
@@ -646,7 +644,7 @@ TH2F *h2D;
 TH1D *make1D (const char* txt, int xln,int xlo,int xhi)
 {
 char str[STRLEN];
-char fn[STRLEN];
+
 double xlod,xhid;
 TH1D *mkTH1D (char *, char *, int, double, double);
 TH1D *h1D;
@@ -661,7 +659,7 @@ TH1D *h1D;
 //////////////////////////////////////////////////////////////////////////////
 void getcal(char *file)
 {
-  int i,ii,j,k,l,ret=0;
+  int i,ret=0;
   float a,b,c,d;
   char mystring [1000];
   FILE *fp;
