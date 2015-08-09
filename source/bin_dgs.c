@@ -245,7 +245,7 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
     {
-      printf ("event len=%i (%lu bytes) >\n", len, len * sizeof (unsigned int));
+      printf ("event len=%i (%u bytes) >\n", len, len * sizeof (unsigned int));
       for (i = 0; i < len; i++)
         {
           printf ("%3i[doc: %3i]: %12u, 0x%8.8x; ", i, i + 1, *(ev + i), *(ev + i));
