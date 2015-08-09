@@ -183,7 +183,7 @@ sup_dgs ()
 
 // Set Default Calibration parameters
 
-  for (i = 0; i <= NGE+1; i++) {
+  for (i = 0; i < NGE+1; i++) {
     printf ("\nsup_dgs %i \n",i);
     ehigain[i] = 1.0;
     ehioffset[i] = 0.0;
@@ -222,7 +222,6 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
 
   int i, k;
   unsigned int ui0 = 0;
-  int rawE;
   unsigned int t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   unsigned long long int ulli1;
 
@@ -414,11 +413,11 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * DGSEvent)
     }
   }
 
-  //rawE = (int) POST_RISE_SUM - (int) PRE_RISE_SUM;
+  //int rawE = (int) POST_RISE_SUM - (int) PRE_RISE_SUM;
   //DGSEvent->ehi = rawE / 800;
 
-  if (Pars.CurEvNo <= Pars.NumToPrint)
-    printf ("rawE = 0x%8.8x %i, DGSEvent->ehi= %f\n", rawE, rawE, DGSEvent->ehi);
+  //if (Pars.CurEvNo <= Pars.NumToPrint)
+  //  printf ("rawE = 0x%8.8x %i, DGSEvent->ehi= %f\n", rawE, rawE, DGSEvent->ehi);
 
   /* done */
 
@@ -545,7 +544,7 @@ bin_dgs (GEB_EVENT * GEB_event)
 // Let us determine T0 (first implement simple DT min algorithm);
 
   int nGe, nGeCl, GeDTmin;
-  unsigned long long int prevTS,eventT0;
+  unsigned long long int prevTS,eventT0 = 0;
 
   int event_tw = (int)(DGSEvent[ng-1].event_timestamp - DGSEvent[0].event_timestamp);
 

@@ -182,7 +182,7 @@ typedef struct GTEVENT
   char                    flag;  
   short int               baseline;
   int                     rawE;
-  unsigned int            hdr[HDRLENINTS];
+  unsigned int            hdr[HDRLENWORDS];
   unsigned short int      traceLen;
   short int               trace[MAXTRACELEN];
 }  GTEVENT;

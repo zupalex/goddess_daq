@@ -150,12 +150,12 @@ mkTH1D (char *str1, char *str2, int nn, double lo, double hi)
   if (!Pars.UpdateRootFile)
     {
       tmppt = new TH1D (str1, str2, nn, lo, hi);
-      printf ("Created Object \"%s\", %p\n, \"%s\"", str1, tmppt, str2);
+      printf ("Created Object \"%s\", %p\n, \"%s\"", str1, (void*)tmppt, str2);
     }
   else
     {
       tmppt = (TH1D *) gROOT->FindObject (str1);
-      printf ("Found Object \"%s\", %p\n", str1, tmppt);
+      printf ("Found Object \"%s\", %p\n", str1, (void*)tmppt);
     }
 
   return (tmppt);
@@ -194,12 +194,12 @@ mkTH2F (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double
   if (!Pars.UpdateRootFile)
     {
       tmppt = new TH2F (str1, str2, nn1, lo1, hi1, nn2, lo2, hi2);
-      printf ("Created Object \"%s\", %p\n", str1, tmppt);
+      printf ("Created Object \"%s\", %p\n", str1, (void*)tmppt);
     }
   else
     {
       tmppt = (TH2F *) gROOT->FindObject (str1);
-      printf ("Found Object \"%s\", %p\n", str1, tmppt);
+      printf ("Found Object \"%s\", %p\n", str1, (void*)tmppt);
     };
 
   return (tmppt);
@@ -214,12 +214,12 @@ mkTH2I (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double
   if (!Pars.UpdateRootFile)
     {
       tmppt = new TH2I (str1, str2, nn1, lo1, hi1, nn2, lo2, hi2);
-      printf ("Created Object \"%s\", %p\n", str1, tmppt);
+      printf ("Created Object \"%s\", %p\n", str1, (void*)tmppt);
     }
   else
     {
       tmppt = (TH2I *) gROOT->FindObject (str1);
-      printf ("Found Object \"%s\", %p\n", str1, tmppt);
+      printf ("Found Object \"%s\", %p\n", str1, (void*)tmppt);
     };
 
   return (tmppt);
@@ -961,12 +961,15 @@ main (int argc, char **argv)
     {
       Pars.CCcal_offset[i] = 0;
       Pars.CCcal_gain[i] = 1.0;
+	}
+  for (i = 0; i < MAXDETPOS; i++)
+    {
       for (j = 0; j <= MAXCRYSTALNO; j++)
         {
           Pars.SEGcal_gain[i][j] = 1.0;
           Pars.SEGcal_offset[i][j] = 0.0;
-        };
-    };
+        }
+    }
 
   /*--------------------*/
   /* Parse command line */
@@ -1583,7 +1586,7 @@ GEBacq (char *ChatFileName)
   TList *zlist;
   TIterator *hiterator;
 
-  TMapFile *mfile;
+  TMapFile *mfile = NULL;
 
   /* prototypes */
 
@@ -1652,7 +1655,7 @@ GEBacq (char *ChatFileName)
   Pars.WeWereSignalled = FALSE; /* signal  */
   Pars.UseRootFile = FALSE;
   Pars.SizeShareMemFile = FALSE;
-  Pars.spname[STRLEN];
+  //Pars.spname[STRLEN];
   Pars.firstEvent = 0;
   Pars.GSudpPort = 1101;
   Pars.NumToPrint = 25;
@@ -1705,19 +1708,19 @@ GEBacq (char *ChatFileName)
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %i %lf %lf %lf ", &ir, &dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
+          sscanf (buffer, "%i %i %lf %lf %lf ", ir, dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %lf %lf %lf  ", &dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
+          sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %lf %lf %lf  ", &dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
+          sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
 
           memset (buffer, zero, sizeof (buffer));
           fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %lf %lf %lf  ", &dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
+          sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
 
           j++;
         }

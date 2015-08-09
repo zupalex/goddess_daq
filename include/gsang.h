@@ -5,6 +5,7 @@
 #define MAX_ANG 17
 #endif
 
+#if 0
 /*  GS angular identification lookup table  */
 static int angid[MAX_GES] = {
 		1,1,1,1,2,1,2,2,2,2,		/*  5x1:17.3,  5x2:31.7 */
@@ -77,6 +78,8 @@ static float side_b_angcos[MAX_ANG] ={
 static float angtring[MAX_ANG] ={17.3,31.7,37.4,50.1,58.3,69.8,79.2,
 	80.7,90.0,99.3,100.8,110.2,121.7,129.9,142.6,148.3,162.7};
 
+#endif
+
 /*  GS angtheta lookup table  */
 static float angtheta[MAX_GES] = {
          17.3, 17.3, 17.3, 17.3, 31.7, 17.3, 31.7, 31.7, 31.7, 31.7,
@@ -91,6 +94,7 @@ static float angtheta[MAX_GES] = {
         129.9,129.9,129.9,129.9,142.6,129.9,142.6,142.6,142.6,142.6,
         148.3,148.3,148.3,148.3,162.7,148.3,162.7,162.7,162.7,162.7};
 
+#if 0
 /*  GS angphi lookup table  */
 static float angphi[MAX_GES] = {
         72.0, 216.0,144.0,288.0, 36.0,360.0,108.0,252.0,180.0,324.0,
@@ -104,6 +108,8 @@ static float angphi[MAX_GES] = {
         108.0,342.5,180.0,252.0, 13.2,324.0, 58.8,202.8, 85.2,229.2,
         130.8,274.8,157.2,301.2, 36.0,346.8,108.0,252.0,180.0,324.0,
         72.0, 216.0,144.0,288.0, 36.0,360.0,108.0,252.0,180.0,324.0};
+
+#endif
 
 /*   This table gives the angles of the Ge-detectors according to the 
      coordinate system given as follows:
