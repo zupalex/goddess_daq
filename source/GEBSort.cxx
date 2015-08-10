@@ -1167,7 +1167,7 @@ sdummyload (Long_t size)
 #else
   Pars.StartMapAddress = (unsigned int) m->GetMmallocDesc ();
 #endif
-  m->Print ();
+  //m->Print ();
 
   /* close and remove dummy map file */
 
@@ -1931,7 +1931,7 @@ GEBacq (char *ChatFileName)
 
       printf ("shared memory [%s] created, size: %s bytes\n", Pars.ShareMemFile, Pars.ShareMemFile);
       fflush (stdout);
-      mfile->Print ();
+      //mfile->Print ();
       printf ("\n");
 
     };
@@ -1988,7 +1988,7 @@ GEBacq (char *ChatFileName)
             exit (-1);
           };
         printf ("base=<%s>\n", Pars.f1->GetPath ());
-        Pars.f1->Print ();
+        //Pars.f1->Print ();
 	
       }
     else
@@ -2004,7 +2004,7 @@ GEBacq (char *ChatFileName)
 	    exit (-1);
 	  };
 	printf ("base=<%s>\n", Pars.f1->GetPath ());
-	Pars.f1->Print ();
+	//Pars.f1->Print ();
       };
   }
   printf ("\n");
@@ -2075,7 +2075,7 @@ GEBacq (char *ChatFileName)
   printf ("we have define the following ROOT spectra:\n");
 
   Pars.wlist = gDirectory->GetList ();
-  Pars.wlist->Print ();
+  //Pars.wlist->Print ();
 
   /* azi only in detector systems for now... */
 
@@ -2499,7 +2499,7 @@ GEBacq (char *ChatFileName)
                       hhtemp = (TH1 *) mfile->Remove (Pars.spname);
                       if (hhtemp != NULL)
                         {
-                          hhtemp->Print ();
+                          //hhtemp->Print ();
                           hhtemp->Reset ();
                           mfile->Add (hhtemp, Pars.spname);
                           mfile->Update (hhtemp);
@@ -2604,10 +2604,10 @@ GEBacq (char *ChatFileName)
 
   if (Pars.UseShareMemFile)
     {
-      UPDSSHMEM mfile->Print ();
-      printf ("\n");
-      mfile->ls ();
-      printf ("\n");
+      //UPDSSHMEM mfile->Print ();
+      //printf ("\n");
+      //mfile->ls ();
+      //printf ("\n");
     };
 
   /* if we were using rootfile */

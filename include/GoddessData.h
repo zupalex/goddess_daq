@@ -31,13 +31,16 @@ class GoddessData {
 
 	TH2F* enRawA;
 	TH2F* enRawD;
-	// raw and calibrated energy spectrum for each channel
-	std::vector<TH1F*> enRaw;
-	std::vector<TH1F*> enCal;
+	TH2F* enCalA;
+	TH2F* enCalD;
 	
-	// summary spectrum (energy vs strip) for each detector
-	std::vector<TH1F*> sumEnCal;
-	std::vector<TH1F*> sumEnRaw;
+	// raw and calibrated energy spectrum for each channel
+	// qqq5 per strip
+	std::vector<TH2F*> QQQenRawFront;
+	std::vector<TH2F*> QQQenCalFront;
+	std::vector<TH2F*> QQQenRawBack;
+	std::vector<TH2F*> QQQenCalBack;
+
 
 	// number of hits/strip for each detector
 	std::vector<TH2F*> hitPattern; 

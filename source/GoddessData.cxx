@@ -9,6 +9,9 @@
 //GODDESS Headers
 #include "Detector.h"
 #include "orrubaDet.h"
+#include "QQQ5.h"
+
+#include <iostream>
 
 GoddessData::GoddessData(std::string configFilename)
 {
@@ -22,12 +25,62 @@ GoddessData::GoddessData(std::string configFilename)
 	// ORRUBA histograms
 	// dorectories to keep things organized
 	gDirectory->mkdir("ORRUBA");
-	gDirectory->mkdir("ORRUBA/analog");
-	gDirectory->cd("ORRUBA/analog");
+	gDirectory->cd("ORRUBA");
+	gDirectory->mkdir("analog");
+	gDirectory->mkdir("digital");
+	gDirectory->cd("analog");
+	gDirectory->mkdir("cal");
+	gDirectory->mkdir("raw");
+	gDirectory->cd("/ORRUBA/digital");
+	gDirectory->mkdir("raw");
+	gDirectory->mkdir("cal");
 
+	gDirectory->cd("/ORRUBA/analog/raw");
 	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",4096,0,4096,400,0,400);
 
+	gDirectory->cd("/ORRUBA/digital/raw");
+	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",4096,0,4096,400,0,400);
+
+	gDirectory->cd("/ORRUBA/analog/cal");
+	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",4096,0,4096,400,0,400);
+
+	gDirectory->cd("/ORRUBA/digital/cal");
+	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",4096,0,4096,400,0,400);
+
 	gDirectory->cd("/");
+
+	TClonesArray *qqq5s=config->GetQQQ5s();
+	int nqqq5s = qqq5s->GetEntries();
+
+	gDirectory->mkdir("QQQ5");
+	gDirectory->cd("QQQ5");
+	gDirectory->mkdir("front");
+	gDirectory->mkdir("back");
+	gDirectory->cd("front");
+	gDirectory->mkdir("raw");
+	gDirectory->mkdir("cal");
+	gDirectory->cd("/QQQ5/back");
+	gDirectory->mkdir("raw");
+	gDirectory->mkdir("cal");
+	
+	for (int i = 0; i < nqqq5s; i++) {
+		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
+		
+		gDirectory->cd("/QQQ5/front/raw");
+		QQQenRawFront.push_back(new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 4096,0,4096,32,0,32));
+
+		gDirectory->cd("/QQQ5/front/cal");
+		QQQenCalFront.push_back(new TH2F(Form("QQQenCalFront_%s",name),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name), 4096,0,4096,32,0,32));
+
+		gDirectory->cd("/QQQ5/back/raw");
+		QQQenRawBack.push_back(new TH2F(Form("QQQenRawBack_%s",name),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name), 4096,0,4096,4,0,4));
+
+		gDirectory->cd("/QQQ5/back/cal");
+		QQQenCalBack.push_back(new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 4096,0,4096,4,0,4));
+	}
+	gDirectory->cd("/");	
+		
+		
 	
 	
 }
