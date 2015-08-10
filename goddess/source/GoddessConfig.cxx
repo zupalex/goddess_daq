@@ -85,6 +85,15 @@ void GoddessConfig::ReadConfig(std::string filename) {
 	std::string line;
 	//Loop over every line in the config file
 	while (std::getline(mapFile, line).good()) {
+		//Remove comments
+		size_t pos = line.find('#');
+		if (pos != std::string::npos) 
+			line.erase(pos);
+		//Remove leading whitespace.
+		size_t wordStart = line.find_first_not_of(" \t");
+		if (wordStart == std::string::npos) continue;
+		line.erase(0,wordStart);
+
 		//Convert string to stream
 		std::istringstream lineStream(line);
 
@@ -173,6 +182,15 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		//Read calibration information.
 		std::istream::streampos prevPos = mapFile.tellg();
 		while (std::getline(mapFile, line).good()) {
+			//Remove comments
+			size_t pos = line.find('#');
+			if (pos != std::string::npos) 
+				line.erase(pos);
+			//Remove leading whitespace.
+			size_t wordStart = line.find_first_not_of(" \t");
+			if (wordStart == std::string::npos) continue;
+			line.erase(0,wordStart);
+
 			std::istringstream lineStream(line);
 			std::string calType, subType;
 			int detChannel;
