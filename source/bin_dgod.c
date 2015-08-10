@@ -33,6 +33,7 @@ extern int tlkup[NCHANNELS];
 extern int tid[NCHANNELS];
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern int ng;
+extern unsigned int numDGOD;
 
 TH1D *h1_god_en;
 TH2F *h2_god_en;
@@ -99,6 +100,7 @@ bin_dgod (GEB_EVENT * GEB_event)
   nsubev = 0;
   nfp = 0;
 
+	numDGOD = 0;
 
 
   /* loop through the coincidence event and fish out GEB_TYPE_DFMA data */
@@ -128,6 +130,7 @@ bin_dgod (GEB_EVENT * GEB_event)
              ndfma++;
       }
            nsubev++;
+				numDGOD++;
 
         };
 

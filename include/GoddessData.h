@@ -36,10 +36,15 @@ class GoddessData {
 	
 	// raw and calibrated energy spectrum for each channel
 	// qqq5 per strip
-	std::vector<TH2F*> QQQenRawFront;
-	std::vector<TH2F*> QQQenCalFront;
-	std::vector<TH2F*> QQQenRawBack;
-	std::vector<TH2F*> QQQenCalBack;
+	std::map<std::string,TH2F*> QQQenRawFront;
+	std::map<std::string,TH2F*> QQQenCalFront;
+	std::map<std::string,TH2F*> QQQenRawBack;
+	std::map<std::string,TH2F*> QQQenCalBack;
+	
+	std::map<std::string,TH2F*> QQQHitPat;
+	std::map<std::string,TH1F*> QQQFrontMult;
+	std::map<std::string,TH1F*> QQQBackMult;
+
 
 
 	// number of hits/strip for each detector

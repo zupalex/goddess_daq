@@ -4,11 +4,13 @@
 #include "GoddessData.h"
 #include "GoddessConfig.h"
 
+#include <iostream>
+
 extern DFMAEVENT DFMAEvent[MAXCOINEV];
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern AGODEVENT AGODEvent[MAXCOINEV];
 
-extern unsigned int numAGOD, numDFMA;
+extern unsigned int numAGOD, numDGOD;
 extern int ng;
 
 GoddessData *godData;
@@ -24,7 +26,7 @@ void bin_god (GEB_EVENT *){
 	for (unsigned int i=0;i<numAGOD;i++) 
 		AGODEvts.push_back(AGODEvent[i]);
 
-	for (unsigned int i=0;i<numDFMA;i++) 
+	for (unsigned int i=0;i<numDGOD;i++) 
 		DFMAEvts.push_back(DFMAEvent[i]);
 
 	godData->Fill(NULL,&DFMAEvts,&AGODEvts);

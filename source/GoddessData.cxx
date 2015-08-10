@@ -54,6 +54,7 @@ GoddessData::GoddessData(std::string configFilename)
 
 	gDirectory->mkdir("QQQ5");
 	gDirectory->cd("QQQ5");
+	gDirectory->mkdir("multiplicity");
 	gDirectory->mkdir("front");
 	gDirectory->mkdir("back");
 	gDirectory->cd("front");
@@ -67,16 +68,21 @@ GoddessData::GoddessData(std::string configFilename)
 		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
 		
 		gDirectory->cd("/QQQ5/front/raw");
-		QQQenRawFront.push_back(new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 4096,0,4096,32,0,32));
+		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 4096,0,4096,32,0,32));
 
 		gDirectory->cd("/QQQ5/front/cal");
-		QQQenCalFront.push_back(new TH2F(Form("QQQenCalFront_%s",name),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name), 4096,0,4096,32,0,32));
+		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name), 4096,0,4096,32,0,32));
 
 		gDirectory->cd("/QQQ5/back/raw");
-		QQQenRawBack.push_back(new TH2F(Form("QQQenRawBack_%s",name),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name), 4096,0,4096,4,0,4));
+		QQQenRawBack.emplace(name,new TH2F(Form("QQQenRawBack_%s",name),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name), 4096,0,4096,4,0,4));
 
 		gDirectory->cd("/QQQ5/back/cal");
-		QQQenCalBack.push_back(new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 4096,0,4096,4,0,4));
+		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 4096,0,4096,4,0,4));
+
+		gDirectory->cd("/QQQ5/multiplicity");
+		QQQHitPat.emplace(name,new TH2F(Form("QQQHitPat_%s",name),Form("QQQ5 Hit Pattern %s;Front [strip];Back [strip]",name),32,0,32,4,0,4));
+		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity vs Front Strip;Strip;multiplicity",name),32,0,32));
+		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicity vs Back Strip;Strip;multiplicity",name),4,0,4));
 	}
 	gDirectory->cd("/");	
 		
@@ -89,15 +95,17 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 {
 	std::vector<orrubaDet*> firedDets;
 
+	// getting data from analog events
 	for (size_t i=0;i<agodEvts->size();i++) {
 		AGODEVENT agodEvt = agodEvts->at(i);
 		for (size_t j=0;j<agodEvt.values.size();j++) {
 			short value = agodEvt.values[j];
 			short channel = agodEvt.channels[j];
+			
 			enRawA->Fill(value,channel);
 
 			std::pair<short, short> key = std::make_pair(GEB_TYPE_AGOD, channel);
-			if (suppressCh[key]) continue;
+			if (suppressCh.find(key) != suppressCh.end()) continue;
 
 			Detector *det = config->SetRawValue(GEB_TYPE_AGOD, channel, value);
 			if (!det) {
@@ -105,11 +113,37 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				continue;
 			}	
 
-			if (std::string(det->IsA()->GetName()) != "IonChamber")
+			std::string detectorType = det->IsA()->GetName();
+			if (detectorType != "Ion Chamber") {
 				firedDets.push_back((orrubaDet*) det);
+			} 
 		}
 	}
 
+	// getting data from digital events	
+	for (size_t i=0;i<dgodEvts->size();i++) {
+		DFMAEVENT dgodEvt = dgodEvts->at(i);
+		short value=dgodEvt.ehi;
+		short channel=dgodEvt.tid;
+
+		enRawD->Fill(value,channel);
+		
+		std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
+		if (suppressCh.find(key) != suppressCh.end()) {
+			continue;
+		}
+
+		Detector *det=config->SetRawValue(GEB_TYPE_DFMA,channel,value);
+		if (!det) {
+			suppressCh[key]=true;
+			continue;
+		}
+
+		std::string detectorType = det->IsA()->GetName();
+		if (detectorType != "Ion Chamber") {
+			firedDets.push_back((orrubaDet*) det);
+		}
+	}
 
 	//Build a total ORRUBA event
 	float dE=0, E1=0, E2=0;
@@ -122,6 +156,33 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		std::string detType = det->IsA()->GetName();
 		std::string detPosID = det->GetPosID();
 		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
+		// front=false (p-type = (!n-type))
+		siDet::ValueMap frontRawEn = det->GetRawEn(false);
+		siDet::ValueMap frontCalEn = det->GetRawEn(false);
+		siDet::ValueMap backRawEn = det->GetRawEn(true);
+		siDet::ValueMap backCalEn = det->GetCalEn(true);
+		if (detType == "QQQ5") {
+			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
+				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
+				QQQFrontMult[detPosID]->Fill(itr->first);
+			}
+			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
+				QQQenCalFront[detPosID]->Fill(itr->second, itr->first);
+			}
+			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
+				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
+				QQQBackMult[detPosID]->Fill(itr->first);
+			}
+			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
+				QQQenCalBack[detPosID]->Fill(itr->second, itr->first);
+			}
+			
+			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
+				for (auto itrBack=frontRawEn.begin();itrBack!=frontRawEn.end();++itrBack) {
+					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
+				}
+			}
+		}
 
 		if (sector.empty()) sector = detPosSector;
 		//If we had detectors from different quadrants we need to abort.
@@ -148,5 +209,10 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	} 
 	orruba->SetEvent(sector,dE,E1,E2,pos);
 	//tree->Fill();
+
+	//We clear everything here since we know what was actually fired.
+	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
+		(*itr)->Clear();
+	}
 }
 

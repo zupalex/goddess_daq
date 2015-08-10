@@ -20,6 +20,9 @@ void siDet::Clear() {
 }
 
 void siDet::SetNumContacts(int pType, int nType/*=0*/) {
+	numPtype = pType;
+	numNtype = nType;
+
 	parEnCalP.resize(pType);
 	parEnCalN.resize(nType);
 }
