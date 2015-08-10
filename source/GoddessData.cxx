@@ -81,8 +81,8 @@ GoddessData::GoddessData(std::string configFilename)
 
 		gDirectory->cd("/QQQ5/multiplicity");
 		QQQHitPat.emplace(name,new TH2F(Form("QQQHitPat_%s",name),Form("QQQ5 Hit Pattern %s;Front [strip];Back [strip]",name),32,0,32,4,0,4));
-		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity vs Front Strip;Strip;multiplicity",name),32,0,32));
-		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicity vs Back Strip;Strip;multiplicity",name),4,0,4));
+		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity;multiplicity",name),32,0,32));
+		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicitymultiplicity",name),4,0,4));
 	}
 	gDirectory->cd("/");	
 		
@@ -158,27 +158,29 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
 		// front=false (p-type = (!n-type))
 		siDet::ValueMap frontRawEn = det->GetRawEn(false);
-		siDet::ValueMap frontCalEn = det->GetRawEn(false);
+		siDet::ValueMap frontCalEn = det->GetCalEn(false);
 		siDet::ValueMap backRawEn = det->GetRawEn(true);
 		siDet::ValueMap backCalEn = det->GetCalEn(true);
+		
+
 		if (detType == "QQQ5") {
+			QQQFrontMult[detPosID]->Fill(frontRawEn.size());
+			QQQBackMult[detPosID]->Fill(backRawEn.size());
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
-				QQQFrontMult[detPosID]->Fill(itr->first);
 			}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				QQQenCalFront[detPosID]->Fill(itr->second, itr->first);
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
-				QQQBackMult[detPosID]->Fill(itr->first);
 			}
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				QQQenCalBack[detPosID]->Fill(itr->second, itr->first);
 			}
 			
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
-				for (auto itrBack=frontRawEn.begin();itrBack!=frontRawEn.end();++itrBack) {
+				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
 					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
 				}
 			}

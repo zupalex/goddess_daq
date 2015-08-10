@@ -120,12 +120,16 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
 
 			ionChamber = new IonChamber(numAnode, numScint, numDE, numEres);
-			if (IsInsertable(anodeDaqType, anodeDaqCh, detType, false) && IsInsertable(scintDaqType, scintDaqCh, detType, true)) {
+			if (IsInsertable(anodeDaqType, anodeDaqCh, detType, false))  {
 				chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber,false);
+			}
+			else
+				std::cerr << "ERROR: Detector " << serialNum << " p-type will not be unpacked!\n";
+			if (IsInsertable(scintDaqType, scintDaqCh, detType, true)) {
 				chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber,true);
 			}
 			else 
-				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
+				std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
 		}
 		else {
 			int pTypeDaqType, nTypeDaqType;
@@ -171,12 +175,16 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				break;
 			}
 			det->SetDetector(serialNum,sector,depth,upStream, pos);
-			if (IsInsertable(pTypeDaqType, pTypeDaqCh,detType,false) && IsInsertable(nTypeDaqType, nTypeDaqCh, detType,true)) {
+			if (IsInsertable(pTypeDaqType, pTypeDaqCh,detType,false)) {
 				chMap[std::make_pair(pTypeDaqType,pTypeDaqCh)] = std::make_pair(det,false);
+			} 
+			else
+				std::cerr << "ERROR: Detector " << serialNum << " p-type will not be unpacked!\n";
+			if (IsInsertable(nTypeDaqType, nTypeDaqCh, detType,true)) {
 				chMap[std::make_pair(nTypeDaqType,nTypeDaqCh)] = std::make_pair(det,true);
 			}
 			else 
-				std::cerr << "ERROR: Detector " << serialNum << " will not be unpacked!\n";
+				std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
 		}
 
 		//Read calibration information.
@@ -321,9 +329,18 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, 
 			if (mapItr->first.first == daqType) {
 				//Get the number of channels needed for each detector.
 				int numCh = 1;
-				if (detType == "superX3") numCh = 12;
-				else if (detType == "BB10") numCh = 8;
-				else if (detType == "QQQ5") numCh = 36;
+				// front == p-type == 0
+				// if secondaryType == true, then we have a backside
+				if (secondaryType) {
+					if (detType == "superX3") numCh = 4;
+					else if (detType == "BB10") return false;
+					else if (detType == "QQQ5") numCh = 4;
+				} else {
+					if (detType == "superX3") numCh = 8;
+					else if (detType == "BB10") numCh = 8;
+					else if (detType == "QQQ5") numCh = 32;
+				}
+
 
 				if (daqCh + numCh > mapItr->first.second) {
 					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second.first);
@@ -342,9 +359,17 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, 
 			if (mapItr->first.first == daqType)  {
 				int numCh = 1;
 				std::string checkType = mapItr->second.first->IsA()->GetName();
-				if (checkType == "superX3") numCh = 12;
-				else if (checkType == "BB10") numCh = 8;
-				else if (checkType == "QQQ5") numCh = 36;
+				// front == p-type == 0
+				// if secondaryType == true, then we have a backside
+				if (secondaryType) {
+					if (checkType == "superX3") numCh = 4;
+					else if (checkType == "BB10") return false;
+					else if (checkType == "QQQ5") numCh = 4;
+				} else {
+					if (checkType == "superX3") numCh = 8;
+					else if (checkType == "BB10") numCh = 8;
+					else if (checkType == "QQQ5") numCh = 32;
+				}
 
 				if (mapItr->first.second + numCh > daqCh) {
 					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second.first);
