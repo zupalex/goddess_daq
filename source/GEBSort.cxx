@@ -1572,7 +1572,7 @@ GEBacq (char *ChatFileName)
   unsigned int typehit[MAX_GEB_TYPE];
   FILE *TSfile;
   TH2F *dtbtev;
-  long long int firtsTSinEvent, dTS;
+  unsigned long long int firtsTSinEvent, dTS;
 //  int dim;
 //  float rr[LONGLEN + 1];
 
