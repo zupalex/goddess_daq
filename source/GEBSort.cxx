@@ -126,7 +126,7 @@ TTree *tree;//TREES...
 
 PARS Pars;
 int ng;
-unsigned int numAGOD;
+unsigned int numAGOD, numDFMA;
 DGSEVENT DGSEvent[MAXCOINEV];
 DFMAEVENT DFMAEvent[MAXCOINEV];
 AGODEVENT AGODEvent[MAXCOINEV];

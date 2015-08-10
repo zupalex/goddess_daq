@@ -421,7 +421,6 @@ int TestTr2 = 0;
 int TestTr3 = 0;
 int TestTr4 = 0;
 int leTr = 0;
-int numDFMA = 0;
 int numDGS = 0;
 // external parameters 
 
@@ -430,6 +429,7 @@ extern TTree *tree;//TREES...
 
 extern PARS Pars;
 extern int ng;
+extern unsigned int numDFMA;
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern int tlkup[NCHANNELS];
 extern int tid[NCHANNELS];
@@ -1188,6 +1188,7 @@ bin_dfma (GEB_EVENT * GEB_event)
   ndssd = 0;
   nsubev = 0;
   nfp = 0;
+	numDFMA = 0;
 
   for (i = 0; i < GEB_event->mult; i++){
     
@@ -1211,9 +1212,9 @@ bin_dfma (GEB_EVENT * GEB_event)
              ndfma++;
       }
            nsubev++;
+				numDFMA++;
      }
 
-           //nsubev++;
 
    }
 

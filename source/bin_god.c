@@ -8,7 +8,7 @@ extern DFMAEVENT DFMAEvent[MAXCOINEV];
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern AGODEVENT AGODEvent[MAXCOINEV];
 
-extern unsigned int numAGOD;
+extern unsigned int numAGOD, numDFMA;
 extern int ng;
 
 GoddessData *godData;
@@ -19,9 +19,13 @@ void sup_god() {
 
 void bin_god (GEB_EVENT *){
 	std::vector<AGODEVENT> AGODEvts;
+	std::vector<DFMAEVENT> DFMAEvts;
 
 	for (unsigned int i=0;i<numAGOD;i++) 
 		AGODEvts.push_back(AGODEvent[i]);
 
-	godData->Fill(NULL,NULL,&AGODEvts);
+	for (unsigned int i=0;i<numDFMA;i++) 
+		DFMAEvts.push_back(DFMAEvent[i]);
+
+	godData->Fill(NULL,&DFMAEvts,&AGODEvts);
 }
