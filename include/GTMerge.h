@@ -232,8 +232,8 @@ typedef struct CONTROL_struct
   int zzipout;
   int dtsfabort;
   int dtsbabort;
-  long long int startTS_lo;
-  long long int startTS_hi;
+  unsigned long long int startTS_lo;
+  unsigned long long int startTS_hi;
   int startTS;
   int TSlist_lo;
   int TSlist_hi;

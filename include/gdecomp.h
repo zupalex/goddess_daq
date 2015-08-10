@@ -203,7 +203,7 @@ struct crys_intpts {
 struct gebData {
   int type; /* type of data following */
   int length;
-  long long timestamp;
+  unsigned long long timestamp;
 };
 
 #if(0)

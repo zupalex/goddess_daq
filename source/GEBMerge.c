@@ -196,7 +196,7 @@ GTGetDiskEv (int FileNo, int storeNo)
   int siz, i1;
 
 #if(0)
-  printf ("entered GTGetDiskEv, mm=%i\n", mm);
+  1rintf ("entered GTGetDiskEv, mm=%i\n", mm);
   if (mm >= 3)
     {
       printf ("debug stop in GTGetDiskEv\n");
@@ -214,7 +214,7 @@ GTGetDiskEv (int FileNo, int storeNo)
 #endif
   if (siz != sizeof (GEBDATA))
     {
-      printf ("failed to read %u bytes for header, got %i\n", sizeof (GEBDATA), siz);
+      printf ("failed to read %i bytes for header, got %i\n", sizeof (GEBDATA), siz);
 
       return (1);
     };
@@ -411,12 +411,10 @@ main (int argc, char **argv)
   int nfiles = 0, maxNoEvents = 0, nPoolEvents = 0, siz;
   int i1, i2, badRead, nfe, ii, njb = 0, njf = 0;
   int i, j, st, nextTSpoolIndex, nn, argcoffset = 0;
-  
-  long long int oldListTS = 0;
-  long long int dTS, lltmp, oldTS, lli1;
+  long long int oldListTS = 0, dTS, lltmp, oldTS, lli1;
   unsigned long long int nextTS, ulli1, ulli2;
-  float dtbtev[LENSP]; 
-  float r1;
+  float dtbtev[LENSP];
+  float ehigain[NGE + 1], ehioffset[NGE + 1], r1;
   FILE *fp;
   char str[132], str1[512];
   unsigned int seed = 0;
@@ -431,7 +429,6 @@ main (int argc, char **argv)
   int wosize = 0;
   int nused;
   int nprint;
-  int ret_val = 0;
 
   /* prototypes */
 
@@ -469,8 +466,8 @@ main (int argc, char **argv)
 
   for (i = 0; i <= NGE; i++)
     {
-//      ehigain[i] = 1;
-//      ehioffset[i] = 0;
+      ehigain[i] = 1;
+      ehioffset[i] = 0;
     };
 
   /* open chat file */
@@ -543,8 +540,8 @@ main (int argc, char **argv)
           nret = sscanf (str, "%s %i", str1, &size);
           CheckNoArgs (nret, 2, str);
           assert (size <= MAXBIGBUFSIZ);
-          //r1 = (size * sizeof (EVENT) + (size + 1) * sizeof (int)) / 1024.0 / 1024.0;
-          printf ("sizeof(EVENT)= %u\n", sizeof (EVENT));
+          r1 = (size * sizeof (EVENT) + (size + 1) * sizeof (int)) / 1024.0 / 1024.0;
+          printf ("sizeof(EVENT)= %i\n", sizeof (EVENT));
           printf ("will use a bigbuffer size of %i, or %7.3f MBytes\n", size, r1);
         }
       else if ((p = strstr (str, "nprint")) != NULL)
@@ -564,7 +561,7 @@ main (int argc, char **argv)
         }
       else if ((p = strstr (str, "startTS")) != NULL)
         {
-          nret = sscanf (str, "%s %lli %lli ", str1, &control.startTS_lo, &control.startTS_hi);
+          nret = sscanf (str, "%s %llu %llu ", str1, &control.startTS_lo, &control.startTS_hi);
           CheckNoArgs (nret, 3, str);
           printf ("startTS from %lli to %lli\n", control.startTS_lo, control.startTS_hi);
           control.startTS = 1;
@@ -760,12 +757,8 @@ main (int argc, char **argv)
   if (fp == NULL)
     {
       printf ("need a \"map.dat\" file to run\n");
-      ret_val = system ("./mkMap > map.dat");
-      if (ret_val == -1){
-	printf("error creating file \"map.dat\"\n");
-      }else{
-        printf ("just made you one...\n");
-      }
+      system ("./mkMap > map.dat");
+      printf ("just made you one...\n");
       fp = fopen ("map.dat", "r");
       assert (fp != NULL);
     };
@@ -930,7 +923,7 @@ main (int argc, char **argv)
 #if(DEBUG1 ||1)
       printf ("Event[%i].gd->timestamp=%lli\n ", i, Event[i].gd->timestamp);
 #endif
-      if (static_cast<unsigned int>(Event[i].gd->timestamp) < nextTS)
+      if (Event[i].gd->timestamp < nextTS)
         {
           nextTS = Event[i].gd->timestamp;
           nextTSpoolIndex = i;
@@ -963,7 +956,7 @@ main (int argc, char **argv)
       for (i = 0; i < nPoolEvents; i++)
         {
 //          printf("Event[%i].gd->timestamp=%lli\n",i,Event[i].gd->timestamp);
-          if (static_cast<unsigned int>(Event[i].gd->timestamp) < nextTS)
+          if (Event[i].gd->timestamp < nextTS)
             {
               nextTS = Event[i].gd->timestamp;
               nextTSpoolIndex = i;
@@ -1298,7 +1291,7 @@ main (int argc, char **argv)
 
       i1 = size - nused;
       i2 = size;
- //     truesize == i1;
+      truesize = i1;
 //      printf ("refill into %i...%i\n", i1, i2 - 1);
 
       for (nfe = i1; nfe < i2; nfe++)
@@ -1312,7 +1305,7 @@ main (int argc, char **argv)
           nextTSpoolIndex = -1;
           for (i = 0; i < nPoolEvents; i++)
             {
-              if (static_cast<unsigned int>(Event[i].gd->timestamp) < nextTS)
+              if (Event[i].gd->timestamp < nextTS)
                 {
                   nextTS = Event[i].gd->timestamp;
                   nextTSpoolIndex = i;
@@ -1437,13 +1430,7 @@ done:
   printf ("wrote %i events and %lli bytes\n", control.nwritten,nstat->outbytes );
   sprintf (str, "file %s_*; ls -l %s_*", argv[2], argv[2]);
   printf("executing \"%s\"", str);
-  ret_val = 0;
-  ret_val = system (str);
-  if (ret_val == -1){
-	printf("error executing \"%s\"\n",str);
-  }else{
-        printf ("\"%s\" executed\n",str);
-  }
+  system (str);
   fflush (stdout);
   printf ("\n");
   fflush (stdout);
