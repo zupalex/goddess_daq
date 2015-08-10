@@ -1,7 +1,7 @@
 #ifndef SIDET_H
 #define SIDET_H
 
-#include <vector>
+#include <map>
 #include "Detector.h"
 
 ///A class to handle basic silicon detectors.
@@ -10,15 +10,22 @@
  * \date July 2015
  */
 class siDet : public Detector {
+	public: 
+		///A short hand for a map of vlaues per channel.
+		typedef std::map<short, float> ValueMap;
+
 	private:
+		unsigned short numPtype;
+		unsigned short numNtype;
+
 		///Vector of raw energies for p type contacts.
-		std::vector<float> enRawP;
+		ValueMap enRawP;
 		///Vector of raw energies for n type contacts.
-		std::vector<float> enRawN;
+		ValueMap enRawN;
 		///Vector of calibrated energies for p type contacts.
-		std::vector<float> enCalP;
+		ValueMap enCalP;
 		///Vector of calibrated energies for n type contacts.
-		std::vector<float> enCalN;
+		ValueMap enCalN;
 
 		///Multiplicity of p type contacts.
 		unsigned int multP;
@@ -59,7 +66,10 @@ class siDet : public Detector {
 		///Specify the polynomial calibration parameters of the specified contact.
 		bool SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);
 
-
+		///Get a map of the raw energies.
+		ValueMap GetRawEn(bool nType);
+		///Get a map of the calibrated energies.
+		ValueMap GetCalEn(bool nType);
 
 	ClassDef(siDet,1)
 	

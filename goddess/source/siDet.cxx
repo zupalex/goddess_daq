@@ -2,7 +2,9 @@
 #include <cmath>
 #include <iostream>
 
-siDet::siDet() {
+siDet::siDet():
+	numPtype(0), numNtype(0)
+{
 	Clear();
 }
 siDet::~siDet() {
@@ -11,21 +13,13 @@ siDet::~siDet() {
 
 
 void siDet::Clear() {
-	enRawP.assign(enRawP.size(),0);
-	enRawN.assign(enRawN.size(),0);
-	enCalP.assign(enCalP.size(),0);
-	enCalN.assign(enCalN.size(),0);
-
-	multP = 0;
-	multN = 0;
+	enRawP.clear();
+	enRawN.clear();
+	enCalP.clear();
+	enCalN.clear();
 }
 
 void siDet::SetNumContacts(int pType, int nType/*=0*/) {
-	enRawP.resize(pType,0);
-	enRawN.resize(nType,0);
-	enCalP.resize(pType,0);
-	enCalN.resize(nType,0);
-
 	parEnCalP.resize(pType);
 	parEnCalN.resize(nType);
 }
@@ -36,8 +30,8 @@ void siDet::SetNumContacts(int pType, int nType/*=0*/) {
  *	\return True is contact has been declared.
  */
 bool siDet::ValidContact(unsigned int contact, bool nType/*=false*/) {
-	size_t size = enRawP.size();
-	if (nType) size = enRawN.size();
+	size_t size = numPtype;
+	if (nType) size = numNtype;
 	if (contact >= size) { 
 			fprintf(stderr, "ERROR: Contact specified, %u, is invalid!\n",contact);
 			return false;
@@ -54,9 +48,9 @@ bool siDet::ValidContact(unsigned int contact, bool nType/*=false*/) {
  *	\param[in] rawValue The raw contact value in channels.
  */
 void siDet::SetRawValue(unsigned int channel, int rawValue) {
-	if (channel < enRawP.size())
+	if (channel < numPtype)
 		SetRawValue(channel,false,rawValue);
-	else if (channel < enRawP.size() + enRawN.size()) 
+	else if (channel < numPtype + numNtype) 
 		SetRawValue(channel,true,rawValue);
 	else
 		std::cerr << "ERROR: Cannot set raw value for invalid channel: " << channel << "!\n";
@@ -75,14 +69,14 @@ void siDet::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 	float *enRaw, *enCal;
 	std::vector<float> *parEnCal;
 	if (nType) {
-		enRaw = &(enRawN.at(contact));
-		enCal = &(enCalN.at(contact));
-		parEnCal = &(parEnCalN.at(contact));
+		enRaw = &(enRawN[contact]);
+		enCal = &(enCalN[contact]);
+		parEnCal = &(parEnCalN[contact]);
 	}
 	else {
-		enRaw = &(enRawP.at(contact));
-		enCal = &(enCalP.at(contact));
-		parEnCal = &(parEnCalP.at(contact));
+		enRaw = &(enRawP[contact]);
+		enCal = &(enCalP[contact]);
+		parEnCal = &(parEnCalP[contact]);
 	}
 
 	//Assign raw value and compute calibrated value.
@@ -113,8 +107,18 @@ bool siDet::SetEnergyCalib(std::vector<float> par, int contact, bool nType/*=fal
 }
 
 int siDet::GetNumChannels(bool nType) {
-	if (nType) return enRawN.size();
-	return enRawP.size();
+	if (nType) return numNtype;
+	return numPtype;
+}
+
+siDet::ValueMap siDet::GetRawEn(bool nType) {
+	if (nType) return enRawN;
+	return enRawP;
+}
+
+siDet::ValueMap siDet::GetCalEn(bool nType) {
+	if (nType) return enCalN;
+	return enCalP;
 }
 
 
