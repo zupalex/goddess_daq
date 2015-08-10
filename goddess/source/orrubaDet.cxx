@@ -37,6 +37,7 @@ void orrubaDet::SetDetector(std::string serialNum_, unsigned short sector_, unsi
 	detPos = position_;
 
 	ConstructBins();
+	SetPosID();
 
 }
 
