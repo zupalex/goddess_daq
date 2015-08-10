@@ -147,21 +147,17 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		}
 	}
 
-	//Build a total ORRUBA event
-	float dE=0, E1=0, E2=0;
-	TVector3 pos(0,0,0);
-	std::string sector;
 	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
 		orrubaDet* det = *itr;
-		unsigned short depth = det->GetDepth();
-		std::string detType = det->IsA()->GetName();
 		std::string detPosID = det->GetPosID();
-		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
+		std::string detType = det->IsA()->GetName();
+
 		// front=false (p-type = (!n-type))
 		siDet::ValueMap frontRawEn = det->GetRawEn(false);
 		siDet::ValueMap frontCalEn = det->GetRawEn(false);
 		siDet::ValueMap backRawEn = det->GetRawEn(true);
 		siDet::ValueMap backCalEn = det->GetCalEn(true);
+
 		if (detType == "QQQ5") {
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
@@ -185,31 +181,54 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
-
-				if (depth == 0) {
-					if (!dE) dE = det->GetEnergy();
-				}
-				else if (depth == 1) {
-					if (!E1) E1 = det->GetEnergy();
-				}
-				else if (depth == 2) {
-					if (!E2) E2 = det->GetEnergy();
-				}
-				if (detType == "superX3" || detType == "QQQ5") {
-					//Save the position if a position has not been saved or
-					//	if this is a QQQ5 dE layer.
-					if (!pos.Mag2() || (detType == "QQQ5" && depth == 0))
-						pos = det->GetEventPosition();
-				}
-			} 
-			orruba->SetEvent(sector,dE,E1,E2,pos);
-			//tree->Fill();
-
-			//We clear everything here since we know what was actually fired.
-			for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
-				(*itr)->Clear();
 			}
 		}
+	}
+
+
+	//Build a total ORRUBA event
+	float dE=0, E1=0, E2=0;
+	TVector3 pos(0,0,0);
+	std::string sector;
+	bool valid = true;
+	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
+		orrubaDet* det = *itr;
+		std::string detPosID = det->GetPosID();
+		unsigned short depth = det->GetDepth();
+		std::string detType = det->IsA()->GetName();
+		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
+
+
+		if (sector.empty()) sector = detPosSector;
+		//If we had detectors from different quadrants we need to abort.
+		else if (sector != detPosSector) {
+			valid = false;
+			break;
+		}
+		if (depth == 0) {
+			if (!dE) dE = det->GetEnergy();
+		}
+		else if (depth == 1) {
+			if (!E1) E1 = det->GetEnergy();
+		}
+		else if (depth == 2) {
+			if (!E2) E2 = det->GetEnergy();
+		}
+		if (detType == "superX3" || detType == "QQQ5") {
+			//Save the position if a position has not been saved or
+			//	if this is a QQQ5 dE layer.
+			if (!pos.Mag2() || (detType == "QQQ5" && depth == 0))
+				pos = det->GetEventPosition();
+		}
+	} 
+	if (valid) {
+		orruba->SetEvent(sector,dE,E1,E2,pos);
+		tree->Fill();
+	}
+
+	//We clear everything here since we know what was actually fired.
+	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
+		(*itr)->Clear();
 	}
 }
 
