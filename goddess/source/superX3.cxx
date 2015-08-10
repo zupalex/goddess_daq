@@ -122,6 +122,9 @@ void superX3::UpdatePosition(int strip) {
 		farContact = 2 * strip;
 	}
 
+	//Check if both contacts have had there energy set.
+	if (!ContactHit(nearContact, false) || !ContactHit(farContact, false)) return;
+
 	//Compute the strip energy by 
 	//E = N + p0 + p1 * F + p2 * F^2 ...
 	enCalPstrip[strip] = GetCalEnergy(nearContact);
@@ -207,6 +210,7 @@ void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 
 		//If more than one contact fired we can compute position and energy. 
 		if (stripContactMult[strip] > 1) {
+			if (stripContactMult[strip] > 2) 
 			UpdatePosition(GetStrip(contact));
 			//Store the energy only if the multiplicity is one.
 			enPtype += enCalPstrip[strip];

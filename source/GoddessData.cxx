@@ -63,10 +63,10 @@ GoddessData::GoddessData(std::string configFilename)
 	gDirectory->cd("/QQQ5/back");
 	gDirectory->mkdir("raw");
 	gDirectory->mkdir("cal");
-	
+
 	for (int i = 0; i < nqqq5s; i++) {
 		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
-		
+
 		gDirectory->cd("/QQQ5/front/raw");
 		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 4096,0,4096,32,0,32));
 
@@ -85,23 +85,24 @@ GoddessData::GoddessData(std::string configFilename)
 		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicitymultiplicity",name),4,0,4));
 	}
 	gDirectory->cd("/");	
-		
-		
-	
-	
+
+
+
+
 }
 
-void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts)
-{
-	std::vector<orrubaDet*> firedDets;
+void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
+	std::vector<Detector*> firedDets;
+	std::vector<orrubaDet*> siDets;
 
 	// getting data from analog events
 	for (size_t i=0;i<agodEvts->size();i++) {
 		AGODEVENT agodEvt = agodEvts->at(i);
+
 		for (size_t j=0;j<agodEvt.values.size();j++) {
 			short value = agodEvt.values[j];
 			short channel = agodEvt.channels[j];
-			
+
 			enRawA->Fill(value,channel);
 
 			std::pair<short, short> key = std::make_pair(GEB_TYPE_AGOD, channel);
@@ -127,7 +128,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		short channel=dgodEvt.tid;
 
 		enRawD->Fill(value,channel);
-		
+
 		std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
 		if (suppressCh.find(key) != suppressCh.end()) {
 			continue;
@@ -139,9 +140,10 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			continue;
 		}
 
-		std::string detectorType = det->IsA()->GetName();
-		if (detectorType != "Ion Chamber") {
-			firedDets.push_back((orrubaDet*) det);
+		firedDets.push_back(det);
+		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
+		if (siDet) {
+			siDets.push_back(siDet);
 		}
 	}
 
@@ -149,8 +151,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	float dE=0, E1=0, E2=0;
 	TVector3 pos(0,0,0);
 	std::string sector;
-	bool valid = true;
-	for (auto itr=firedDets.begin();itr!=firedDets.end(); ++itr) {
+	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
 		orrubaDet* det = *itr;
 		unsigned short depth = det->GetDepth();
 		std::string detType = det->IsA()->GetName();
@@ -158,63 +159,57 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
 		// front=false (p-type = (!n-type))
 		siDet::ValueMap frontRawEn = det->GetRawEn(false);
-		siDet::ValueMap frontCalEn = det->GetCalEn(false);
+		siDet::ValueMap frontCalEn = det->GetRawEn(false);
 		siDet::ValueMap backRawEn = det->GetRawEn(true);
 		siDet::ValueMap backCalEn = det->GetCalEn(true);
-		
-
 		if (detType == "QQQ5") {
-			QQQFrontMult[detPosID]->Fill(frontRawEn.size());
-			QQQBackMult[detPosID]->Fill(backRawEn.size());
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
+				QQQFrontMult[detPosID]->Fill(itr->first);
 			}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				QQQenCalFront[detPosID]->Fill(itr->second, itr->first);
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
+				QQQBackMult[detPosID]->Fill(itr->first);
 			}
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				QQQenCalBack[detPosID]->Fill(itr->second, itr->first);
 			}
-			
+
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
-				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
+				for (auto itrBack=frontRawEn.begin();itrBack!=frontRawEn.end();++itrBack) {
 					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
 				}
 			}
-		}
+			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
+				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
 
-		if (sector.empty()) sector = detPosSector;
-		//If we had detectors from different quadrants we need to abort.
-		else if (sector != detPosSector) {
-			valid = false;
-			break;
-		}
+				if (depth == 0) {
+					if (!dE) dE = det->GetEnergy();
+				}
+				else if (depth == 1) {
+					if (!E1) E1 = det->GetEnergy();
+				}
+				else if (depth == 2) {
+					if (!E2) E2 = det->GetEnergy();
+				}
+				if (detType == "superX3" || detType == "QQQ5") {
+					//Save the position if a position has not been saved or
+					//	if this is a QQQ5 dE layer.
+					if (!pos.Mag2() || (detType == "QQQ5" && depth == 0))
+						pos = det->GetEventPosition();
+				}
+			} 
+			orruba->SetEvent(sector,dE,E1,E2,pos);
+			//tree->Fill();
 
-		if (depth == 0) {
-			if (!dE) dE = det->GetEnergy();
+			//We clear everything here since we know what was actually fired.
+			for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
+				(*itr)->Clear();
+			}
 		}
-		else if (depth == 1) {
-			if (!E1) E1 = det->GetEnergy();
-		}
-		else if (depth == 2) {
-			if (!E2) E2 = det->GetEnergy();
-		}
-		if (detType == "superX3" || detType == "QQQ5") {
-			//Save the position if a position has not been saved or
-			//	if this is a QQQ5 dE layer.
-			if (!pos.Mag2() || (detType == "QQQ5" && depth == 0))
-				pos = det->GetEventPosition();
-		}
-	} 
-	orruba->SetEvent(sector,dE,E1,E2,pos);
-	//tree->Fill();
-
-	//We clear everything here since we know what was actually fired.
-	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
-		(*itr)->Clear();
 	}
 }
 

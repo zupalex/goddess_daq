@@ -411,7 +411,6 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, int rawVa
 		return NULL;
 	}
 
-		if (std::string(det->IsA()->GetName()) != "superX3")
 	det->SetRawValue(detCh, secondaryType, rawValue);
 
 	return det;

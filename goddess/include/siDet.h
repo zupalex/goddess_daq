@@ -59,6 +59,9 @@ class siDet : public Detector {
 		float GetCalEnergy(int contact, bool nType = false);
 		///Return the number of fired contacts.
 		int GetContactMult(bool nType = false);
+
+		///Return true if the contact energy was set.
+		bool ContactHit(int contact, bool nType);
 	
 		///Return the number of channels of the type specified.
 		int GetNumChannels(bool nType);

@@ -124,5 +124,13 @@ siDet::ValueMap siDet::GetCalEn(bool nType) {
 	return enCalP;
 }
 
+bool siDet::ContactHit(int contact, bool nType) {
+	ValueMap *map = &enRawP;
+	if (nType) map = &enRawN;
+	
+	if (map->find(contact) == map->end()) return false;
+	return true;
+}
+
 
 ClassImp(siDet)
