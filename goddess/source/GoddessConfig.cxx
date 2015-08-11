@@ -83,8 +83,10 @@ void GoddessConfig::ReadConfig(std::string filename) {
 	}
 
 	std::string line;
+	unsigned int lineCnt = 0;
 	//Loop over every line in the config file
 	while (std::getline(mapFile, line).good()) {
+		lineCnt++;
 		//Remove comments
 		size_t pos = line.find('#');
 		if (pos != std::string::npos) 
@@ -197,13 +199,17 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		//Read calibration information.
 		std::istream::streampos prevPos = mapFile.tellg();
 		while (std::getline(mapFile, line).good()) {
+			lineCnt++;
 			//Remove comments
 			size_t pos = line.find('#');
 			if (pos != std::string::npos) 
 				line.erase(pos);
 			//Remove leading whitespace.
 			size_t wordStart = line.find_first_not_of(" \t");
-			if (wordStart == std::string::npos) continue;
+			if (wordStart == std::string::npos) {
+				prevPos = mapFile.tellg();
+				continue;
+			}
 			line.erase(0,wordStart);
 
 			std::istringstream lineStream(line);
@@ -212,6 +218,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			//If we don't understand this line we rewind the stream and let the first parsing section have a chance.
 			if (!(lineStream >> calType >> subType >> detChannel)) {
 				mapFile.seekg(prevPos);
+				lineCnt--;
 				break;
 			}
 
@@ -220,20 +227,23 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			bool timeCal = false;
 			if (calType == "posCal") {
 				if (!(detType == "superX3" && subType == "resStrip") && !(detType == "ion" && subType == "scint")) {
-					std::cout << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
+					std::cerr << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
+					prevPos = mapFile.tellg();
 					continue;
 				}
 				posCal = true;
 			}
 			else if (calType == "timeCal") {
 				if (!(detType == "ion" && subType == "scint")) {
-					std::cout << " WARNING: Ignoring time calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
+					std::cerr << " WARNING: Ignoring time calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
+					prevPos = mapFile.tellg();
 					continue;
 				}
 				timeCal = true;
 			}
 			else if (calType != "enCal") { 
 				mapFile.seekg(prevPos);
+				lineCnt--;
 				break;
 			}
 
@@ -243,6 +253,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				if (subType != "scint" && subType != "anode") {
 					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
 					std::cerr << "  Valid options: anode, strip.\n";
+					prevPos = mapFile.tellg();
 					continue;
 				}
 			}
@@ -251,6 +262,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				else if (subType != "p" && subType != "resStrip") {
 					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
 					std::cerr << "  Valid options: p, n, resStrip.\n";
+					prevPos = mapFile.tellg();
 					continue;
 				}
 			}
@@ -300,13 +312,13 @@ void GoddessConfig::ReadConfig(std::string filename) {
 					}
 				}
 			}
-
+			prevPos = mapFile.tellg();
 		}
 	}
 
 	//If we aborted for some reason and the file is good we must of had a parsing issue.
 	if (mapFile.good()) {
-		std::cerr << "ERROR: Unable to read configuration file! Failed on the following line:\n";
+		std::cerr << "ERROR: Unable to read configuration file! Failed on the line " << lineCnt << ":\n";
 		std::cerr << line << "\n";
 	}
 }
