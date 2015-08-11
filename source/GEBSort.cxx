@@ -1644,7 +1644,7 @@ GEBacq (char *ChatFileName)
   /*------------*/
 
   for (i = 0; i < MAX_GEB_TYPE; i++)
-    typehit[i] = 0;
+	  typehit[i] = 0;
 
   printf ("\n");
   printf ("initializing\n");
@@ -1671,10 +1671,10 @@ GEBacq (char *ChatFileName)
   Pars.requiretracked = 0;
 
   for (i = 0; i < MAXGEBS; i++)
-    {
-      GEB_event.ptgd[i] = (GEBDATA *) calloc (2 * sizeof (GEBDATA), 1);
-      GEB_event.ptinp[i] = (CRYS_INTPTS *) calloc (MAXPAYLOADSIZE, 1);
-    };
+  {
+	  GEB_event.ptgd[i] = (GEBDATA *) calloc (2 * sizeof (GEBDATA), 1);
+	  GEB_event.ptinp[i] = (CRYS_INTPTS *) calloc (MAXPAYLOADSIZE, 1);
+  };
 
   rbuf = (char *) calloc (RBUFSIZE + 1, 1);
 
@@ -1683,12 +1683,12 @@ GEBacq (char *ChatFileName)
   sprintf (str, "crmat.LINUX");
   in = open (str, O_RDONLY, 0);
   if (in > 0)
-    printf ("%s is open (input) binary format\n", str);
+	  printf ("%s is open (input) binary format\n", str);
   else
-    {
-      printf ("could not open %s\n", str);
-      exit (1);
-    };
+  {
+	  printf ("could not open %s\n", str);
+	  exit (1);
+  };
   siz = read (in, (char *) Pars.crmat, sizeof (Pars.crmat));
   printf ("read %i bytes into Pars.crmat\n", siz);
   close (in);
@@ -1699,48 +1699,48 @@ GEBacq (char *ChatFileName)
 
   fp0 = fopen ("AGATA_crmat.dat", "r");
   if (fp0 != NULL)
-    {
-      printf ("AGATA_crmat.dat is open for reading\n");
+  {
+	  printf ("AGATA_crmat.dat is open for reading\n");
 
-      j = 0;
-      for (i = 0; i < 180; i++)
-        {
+	  j = 0;
+	  for (i = 0; i < 180; i++)
+	  {
 
-          memset (buffer, zero, sizeof (buffer));
-          fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %i %lf %lf %lf ", ir, dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
+		  memset (buffer, zero, sizeof (buffer));
+		  fgets (buffer, 150, fp0);
+		  sscanf (buffer, "%i %i %lf %lf %lf ", ir, dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
 
-          memset (buffer, zero, sizeof (buffer));
-          fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
+		  memset (buffer, zero, sizeof (buffer));
+		  fgets (buffer, 150, fp0);
+		  sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
 
-          memset (buffer, zero, sizeof (buffer));
-          fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
+		  memset (buffer, zero, sizeof (buffer));
+		  fgets (buffer, 150, fp0);
+		  sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
 
-          memset (buffer, zero, sizeof (buffer));
-          fgets (buffer, 150, fp0);
-          sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
+		  memset (buffer, zero, sizeof (buffer));
+		  fgets (buffer, 150, fp0);
+		  sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
 
-          j++;
-        }
-      printf ("read %i AGATA rotational/translational matrices\n", j);
-    }
+		  j++;
+	  }
+	  printf ("read %i AGATA rotational/translational matrices\n", j);
+  }
   else
-    {
-      printf ("Error: ascii AGATA_crmat.dat not found, quit\n");
-      exit (1);
-    };
+  {
+	  printf ("Error: ascii AGATA_crmat.dat not found, quit\n");
+	  exit (1);
+  };
 
 #if(0)
   for (j = 0; j < 180; j++)
-    {
-      printf ("%2i: \n", j);
-      printf ("Tr?: %10.5f %10.5f %10.5f\n", Pars.TrX[j], Pars.TrX[j], Pars.TrZ[j]);
-      printf ("rx?: %10.5f %10.5f %10.5f\n", Pars.rotxx[j], Pars.rotxy[j], Pars.rotxz[j]);
-      printf ("ry?: %10.5f %10.5f %10.5f\n", Pars.rotyx[j], Pars.rotyy[j], Pars.rotyz[j]);
-      printf ("rz?: %10.5f %10.5f %10.5f\n", Pars.rotzx[j], Pars.rotzy[j], Pars.rotzz[j]);
-    }
+  {
+	  printf ("%2i: \n", j);
+	  printf ("Tr?: %10.5f %10.5f %10.5f\n", Pars.TrX[j], Pars.TrX[j], Pars.TrZ[j]);
+	  printf ("rx?: %10.5f %10.5f %10.5f\n", Pars.rotxx[j], Pars.rotxy[j], Pars.rotxz[j]);
+	  printf ("ry?: %10.5f %10.5f %10.5f\n", Pars.rotyx[j], Pars.rotyy[j], Pars.rotyz[j]);
+	  printf ("rz?: %10.5f %10.5f %10.5f\n", Pars.rotzx[j], Pars.rotzy[j], Pars.rotzz[j]);
+  }
 #endif
 
   /*------------------*/
@@ -1752,110 +1752,110 @@ GEBacq (char *ChatFileName)
 
   printf ("checking proper input of chat file...\n");
   if (Pars.InputSrc == NOTDEF)
-    {
-      printf ("you must specify an input source\n");
-      exit (1);
-    }
+  {
+	  printf ("you must specify an input source\n");
+	  exit (1);
+  }
   else if (Pars.InputSrc == DISK)
-    {
+  {
 
 #if(USEZLIB==0)
-      /* attempt to open input file */
+	  /* attempt to open input file */
 
-      inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
-      if (inData == -1)
-        {
-          printf ("could not open\"%s\"; quit\n", Pars.GTSortInputFile);
-          exit (1);
-        }
-      else
-        printf ("input file \"%s\" is open, inData=%lli\n", Pars.GTSortInputFile, inData);
+	  inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
+	  if (inData == -1)
+	  {
+		  printf ("could not open\"%s\"; quit\n", Pars.GTSortInputFile);
+		  exit (1);
+	  }
+	  else
+		  printf ("input file \"%s\" is open, inData=%lli\n", Pars.GTSortInputFile, inData);
 
-      /* find the very first GEB header to find start TS */
+	  /* find the very first GEB header to find start TS */
 
-      siz = read (inData, (char *) GEB_event.ptgd[0], sizeof (GEBDATA));
+	  siz = read (inData, (char *) GEB_event.ptgd[0], sizeof (GEBDATA));
 #if (1)
-      printf ("siz=%i;", siz);
-      printf ("ptgd[i]->type=%2i; ", GEB_event.ptgd[0]->type);
-      printf ("ptgd[i]->length=%4i; ", GEB_event.ptgd[0]->length);
-      printf ("ptgd[i]->timestamp=%lli\n", GEB_event.ptgd[0]->timestamp);
-      fflush (stdout);
+	  printf ("siz=%i;", siz);
+	  printf ("ptgd[i]->type=%2i; ", GEB_event.ptgd[0]->type);
+	  printf ("ptgd[i]->length=%4i; ", GEB_event.ptgd[0]->length);
+	  printf ("ptgd[i]->timestamp=%lli\n", GEB_event.ptgd[0]->timestamp);
+	  fflush (stdout);
 #endif
-      Pars.curTS = GEB_event.ptgd[0]->timestamp;
-      printf ("start TS is %lli\n", Pars.curTS);
+	  Pars.curTS = GEB_event.ptgd[0]->timestamp;
+	  printf ("start TS is %lli\n", Pars.curTS);
 
-      /* reopen */
+	  /* reopen */
 
-      close (inData);
-      inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
-      printf ("reopened input file, inData=%lli \n", inData);
+	  close (inData);
+	  inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
+	  printf ("reopened input file, inData=%lli \n", inData);
 
 #endif
 
 #if(USEZLIB==1)
-      /* attempt to open input file */
+	  /* attempt to open input file */
 
-      zinData = gzopen (Pars.GTSortInputFile, "r");
-      if (zinData == NULL)
-        {
-          printf ("could not open zipped \"%s\"; quit\n", Pars.GTSortInputFile);
-          exit (1);
-        }
-      else
-        printf ("zipped input file \"%s\" is open\n", Pars.GTSortInputFile);
+	  zinData = gzopen (Pars.GTSortInputFile, "r");
+	  if (zinData == NULL)
+	  {
+		  printf ("could not open zipped \"%s\"; quit\n", Pars.GTSortInputFile);
+		  exit (1);
+	  }
+	  else
+		  printf ("zipped input file \"%s\" is open\n", Pars.GTSortInputFile);
 #endif
 
 
-    }
+  }
   else if (Pars.InputSrc == GEB)
-    {
+  {
 
 #if(HAVE_VXWORKS)
-      printf ("will take input from GEB with these parameters:\n");
-      printf ("Pars.pHost=%s; ", Pars.pHost);
-      printf ("Pars.grouping=%i; ", Pars.grouping);
-      printf ("Pars.type=%i; ", Pars.type);
-      printf ("Pars.timeout=%f\n", Pars.timeout);
+	  printf ("will take input from GEB with these parameters:\n");
+	  printf ("Pars.pHost=%s; ", Pars.pHost);
+	  printf ("Pars.grouping=%i; ", Pars.grouping);
+	  printf ("Pars.type=%i; ", Pars.type);
+	  printf ("Pars.timeout=%f\n", Pars.timeout);
 
-      printf ("connecting to tap\n");
+	  printf ("connecting to tap\n");
 
-      for (i = 0; i < ConnectionRetryCount; i++)
-        {
+	  for (i = 0; i < ConnectionRetryCount; i++)
+	  {
 #if(1)
-          printf ("connecting, %i/%i, %i\n", i, ConnectionRetryCount, ConnectionRetryWait / 1000);
-          fflush (stdout);
+		  printf ("connecting, %i/%i, %i\n", i, ConnectionRetryCount, ConnectionRetryWait / 1000);
+		  fflush (stdout);
 #endif
-          pTap = gretTapConnect (Pars.pHost, GRETTAP_GEB, Pars.type);
-          if (pTap || (gretTapClientError != GTC_TAPCONN))
-            {
-              /* Either success or a failure other than connection failure */
-              printf ("got here, that is good, break out and go on\n");
+		  pTap = gretTapConnect (Pars.pHost, GRETTAP_GEB, Pars.type);
+		  if (pTap || (gretTapClientError != GTC_TAPCONN))
+		  {
+			  /* Either success or a failure other than connection failure */
+			  printf ("got here, that is good, break out and go on\n");
 
-              break;
-            }
-          usleep (ConnectionRetryWait);
+			  break;
+		  }
+		  usleep (ConnectionRetryWait);
 
 #if(DEBUG)
-          fprintf (stderr, "Retry number %d\n", i);
-          fflush (stderr);
+		  fprintf (stderr, "Retry number %d\n", i);
+		  fflush (stderr);
 #endif
 
-        }
-      fprintf (stderr, "Retries: %d\n", i);
-      fflush (stderr);
-      if (!pTap)
-        {
-          fprintf (stderr, "Unable to connect to tap server at %s : %s\n", Pars.pHost,
-                   gretTapClientErrorStrings[gretTapClientError]);
-          exit (1);
-        };
+	  }
+	  fprintf (stderr, "Retries: %d\n", i);
+	  fflush (stderr);
+	  if (!pTap)
+	  {
+		  fprintf (stderr, "Unable to connect to tap server at %s : %s\n", Pars.pHost,
+				  gretTapClientErrorStrings[gretTapClientError]);
+		  exit (1);
+	  };
 #endif
-    }
+  }
   else
-    {
-      printf ("input source not recognized, quit\n");
-      exit (1);
-    };
+  {
+	  printf ("input source not recognized, quit\n");
+	  exit (1);
+  };
 
   printf ("input source is set up, supposedly\n");
 
@@ -1864,35 +1864,35 @@ GEBacq (char *ChatFileName)
   /*---------------------*/
 
   if (Pars.InputSrc == NOTDEF)
-    {
-      printf ("you must specify an input source!\n");
-      printf ("quitting...\n");
-      exit (1);
-    };
+  {
+	  printf ("you must specify an input source!\n");
+	  printf ("quitting...\n");
+	  exit (1);
+  };
 
 
   if (Pars.UseShareMemFile && Pars.UseRootFile)
-    {
-      printf ("you cannot use shared memory and a root disk\n");
-      printf ("at the same time!\n");
-      exit (1);
-    };
+  {
+	  printf ("you cannot use shared memory and a root disk\n");
+	  printf ("at the same time!\n");
+	  exit (1);
+  };
 
   /* force user to declare intension with root file */
   /* so I can't be blamed for any overwrites!!      */
 
   if (!Pars.UseShareMemFile)
-    if ((p = strstr (Pars.ROOTFileOption, "UNDEFINED")) != NULL)
-      {
-        printf ("for root files you must specify either:\n");
-        printf ("\n");
-        printf ("    ROOTFileOption RECREATE\n");
-        printf ("or\n");
-        printf ("    ROOTFileOption UPDATE\n");
-        printf ("\n");
-        printf ("please modify your chat file and try again\n");
-        exit (-1);
-      };
+	  if ((p = strstr (Pars.ROOTFileOption, "UNDEFINED")) != NULL)
+	  {
+		  printf ("for root files you must specify either:\n");
+		  printf ("\n");
+		  printf ("    ROOTFileOption RECREATE\n");
+		  printf ("or\n");
+		  printf ("    ROOTFileOption UPDATE\n");
+		  printf ("\n");
+		  printf ("please modify your chat file and try again\n");
+		  exit (-1);
+	  };
 
   /*------------------------*/
   /* execute user init code */
@@ -1911,42 +1911,42 @@ GEBacq (char *ChatFileName)
   /*-----------------------------------*/
 
   if (Pars.UseShareMemFile)
-    {
-      printf ("\n");
+  {
+	  printf ("\n");
 
-      if (Pars.StartMapAddress != 0)
-        {
-          TMapFile::SetMapAddress ((Long_t) Pars.StartMapAddress);
-          printf ("shared mem start address set to 0x%8.8x\n", Pars.StartMapAddress);
-        }
-      else
-        printf ("will use system default for shared mem start address\n");
+	  if (Pars.StartMapAddress != 0)
+	  {
+		  TMapFile::SetMapAddress ((Long_t) Pars.StartMapAddress);
+		  printf ("shared mem start address set to 0x%8.8x\n", Pars.StartMapAddress);
+	  }
+	  else
+		  printf ("will use system default for shared mem start address\n");
 
-      mfile = TMapFile::Create (Pars.ShareMemFile, "RECREATE", Pars.SizeShareMemFile, "GS shared mem");
-      if (mfile == NULL)
-        {
-          printf ("failed to create TMapFile\n");
-          exit (-1);
-        };
+	  mfile = TMapFile::Create (Pars.ShareMemFile, "RECREATE", Pars.SizeShareMemFile, "GS shared mem");
+	  if (mfile == NULL)
+	  {
+		  printf ("failed to create TMapFile\n");
+		  exit (-1);
+	  };
 
-      printf ("shared memory [%s] created, size: %s bytes\n", Pars.ShareMemFile, Pars.ShareMemFile);
-      fflush (stdout);
-      //mfile->Print ();
-      printf ("\n");
+	  printf ("shared memory [%s] created, size: %s bytes\n", Pars.ShareMemFile, Pars.ShareMemFile);
+	  fflush (stdout);
+	  //mfile->Print ();
+	  printf ("\n");
 
-    };
+  };
 
 
   NprintEvNo = 0;
   Pars.CurEvNo = 0;
 
   if (!Pars.ShareMemFile)
-    {
-      Pars.DumpEvery = 2000000000;
-      printf ("\n");
-      printf ("_since rootfile: setting `Pars.DumpEvery` to infinity..!\n");
-      printf ("\n");
-    };
+  {
+	  Pars.DumpEvery = 2000000000;
+	  printf ("\n");
+	  printf ("_since rootfile: setting `Pars.DumpEvery` to infinity..!\n");
+	  printf ("\n");
+  };
 
   /* delete any command file */
 
@@ -1961,51 +1961,51 @@ GEBacq (char *ChatFileName)
 
 
   if (!Pars.UseShareMemFile){
-    if (Pars.UpdateRootFile)
-      {
-	
-        /* check here whether the old root file exists */
-	
-        fp = fopen (Pars.ROOTFile, "r");
-        if (fp == NULL)
-          {
-            printf ("could not open old rootfile: %s\n", Pars.ROOTFile);
-            printf ("the old rootfile must exist if you  \n");
-            printf ("want to use the UPDATE option\n");
-            printf ("aborting...\n");
-            exit (0);
-          };
-        fclose (fp);
-	
-        /* read in old root file */
-	
-        Pars.f1 = NULL;
-        Pars.f1 = new TFile (Pars.ROOTFile, "UPDATE");
-        printf ("read old root file <%s>\n", Pars.ROOTFile);
-        if (!Pars.f1->IsOpen ())
-          {
-            printf ("could not open file....\n\n");
-            exit (-1);
-          };
-        printf ("base=<%s>\n", Pars.f1->GetPath ());
-        //Pars.f1->Print ();
-	
-      }
-    else
-      {
-	/* create the rootfile */
-	
-	Pars.f1 = NULL;
-	Pars.f1 = new TFile (Pars.ROOTFile, "RECREATE");
-	printf ("root file <%s>\n", Pars.ROOTFile);
-	if (!Pars.f1->IsOpen ())
+	  if (Pars.UpdateRootFile)
 	  {
-	    printf ("could not open file....\n\n");
-	    exit (-1);
-	  };
-	printf ("base=<%s>\n", Pars.f1->GetPath ());
-	//Pars.f1->Print ();
-      };
+
+		  /* check here whether the old root file exists */
+
+		  fp = fopen (Pars.ROOTFile, "r");
+		  if (fp == NULL)
+		  {
+			  printf ("could not open old rootfile: %s\n", Pars.ROOTFile);
+			  printf ("the old rootfile must exist if you  \n");
+			  printf ("want to use the UPDATE option\n");
+			  printf ("aborting...\n");
+			  exit (0);
+		  };
+		  fclose (fp);
+
+		  /* read in old root file */
+
+		  Pars.f1 = NULL;
+		  Pars.f1 = new TFile (Pars.ROOTFile, "UPDATE");
+		  printf ("read old root file <%s>\n", Pars.ROOTFile);
+		  if (!Pars.f1->IsOpen ())
+		  {
+			  printf ("could not open file....\n\n");
+			  exit (-1);
+		  };
+		  printf ("base=<%s>\n", Pars.f1->GetPath ());
+		  //Pars.f1->Print ();
+
+	  }
+	  else
+	  {
+		  /* create the rootfile */
+
+		  Pars.f1 = NULL;
+		  Pars.f1 = new TFile (Pars.ROOTFile, "RECREATE");
+		  printf ("root file <%s>\n", Pars.ROOTFile);
+		  if (!Pars.f1->IsOpen ())
+		  {
+			  printf ("could not open file....\n\n");
+			  exit (-1);
+		  }
+		  printf ("base=<%s>\n", Pars.f1->GetPath ());
+		  Pars.f1->Write(0,TObject::kWriteDelete);
+	  }
   }
   printf ("\n");
   printf ("executing UserInit.h code\n");
@@ -2017,42 +2017,42 @@ GEBacq (char *ChatFileName)
   /* shared memory wellness checkpoint          */
 
   if (Pars.UseShareMemFile)
-    {
-      printf ("\n");
-      printf ("Note: if the command below fails,\n");
-      printf ("increase the shared memory size!\n");
-      printf ("\n");
-      printf ("updating empty shared mem file... ");
-      fflush (stdout);
-//      mfile->Update ();
-      UPDSSHMEM;
-      printf ("Done!\n");
-      printf ("\n");
-      fflush (stdout);
-    };
+  {
+	  printf ("\n");
+	  printf ("Note: if the command below fails,\n");
+	  printf ("increase the shared memory size!\n");
+	  printf ("\n");
+	  printf ("updating empty shared mem file... ");
+	  fflush (stdout);
+	  //      mfile->Update ();
+	  UPDSSHMEM;
+	  printf ("Done!\n");
+	  printf ("\n");
+	  fflush (stdout);
+  };
 
   TSfile = fopen ("TS.list", "w");
 
   /*--------------------------------*/
   /* setup the root spectra we need */
   /*--------------------------------*/
-	
-	gDirectory->mkdir("GEBSort");
-	gDirectory->cd("GEBSort");
+
+  gDirectory->mkdir("GEBSort");
+  gDirectory->cd("GEBSort");
   /* spectra that are always there */
   for (i = 0; i <= NGE; i++)
-    {
-      sprintf (str2, "CC");
-      sprintf (str1, "ehi%3.3i", i);
-      ehi[i] = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-      ehi[i]->SetXTitle ("Channel");
-      ehi[i]->SetYTitle ("Counts");
-    };
+  {
+	  sprintf (str2, "CC");
+	  sprintf (str1, "ehi%3.3i", i);
+	  ehi[i] = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
+	  ehi[i]->SetXTitle ("Channel");
+	  ehi[i]->SetYTitle ("Counts");
+  };
 
   sprintf (str1, "dtbtev");
   sprintf (str2, "dtbtev");
   dtbtev = mkTH2F (str1, str2, DTBTEVLEN / 2, 0, DTBTEVLEN, MAX_GEB_TYPE, 1, MAX_GEB_TYPE);
-	gDirectory->cd("/");
+  gDirectory->cd("/");
   sprintf (str1, "delta t");
   dtbtev->SetXTitle (str1);
   sprintf (str1, "type");
@@ -2072,6 +2072,8 @@ GEBacq (char *ChatFileName)
   //sup_phoswich ();
   sup_template ();
 
+	Pars.f1->Write(0,TObject::kWriteDelete);
+
   printf ("we have define the following ROOT spectra:\n");
 
   Pars.wlist = gDirectory->GetList ();
@@ -2080,80 +2082,80 @@ GEBacq (char *ChatFileName)
   /* azi only in detector systems for now... */
 
   if (Pars.AGATA_data == 0)
-    {
-      /* find the detector angles from crmat */
+  {
+	  /* find the detector angles from crmat */
 
-      printf ("GRETINA detector angles\n");
+	  printf ("GRETINA detector angles\n");
 
-      for (i = 1; i <= MAXGTMODNO; i++)
-        for (j = 0; j < 4; j++)
-          {
-            printf ("mod %2i, crystal %1i [%3i]: ", i, j, 4 * i + j);
-            printf ("(%6.2f ", Pars.crmat[i][j][0][3]);
-            printf ("%6.2f ", Pars.crmat[i][j][1][3]);
-            printf ("%6.2f) ", Pars.crmat[i][j][2][3]);
+	  for (i = 1; i <= MAXGTMODNO; i++)
+		  for (j = 0; j < 4; j++)
+		  {
+			  printf ("mod %2i, crystal %1i [%3i]: ", i, j, 4 * i + j);
+			  printf ("(%6.2f ", Pars.crmat[i][j][0][3]);
+			  printf ("%6.2f ", Pars.crmat[i][j][1][3]);
+			  printf ("%6.2f) ", Pars.crmat[i][j][2][3]);
 
-            r1 = Pars.crmat[i][j][0][3] * Pars.crmat[i][j][0][3] +
-              +Pars.crmat[i][j][1][3] * Pars.crmat[i][j][1][3] + +Pars.crmat[i][j][2][3] * Pars.crmat[i][j][2][3];
-            r1 = sqrtf (r1);
-            r2 = Pars.beamdir[0] * Pars.crmat[i][j][0][3] / r1
-              + Pars.beamdir[1] * Pars.crmat[i][j][1][3] / r1 + Pars.beamdir[2] * Pars.crmat[i][j][2][3] / r1;
-            Pars.modCCang[i][j] = acosf (r2);
-            printf ("pol %7.2f ,  ", Pars.modCCang[i][j] / M_PI * 180);
-            r3 = atan2f (Pars.crmat[i][j][1][3], Pars.crmat[i][j][2][3]);
-            printf("azi %7.2f; ", r3 / M_PI * 180);
+			  r1 = Pars.crmat[i][j][0][3] * Pars.crmat[i][j][0][3] +
+				  +Pars.crmat[i][j][1][3] * Pars.crmat[i][j][1][3] + +Pars.crmat[i][j][2][3] * Pars.crmat[i][j][2][3];
+			  r1 = sqrtf (r1);
+			  r2 = Pars.beamdir[0] * Pars.crmat[i][j][0][3] / r1
+				  + Pars.beamdir[1] * Pars.crmat[i][j][1][3] / r1 + Pars.beamdir[2] * Pars.crmat[i][j][2][3] / r1;
+			  Pars.modCCang[i][j] = acosf (r2);
+			  printf ("pol %7.2f ,  ", Pars.modCCang[i][j] / M_PI * 180);
+			  r3 = atan2f (Pars.crmat[i][j][1][3], Pars.crmat[i][j][2][3]);
+			  printf("azi %7.2f; ", r3 / M_PI * 180);
 
-            r1 = 1.0 - Pars.beta * Pars.beta;
-            Pars.modCCdopfac[4 * i + j] = sqrtf (r1) / (1.0 - Pars.beta * cosf (Pars.modCCang[i][j]));
+			  r1 = 1.0 - Pars.beta * Pars.beta;
+			  Pars.modCCdopfac[4 * i + j] = sqrtf (r1) / (1.0 - Pars.beta * cosf (Pars.modCCang[i][j]));
 
-            printf ("modCCdopfac %6.4f", Pars.modCCdopfac[4 * i + j]);
-            printf ("\n");
-          }
-    }
+			  printf ("modCCdopfac %6.4f", Pars.modCCdopfac[4 * i + j]);
+			  printf ("\n");
+		  }
+  }
   else if (Pars.AGATA_data == 1)
-    {
-      printf ("AGATA detector angles\n");
+  {
+	  printf ("AGATA detector angles\n");
 
-      for (i = 0; i < 180; i++)
-        {
-          r1 = Pars.TrX[i] * Pars.TrX[i] + Pars.TrY[i] * Pars.TrY[i] + Pars.TrZ[i] * Pars.TrZ[i];
-          r1 = sqrtf (r1);
-          printf ("%3i: %10.5f %10.5f %10.5f; ", i, Pars.TrX[i], Pars.TrY[i], Pars.TrZ[i]);
+	  for (i = 0; i < 180; i++)
+	  {
+		  r1 = Pars.TrX[i] * Pars.TrX[i] + Pars.TrY[i] * Pars.TrY[i] + Pars.TrZ[i] * Pars.TrZ[i];
+		  r1 = sqrtf (r1);
+		  printf ("%3i: %10.5f %10.5f %10.5f; ", i, Pars.TrX[i], Pars.TrY[i], Pars.TrZ[i]);
 
-          r2 = Pars.beamdir[0] * Pars.TrX[i]/r1 + Pars.beamdir[1] * Pars.TrY[i]/r1 + Pars.beamdir[2] * Pars.TrZ[i]/r1;
-          if(r2< -1.0 || r2>1.0)
-            {
-            printf("r2 out of range=%f\n",r2);
-            exit(1);
-            };
-          i1 = i / 3;
-          i2 = i - i1;
-//          printf ("[%f %f] ", r2, acosf (r2)/ M_PI * 180);
-          Pars.modCCang[i1][i2] = acosf (r2);
-          printf ("pol %7.2f , ", Pars.modCCang[i1][i2] / M_PI * 180);
-          r3 = atan2f (Pars.TrY[i], Pars.TrX[i]);
-          printf("azi %7.2f; ", r3 / M_PI * 180);
+		  r2 = Pars.beamdir[0] * Pars.TrX[i]/r1 + Pars.beamdir[1] * Pars.TrY[i]/r1 + Pars.beamdir[2] * Pars.TrZ[i]/r1;
+		  if(r2< -1.0 || r2>1.0)
+		  {
+			  printf("r2 out of range=%f\n",r2);
+			  exit(1);
+		  };
+		  i1 = i / 3;
+		  i2 = i - i1;
+		  //          printf ("[%f %f] ", r2, acosf (r2)/ M_PI * 180);
+		  Pars.modCCang[i1][i2] = acosf (r2);
+		  printf ("pol %7.2f , ", Pars.modCCang[i1][i2] / M_PI * 180);
+		  r3 = atan2f (Pars.TrY[i], Pars.TrX[i]);
+		  printf("azi %7.2f; ", r3 / M_PI * 180);
 
-          r1 = 1.0 - Pars.beta * Pars.beta;
-          Pars.modCCdopfac[i] = sqrtf (r1) / (1.0 - Pars.beta * cosf (Pars.modCCang[i1][i2]));
+		  r1 = 1.0 - Pars.beta * Pars.beta;
+		  Pars.modCCdopfac[i] = sqrtf (r1) / (1.0 - Pars.beta * cosf (Pars.modCCang[i1][i2]));
 
-          printf ("modCCdopfac %6.4f", Pars.modCCdopfac[i]);
-          printf ("\n");
+		  printf ("modCCdopfac %6.4f", Pars.modCCdopfac[i]);
+		  printf ("\n");
 
-        };
+	  };
 
 #if(0)
-       printf("\ntable\n\n");
-       r1=0;
-       while (r1<=M_PI)
-         {
-         r2=cosf(r1);
-         printf("r1=%frad %fdeg, cosf(r1)=r2=%f, acosf(r2)=%f\n",r1, r1*57.2958, r2, acosf(r2));
-         r1+=M_PI/100.0;
-         };
+	  printf("\ntable\n\n");
+	  r1=0;
+	  while (r1<=M_PI)
+	  {
+		  r2=cosf(r1);
+		  printf("r1=%frad %fdeg, cosf(r1)=r2=%f, acosf(r2)=%f\n",r1, r1*57.2958, r2, acosf(r2));
+		  r1+=M_PI/100.0;
+	  };
 #endif
 
-    };
+  };
 
   /*----------------------*/
   /* setup signal catcher */
@@ -2173,396 +2175,392 @@ GEBacq (char *ChatFileName)
 
   printf ("started sorting... ");
   if (Pars.InputSrc == DISK)
-    printf ("from disk...\n");
+	  printf ("from disk...\n");
   else if (Pars.InputSrc == GEB)
-    {
-      printf ("from GEB...\n");
-    }
+  {
+	  printf ("from GEB...\n");
+  }
   else if (Pars.InputSrc == NET)
-    {
-      printf ("from net... SHOULD NOT HAPPEN\n");
-      exit (1);
-    };
+  {
+	  printf ("from net... SHOULD NOT HAPPEN\n");
+	  exit (1);
+  };
   printf ("\n");
   fflush (stdout);
 
   tdmplast = time (NULL);
   while (st >= 0 && (Pars.CurEvNo - Pars.firstEvent) < Pars.nEvents && eov == 0)
-    {
+  {
 
-      /* zap [this may be too safe and slow...; yes it is] */
+	  /* zap [this may be too safe and slow...; yes it is] */
 
-      //memset ((char *) &CEvent, 0, sizeof (COINEV));
+	  //memset ((char *) &CEvent, 0, sizeof (COINEV));
 
-      /*----------------*/
-      /* get next event */
-      /*----------------*/
-
-#if(DEBUG2)
-      printf ("calling GEBGetEv, Pars.CurEvNo=%i\n", Pars.CurEvNo);
-#endif
-      st = GEBGetEv (&GEB_event, Pars.CurEvNo);
-
-      if (st == 0 && Pars.CurEvNo < Pars.tsnumwrites)
-        {
-          for (i = 0; i < GEB_event.mult; i++)
-            {
-              if (i == 0)
-                fprintf (TSfile, "\n");
-              GebTypeStr (GEB_event.ptgd[i]->type, str);
-              fprintf (TSfile, "%4i/%2i: (%2i,%s) TS=%20lli; ", Pars.CurEvNo, i, GEB_event.ptgd[i]->type, str,
-                       GEB_event.ptgd[i]->timestamp);
-              fprintf (TSfile, "dT=%lli\n", GEB_event.ptgd[i]->timestamp - TSprev);
-              TSprev = GEB_event.ptgd[i]->timestamp;
-            }
-
-        };
+	  /*----------------*/
+	  /* get next event */
+	  /*----------------*/
 
 #if(DEBUG2)
-      printf ("st=%i\n", st);
-      printf ("GEB_event.mult=%i\n", GEB_event.mult);
-      fflush (stdout);
-      if (1)
-        exit (0);
+	  printf ("calling GEBGetEv, Pars.CurEvNo=%i\n", Pars.CurEvNo);
+#endif
+	  st = GEBGetEv (&GEB_event, Pars.CurEvNo);
+
+	  if (st == 0 && Pars.CurEvNo < Pars.tsnumwrites)
+	  {
+		  for (i = 0; i < GEB_event.mult; i++)
+		  {
+			  if (i == 0)
+				  fprintf (TSfile, "\n");
+			  GebTypeStr (GEB_event.ptgd[i]->type, str);
+			  fprintf (TSfile, "%4i/%2i: (%2i,%s) TS=%20lli; ", Pars.CurEvNo, i, GEB_event.ptgd[i]->type, str,
+					  GEB_event.ptgd[i]->timestamp);
+			  fprintf (TSfile, "dT=%lli\n", GEB_event.ptgd[i]->timestamp - TSprev);
+			  TSprev = GEB_event.ptgd[i]->timestamp;
+		  }
+
+	  };
+
+#if(DEBUG2)
+	  printf ("st=%i\n", st);
+	  printf ("GEB_event.mult=%i\n", GEB_event.mult);
+	  fflush (stdout);
+	  if (1)
+		  exit (0);
 #endif
 
-      if (st == 0)
-        {
+	  if (st == 0)
+	  {
 
-          if (firsttime)
-            {
-              firsttime = 0;
-              t0 = GEB_event.ptgd[0]->timestamp;
-              printf ("t0=%lli\n", t0);
-              printf ("first event: GEB_event.mult=%i\n", GEB_event.mult);
-              for (i = 0; i < GEB_event.mult; i++)
-                {
-                  GebTypeStr (GEB_event.ptgd[i]->type, str);
-                  printf ("%4i/%2i: (%2i,%s) TS=%20lli; ", Pars.CurEvNo, i, GEB_event.ptgd[i]->type, str,
-                          GEB_event.ptgd[i]->timestamp);
-                  printf ("dT=%lli\n", GEB_event.ptgd[i]->timestamp - TSprev);
-                };
-            }
+		  if (firsttime)
+		  {
+			  firsttime = 0;
+			  t0 = GEB_event.ptgd[0]->timestamp;
+			  printf ("t0=%lli\n", t0);
+			  printf ("first event: GEB_event.mult=%i\n", GEB_event.mult);
+			  for (i = 0; i < GEB_event.mult; i++)
+			  {
+				  GebTypeStr (GEB_event.ptgd[i]->type, str);
+				  printf ("%4i/%2i: (%2i,%s) TS=%20lli; ", Pars.CurEvNo, i, GEB_event.ptgd[i]->type, str,
+						  GEB_event.ptgd[i]->timestamp);
+				  printf ("dT=%lli\n", GEB_event.ptgd[i]->timestamp - TSprev);
+			  };
+		  }
 
-          tcur = GEB_event.ptgd[0]->timestamp;
+		  tcur = GEB_event.ptgd[0]->timestamp;
 
 
-          /* count data types */
+		  /* count data types */
 
-          for (i = 0; i < GEB_event.mult; i++)
-            {
-              if (GEB_event.ptgd[i]->type > 0 && GEB_event.ptgd[i]->type < MAX_GEB_TYPE)
-                typehit[GEB_event.ptgd[i]->type]++;
-            };
+		  for (i = 0; i < GEB_event.mult; i++)
+		  {
+			  if (GEB_event.ptgd[i]->type > 0 && GEB_event.ptgd[i]->type < MAX_GEB_TYPE)
+				  typehit[GEB_event.ptgd[i]->type]++;
+		  };
 
-          /* fill dtbtev spectrum */
+		  /* fill dtbtev spectrum */
 
-          firtsTSinEvent = LLONG_MAX;
-          for (i = 0; i < GEB_event.mult; i++)
-            if (GEB_event.ptgd[i]->timestamp < firtsTSinEvent)
-              firtsTSinEvent = GEB_event.ptgd[i]->timestamp;
+		  firtsTSinEvent = LLONG_MAX;
+		  for (i = 0; i < GEB_event.mult; i++)
+			  if (GEB_event.ptgd[i]->timestamp < firtsTSinEvent)
+				  firtsTSinEvent = GEB_event.ptgd[i]->timestamp;
 
-          for (i = 0; i < GEB_event.mult; i++)
-            {
-              dTS = GEB_event.ptgd[i]->timestamp - firtsTSinEvent;
-              d1 = (double) dTS;
-              if (d1 >= (double) 0 && d1 < RATELEN)
-                dtbtev->Fill (d1, GEB_event.ptgd[i]->type, 1);
-            };
+		  for (i = 0; i < GEB_event.mult; i++)
+		  {
+			  dTS = GEB_event.ptgd[i]->timestamp - firtsTSinEvent;
+			  d1 = (double) dTS;
+			  if (d1 >= (double) 0 && d1 < RATELEN)
+				  dtbtev->Fill (d1, GEB_event.ptgd[i]->type, 1);
+		  };
 
-        };
+	  };
 
-      /*----------------------------------------*/
-      /* allow user to manipulate raw data here */
-      /*----------------------------------------*/
+	  /*----------------------------------------*/
+	  /* allow user to manipulate raw data here */
+	  /*----------------------------------------*/
 
-      if (st != 0)
-        {
-          printf (" GEBGetEv returned %i\n", st);
-          printf ("we have read %lli bytes; ", Pars.nbytes);
-          printf ("CurEvNo=%i\n", Pars.CurEvNo);
-          fflush (stdout);
+	  if (st != 0)
+	  {
+		  printf (" GEBGetEv returned %i\n", st);
+		  printf ("we have read %lli bytes; ", Pars.nbytes);
+		  printf ("CurEvNo=%i\n", Pars.CurEvNo);
+		  fflush (stdout);
 
-          /* terminate sort */
+		  /* terminate sort */
 
-          eov = 1;
+		  eov = 1;
 
-          /* note: */
-          /* we might want to wait and try GEBGetEv */
-          /* later to give the impresssion of interactivity */
-          /* here in some future version... */
+		  /* note: */
+		  /* we might want to wait and try GEBGetEv */
+		  /* later to give the impresssion of interactivity */
+		  /* here in some future version... */
 
-        }
+	  }
 
 #include "UserRawEv.h"
 
-//    assert (Pars.InputSrc == DISK);
+	  //    assert (Pars.InputSrc == DISK);
 
-      if (st == 0)
-        {
+	  if (st == 0)
+	  {
 
-          /*----------------------------*/
-          /* good event, now process it */
-          /*----------------------------*/
+		  /*----------------------------*/
+		  /* good event, now process it */
+		  /*----------------------------*/
 
-          /* statistics */
+		  /* statistics */
 
-          Pars.CurEvNo++;
-          NprintEvNo++;
+		  Pars.CurEvNo++;
+		  NprintEvNo++;
 
-          if (Pars.CurEvNo <= Pars.NumToPrint)
-            {
-              printf ("GEBGetEv returned st=%i\n", st);
-              printf ("we have read %lli bytes; ", Pars.nbytes);
-              printf ("CurEvNo=%i\n", Pars.CurEvNo);
-              fflush (stdout);
-            };
+		  if (Pars.CurEvNo <= Pars.NumToPrint)
+		  {
+			  printf ("GEBGetEv returned st=%i\n", st);
+			  printf ("we have read %lli bytes; ", Pars.nbytes);
+			  printf ("CurEvNo=%i\n", Pars.CurEvNo);
+			  fflush (stdout);
+		  };
 
 #include "UserGoodEv.h"
 
 
-          /* debug print some events */
+		  /* debug print some events */
 
-          if (Pars.CurEvNo <= Pars.NumToPrint)
-            {
-              printf ("\n+++++++++++++++++++++++++++++++\n");
-              printf ("*start event # %i with multiplicity %i looks like this:\n", Pars.CurEvNo, GEB_event.mult);
-              for (i = 0; i < GEB_event.mult; i++)
-                {
-                  GebTypeStr (GEB_event.ptgd[i]->type, str);
-                  printf ("%2i> %2i, %s, TS=%lli\n", i, GEB_event.ptgd[i]->type, str, GEB_event.ptgd[i]->timestamp);
-                };
-            };
+		  if (Pars.CurEvNo <= Pars.NumToPrint)
+		  {
+			  printf ("\n+++++++++++++++++++++++++++++++\n");
+			  printf ("*start event # %i with multiplicity %i looks like this:\n", Pars.CurEvNo, GEB_event.mult);
+			  for (i = 0; i < GEB_event.mult; i++)
+			  {
+				  GebTypeStr (GEB_event.ptgd[i]->type, str);
+				  printf ("%2i> %2i, %s, TS=%lli\n", i, GEB_event.ptgd[i]->type, str, GEB_event.ptgd[i]->timestamp);
+			  };
+		  };
 
-          if (0)
-            {
-              printf ("debug quit\n");
-              exit (0);
-            };
+		  if (0)
+		  {
+			  printf ("debug quit\n");
+			  exit (0);
+		  };
 
 #include "UserPreCond.h"
 
-          /* bin GT mode 3 data  (== raw data with traces) */
+		  /* bin GT mode 3 data  (== raw data with traces) */
 
-          //bin_mode3 (&GEB_event);
+		  //bin_mode3 (&GEB_event);
 
-          /* bin GT mode 2 data  (== decomposed data) */
+		  /* bin GT mode 2 data  (== decomposed data) */
 
-          //bin_mode2 (&GEB_event);
+		  //bin_mode2 (&GEB_event);
 
-          /* bin mode 1 data (==tracked data) */
+		  /* bin mode 1 data (==tracked data) */
 
-          //bin_mode1 (&GEB_event);
+		  //bin_mode1 (&GEB_event);
 
-          /* bin DGS data */
+		  /* bin DGS data */
 
-          bin_dgs (&GEB_event);
-          bin_dgod  (&GEB_event);
-          bin_agod  (&GEB_event);
+		  bin_dgs (&GEB_event);
+		  bin_dgod  (&GEB_event);
+		  bin_agod  (&GEB_event);
 
-			//bin_god must come after unpacking of dgod and agod.
-			bin_god(&GEB_event);
-          //bin_dfma (&GEB_event);
+		  //bin_god must come after unpacking of dgod and agod.
+		  bin_god(&GEB_event);
+		  //bin_dfma (&GEB_event);
 
 
-	  //bin_phoswich (&GEB_event);
-	  //added by JK 08/26/2014
+		  //bin_phoswich (&GEB_event);
+		  //added by JK 08/26/2014
 
-          /* bin GT data for calibration */
+		  /* bin GT data for calibration */
 
-          //bin_gtcal (&GEB_event);
+		  //bin_gtcal (&GEB_event);
 
-          /* bin other stuff in template */
+		  /* bin other stuff in template */
 
-          //bin_template (&GEB_event);
+		  //bin_template (&GEB_event);
 
-      /*-------------------------*/
-          /* execute user event code */
-      /*-------------------------*/
+		  /*-------------------------*/
+		  /* execute user event code */
+		  /*-------------------------*/
 #include "UserEv.h"
 
-          if (Pars.CurEvNo <= Pars.NumToPrint)
-            {
-              printf ("*end of event # %i\n", Pars.CurEvNo);
-              printf ("+++++++++++++++++++++++++++++++\n");
-            };
+		  if (Pars.CurEvNo <= Pars.NumToPrint)
+		  {
+			  printf ("*end of event # %i\n", Pars.CurEvNo);
+			  printf ("+++++++++++++++++++++++++++++++\n");
+		  };
 
 
-        };
+	  };
 
 
-      /*---------------------*/
-      /* house keeping...... */
-      /* done every so often */
-      /*---------------------*/
+	  /*---------------------*/
+	  /* house keeping...... */
+	  /* done every so often */
+	  /*---------------------*/
 
-      if (Pars.CurEvNo % 100 == 0)
-        {
+	  if (Pars.CurEvNo % 100 == 0)
+	  {
 
-          /* calc time since last dump */
+			fprintf(stderr, "Event: %d\r", Pars.CurEvNo);
+		  /* calc time since last dump */
 
-          tdmp = time (NULL);
-          tdmp -= tdmplast;
-          tdmp /= 60;           /* now minutes */
+		  tdmp = time (NULL);
+		  tdmp -= tdmplast;
 
-        };
+	  };
 
-    /*-----------------------------------------------------------*/
-      /* dump all spectra on signal or dump every Pars.DumpEvery events */
-      /* or respond to 'interactive' command...................... */
-    /*-----------------------------------------------------------*/
+	  /*-----------------------------------------------------------*/
+	  /* dump all spectra on signal or dump every Pars.DumpEvery events */
+	  /* or respond to 'interactive' command...................... */
+	  /*-----------------------------------------------------------*/
 
-      if (Pars.WeWereSignalled || (int) tdmp >= Pars.DumpEvery)
-        {
+	  if (Pars.WeWereSignalled || (int) tdmp >= Pars.DumpEvery)
+	  {
 
-          /* disarm signal */
+		  /* disarm signal */
 
-          Pars.WeWereSignalled = FALSE;
+		  Pars.WeWereSignalled = FALSE;
 
-          /* check for command file */
+		  /* check for command file */
 
-          fp = fopen (CommandFileName, "r");
-          if (fp != NULL)
-            {
+		  fp = fopen (CommandFileName, "r");
+		  if (fp != NULL)
+		  {
 
-              printf ("found command file: %s\n", CommandFileName);
-              fgets (str, STRLEN, fp);
-              printf ("with command: %s\n", str);
+			  printf ("found command file: %s\n", CommandFileName);
+			  fgets (str, STRLEN, fp);
+			  printf ("with command: %s\n", str);
 
-              if ((p = strstr (str, "DumpEvery")) != NULL)
-                {
+			  if ((p = strstr (str, "DumpEvery")) != NULL)
+			  {
 
-                  sscanf (str, "%s %i", str1, &Pars.DumpEvery);
-                  printf ("will dump to output file every %i minutes\n", Pars.DumpEvery);
-                  fflush (stdout);
+				  sscanf (str, "%s %i", str1, &Pars.DumpEvery);
+				  printf ("will dump to output file every %i minutes\n", Pars.DumpEvery);
+				  fflush (stdout);
 
-                }
-              else if ((p = strstr (str, "printevents")) != NULL)
-                {
-                  /* reset print event counter */
+			  }
+			  else if ((p = strstr (str, "printevents")) != NULL)
+			  {
+				  /* reset print event counter */
 
-                  nret = sscanf (str, "%s %i", str1, &i1);
-                  if (nret == 2)
-                    Pars.NumToPrint = i1;
-                  printf ("will print %i events\n", Pars.NumToPrint);
-                  NprintEvNo = 0;
+				  nret = sscanf (str, "%s %i", str1, &i1);
+				  if (nret == 2)
+					  Pars.NumToPrint = i1;
+				  printf ("will print %i events\n", Pars.NumToPrint);
+				  NprintEvNo = 0;
 
-                }
-              else if ((p = strstr (str, "status")) != NULL)
-                {
+			  }
+			  else if ((p = strstr (str, "status")) != NULL)
+			  {
 
-                  showStatus ();
-
-
-                }
-              else if ((p = strstr (str, "stopsort")) != NULL)
-                {
-                  /* simulate end of event to stop sort */
-
-                  eov = 1;
-
-                }
-              else if ((p = strstr (str, "zapall")) != NULL)
-                {
-
-                  /* zap spectra */
-                  if (Pars.UseShareMemFile)
-                    {
-                      zlist = mfile->GetDirectory ()->GetList ();
-                      hiterator = zlist->MakeIterator ();
-                      while ((hhtemp = (TH1 *) hiterator->Next ()))
-                        {
-                          hhtemp->Reset ();
-                        }
-                      printf ("all spectra were zapped @ ");
-                      time_stamp ();
-                      fflush (stdout);
-
-                      /* update */
-
-                      printf ("updating shared mem... ");
-                      UPDSSHMEM;
-                    }
-                  else
-                    {
-                      /* do nothing */
-                    }
-                }
-              else if ((p = strstr (str, "zap")) != NULL)
-                {
-                  /* extract spectrum name */
-
-                  sscanf (str, "%s %s", str1, Pars.spname);
-                  hhtemp = (TH1D *) gROOT->FindObject (Pars.spname);
-                  if (Pars.UseShareMemFile)
-                    {
-                      hhtemp = (TH1 *) mfile->Remove (Pars.spname);
-                      if (hhtemp != NULL)
-                        {
-                          //hhtemp->Print ();
-                          hhtemp->Reset ();
-                          mfile->Add (hhtemp, Pars.spname);
-                          mfile->Update (hhtemp);
-                        }
-                      printf ("spectrum %s zapped @ ", Pars.spname);
-                      time_stamp ();
-                      fflush (stdout);
-                      /* update */
-                    }
-                  else
-                    {
-                      /* do nothing */
-                    };
-
-                }
-              else
-                printf ("command not understood\n");
-
-              /* delete command file */
-
-              fclose (fp);
-              sprintf (str, "\\rm %s", CommandFileName);
-              system (str);
-              printf ("%s\n", str);
-
-            }
-          else
-            {
-              printf ("\"%s\" was not found\n", CommandFileName);
-
-              /* update sh mem or writeout root file */
-
-              printf ("time since last dump: %i minute(s)\n", (int) tdmp);
-              tdmp = 0;
-              if (!Pars.UseShareMemFile)
-                {
-
-                  printf ("*---------------------------------\n");
-                  printf ("* you cannot update a disk file.  \n");
-                  printf ("  you must wait for sort to finish\n");
-                  printf ("  or stop the sort! Ignoring you...\n");
-                  printf ("*---------------------------------\n");
-
-                }
-              else
-                {
-                  printf ("updating shared mem... ");
-
-                  UPDSSHMEM;
-                  showStatus ();
-                };
-
-              tdmplast = time (NULL);
-
-            };
-
-          printf ("continuing the sort...\n");
-          fflush (stdout);
-
-        };
+				  showStatus ();
 
 
-    };
+			  }
+			  else if ((p = strstr (str, "stopsort")) != NULL)
+			  {
+				  /* simulate end of event to stop sort */
+
+				  eov = 1;
+
+			  }
+			  else if ((p = strstr (str, "zapall")) != NULL)
+			  {
+
+				  /* zap spectra */
+				  if (Pars.UseShareMemFile)
+				  {
+					  zlist = mfile->GetDirectory ()->GetList ();
+					  hiterator = zlist->MakeIterator ();
+					  while ((hhtemp = (TH1 *) hiterator->Next ()))
+					  {
+						  hhtemp->Reset ();
+					  }
+					  printf ("all spectra were zapped @ ");
+					  time_stamp ();
+					  fflush (stdout);
+
+					  /* update */
+
+					  printf ("updating shared mem... ");
+					  UPDSSHMEM;
+				  }
+				  else
+				  {
+					  /* do nothing */
+				  }
+			  }
+			  else if ((p = strstr (str, "zap")) != NULL)
+			  {
+				  /* extract spectrum name */
+
+				  sscanf (str, "%s %s", str1, Pars.spname);
+				  hhtemp = (TH1D *) gROOT->FindObject (Pars.spname);
+				  if (Pars.UseShareMemFile)
+				  {
+					  hhtemp = (TH1 *) mfile->Remove (Pars.spname);
+					  if (hhtemp != NULL)
+					  {
+						  //hhtemp->Print ();
+						  hhtemp->Reset ();
+						  mfile->Add (hhtemp, Pars.spname);
+						  mfile->Update (hhtemp);
+					  }
+					  printf ("spectrum %s zapped @ ", Pars.spname);
+					  time_stamp ();
+					  fflush (stdout);
+					  /* update */
+				  }
+				  else
+				  {
+					  /* do nothing */
+				  };
+
+			  }
+			  else
+				  printf ("command not understood\n");
+
+			  /* delete command file */
+
+			  fclose (fp);
+			  sprintf (str, "\\rm %s", CommandFileName);
+			  system (str);
+			  printf ("%s\n", str);
+
+		  }
+		  else
+		  {
+			  printf ("\"%s\" was not found\n", CommandFileName);
+
+			  /* update sh mem or writeout root file */
+
+			  printf ("time since last dump: %i second(s)\n", (int) tdmp);
+			  tdmp = 0;
+			  if (!Pars.UseShareMemFile)
+			  {
+					printf("Writing ROOT file\n");
+					Pars.f1->Write(0,TObject::kWriteDelete);
+
+			  }
+			  else
+			  {
+				  printf ("updating shared mem... ");
+
+				  UPDSSHMEM;
+				  showStatus ();
+			  };
+
+			  tdmplast = time (NULL);
+
+		  };
+
+		  printf ("continuing the sort...\n");
+		  fflush (stdout);
+
+	  };
+
+
+  };
 
   /*-----------------------*/
   /* we are done sorting!! */
@@ -2576,59 +2574,51 @@ GEBacq (char *ChatFileName)
   fflush (stdout);
 
   if (Pars.InputSrc == DISK)
-    {
-      close (inData);
-    }
+  {
+	  close (inData);
+  }
   else if (Pars.InputSrc == GEB)
-    {
+  {
 #if(HAVE_VXWORKS)
-      gretTapClose (pTap);
+	  gretTapClose (pTap);
 #endif
-    };
+  };
   printf ("\n");
   fflush (stdout);
 
   /* write the tracked spectrum in spe format as well */
-/*
-  dim = LONGLEN;
+  /*
+	  dim = LONGLEN;
 
-  for (i = 0; i < dim; i++)
-    {
-      rr[i] = (float) sumTrackE->GetBinContent (i);;
-    };
-*/
+	  for (i = 0; i < dim; i++)
+	  {
+	  rr[i] = (float) sumTrackE->GetBinContent (i);;
+	  };
+	  */
   sprintf (str, "sumTrackE.spe");
   //wr_spe (str, &dim, rr); DS change 7/31/2015
 
   /* if we were using shared memory */
 
   if (Pars.UseShareMemFile)
-    {
-      //UPDSSHMEM mfile->Print ();
-      //printf ("\n");
-      //mfile->ls ();
-      //printf ("\n");
-    };
+  {
+	  //UPDSSHMEM mfile->Print ();
+	  //printf ("\n");
+	  //mfile->ls ();
+	  //printf ("\n");
+  };
 
   /* if we were using rootfile */
 
   if (!Pars.UseShareMemFile)
-    {
-      printf ("attempting to close root file...\n");
-      fflush (stdout);
-
-      printf ("Pars.f1->Write();\n");
-      fflush (stdout);
-      Pars.f1->Write ();
-      printf ("Pars.f1->Print();\n");
-      fflush (stdout);
-      Pars.f1->Print ();
-      printf ("Pars.f1->Close();\n");
-      fflush (stdout);
-      Pars.f1->Close ();
-      printf ("done saving rootfile \"%s\n\n", Pars.ROOTFile);
-      fflush (stdout);
-    }
+  {
+	  printf ("attempting to close root file...\n");
+	  fflush (stdout);
+	  Pars.f1->Write (0,TObject::kWriteDelete);
+	  Pars.f1->Close ();
+	  printf ("done saving rootfile \"%s\n\n", Pars.ROOTFile);
+	  fflush (stdout);
+  }
   printf ("\n");
 
 
@@ -2660,15 +2650,15 @@ GEBacq (char *ChatFileName)
   printf ("hit statistics per type\n");
   i1 = 0;
   for (i = 1; i < MAX_GEB_TYPE; i++)
-    if (typehit[i] > 0)
-      {
-        GebTypeStr (i, str);
-        printf ("%2i %s %10i ;", i, str, typehit[i]);
-        i1 += typehit[i];
-        d1 = (double) typehit[i] / nsec;
-        printf (" %9.2f Hz ", (float) d1);
-        printf ("\n");
-      };
+	  if (typehit[i] > 0)
+	  {
+		  GebTypeStr (i, str);
+		  printf ("%2i %s %10i ;", i, str, typehit[i]);
+		  i1 += typehit[i];
+		  d1 = (double) typehit[i] / nsec;
+		  printf (" %9.2f Hz ", (float) d1);
+		  printf ("\n");
+	  };
   printf ("read a total of              %i ; header/payloads\n", i1);
   printf ("\n");
 
