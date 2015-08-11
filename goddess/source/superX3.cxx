@@ -225,7 +225,6 @@ void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 
 		//If more than one contact fired we can compute position and energy. 
 		if (stripContactMult[strip] > 1) {
-			if (stripContactMult[strip] > 2) 
 			UpdatePosition(GetStrip(contact));
 			//Store the energy only if the multiplicity is one.
 			enPtype += enCalPstrip[strip];
