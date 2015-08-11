@@ -16,7 +16,7 @@ fi
 DIR=$1
 RUN=$2
 
-if [ ! -e $DIR ]; then
+if [ $DIR != *":"* ] && [ ! -e $DIR ]; then
 	printf "${RED}ERROR:${RESET} Destination directory $DIR doe snot exist.\n"
 	exit 1
 fi
@@ -24,30 +24,28 @@ fi
 echo "Copying data files to ${DIR}"
 
 printf "${BLUE}Copying DGS files${RESET}\n"
-rsync -aP dgs1:/media/20140317_1604/user/gsfma330/run_$RUN.dgs* $DIR
+rsync -aP --chmod=a-w dgs1:/media/20140317_1604/user/gsfma330/run_$RUN.dgs* $DIR
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DGS run files found!\n"
 	warn=true
 fi
 
 printf "${BLUE}Copying DFMA files${RESET}\n"
-rsync -aP nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR
+rsync -aP --chmod=a-w nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DFMA run files found!\n"
 	warn=true
 fi
 
-if [ ! -e $DIR/run$RUN.ldf ] || [ -e /media/4844678136/run$RUN.ldf ]; then 
+#if [ ! -e $DIR/run$RUN.ldf ] || [ -e /media/4844678136/run$RUN.ldf ]; then 
 	printf "${BLUE}Copying LDF files${RESET}\n"
 	if [ ! -e /media/4844678136/run$RUN.ldf ]; then
 		printf "${YELLOW}WARNING:${RESET} ORNL ldf file not found on memory stick!\n"
 		warn=true
 	else 
-		mv /media/4844678136/run$RUN.ldf $DIR
+		rsync -aP --chmod=a-w /media/4844678136/run$RUN.ldf $DIR
 	fi
-fi
-
-chmod a-w $DIR/*
+#fi
 
 if [ ! ${warn} ]; then
 	printf "${GREEN}Completed${RESET}. Have a nice day.\n"
