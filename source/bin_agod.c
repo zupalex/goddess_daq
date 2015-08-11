@@ -45,7 +45,7 @@ void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
 		unsigned short channel = datum & 0xFFFF;
 		unsigned short value = (datum >> 16) & 0xFFFF;
 
-		if (channel >= 244 && channel <=246) {
+		if (channel >= 1000 && channel <= 1003) {
 			timestamp |= (unsigned long long) value << (16 * (246-channel));
 		}
 		else {
