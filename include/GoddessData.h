@@ -57,6 +57,7 @@ class GoddessData {
 	std::map<std::string,TH1F*> sX3frontMult;
 	std::map<std::string,TH1F*> sX3backMult;
 	std::map<std::string,TH2F**> sX3nearFar;
+	std::map<std::string,TH2F**> sX3posRaw_enRaw;
 
 	TTree* tree;
 
