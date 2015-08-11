@@ -87,18 +87,17 @@ void superX3::ConstructBins () {
 
 void superX3::Clear() {
 	siDet::Clear();
+
+	enCalPstrip.clear();
+	stripPosRaw.clear();
+	stripPosCal.clear();
 	for (int i=0;i<4;i++) {
-		enCalPstrip[i] = 0;
-		stripPosRaw[i] = -2;
-		stripPosCal[i] = -1;
 		stripContactMult[i] = 0;
 	}
 
 	enPtype = 0;
 	enNtype = 0;
 	enCal = 0;
-
-	multPstrip = 0;
 
 	eventPos.SetXYZ(0,0,0);
 }
@@ -125,22 +124,38 @@ void superX3::UpdatePosition(int strip) {
 	//Check if both contacts have had there energy set.
 	if (!ContactHit(nearContact, false) || !ContactHit(farContact, false)) return;
 
+	float nearEnergy = GetCalEnergy(nearContact);
+	float farEnergy = GetCalEnergy(farContact);
+
 	//Compute the strip energy by 
 	//E = N + p0 + p1 * F + p2 * F^2 ...
-	enCalPstrip[strip] = GetCalEnergy(nearContact);
+	float stripEnergy = nearEnergy ;
 	for (size_t power = 0; power < parStripEnCal[strip].size(); power++)
-		enCalPstrip[strip] += parStripEnCal[strip].at(power) * pow(GetCalEnergy(farContact),power);
+		stripEnergy += parStripEnCal[strip].at(power) * pow(farEnergy,power);
+	enCalPstrip[strip] = stripEnergy;
+
+	//Compute the resistive strip position by
+	// P_raw = (N - F) / E 
+	// P_cal = p0 + p1 * P_raw + p2 * P_raw^2
+	float stripPosRaw = (nearEnergy - farEnergy) / stripEnergy;
+	float stripPosCal;
+	for (size_t power = 0; power < parStripPosCal[strip].size(); power++)
+		stripPosCal += parStripPosCal[strip].at(power) * pow (stripPosRaw, power);
+
+	stripPosRaw[strip] = stripPosRaw;
+	stripPosCal[strip] = stripPosCal;
+	
 
 	//Compute the event position.
 	//If the p and n strip multiplicity is 1 we can easily find the position.
-	if (multPstrip == 1) {
+	if (enCalPstrip.size() == 1) {
 		//We construct the event position from the following:
 		//	X: The middle point of the pStrip
 		//	Y: The middle point of the pStrip
 		//	Z: The calibrated position reported from the resistive strip.
 		float xValue = (pStripEdgePos[strip].X() + pStripEdgePos[strip + 1].X()) / 2.;
 		float yValue = (pStripEdgePos[strip].Y() + pStripEdgePos[strip + 1].Y()) / 2.;
-		eventPos.SetXYZ(xValue, yValue, enCalPstrip[strip]);
+		eventPos.SetXYZ(xValue, yValue, stripPosCal);
 	}
 	//Otherwise we just zero the vector.
 	else eventPos.SetXYZ(0,0,0);

@@ -32,7 +32,7 @@ class superX3 : public orrubaDet {
 		Float_t binsPolar[5]; //!
 
 		///Calibrated energy of p type strips.
-		float enCalPstrip[4];
+		siDet::ValueMap enCalPstrip;
 		///Calibrated energy of the p type side.
 		float enPtype;
 		///Calibrated energy of the n type side.
@@ -41,14 +41,12 @@ class superX3 : public orrubaDet {
 		float enCal;
 
 		///Computed raw position of event.
-		float stripPosRaw[4];
+		ValueMap stripPosRaw;
 		///Computed calibrated position of event.
-		float stripPosCal[4];
+		ValueMap stripPosCal;
 
 		///The number of contacts fired on a strip.
 		int stripContactMult[4];
-		///The number of p type strips that fired.
-		int multPstrip;
 
 		///The constructed position of the event.
 		TVector3 eventPos; 
@@ -99,6 +97,14 @@ class superX3 : public orrubaDet {
 		///Returns true if strip number is valid.
 		bool ValidStrip(int strip);
 
+		///Return a map of the strips that fired with their energies.
+		siDet::ValueMap GetStripEnergies() {return enCalPstrip;};
+		///Get the number of strip that fired. (Requiring both contacts on a strip.)
+		unsigned int GetStripMultiplicity() {return enCalPstrip.size();};
+		///Returns the ValueMap of the raw strips ranginf from -1 to +1.
+		siDet::ValueMap GetStripPosRaw() {return stripPosRaw;};
+		///Returns the ValueMap of the calibrated strip positions in mm.
+		siDet::ValueMap GetStripPosCal() {return stripPosCal;};
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
 		///Return the energy from the p type side.
