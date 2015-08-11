@@ -233,7 +233,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				timeCal = true;
 			}
 			else if (calType != "enCal") { 
-				mapFile.seekg(-line.length()-1,std::ios_base::cur);
+				mapFile.seekg(prevPos);
 				break;
 			}
 
