@@ -150,7 +150,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			short channel = agodEvt.channels[j];
 
 			enRawA->Fill(value,channel);
-			std::cout << "filling enRawA " << channel << " " << value << '\n';
 
 			std::pair<short, short> key = std::make_pair(GEB_TYPE_AGOD, channel);
 			if (suppressCh.find(key) != suppressCh.end()) continue;
@@ -175,7 +174,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		short channel=dgodEvt.tid;
 
 		enRawD->Fill(value,channel);
-		std::cout << "filling enRawD " << channel << " " << value << '\n';
 
 		std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
 		if (suppressCh.find(key) != suppressCh.end()) {
@@ -210,7 +208,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		if (detType == "QQQ5") {
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
-				std::cout << "filling qqq " << itr->first << ' ' << itr->second << '\n';
 				QQQFrontMult[detPosID]->Fill(frontRawEn.size());
 			}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
@@ -235,7 +232,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
 				sX3frontMult[detPosID]->Fill(frontRawEn.size());
-				std::cout << "filling sx3 " << itr->first << ' ' << itr->second << '\n';
 				//
 				//for loop over 8 contacts/4 strips
 				for (int i=0; i < 8; i+=2) {
