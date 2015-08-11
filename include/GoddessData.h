@@ -11,6 +11,7 @@
 #include "GTMerge.h"
 
 #include <vector>
+#include <array>
 #include <map>
 #include <utility>
 
@@ -53,6 +54,9 @@ class GoddessData {
 	std::map<std::string,TH2F*> sX3enCal_posRaw;
 	std::map<std::string,TH2F*> sX3enCal_posCal;
 	std::map<std::string,TH2F*> sX3HitPat;
+	std::map<std::string,TH1F*> sX3frontMult;
+	std::map<std::string,TH1F*> sX3backMult;
+	std::map<std::string,TH2F**> sX3nearFar;
 
 	TTree* tree;
 

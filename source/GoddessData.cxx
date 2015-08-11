@@ -37,16 +37,16 @@ GoddessData::GoddessData(std::string configFilename)
 	gDirectory->mkdir("cal");
 
 	gDirectory->cd("/ORRUBA/analog/raw");
-	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",4096,0,4096,400,0,400);
+	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 
 	gDirectory->cd("/ORRUBA/digital/raw");
-	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",4096,0,4096,400,0,400);
+	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 
 	gDirectory->cd("/ORRUBA/analog/cal");
-	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",4096,0,4096,400,0,400);
+	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 
 	gDirectory->cd("/ORRUBA/digital/cal");
-	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",4096,0,4096,400,0,400);
+	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 
 	gDirectory->cd("/");
 
@@ -69,16 +69,16 @@ GoddessData::GoddessData(std::string configFilename)
 		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
 
 		gDirectory->cd("/QQQ5/front/raw");
-		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 4096,0,4096,32,0,32));
+		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 512,0,4096,32,0,32));
 
 		gDirectory->cd("/QQQ5/front/cal");
-		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name), 4096,0,4096,32,0,32));
+		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name), 512,0,4096,32,0,32));
 
 		gDirectory->cd("/QQQ5/back/raw");
-		QQQenRawBack.emplace(name,new TH2F(Form("QQQenRawBack_%s",name),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name), 4096,0,4096,4,0,4));
+		QQQenRawBack.emplace(name,new TH2F(Form("QQQenRawBack_%s",name),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name), 512,0,4096,4,0,4));
 
 		gDirectory->cd("/QQQ5/back/cal");
-		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 4096,0,4096,4,0,4));
+		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 512,0,4096,4,0,4));
 
 		gDirectory->cd("/QQQ5/multiplicity");
 		QQQHitPat.emplace(name,new TH2F(Form("QQQHitPat_%s",name),Form("QQQ5 Hit Pattern %s;Front [strip];Back [strip]",name),32,0,32,4,0,4));
@@ -98,14 +98,37 @@ GoddessData::GoddessData(std::string configFilename)
 	std::cout << nsx3s << "\n";
 	for (int i=0;i< nsx3s;i++) {
 		const char* name = ((std::string)((superX3*)sx3s->At(i))->GetPosID()).c_str();
-		sX3stripEnRaw.emplace(name, new TH2F(Form("sX3stripEnRaw%s",name),Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name),4096,0,4096, 8, 0,8));
-		sX3stripEnCal.emplace(name, new TH2F(Form("sX3stripEnCal%s",name),Form("SuperX3 strip cal energy vs strip %s;energy [keV];strip", name),4096,0,4096, 8, 0,8));
-		sX3backEnRaw.emplace(name, new TH2F(Form("sX3backEnRaw%s",name),Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name),4096,0,4096, 4, 0,4));
-		sX3backEnCal.emplace(name, new TH2F(Form("sX3backEnCal%s",name),Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),4096,0,4096, 4, 0,4));
-		//sX3near_far.emplace(name, new TH2F(Form("sX3near_far_%s",name),Form("SuperX3 Near vs Far %s;Near;Far", name),4096,0,4096,4096,0,4096));
-		//sX3enCal_posRaw.emplace(name, new TH2F(Form("sX3posRaw_enCal_%s",name),Form("SuperX3 Pos Raw vs Cal Energy %s;position [ch];Energy[MeV]", name),4096,0,4096,4096,0,4096));
-		//sX3enCal_posCal.emplace(name, new TH2F(Form("sX3posCal_enCal_%s",name),Form("SuperX3 Pos Cal vs Cal Energy %s;position [cm];Energy[MeV]", name),4096,0,4096,4096,0,4096));
-		sX3HitPat.emplace(name,new TH2F(Form("sX3HitPat_%s",name),Form("SuperX3 Hit Pattern %s;Front [strip];Back [strip]",name),8,0,8,4,0,4));
+		sX3stripEnRaw.emplace(name, new TH2F(Form("sX3stripEnRaw%s",name),
+			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 8, 0,8));
+
+		sX3stripEnCal.emplace(name, new TH2F(Form("sX3stripEnCal%s",name),
+			Form("SuperX3 strip cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 8, 0,8));
+
+		sX3backEnRaw.emplace(name, new TH2F(Form("sX3backEnRaw%s",name),
+			Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 4, 0,4));
+
+		sX3backEnCal.emplace(name, new TH2F(Form("sX3backEnCal%s",name),
+			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 4, 0,4));
+
+		sX3nearFar[name] = new TH2F*[4];
+		for (int i=0; i < 4; i++) {
+			sX3nearFar[name][i] = new TH2F(Form("sX3nearFar_%s_%i",name,i),
+				Form("sX3 near strip vs far strip %s %i", name,i), 512,0,4096,512,0,4096);
+		}
+
+
+		//sX3near_far.emplace(name, new TH2F(Form("sX3near_far_%s",name),Form("SuperX3 Near vs Far %s;Near;Far", name),512,0,4096,512,0,4096));
+		//sX3enCal_posRaw.emplace(name, new TH2F(Form("sX3posRaw_enCal_%s",name),Form("SuperX3 Pos Raw vs Cal Energy %s;position [ch];Energy[MeV]", name),512,0,4096,512,0,4096));
+		//sX3enCal_posCal.emplace(name, new TH2F(Form("sX3posCal_enCal_%s",name),Form("SuperX3 Pos Cal vs Cal Energy %s;position [cm];Energy[MeV]", name),512,0,4096,512,0,4096));
+
+		sX3HitPat.emplace(name,new TH2F(Form("sX3HitPat_%s",name),
+			Form("SuperX3 Hit Pattern %s;Front [strip];Back [strip]",name),8,0,8,4,0,4));
+
+		sX3frontMult.emplace(name,new TH1F(Form("sX3FrontMult_%s",name),
+			Form("super X3 %s multiplicity;multiplicity",name),20,0,20));
+
+		sX3backMult.emplace(name,new TH1F(Form("sX3BackMult_%s",name),
+			Form("super X3 %s multiplicity;multiplicity",name),20,0,20));
 	}
 		
 	gDirectory->cd("/");
@@ -127,6 +150,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			short channel = agodEvt.channels[j];
 
 			enRawA->Fill(value,channel);
+			std::cout << "filling enRawA " << channel << " " << value << '\n';
 
 			std::pair<short, short> key = std::make_pair(GEB_TYPE_AGOD, channel);
 			if (suppressCh.find(key) != suppressCh.end()) continue;
@@ -151,6 +175,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		short channel=dgodEvt.tid;
 
 		enRawD->Fill(value,channel);
+		std::cout << "filling enRawD " << channel << " " << value << '\n';
 
 		std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
 		if (suppressCh.find(key) != suppressCh.end()) {
@@ -178,14 +203,14 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 		// front=false (p-type = (!n-type))
 		siDet::ValueMap frontRawEn = det->GetRawEn(false);
-		siDet::ValueMap frontCalEn = det->GetRawEn(false);
+		siDet::ValueMap frontCalEn = det->GetCalEn(false);
 		siDet::ValueMap backRawEn = det->GetRawEn(true);
 		siDet::ValueMap backCalEn = det->GetCalEn(true);
 
 		if (detType == "QQQ5") {
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
-				//QQQFrontMult[detPosID]->Fill(itr->first);
+				std::cout << "filling qqq " << itr->first << ' ' << itr->second << '\n';
 				QQQFrontMult[detPosID]->Fill(frontRawEn.size());
 			}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
@@ -193,7 +218,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
-				QQQBackMult[detPosID]->Fill(itr->first);
+				QQQBackMult[detPosID]->Fill(backRawEn.size());
 			}
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				QQQenCalBack[detPosID]->Fill(itr->second, itr->first);
@@ -209,12 +234,27 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		if (detType == "superX3") {
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
+				sX3frontMult[detPosID]->Fill(frontRawEn.size());
+				std::cout << "filling sx3 " << itr->first << ' ' << itr->second << '\n';
+				//
+				//for loop over 8 contacts/4 strips
+				for (int i=0; i < 8; i+=2) {
+					if ((frontRawEn.find(i)!=frontRawEn.end()) && (frontRawEn.find(i+1)!=frontRawEn.end())) {
+						sX3nearFar[detPosID][i/2]->Fill(frontRawEn.find(i)->second, frontRawEn.find(i+1)->second);
+					}
+				}
 			}
+
+				//auto tmpitr = itr;
+				//if ((siDet*)det->GetStrip(itr->first) == det->GetStrip(++tmpitr)) {
+				//	stripNearFar[Form("%s_%i",detPosID,det->GetStrip())]->Fill(itr.second, tmpitr.second);
+				//}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				sX3stripEnCal[detPosID]->Fill(itr->second, itr->first);
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
+				sX3backMult[detPosID]->Fill(backRawEn.size());
 			}
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				sX3backEnCal[detPosID]->Fill(itr->second,itr->first);
