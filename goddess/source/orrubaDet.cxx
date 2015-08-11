@@ -22,7 +22,7 @@ void orrubaDet::SetPosID() {
 	
 	posID.append(std::to_string((long long int)sector));
 
-	posID.append("-");
+	posID.append("_");
 
 	if (depth == 0) posID.append("dE");
 	else if (depth == 1) posID.append("E1");
