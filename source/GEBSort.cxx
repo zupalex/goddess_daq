@@ -2004,7 +2004,9 @@ GEBacq (char *ChatFileName)
 			  exit (-1);
 		  }
 		  printf ("base=<%s>\n", Pars.f1->GetPath ());
-		  Pars.f1->Write(0,TObject::kWriteDelete);
+		  Pars.f1->SetCompressionLevel(0);
+		  Pars.f1->Write(0,TObject::kOverwrite);
+		  Pars.f1->Flush();
 	  }
   }
   printf ("\n");
@@ -2072,7 +2074,9 @@ GEBacq (char *ChatFileName)
   //sup_phoswich ();
   sup_template ();
 
-	Pars.f1->Write(0,TObject::kWriteDelete);
+	Pars.f1->SetCompressionLevel(0);
+	Pars.f1->Write(0,TObject::kOverwrite);
+	Pars.f1->Flush();
 
   printf ("we have define the following ROOT spectra:\n");
 
@@ -2398,7 +2402,7 @@ GEBacq (char *ChatFileName)
 	  /* done every so often */
 	  /*---------------------*/
 
-	  if (Pars.CurEvNo % 100 == 0)
+	  if (Pars.CurEvNo % 1000 == 0)
 	  {
 
 			fprintf(stderr, "Event: %d\r", Pars.CurEvNo);
@@ -2539,7 +2543,8 @@ GEBacq (char *ChatFileName)
 			  if (!Pars.UseShareMemFile)
 			  {
 					printf("Writing ROOT file\n");
-					Pars.f1->Write(0,TObject::kWriteDelete);
+					Pars.f1->Write(0,TObject::kOverwrite);
+					Pars.f1->Flush();
 
 			  }
 			  else
@@ -2614,7 +2619,9 @@ GEBacq (char *ChatFileName)
   {
 	  printf ("attempting to close root file...\n");
 	  fflush (stdout);
-	  Pars.f1->Write (0,TObject::kWriteDelete);
+	  Pars.f1->SetCompressionLevel(1);
+	  Pars.f1->Write (0,TObject::kOverwrite);
+	  Pars.f1->Flush();
 	  Pars.f1->Close ();
 	  printf ("done saving rootfile \"%s\n\n", Pars.ROOTFile);
 	  fflush (stdout);
