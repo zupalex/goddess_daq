@@ -133,15 +133,20 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		}
 		else {
 			int pTypeDaqType, nTypeDaqType;
-			int pTypeDaqCh, nTypeDaqCh;
-			if (!(lineStream >> serialNum >> id >> pTypeDaqType >> pTypeDaqCh >> nTypeDaqType >> nTypeDaqCh)) {
-				break;
+			int pTypeDaqCh, nTypeDaqCh = 0;
+			if (detType == "BB10") { 
+				if (!(lineStream >> serialNum >> id >> pTypeDaqType >> pTypeDaqCh)) break;
+			}
+			else {
+				if (!(lineStream >> serialNum >> id >> pTypeDaqType >> pTypeDaqCh >> nTypeDaqType >> nTypeDaqCh)) break;
 			}
 
 			std::cout << serialNum;
 			std::cout << ", LocID: " << id;
 			std::cout << ", pDAQ: " << pTypeDaqType << "-" << pTypeDaqCh;
-			std::cout << ", nDAQ: " << nTypeDaqType << "-" << nTypeDaqCh << "\n";
+			if (detType == "BB10") std::cout << "\n";
+			else std::cout << ", nDAQ: " << nTypeDaqType << "-" << nTypeDaqCh << "\n";
+		
 
 			short sector, depth;
 			bool upStream;
@@ -180,11 +185,13 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			} 
 			else
 				std::cerr << "ERROR: Detector " << serialNum << " p-type will not be unpacked!\n";
-			if (IsInsertable(nTypeDaqType, nTypeDaqCh, detType,true)) {
-				chMap[std::make_pair(nTypeDaqType,nTypeDaqCh)] = std::make_pair(det,true);
+			if (det->GetNumChannels(siDet::nType)) {
+				if (IsInsertable(nTypeDaqType, nTypeDaqCh, detType,true)) {
+					chMap[std::make_pair(nTypeDaqType,nTypeDaqCh)] = std::make_pair(det,true);
+				}
+				else 
+					std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
 			}
-			else 
-				std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
 		}
 
 		//Read calibration information.
