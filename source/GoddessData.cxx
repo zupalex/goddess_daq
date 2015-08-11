@@ -102,11 +102,11 @@ GoddessData::GoddessData(std::string configFilename)
 
 		sX3nearFar[name] = new TH2F*[4];
 		sX3posRaw_enRaw[name] = new TH2F*[4];
-		(Form("sX3posRaw_enRaw_%s",name),
-			Form("super X3 raw position vs raw energy %s",name),512, -1,1,512,0,4096);
+
 		for (int i=0; i < 4; i++) {
-			sX3posRaw_enRaw[name][i] = new TH2F(Form("sX3posRaw_enRaw_%s",name),
-				Form("super X3 raw position vs raw energy %s",name),512, -1,1,512,0,4096);
+			sX3posRaw_enRaw[name][i] = new TH2F(Form("sX3posRaw_enRaw_%s_%i",name,i),
+				Form("super X3 raw position vs raw energy %s_%i",name,i),512, -1,1,512,0,4096);
+
 			sX3nearFar[name][i] = new TH2F(Form("sX3nearFar_%s_%i",name,i),
 				Form("sX3 near strip vs far strip %s %i", name,i), 512,0,4096,512,0,4096);
 		}
@@ -223,13 +223,15 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		}
 
 		if (detType == "superX3") {
+			superX3 *sx3= (superX3*) det;
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
 				sX3frontMult[detPosID]->Fill(frontRawEn.size());
 				//for loop over 8 contacts/4 strips
-				for (int i=0; i < 8; i+=2) {
-					if ((frontRawEn.find(i)!=frontRawEn.end()) && (frontRawEn.find(i+1)!=frontRawEn.end())) {
-						sX3nearFar[detPosID][i/2]->Fill(frontRawEn.find(i)->second, frontRawEn.find(i+1)->second);
+				for (int i=0;i<4;i++) {
+					if ((frontRawEn.find(2*i)!=frontRawEn.end()) && (frontRawEn.find(2*i+1)!=frontRawEn.end())) {
+						sX3posRaw_enRaw[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],itr->second);
+						sX3nearFar[detPosID][i]->Fill(frontRawEn[2*i], frontRawEn[2*i+1]);
 					}
 				}
 			}
