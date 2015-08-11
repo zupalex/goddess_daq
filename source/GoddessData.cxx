@@ -102,8 +102,16 @@ GoddessData::GoddessData(std::string configFilename)
 
 		sX3nearFar[name] = new TH2F*[4];
 		sX3posRaw_enRaw[name] = new TH2F*[4];
+		sX3posRaw_enCal[name] = new TH2F*[4];
+		sX3posCal_enCal[name] = new TH2F*[4];
 
 		for (int i=0; i < 4; i++) {
+			sX3posRaw_enCal[name][i] = new TH2F(Form("sX3posRaw_enCal_%s_%i",name,i),
+				Form("super X3 raw position vs cal energy %s_%i",name,i),512, -1,1,512,0,4096);
+
+			sX3posCal_enCal[name][i] = new TH2F(Form("sX3posCal_enCal_%s_%i",name,i),
+				Form("super X3 cal position vs cal energy %s_%i",name,i),512, -1,1,512,0,4096);
+
 			sX3posRaw_enRaw[name][i] = new TH2F(Form("sX3posRaw_enRaw_%s_%i",name,i),
 				Form("super X3 raw position vs raw energy %s_%i",name,i),512, -1,1,512,0,4096);
 
@@ -225,27 +233,40 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		if (detType == "superX3") {
 			superX3 *sx3= (superX3*) det;
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
+				
 				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
 				sX3frontMult[detPosID]->Fill(frontRawEn.size());
-				//for loop over 8 contacts/4 strips
-				for (int i=0;i<4;i++) {
-					if ((frontRawEn.find(2*i)!=frontRawEn.end()) && (frontRawEn.find(2*i+1)!=frontRawEn.end())) {
-						sX3posRaw_enRaw[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],itr->second);
-						sX3nearFar[detPosID][i]->Fill(frontRawEn[2*i], frontRawEn[2*i+1]);
-					}
+			}
+			//for loop over 8 contacts/4 strips
+			for (int i=0;i<4;i++) {
+				if ((frontRawEn.find(2*i)!=frontRawEn.end()) && (frontRawEn.find(2*i+1)!=frontRawEn.end())) {
+					sX3posRaw_enRaw[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontRawEn[2*i]+frontRawEn[2*i+1]);
+					sX3nearFar[detPosID][i]->Fill(frontRawEn[2*i], frontRawEn[2*i+1]);
 				}
 			}
 
+			
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				sX3stripEnCal[detPosID]->Fill(itr->second, itr->first);
 			}
+			//for loop over 8 contacts/4 strips
+			for (int i=0;i<4;i++) {
+				if ((frontCalEn.find(2*i)!=frontCalEn.end()) && (frontCalEn.find(2*i+1)!=frontCalEn.end())) {
+					sX3posRaw_enCal[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontCalEn[2*i]+frontCalEn[2*i+1]);
+					sX3posCal_enCal[detPosID][i]->Fill(sx3->GetStripPosCal()[i],frontCalEn[2*i]+frontCalEn[2*i+1]);
+					sX3nearFar[detPosID][i]->Fill(frontCalEn[2*i], frontCalEn[2*i+1]);
+				}
+			}
+
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
 				sX3backMult[detPosID]->Fill(backRawEn.size());
 			}
+
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				sX3backEnCal[detPosID]->Fill(itr->second,itr->first);
 			}
+
 			// hit pattern
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
 				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
