@@ -160,10 +160,11 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				continue;
 			}	
 
-			std::string detectorType = det->IsA()->GetName();
-			if (detectorType != "Ion Chamber") {
-				firedDets.push_back((orrubaDet*) det);
-			} 
+			firedDets.push_back(det);
+			orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
+			if (siDet) {
+				siDets.push_back(siDet);
+			}
 		}
 	}
 
