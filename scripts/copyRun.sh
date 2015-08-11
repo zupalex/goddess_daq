@@ -1,23 +1,24 @@
 #/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
-GREEN='\033[0;32m'
 RESET='\033[0m'
 warn=false
 
 if [ $# -ne 1 ] 
   then
-   echo "USAGE: copyRun.sh <run>"
+   echo "USAGE: copyRun.sh <destination> <run>"
   exit 1
 fi
 
-RUN=$1
-
-DIR=/media/Pele/calib/run$RUN
+DIR=$1
+RUN=$2
 
 if [ ! -e $DIR ]; then
-	mkdir $DIR
+	printf "${RED}ERROR:${RESET} Destination directory $DIR doe snot exist.\n"
+	exit 1
 fi
 
 echo "Copying data files to ${DIR}"
