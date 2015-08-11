@@ -415,7 +415,8 @@ bin_mode1 (GEB_EVENT * GEB_event)
                       if (rr / 10 > RMIN && rr / 10 < RMAX)
                         {
                           radius_first->Fill ((double) rr / 10, 1);
-                          if (grh->gr[j].esum > 0 && grh->gr[j].esum < MEDIUMLEN);
+			  //need to make sure the following if statment is supposed to control the evsr Fill
+                          if (grh->gr[j].esum > 0 && grh->gr[j].esum < MEDIUMLEN){};  
                           evsr_first->Fill ((double) rr / 10, grh->gr[j].esum);
                         };
 

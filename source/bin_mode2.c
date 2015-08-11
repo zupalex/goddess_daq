@@ -470,7 +470,8 @@ bin_mode2 (GEB_EVENT * GEB_event)
               if (rr > RMIN && rr < RMAX)
                 {
                   radius_all->Fill ((double) rr, 1);
-                  if (ptinp->intpts[j].e > 0 && ptinp->intpts[j].e < MEDIUMLEN);
+		  //need to make sure if the following if statement controls the evsr Fill
+                  if (ptinp->intpts[j].e > 0 && ptinp->intpts[j].e < MEDIUMLEN){};
                   evsr_all->Fill ((double) rr, ptinp->intpts[j].e);
                 };
 
