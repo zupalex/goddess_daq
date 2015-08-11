@@ -137,13 +137,13 @@ void superX3::UpdatePosition(int strip) {
 	//Compute the resistive strip position by
 	// P_raw = (N - F) / E 
 	// P_cal = p0 + p1 * P_raw + p2 * P_raw^2
-	float stripPosRaw = (nearEnergy - farEnergy) / stripEnergy;
-	float stripPosCal;
-	for (size_t power = 0; power < parStripPosCal[strip].size(); power++)
-		stripPosCal += parStripPosCal[strip].at(power) * pow (stripPosRaw, power);
+	float stripPosRaw_ = (nearEnergy - farEnergy) / stripEnergy;
+	float stripPosCal_;
+	for (size_t power = 0; power < parPosCal[strip].size(); power++)
+		stripPosCal_ += parPosCal[strip].at(power) * pow (stripPosRaw_, power);
 
-	stripPosRaw[strip] = stripPosRaw;
-	stripPosCal[strip] = stripPosCal;
+	stripPosRaw[strip] = stripPosRaw_;
+	stripPosCal[strip] = stripPosCal_;
 	
 
 	//Compute the event position.
@@ -155,7 +155,7 @@ void superX3::UpdatePosition(int strip) {
 		//	Z: The calibrated position reported from the resistive strip.
 		float xValue = (pStripEdgePos[strip].X() + pStripEdgePos[strip + 1].X()) / 2.;
 		float yValue = (pStripEdgePos[strip].Y() + pStripEdgePos[strip + 1].Y()) / 2.;
-		eventPos.SetXYZ(xValue, yValue, stripPosCal);
+		eventPos.SetXYZ(xValue, yValue, stripPosCal_);
 	}
 	//Otherwise we just zero the vector.
 	else eventPos.SetXYZ(0,0,0);

@@ -10,6 +10,7 @@
 #include "Detector.h"
 #include "orrubaDet.h"
 #include "QQQ5.h"
+#include "superX3.h"
 
 #include <iostream>
 
@@ -81,14 +82,36 @@ GoddessData::GoddessData(std::string configFilename)
 
 		gDirectory->cd("/QQQ5/multiplicity");
 		QQQHitPat.emplace(name,new TH2F(Form("QQQHitPat_%s",name),Form("QQQ5 Hit Pattern %s;Front [strip];Back [strip]",name),32,0,32,4,0,4));
-		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity;multiplicity",name),32,0,32));
-		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicitymultiplicity",name),4,0,4));
+		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity;multiplicity",name),20,0,20));
+		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicitymultiplicity",name),20,0,20));
 	}
 	gDirectory->cd("/");	
 
 
 
+	gDirectory->mkdir("sX3");
+	gDirectory->cd("sX3");
 
+	// super X 3s 
+	TClonesArray* sx3s = config->GetSuperX3s();
+	int nsx3s = sx3s->GetEntries();
+	std::cout << nsx3s << "\n";
+	for (int i=0;i< nsx3s;i++) {
+		const char* name = ((std::string)((superX3*)sx3s->At(i))->GetPosID()).c_str();
+		sX3stripEnRaw.emplace(name, new TH2F(Form("sX3stripEnRaw%s",name),Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name),4096,0,4096, 8, 0,8));
+		sX3stripEnCal.emplace(name, new TH2F(Form("sX3stripEnCal%s",name),Form("SuperX3 strip cal energy vs strip %s;energy [keV];strip", name),4096,0,4096, 8, 0,8));
+		sX3backEnRaw.emplace(name, new TH2F(Form("sX3backEnRaw%s",name),Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name),4096,0,4096, 4, 0,4));
+		sX3backEnCal.emplace(name, new TH2F(Form("sX3backEnCal%s",name),Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),4096,0,4096, 4, 0,4));
+		//sX3near_far.emplace(name, new TH2F(Form("sX3near_far_%s",name),Form("SuperX3 Near vs Far %s;Near;Far", name),4096,0,4096,4096,0,4096));
+		//sX3enCal_posRaw.emplace(name, new TH2F(Form("sX3posRaw_enCal_%s",name),Form("SuperX3 Pos Raw vs Cal Energy %s;position [ch];Energy[MeV]", name),4096,0,4096,4096,0,4096));
+		//sX3enCal_posCal.emplace(name, new TH2F(Form("sX3posCal_enCal_%s",name),Form("SuperX3 Pos Cal vs Cal Energy %s;position [cm];Energy[MeV]", name),4096,0,4096,4096,0,4096));
+		sX3HitPat.emplace(name,new TH2F(Form("sX3HitPat_%s",name),Form("SuperX3 Hit Pattern %s;Front [strip];Back [strip]",name),8,0,8,4,0,4));
+	}
+		
+	gDirectory->cd("/");
+		
+	
+	
 }
 
 void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
@@ -147,6 +170,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		}
 	}
 
+	// loop over fired detectors
 	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
 		orrubaDet* det = *itr;
 		std::string detPosID = det->GetPosID();
@@ -161,7 +185,8 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		if (detType == "QQQ5") {
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
-				QQQFrontMult[detPosID]->Fill(itr->first);
+				//QQQFrontMult[detPosID]->Fill(itr->first);
+				QQQFrontMult[detPosID]->Fill(frontRawEn.size());
 			}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				QQQenCalFront[detPosID]->Fill(itr->second, itr->first);
@@ -175,12 +200,30 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			}
 
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
-				for (auto itrBack=frontRawEn.begin();itrBack!=frontRawEn.end();++itrBack) {
+				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
 					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
 				}
 			}
+		}
+
+		if (detType == "superX3") {
+			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
+				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
+			}
+			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
+				sX3stripEnCal[detPosID]->Fill(itr->second, itr->first);
+			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
-				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
+				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
+			}
+			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
+				sX3backEnCal[detPosID]->Fill(itr->second,itr->first);
+			}
+			// hit pattern
+			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
+				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
+					sX3HitPat[detPosID]->Fill(itrFront->first,itrBack->first);	
+				}
 			}
 		}
 	}
