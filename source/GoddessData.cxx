@@ -34,10 +34,8 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("orruba",&orruba);
 	tree->Branch("det",&firedDets);
 
-	f->cd("/hists");
-	gDirectory->pwd();
 	// ORRUBA histograms
-	// dorectories to keep things organized
+	f->cd("/hists");
 	TDirectory *dirOrruba = gDirectory->mkdir("orruba");
 	dirOrruba->cd();
 	TDirectory *dirRaw = gDirectory->mkdir("raw");
@@ -47,14 +45,35 @@ GoddessData::GoddessData(std::string configFilename)
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 
+	dirOrruba->cd();
+	InitSuperX3Hists();
+
+	dirOrruba->cd();
+	InitQQQ5Hists();
+
+	dirOrruba->cd();
+	InitBB10Hists();
+
+	gDirectory->cd("/hists");
+}
+void GoddessData::InitBB10Hists() {
+	TClonesArray* bb10s =config->GetBB10s();
+	int nbb10s = bb10s->GetEntries();
+
+	TDirectory *dirBB10 = gDirectory->mkdir("bb10");
+	for (int i = 0; i < nbb10s; i++) {
+		const char* name = ((std::string)((BB10*)bb10s->At(i))->GetPosID()).c_str();
+		dirBB10->cd();
+		gDirectory->mkdir(name)->cd();
+		gDirectory->mkdir("en")->cd();
+
+
+	}
+}
+void GoddessData::InitQQQ5Hists() {
 
 	TClonesArray *qqq5s=config->GetQQQ5s();
-	TClonesArray* sx3s = config->GetSuperX3s();
-	TClonesArray* bb10s =config->GetBB10s();
-	//TClonesArray* ics = config->GetIonCounter();
 	int nqqq5s = qqq5s->GetEntries();
-
-	f->cd("hists");
 	TDirectory *dirQQQ5 = gDirectory->mkdir("qqq5");
 
 	for (int i = 0; i < nqqq5s; i++) {
@@ -80,11 +99,12 @@ GoddessData::GoddessData(std::string configFilename)
 		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity;multiplicity",name),20,0,20));
 		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicitymultiplicity",name),20,0,20));
 	}
-	gDirectory->cd("/hists");
 
+}
+void GoddessData::InitSuperX3Hists() {
 	TDirectory *dirSX3 = gDirectory->mkdir("sx5");
 
-	// super X 3s 
+	TClonesArray *sx3s = config->GetSuperX3s();
 	int nsx3s = sx3s->GetEntries();
 	std::cout << nsx3s << "\n";
 	for (int i=0;i< nsx3s;i++) {
@@ -143,26 +163,6 @@ GoddessData::GoddessData(std::string configFilename)
 
 
 	}
-
-
-
-	gDirectory->cd("/hists");
-	TDirectory *dirBB10 = gDirectory->mkdir("bb10");
-
-	int nbb10s = bb10s->GetEntries();
-	for (int i = 0; i < nbb10s; i++) {
-		const char* name = ((std::string)((BB10*)bb10s->At(i))->GetPosID()).c_str();
-		dirBB10->cd();
-		gDirectory->mkdir(name)->cd();
-		gDirectory->mkdir("en")->cd();
-
-
-	}
-		
-	gDirectory->cd("/hists");
-		
-	
-	
 }
 
 void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {

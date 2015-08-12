@@ -18,9 +18,14 @@
 
 class GoddessData {
 	public:
-	GoddessData(std::string configFilename);
-	~GoddessData();
-	void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
+		GoddessData(std::string configFilename);
+		~GoddessData();
+		
+		void InitSuperX3Hists();
+		void InitQQQ5Hists();
+		void InitBB10Hists();
+
+		void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 	
 	private:
 	GoddessConfig *config;
