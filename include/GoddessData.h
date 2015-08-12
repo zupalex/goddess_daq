@@ -61,6 +61,13 @@ class GoddessData {
 	std::map<std::string,TH2F**> sX3posRaw_enCal;
 	std::map<std::string,TH2F**> sX3posCal_enCal;
 
+	// IC
+	std::map<std::string,TH1F*> icE1;
+	std::map<std::string,TH1F*> icE2;
+	std::map<std::string,TH1F*> icE;
+	std::map<std::string,TH1F**> scint;
+	
+
 	TTree* tree;
 
 	TClonesArray* superX3s;

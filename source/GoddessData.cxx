@@ -52,6 +52,7 @@ GoddessData::GoddessData(std::string configFilename)
 
 	TClonesArray *qqq5s=config->GetQQQ5s();
 	TClonesArray* sx3s = config->GetSuperX3s();
+	TClonesArray* ics = config->GetIonCounter();
 	int nqqq5s = qqq5s->GetEntries();
 
 	gDirectory->mkdir("QQQ5");
@@ -273,6 +274,8 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 					sX3HitPat[detPosID]->Fill(itrFront->first,itrBack->first);	
 				}
 			}
+		}
+		if (detType=="Ion Counter") {
 		}
 	}
 
