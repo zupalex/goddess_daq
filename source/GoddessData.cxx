@@ -12,6 +12,7 @@
 #include "orrubaDet.h"
 #include "QQQ5.h"
 #include "superX3.h"
+#include "BB10.h"
 
 #include <iostream>
 
@@ -28,12 +29,12 @@ GoddessData::GoddessData(std::string configFilename)
 		std::cerr << "ERROR: Not in a ROOT File?\n";
 		return;
 	}
-	f->cd("trees");
+	f->cd("/trees");
 	tree=new TTree("god","GODDESS Tree");
 	tree->Branch("orruba",&orruba);
 	tree->Branch("det",&firedDets);
 
-	f->cd("hists");
+	f->cd("/hists");
 	gDirectory->pwd();
 	// ORRUBA histograms
 	// dorectories to keep things organized
@@ -49,6 +50,7 @@ GoddessData::GoddessData(std::string configFilename)
 
 	TClonesArray *qqq5s=config->GetQQQ5s();
 	TClonesArray* sx3s = config->GetSuperX3s();
+	TClonesArray* bb10s =config->GetBB10s();
 	//TClonesArray* ics = config->GetIonCounter();
 	int nqqq5s = qqq5s->GetEntries();
 
@@ -59,7 +61,8 @@ GoddessData::GoddessData(std::string configFilename)
 		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
 		const char* dir=Form("%s",name);
 		dirQQQ5->cd();
-		gDirectory->mkdir(dir)->cd();
+		TDirectory *dirDet = gDirectory->mkdir(dir);
+		dirDet->cd();
 		gDirectory->mkdir("en")->cd();
 
 		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 512,0,4096,32,0,32));
@@ -70,6 +73,7 @@ GoddessData::GoddessData(std::string configFilename)
 
 		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 512,0,4096,4,0,4));
 
+		dirDet->cd();
 		gDirectory->mkdir("mult")->cd();
 
 		QQQHitPat.emplace(name,new TH2F(Form("QQQHitPat_%s",name),Form("QQQ5 Hit Pattern %s;Front [strip];Back [strip]",name),32,0,32,4,0,4));
@@ -87,7 +91,8 @@ GoddessData::GoddessData(std::string configFilename)
 		const char* name = ((std::string)((superX3*)sx3s->At(i))->GetPosID()).c_str();
 		const char* dir=Form("%s",name);
 		dirSX3->cd();
-		gDirectory->mkdir(dir)->cd();
+		TDirectory *dirDet = gDirectory->mkdir(dir);
+		dirDet->cd();
 
 		gDirectory->mkdir("en")->cd();
 		sX3stripEnRaw.emplace(name, new TH2F(Form("sX3stripEnRaw%s",name),
@@ -102,6 +107,7 @@ GoddessData::GoddessData(std::string configFilename)
 		sX3backEnCal.emplace(name, new TH2F(Form("sX3backEnCal%s",name),
 			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 4, 0,4));
 
+		dirDet->cd();
 		gDirectory->mkdir("pos")->cd();
 
 		sX3nearFar[name] = new TH2F*[4];
@@ -123,6 +129,7 @@ GoddessData::GoddessData(std::string configFilename)
 				Form("sX3 near strip vs far strip %s %i", name,i), 512,0,4096,512,0,4096);
 		}
 
+		dirDet->cd();
 		gDirectory->mkdir("mult")->cd();
 
 		sX3HitPat.emplace(name,new TH2F(Form("sX3HitPat_%s",name),
@@ -133,6 +140,21 @@ GoddessData::GoddessData(std::string configFilename)
 
 		sX3backMult.emplace(name,new TH1F(Form("sX3BackMult_%s",name),
 			Form("super X3 %s multiplicity;multiplicity",name),20,0,20));
+
+
+	}
+
+
+
+	gDirectory->cd("/hists");
+	TDirectory *dirBB10 = gDirectory->mkdir("bb10");
+
+	int nbb10s = bb10s->GetEntries();
+	for (int i = 0; i < nbb10s; i++) {
+		const char* name = ((std::string)((BB10*)bb10s->At(i))->GetPosID()).c_str();
+		dirBB10->cd();
+		gDirectory->mkdir(name)->cd();
+		gDirectory->mkdir("en")->cd();
 
 
 	}
