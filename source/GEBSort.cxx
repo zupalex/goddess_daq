@@ -2045,8 +2045,7 @@ GEBacq (char *ChatFileName)
 	Pars.f1->Write(0,TObject::kWriteDelete);
 	Pars.histDir->cd();
 
-	TDirectory dirGEBSort("GEBSort","GEBSort");
-	dirGEBSort.cd();
+	gDirectory->mkdir("GEBSort")->cd();
   /* spectra that are always there */
   for (i = 0; i <= NGE; i++)
   {
