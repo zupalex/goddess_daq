@@ -261,10 +261,10 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 		if (detType == "superX3") {
 			superX3 *sx3= (superX3*) det;
+
+			sX3frontMult[detPosID]->Fill(frontRawEn.size());
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
-				
 				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
-				sX3frontMult[detPosID]->Fill(frontRawEn.size());
 			}
 			//for loop over 8 contacts/4 strips
 			for (int i=0;i<4;i++) {
@@ -287,9 +287,9 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				}
 			}
 
+			sX3backMult[detPosID]->Fill(backRawEn.size());
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
-				sX3backMult[detPosID]->Fill(backRawEn.size());
 			}
 
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
