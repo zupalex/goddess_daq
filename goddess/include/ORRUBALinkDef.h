@@ -16,4 +16,6 @@
 
 #pragma link C++ class ORRUBA+;
 
+#pragma link C++ class vector<Detector*>+;
+
 #endif

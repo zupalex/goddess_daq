@@ -47,8 +47,7 @@ sup_dgod ()
 {
   /* declarations */
 
-	gDirectory->mkdir("bin_dgod");
-	gDirectory->cd("bin_dgod");
+	gDirectory->mkdir("dgod")->cd();
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 

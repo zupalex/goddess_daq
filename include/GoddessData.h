@@ -27,8 +27,7 @@ class GoddessData {
 
 	ORRUBA *orruba;
 
-	//Map of channels to suppress, This occurs if they were not found in the map.
-	std::map<std::pair<short, short>, bool> suppressCh;
+	std::vector<Detector*> *firedDets;
 
 	TH2F* enRawA;
 	TH2F* enRawD;

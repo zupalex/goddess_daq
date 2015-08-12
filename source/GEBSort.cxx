@@ -24,6 +24,7 @@
 #include "TFile.h"
 #include "TRandom.h"
 #include "TH1.h"
+#include "TDirectory.h"
 
 #include "TH2.h"
 #include "TObjArray.h"
@@ -2005,7 +2006,6 @@ GEBacq (char *ChatFileName)
 		  }
 		  printf ("base=<%s>\n", Pars.f1->GetPath ());
 		  Pars.f1->SetCompressionLevel(0);
-		  Pars.f1->Write(0,TObject::kOverwrite);
 		  Pars.f1->Flush();
 	  }
   }
@@ -2039,8 +2039,14 @@ GEBacq (char *ChatFileName)
   /* setup the root spectra we need */
   /*--------------------------------*/
 
-  gDirectory->mkdir("GEBSort");
-  gDirectory->cd("GEBSort");
+	Pars.f1->cd();
+	Pars.histDir = Pars.f1->mkdir("hists");
+	Pars.treeDir = Pars.f1->mkdir("trees");
+	Pars.f1->Write(0,TObject::kWriteDelete);
+	Pars.histDir->cd();
+
+	TDirectory dirGEBSort("GEBSort","GEBSort");
+	dirGEBSort.cd();
   /* spectra that are always there */
   for (i = 0; i <= NGE; i++)
   {
@@ -2060,22 +2066,32 @@ GEBacq (char *ChatFileName)
   sprintf (str1, "type");
   dtbtev->SetYTitle (str1);
 
+	Pars.histDir->cd();
   /* spectra for different types of data */
 
   sup_mode2 ();
+	Pars.histDir->cd();
   sup_mode1 ();
+	Pars.histDir->cd();
   sup_mode3 ();
+	Pars.histDir->cd();
   sup_gtcal ();
+	Pars.histDir->cd();
   sup_dgs ();
+	Pars.histDir->cd();
   //sup_dfma ();
   sup_god();
+	Pars.histDir->cd();
   sup_dgod ();
+	Pars.histDir->cd();
   sup_agod ();
+	Pars.histDir->cd();
   //sup_phoswich ();
   sup_template ();
 
 	Pars.f1->SetCompressionLevel(0);
-	Pars.f1->Write(0,TObject::kOverwrite);
+	Pars.histDir->Write(0,TObject::kOverwrite);
+	Pars.treeDir->Write(0,TObject::kWriteDelete);
 	Pars.f1->Flush();
 
   printf ("we have define the following ROOT spectra:\n");
@@ -2543,7 +2559,8 @@ GEBacq (char *ChatFileName)
 			  if (!Pars.UseShareMemFile)
 			  {
 					printf("Writing ROOT file\n");
-					Pars.f1->Write(0,TObject::kOverwrite);
+					Pars.histDir->Write(0,TObject::kOverwrite);
+					Pars.treeDir->Write(0,TObject::kWriteDelete);
 					Pars.f1->Flush();
 
 			  }
@@ -2620,9 +2637,12 @@ GEBacq (char *ChatFileName)
 	  printf ("attempting to close root file...\n");
 	  fflush (stdout);
 	  Pars.f1->SetCompressionLevel(1);
-	  Pars.f1->Write (0,TObject::kOverwrite);
+	  Pars.histDir->Write(0,TObject::kOverwrite);
+	  Pars.treeDir->Write(0,TObject::kWriteDelete);
 	  Pars.f1->Flush();
 	  Pars.f1->Close ();
+		Pars.histDir = 0;
+		Pars.treeDir = 0;
 	  printf ("done saving rootfile \"%s\n\n", Pars.ROOTFile);
 	  fflush (stdout);
   }

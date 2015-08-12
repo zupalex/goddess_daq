@@ -2,6 +2,7 @@
 
 //ROOT Headers
 #include "TDirectory.h"
+#include "TFile.h"
 
 //GEBSort Headers
 #include "gdecomp.h"
@@ -19,50 +20,48 @@ GoddessData::GoddessData(std::string configFilename)
 	config = new GoddessConfig("goddess.position",configFilename);
 
 	orruba = new ORRUBA();
+	firedDets = new std::vector<Detector*>;
 
+	gDirectory->pwd();
+	TFile *f = gDirectory->GetFile();
+	if (!f) {
+		std::cerr << "ERROR: Not in a ROOT File?\n";
+		return;
+	}
+	f->cd("trees");
 	tree=new TTree("god","GODDESS Tree");
 	tree->Branch("orruba",&orruba);
+	tree->Branch("det",&firedDets);
 
+	f->cd("hists");
+	gDirectory->pwd();
 	// ORRUBA histograms
 	// dorectories to keep things organized
-	gDirectory->mkdir("ORRUBA");
-	gDirectory->cd("ORRUBA");
-	gDirectory->mkdir("analog");
-	gDirectory->mkdir("digital");
-	gDirectory->cd("analog");
-	gDirectory->mkdir("cal");
-	gDirectory->mkdir("raw");
-	gDirectory->cd("/ORRUBA/digital");
-	gDirectory->mkdir("raw");
-	gDirectory->mkdir("cal");
-
-	gDirectory->cd("/ORRUBA/analog/raw");
+	TDirectory *dirOrruba = gDirectory->mkdir("orruba");
+	dirOrruba->cd();
+	TDirectory *dirRaw = gDirectory->mkdir("raw");
+	dirRaw->cd();
 	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
-
-	gDirectory->cd("/ORRUBA/digital/raw");
 	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
-
-	gDirectory->cd("/ORRUBA/analog/cal");
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
-
-	gDirectory->cd("/ORRUBA/digital/cal");
 	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 
-	gDirectory->cd("/");
 
 	TClonesArray *qqq5s=config->GetQQQ5s();
 	TClonesArray* sx3s = config->GetSuperX3s();
-	TClonesArray* ics = config->GetIonCounter();
+	//TClonesArray* ics = config->GetIonCounter();
 	int nqqq5s = qqq5s->GetEntries();
 
-	gDirectory->mkdir("QQQ5");
-	gDirectory->cd("QQQ5");
+	f->cd("hists");
+	TDirectory *dirQQQ5 = gDirectory->mkdir("qqq5");
 
 	for (int i = 0; i < nqqq5s; i++) {
 		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
 		const char* dir=Form("%s",name);
-		gDirectory->mkdir(dir);
-		gDirectory->cd(dir);
+		dirQQQ5->cd();
+		gDirectory->mkdir(dir)->cd();
+		gDirectory->mkdir("en")->cd();
+
 		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name), 512,0,4096,32,0,32));
 
 		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name), 512,0,4096,32,0,32));
@@ -71,15 +70,15 @@ GoddessData::GoddessData(std::string configFilename)
 
 		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name), 512,0,4096,4,0,4));
 
+		gDirectory->mkdir("mult")->cd();
+
 		QQQHitPat.emplace(name,new TH2F(Form("QQQHitPat_%s",name),Form("QQQ5 Hit Pattern %s;Front [strip];Back [strip]",name),32,0,32,4,0,4));
 		QQQFrontMult.emplace(name,new TH1F(Form("QQQFrontMult_%s",name),Form("QQQ5 %s multiplicity;multiplicity",name),20,0,20));
 		QQQBackMult.emplace(name,new TH1F(Form("QQQBackMult_%s",name),Form("QQQ5 %s multiplicitymultiplicity",name),20,0,20));
-		gDirectory->cd("/QQQ5");
 	}
-	gDirectory->cd("/");
+	gDirectory->cd("/hists");
 
-	gDirectory->mkdir("sX3");
-	gDirectory->cd("sX3");
+	TDirectory *dirSX3 = gDirectory->mkdir("sx5");
 
 	// super X 3s 
 	int nsx3s = sx3s->GetEntries();
@@ -87,8 +86,10 @@ GoddessData::GoddessData(std::string configFilename)
 	for (int i=0;i< nsx3s;i++) {
 		const char* name = ((std::string)((superX3*)sx3s->At(i))->GetPosID()).c_str();
 		const char* dir=Form("%s",name);
-		gDirectory->mkdir(dir);
-		gDirectory->cd(dir);
+		dirSX3->cd();
+		gDirectory->mkdir(dir)->cd();
+
+		gDirectory->mkdir("en")->cd();
 		sX3stripEnRaw.emplace(name, new TH2F(Form("sX3stripEnRaw%s",name),
 			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 8, 0,8));
 
@@ -100,6 +101,8 @@ GoddessData::GoddessData(std::string configFilename)
 
 		sX3backEnCal.emplace(name, new TH2F(Form("sX3backEnCal%s",name),
 			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 4, 0,4));
+
+		gDirectory->mkdir("pos")->cd();
 
 		sX3nearFar[name] = new TH2F*[4];
 		sX3posRaw_enRaw[name] = new TH2F*[4];
@@ -120,6 +123,8 @@ GoddessData::GoddessData(std::string configFilename)
 				Form("sX3 near strip vs far strip %s %i", name,i), 512,0,4096,512,0,4096);
 		}
 
+		gDirectory->mkdir("mult")->cd();
+
 		sX3HitPat.emplace(name,new TH2F(Form("sX3HitPat_%s",name),
 			Form("SuperX3 Hit Pattern %s;Front [strip];Back [strip]",name),8,0,8,4,0,4));
 
@@ -130,17 +135,18 @@ GoddessData::GoddessData(std::string configFilename)
 			Form("super X3 %s multiplicity;multiplicity",name),20,0,20));
 
 
-		gDirectory->cd("/sX3");
 	}
 		
-	gDirectory->cd("/");
+	gDirectory->cd("/hists");
 		
 	
 	
 }
 
 void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
-	std::vector<Detector*> firedDets;
+	//Map of channels to suppress, This occurs if they were not found in the map.
+	static std::map<std::pair<short, short>, bool> suppressCh;
+
 	std::vector<orrubaDet*> siDets;
 
 	// getting data from analog events
@@ -162,7 +168,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				continue;
 			}	
 
-			firedDets.push_back(det);
+			firedDets->push_back(det);
 			orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 			if (siDet) {
 				siDets.push_back(siDet);
@@ -189,7 +195,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			continue;
 		}
 
-		firedDets.push_back(det);
+		firedDets->push_back(det);
 		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 		if (siDet) {
 			siDets.push_back(siDet);
@@ -316,12 +322,13 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	} 
 	if (valid) {
 		orruba->SetEvent(sector,dE,E1,E2,pos);
-		tree->Fill();
 	}
+	tree->Fill();
 
 	//We clear everything here since we know what was actually fired.
-	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
+	for (auto itr = firedDets->begin(); itr != firedDets->end(); ++itr) {
 		(*itr)->Clear();
 	}
+	firedDets->clear();
 }
 

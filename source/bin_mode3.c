@@ -52,9 +52,7 @@ sup_mode3 ()
 
   /* initialize */
 
-
-	gDirectory->mkdir("bin_mode3");
-	gDirectory->cd("bin_mode3");
+	gDirectory->mkdir("bin_mode3")->cd();
 
 
   /* define spectra */

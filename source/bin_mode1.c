@@ -122,8 +122,7 @@ sup_mode1 ()
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
   int get_a_seed (unsigned int *);
 
-	gDirectory->mkdir("bin_mode1");
-	gDirectory->cd("bin_mode1");
+	gDirectory->mkdir("bin_mode1")->cd();
 
   /* define spectra */
 

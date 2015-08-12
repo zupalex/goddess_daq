@@ -94,9 +94,7 @@ sup_dgs ()
 
   char file_name[]="./dgscal.dat";        // place this is sort directory
 
-	
-	gDirectory->mkdir("bin_dgs");
-	gDirectory->cd("bin_dgs");
+	gDirectory->mkdir("dgs")->cd();
 
 // functions for making root histograms 
 

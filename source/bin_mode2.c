@@ -79,8 +79,7 @@ sup_mode2 ()
       ndethits[i] = 0;
     };
 
-	gDirectory->mkdir("bin_mode2");
-	gDirectory->cd("bin_mode2");
+	gDirectory->mkdir("bin_mode2")->cd();
 
   /* define spectra */
 

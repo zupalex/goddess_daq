@@ -76,6 +76,8 @@ typedef struct PARS
   int NumToPrint;
   int DumpEvery;
   TFile *f1;
+	TDirectory *histDir;
+	TDirectory *treeDir;
   TList *wlist;
   long long int curTS;
   long long int dTS;

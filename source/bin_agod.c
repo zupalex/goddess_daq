@@ -68,8 +68,7 @@ void sup_agod()
 {
   /* declarations */
 
-	gDirectory->mkdir("bin_agod");
-	gDirectory->cd("bin_agod");
+	gDirectory->mkdir("agod")->cd();
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
