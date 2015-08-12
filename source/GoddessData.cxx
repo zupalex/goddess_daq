@@ -115,18 +115,18 @@ GoddessData::GoddessData(std::string configFilename)
 		sX3posRaw_enCal[name] = new TH2F*[4];
 		sX3posCal_enCal[name] = new TH2F*[4];
 
-		for (int i=0; i < 4; i++) {
-			sX3posRaw_enCal[name][i] = new TH2F(Form("sX3posRaw_enCal_%s_%i",name,i),
-				Form("super X3 raw position vs cal energy %s_%i",name,i),512, -1,1,512,0,4096);
+		for (int strip=0; strip < 4; strip++) {
+			sX3posRaw_enCal[name][strip] = new TH2F(Form("sX3posRaw_enCal_%s_%i",name,strip),
+				Form("super X3 raw position vs cal energy %s_%i",name,strip),512, -1,1,512,0,4096);
 
-			sX3posCal_enCal[name][i] = new TH2F(Form("sX3posCal_enCal_%s_%i",name,i),
-				Form("super X3 cal position vs cal energy %s_%i",name,i),512, -1,1,512,0,4096);
+			sX3posCal_enCal[name][strip] = new TH2F(Form("sX3posCal_enCal_%s_%i",name,strip),
+				Form("super X3 cal position vs cal energy %s_%i",name,strip),512, -1,1,512,0,4096);
 
-			sX3posRaw_enRaw[name][i] = new TH2F(Form("sX3posRaw_enRaw_%s_%i",name,i),
-				Form("super X3 raw position vs raw energy %s_%i",name,i),512, -1,1,512,0,4096);
+			sX3posRaw_enRaw[name][strip] = new TH2F(Form("sX3posRaw_enRaw_%s_%i",name,strip),
+				Form("super X3 raw position vs raw energy %s_%i",name,strip),512, -1,1,512,0,4096);
 
-			sX3nearFar[name][i] = new TH2F(Form("sX3nearFar_%s_%i",name,i),
-				Form("sX3 near strip vs far strip %s %i", name,i), 512,0,4096,512,0,4096);
+			sX3nearFar[name][strip] = new TH2F(Form("sX3nearFar_%s_%i",name,strip),
+				Form("sX3 near strip vs far strip %s %i", name,strip), 512,0,4096,512,0,4096);
 		}
 
 		dirDet->cd();
@@ -225,8 +225,8 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	}
 
 	// loop over fired detectors
-	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
-		orrubaDet* det = *itr;
+	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
+		orrubaDet* det = *detItr;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
 

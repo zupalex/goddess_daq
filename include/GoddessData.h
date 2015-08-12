@@ -69,10 +69,6 @@ class GoddessData {
 
 	TTree* tree;
 
-	TClonesArray* superX3s;
-	TClonesArray* bb10s;
-	TClonesArray* qqq5s;
-
 
 };
 
