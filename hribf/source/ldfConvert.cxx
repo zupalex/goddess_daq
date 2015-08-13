@@ -25,7 +25,8 @@ int main(int argc, char *argv[]) {
 	const unsigned short myriadParam[3]  = {1002,1001,1000};
 	
 	unsigned int eventCnt=0;
-	unsigned int myriadFailCnt = 0;
+	unsigned int myriadMalformed = 0;
+	unsigned int myriadMissing = 0;
 	std::map<unsigned short, unsigned short> *values = buffer.GetMap();
 	while (buffer.ReadNextBuffer() > 0) {
 
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
 				bool myriadFail = false;
 				for (int i=0;i<3;i++) {
 					if (values->find(myriadParam[i]) == values->end()) {
-						std::cerr << "ERROR: Timestamp not found in event! Parameters checked";
+						std::cerr << "ERROR: Timestamp not found in event " << eventCnt << ", buffer " << buffer.GetBufferNumber() << "! Parameters checked";
 						for (int param=0;param < 3;param++) 	
 							std::cerr << ", " << myriadParam[param];
 						std::cerr << ".\n";
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]) {
 						for (auto itr=values->begin(); itr != values->end(); ++itr) {
 							std::cerr << "\tValue[" << itr->first << "]=" << itr->second << "\n";
 						}
+						myriadMissing++;
 						myriadFail = true;
 						break;
 					}
@@ -63,7 +65,7 @@ int main(int argc, char *argv[]) {
 				if (myriadFail) continue;
 
 				if (values->at(myriadParam[2]) == 0xAAAA) {
-					myriadFailCnt++;
+					myriadMalformed++;
 
 					if (verbose) {
 						std::cout << "\n";
@@ -90,7 +92,8 @@ int main(int argc, char *argv[]) {
 
 	}
 	std::cout << "Converted " << eventCnt << " events.           \n";
-	std::cout << "Malformed Myriad Events: " << myriadFailCnt << " " << (float)myriadFailCnt*100/eventCnt << "%\n";
+	std::cout << "Malformed Myriad Events: " << myriadMalformed << " " << (float)myriadMalformed*100/eventCnt << "%\n";
+	std::cout << "Missing Myriad Events: " << myriadMissing << " " << (float)myriadMissing*100/eventCnt << "%\n";
 
 	return 0;
 }
