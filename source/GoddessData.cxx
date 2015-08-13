@@ -9,7 +9,6 @@
 
 //GODDESS Headers
 #include "Detector.h"
-#include "orrubaDet.h"
 #include "QQQ5.h"
 #include "superX3.h"
 #include "BB10.h"
@@ -22,6 +21,10 @@ GoddessData::GoddessData(std::string configFilename)
 
 	orruba = new ORRUBA();
 	firedDets = new std::vector<Detector*>;
+	siDets = new std::vector<orrubaDet*>;
+	gammaAnalogTimeDiffs = new std::vector<float>;
+	gammaDigitalTimeDiffs = new std::vector<float>;
+	gammaEnergies = new std::vector<float>;
 
 	gDirectory->pwd();
 	TFile *f = gDirectory->GetFile();
@@ -32,7 +35,13 @@ GoddessData::GoddessData(std::string configFilename)
 	f->cd("/trees");
 	tree=new TTree("god","GODDESS Tree");
 	tree->Branch("orruba",&orruba);
-	tree->Branch("det",&firedDets);
+	tree->Branch("siDetMult",&siDetMult);
+	tree->Branch("sectorMult",&sectorMult);
+	tree->Branch("gamEn",&gammaEnergies);
+	tree->Branch("gamDtAnalog",&gammaAnalogTimeDiffs);
+	tree->Branch("gamDtDigital",&gammaDigitalTimeDiffs);
+	tree->Branch("digital",&digital);
+	tree->Branch("analog",&analog);
 
 	// ORRUBA histograms
 	f->cd("/hists");
@@ -77,10 +86,10 @@ void GoddessData::InitQQQ5Hists() {
 	TDirectory *dirQQQ5 = gDirectory->mkdir("qqq5");
 
 	for (int i = 0; i < nqqq5s; i++) {
-		const char* name = ((std::string)((QQQ5*)qqq5s->At(i))->GetPosID()).c_str();
-		const char* dir=Form("%s",name);
+		const char* name = ((QQQ5*)qqq5s->At(i))->GetPosID().c_str();
 		dirQQQ5->cd();
-		TDirectory *dirDet = gDirectory->mkdir(dir);
+		TDirectory *dirDet = gDirectory->mkdir(name);
+		if (!dirDet) fprintf(stderr,"%s Whjat the fuck!\n",name);
 		dirDet->cd();
 		gDirectory->mkdir("en")->cd();
 
@@ -169,8 +178,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	//Map of channels to suppress, This occurs if they were not found in the map.
 	static std::map<std::pair<short, short>, bool> suppressCh;
 
-	std::vector<orrubaDet*> siDets;
-
 	// getting data from analog events
 	for (size_t i=0;i<agodEvts->size();i++) {
 		AGODEVENT agodEvt = agodEvts->at(i);
@@ -193,9 +200,12 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			firedDets->push_back(det);
 			orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 			if (siDet) {
-				siDets.push_back(siDet);
+				analog = true;
+				siDets->push_back(siDet);
 			}
 		}
+
+
 	}
 
 	dgsEvts->size();
@@ -221,12 +231,25 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		firedDets->push_back(det);
 		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 		if (siDet) {
-			siDets.push_back(siDet);
+			digital = true;
+			siDets->push_back(siDet);
 		}
 	}
 
+	for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
+		for (size_t i=0;i<agodEvts->size();i++) {
+			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(agodEvts->at(i).timestamp);
+			gammaAnalogTimeDiffs->push_back(dT);
+		}
+		for (size_t i=0;i<dgodEvts->size();i++) {
+			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(dgodEvts->at(i).LEDts);
+			gammaDigitalTimeDiffs->push_back(dT);
+		}
+		gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);
+	}
+
 	// loop over fired detectors
-	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
+	for (auto detItr=siDets->begin();detItr!=siDets->end(); ++detItr) {
 		orrubaDet* det = *detItr;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
@@ -304,8 +327,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				}
 			}
 		}
-		if (detType=="Ion Counter") {
-		}
 	}
 
 	//Build a total ORRUBA event
@@ -313,7 +334,8 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	TVector3 pos(0,0,0);
 	std::string sector;
 	bool valid = true;
-	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
+	sectorMult = 0;
+	for (auto itr=siDets->begin();itr!=siDets->end(); ++itr) {
 		orrubaDet* det = *itr;
 		std::string detPosID = det->GetPosID();
 		unsigned short depth = det->GetDepth();
@@ -321,11 +343,14 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
 
 
-		if (sector.empty()) sector = detPosSector;
-		//If we had detectors from different quadrants we need to abort.
+		if (sector.empty()) {
+			sector = detPosSector;
+			sectorMult++;
+		}
+		//If we had detectors from different quadrants we give up on the event.
 		else if (sector != detPosSector) {
+			sectorMult++;
 			valid = false;
-			break;
 		}
 		if (depth == 0) {
 			if (!dE) dE = det->GetEnergy();
@@ -346,6 +371,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	if (valid) {
 		orruba->SetEvent(sector,dE,E1,E2,pos);
 	}
+	siDetMult = siDets->size();
 	tree->Fill();
 
 	//We clear everything here since we know what was actually fired.
@@ -353,5 +379,12 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		(*itr)->Clear();
 	}
 	firedDets->clear();
+	siDets->clear();
+	gammaEnergies->clear();
+	gammaAnalogTimeDiffs->clear();
+	gammaDigitalTimeDiffs->clear();
+	analog = false;
+	digital = false;
 }
+
 
