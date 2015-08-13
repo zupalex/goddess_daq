@@ -136,22 +136,36 @@ void leFilter(short int trace[], int trLen, int k, int leTrace[], int& t0, int& 
 void trigTrace(int trace[], int trLen, int trStart, int trStop, int thr, int &t0) {
 
   int i;
+  
+  int safetyTrace = 0;
+  if ( trStop < trLen ) {
+    safetyTrace = trStop;
+  } else {
+    safetyTrace = trLen;
+  }
 
-      for (i=trStart;i<trStop;i++) {  
-         if ((trace[i]>=thr)&&(trace[i+1]<thr)&&(t0==0)) {
-	    t0=i;
-            break;
-         }
-      }
-        
+  for (i=trStart;i<safetyTrace;i++) {  
+    if ((trace[i]>=thr)&&(trace[i+1]<thr)&&(t0==0)) {
+      t0=i;
+      break;
+    }
+  }
+  
 }
 
 
 void negd2(int trace[], int trLen, int trStart, int trStop, int thr, int &numtrigs) {
 
+  int safetyTrace = 0;
+  if ( trStop < trLen ) {
+    safetyTrace = trStop;
+  } else {
+    safetyTrace = trLen;
+  }
+
   int i;
    
-  for(i=trStart;i<trStop;i++){
+  for(i=trStart;i<safetyTrace;i++){
     if((trace[i]>=thr) && (trace[i+1] < thr)){
       numtrigs++;
     }
@@ -170,47 +184,6 @@ void trapFilter(short int trace[], int trLen, int m, int k, int trapTrace[]){
    }
 
 }
-
-
-// extract energy from trace
-void getEn2(int t0, short int trace[], int trlen, float &e0, int m, int k, int n, float trise) {
-
-  int i;
-  float ebl;
-  //float s1,s2;//unused
-  //float corr;//unused
-
-  
-  ebl=0;
-  for (i=t0-m; i<t0; i++) {
-    ebl=ebl+trace[i];
-  }
-  for (i=t0+k; i<t0+m+k; i++) {
-    e0=e0+trace[i];
-  }
-    e0=e0-ebl;
- 
-  // PU correction
-
-  /*
-  corr=0;
-  if ((n>0)&&(t0>2*n)) {
-  s1=0; s2=0;
-  for (i=1; i<n+1; i++) {
-    s1=s1+trace[i];
-  }
-  for (i=t0-n; i<t0; i++) {
-    s2=s2+trace[i];
-  }
-  corr=(s1-s2)/float(n)*(float(m)+float(k))/(float(t0)-float(n))*float(m);
-  }
-  e0=e0+corr;*/
-
-
-}
-
-
-
 
 // extract energies from PU traces
 void GetPUEn(int t1, int t0, int trace[], int trlen, float &e0, float &e1, int m, int k, int n, float trise) {
