@@ -22,8 +22,11 @@ if [ $DIR != *":"* ] && [ ! -e $DIR ]; then
 fi
 
 DIR="$1/run$RUN/"
-
-mkdir $DIR 
+if [ ! -e $DIR ]; then 
+	mkdir $DIR 
+else
+	printf "${YELLOW}WARNING:${RESET} Run directory already created, data may have already been copied.\n"
+fi
 
 echo "Copying data files to ${DIR}"
 
@@ -35,7 +38,7 @@ if [ $? != 0 ]; then
 fi
 
 printf "${BLUE}Copying DFMA files${RESET}\n"
-rsync -anhP --chmod=a-wx nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR/
+rsync -ahP --chmod=a-wx nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR/
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DFMA run files found!\n"
 	warn=1
