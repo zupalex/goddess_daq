@@ -1,4 +1,4 @@
-#include "hribfBuffer.h"
+s#include "hribfBuffer.h"
 
 #include <sstream> 
 
@@ -169,9 +169,6 @@ void hribfBuffer::PrintBufferHeader()
 	printf("\t%#010llX Buffer type: %s\n",fBufferType,type.c_str());
 	printf("\t%#010llX Number of Words: %llu\n",GetNumOfWords(),GetNumOfWords());
 	printf("\t%10c Buffer number: %llu\n",' ',fBufferNumber);
-}
-void hribfBuffer::ReadRunEnd(bool verbose) 
-{
 }
 
 void hribfBuffer::ReadRunBegin(bool verbose)
