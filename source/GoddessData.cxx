@@ -447,6 +447,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 	gammaTimeDiffs->clear();
 	siDetID->clear();
 	siDetEn->clear();
+	siSector->clear();
+	siUpstream->clear();
 	analog = false;
 	digital = false;
 }
