@@ -14,12 +14,16 @@ if [ $# -ne 2 ]
 fi
 
 RUN=$2
-DIR="$1/run$RUN/"
+DIR="$1"
 
 if [ $DIR != *":"* ] && [ ! -e $DIR ]; then
 	printf "${RED}ERROR:${RESET} Destination directory $DIR does not exist.\n"
 	exit 1
 fi
+
+DIR="$1/run$RUN/"
+
+mkdir $DIR 
 
 echo "Copying data files to ${DIR}"
 
