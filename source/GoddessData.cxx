@@ -20,11 +20,12 @@ GoddessData::GoddessData(std::string configFilename)
 	config = new GoddessConfig("goddess.position",configFilename);
 
 	orruba = new ORRUBA();
-	firedDets = new std::vector<Detector*>;
-	siDets = new std::vector<orrubaDet*>;
-	gammaAnalogTimeDiffs = new std::vector<float>;
-	gammaDigitalTimeDiffs = new std::vector<float>;
+	gammaTimeDiffs = new std::vector<float>;
 	gammaEnergies = new std::vector<float>;
+	siDetEn = new std::vector<float>;
+	siDetID = new std::vector<std::string>;
+	siSector = new std::vector<int>;
+	siUpstream = new std::vector<bool>;
 
 	gDirectory->pwd();
 	TFile *f = gDirectory->GetFile();
@@ -38,10 +39,13 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("siDetMult",&siDetMult);
 	tree->Branch("sectorMult",&sectorMult);
 	tree->Branch("gamEn",&gammaEnergies);
-	tree->Branch("gamDtAnalog",&gammaAnalogTimeDiffs);
-	tree->Branch("gamDtDigital",&gammaDigitalTimeDiffs);
+	tree->Branch("gamDt",&gammaTimeDiffs);
 	tree->Branch("digital",&digital);
 	tree->Branch("analog",&analog);
+	tree->Branch("siDetEn",&siDetEn);
+	tree->Branch("siDetID",&siDetID);
+	tree->Branch("siUpstream",&siUpstream);
+	tree->Branch("siSector",&siSector);
 
 	// ORRUBA histograms
 	f->cd("/hists");
@@ -197,6 +201,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		for (size_t j=0;j<agodEvt.values.size();j++) {
 			short value = agodEvt.values[j];
 			short channel = agodEvt.channels[j];
+			//unsigned long long timestamp = agodEvt.timestamp;
 
 			enRawA->Fill(value,channel);
 
@@ -208,13 +213,18 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				suppressCh[key] = true;
 				continue;
 			}	
+			//det->SetTimestamp(timestamp);
 
-			firedDets->push_back(det);
+			std::string posID;
 			orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 			if (siDet) {
 				analog = true;
-				siDets->push_back(siDet);
+				posID = siDet->GetPosID();
+				siDets[posID] = siDet;
 			}
+			//This is not the way to handle this, but it is late.
+			else posID = "ion";
+			firedDets[posID] = det;
 		}
 
 
@@ -225,6 +235,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		DFMAEVENT dgodEvt = dgodEvts->at(i);
 		short value=dgodEvt.ehi;
 		short channel=dgodEvt.tid;
+		//unsigned long long timestamp = dgodEvt.LEDts;
 
 		enRawD->Fill(value,channel);
 
@@ -239,29 +250,26 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			continue;
 		}
 
-		firedDets->push_back(det);
+		//Take whatever the timestamp is for this channel.
+		//	This is not clear that it is the best method as one detecotr may have various 
+		//	timestamps
+		//det->SetTimestamp(timestamp);
+
+		std::string posID;
 		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 		if (siDet) {
 			digital = true;
-			siDets->push_back(siDet);
+			posID = siDet->GetPosID();
+			siDets[posID] = siDet;
 		}
-	}
-
-	for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
-		for (size_t i=0;i<agodEvts->size();i++) {
-			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(agodEvts->at(i).timestamp);
-			gammaAnalogTimeDiffs->push_back(dT);
-		}
-		for (size_t i=0;i<dgodEvts->size();i++) {
-			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(dgodEvts->at(i).LEDts);
-			gammaDigitalTimeDiffs->push_back(dT);
-		}
-		gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);
+		//This is not the way to handle this, but it is late.
+		else posID = "ion";
+		firedDets[posID] = det;
 	}
 
 	// loop over fired detectors
-	for (auto detItr=siDets->begin();detItr!=siDets->end(); ++detItr) {
-		orrubaDet* det = *detItr;
+	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
+		orrubaDet* det = detItr->second;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
 
@@ -350,14 +358,53 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		
 	}
 
+	FillTrees(dgsEvts);
+
+
+	//We clear everything here since we know what was actually fired.
+	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
+		itr->second->Clear();
+	}
+	firedDets.clear();
+	siDets.clear();
+}
+
+void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
+
+	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
+		orrubaDet* det = detItr->second;
+		std::string detPosID = det->GetPosID();
+
+		siDetID->push_back(detPosID);
+		siSector->push_back(det->GetSector());
+		siUpstream->push_back(det->GetUpStream());
+		siDetEn->push_back(det->GetEnergy());
+
+		for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
+			//gammaTimeDiffs->push_back(dT);
+			gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);
+		}
+	}
+
+/*
+	for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
+		for (size_t i=0;i<agodEvts->size();i++) {
+			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(agodEvts->at(i).timestamp);
+		}
+		for (size_t i=0;i<dgodEvts->size();i++) {
+			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(dgodEvts->at(i).LEDts);
+		}
+	}
+*/
+
 	//Build a total ORRUBA event
 	float dE=0, E1=0, E2=0;
 	TVector3 pos(0,0,0);
 	std::string sector;
 	bool valid = true;
 	sectorMult = 0;
-	for (auto itr=siDets->begin();itr!=siDets->end(); ++itr) {
-		orrubaDet* det = *itr;
+	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
+		orrubaDet* det = itr->second;
 		std::string detPosID = det->GetPosID();
 		unsigned short depth = det->GetDepth();
 		std::string detType = det->IsA()->GetName();
@@ -392,20 +439,15 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	if (valid) {
 		orruba->SetEvent(sector,dE,E1,E2,pos);
 	}
-	siDetMult = siDets->size();
+	siDetMult = siDets.size();
 	tree->Fill();
 
-	//We clear everything here since we know what was actually fired.
-	for (auto itr = firedDets->begin(); itr != firedDets->end(); ++itr) {
-		(*itr)->Clear();
-	}
-	firedDets->clear();
-	siDets->clear();
+
 	gammaEnergies->clear();
-	gammaAnalogTimeDiffs->clear();
-	gammaDigitalTimeDiffs->clear();
+	gammaTimeDiffs->clear();
+	siDetID->clear();
+	siDetEn->clear();
 	analog = false;
 	digital = false;
 }
-
 

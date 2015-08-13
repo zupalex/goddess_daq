@@ -22,11 +22,6 @@ class GoddessData {
 		GoddessData(std::string configFilename);
 		~GoddessData();
 		
-		void InitSuperX3Hists();
-		void InitQQQ5Hists();
-		void InitBB10Hists();
-		void InitGammaHists();
-
 		void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 	
 	private:
@@ -39,6 +34,13 @@ class GoddessData {
 	GoddessConfig *config;
 
 	ORRUBA *orruba;
+
+		void InitSuperX3Hists();
+		void InitQQQ5Hists();
+		void InitBB10Hists();
+		void InitGammaHists();
+
+		void FillTrees(std::vector<DGSEVENT> *dgsEvts);
 
 	TH2F* enRawA;
 	TH2F* enRawD;
@@ -85,12 +87,15 @@ class GoddessData {
 
 	TTree* tree;
 	std::vector<float> *gammaEnergies;
-	std::vector<float> *gammaAnalogTimeDiffs;
-	std::vector<float> *gammaDigitalTimeDiffs;
-	std::vector<orrubaDet*> *siDets;
-	std::vector<Detector*> *firedDets;
+	std::vector<float> *gammaTimeDiffs;
+	std::map<std::string,orrubaDet*> siDets;
+	std::map<std::string,Detector*> firedDets;
 	unsigned int siDetMult;
 	unsigned int sectorMult;
+	std::vector<float> *siDetEn;
+	std::vector<std::string> *siDetID;
+	std::vector<int> *siSector;
+	std::vector<bool> *siUpstream;
 	bool analog;
 	bool digital;
 
