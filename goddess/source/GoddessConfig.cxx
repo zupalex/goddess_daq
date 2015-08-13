@@ -507,6 +507,11 @@ SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short de
 	static float halfBarrelLength = (4.375 - 0.7) * 25.4; //mm
 	SolidVector pos(0.0,0.0,0.0);
 	
+	if ( depth > 0 ) {
+	  // not yet implemeted
+	  ;
+	}
+
 	//Compute position for barrel detectors.
 	if (type == "superX3" || type == "BB10") {
 		//The barrel is divided into twelve sectors with the zero sector in the 
