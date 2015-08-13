@@ -198,6 +198,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		}
 	}
 
+	dgsEvts->size();
 	// getting data from digital events	
 	for (size_t i=0;i<dgodEvts->size();i++) {
 		DFMAEVENT dgodEvt = dgodEvts->at(i);
