@@ -10,9 +10,9 @@ superX3::superX3() {
 	Clear();
 }
 
-superX3::superX3(std::string serialNum, unsigned short sector, unsigned short depth,
-	bool upStream, SolidVector position) :
-	orrubaDet(serialNum, sector, depth, upStream, position)
+superX3::superX3(std::string serial_Num, unsigned short sector_, unsigned short depth_,
+	bool up_Stream, SolidVector position) :
+	orrubaDet(serial_Num, sector_, depth_, up_Stream, position)
 {
 	siDet::SetNumContacts(8,4);
 	ConstructBins();
@@ -138,7 +138,7 @@ void superX3::UpdatePosition(int strip) {
 	// P_raw = (N - F) / E 
 	// P_cal = p0 + p1 * P_raw + p2 * P_raw^2
 	float stripPosRaw_ = (nearEnergy - farEnergy) / stripEnergy;
-	float stripPosCal_;
+	float stripPosCal_ = 0.0;
 	for (size_t power = 0; power < parPosCal[strip].size(); power++)
 		stripPosCal_ += parPosCal[strip].at(power) * pow (stripPosRaw_, power);
 
