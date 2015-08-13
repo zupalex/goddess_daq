@@ -188,6 +188,10 @@ void trapFilter(short int trace[], int trLen, int m, int k, int trapTrace[]){
 // extract energies from PU traces
 void GetPUEn(int t1, int t0, int trace[], int trlen, float &e0, float &e1, int m, int k, int n, float trise) {
 
+  if ( n > 0 ) {
+    ;
+  }
+
    //int tr[1000];
    float ebl;
    //float s1, s2;//unused
