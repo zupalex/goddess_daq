@@ -381,7 +381,7 @@ GebTypeStr (int type, char str[])
 
 /*----------------------------------------------------------------------------*/
 int
-buf_read (off_t inData, char *buf, int nbytes)
+buf_read (off_t inData_buf_read, char *buf, int nbytes)
 {
 
 /* buffered read of data from disk or network */
@@ -392,7 +392,6 @@ buf_read (off_t inData, char *buf, int nbytes)
 
 
   int partread;
-  struct GEBData;
   static int bpos = RBUFSIZE, ActualBufSize;
   static int bleft = 0;
 
@@ -412,7 +411,7 @@ buf_read (off_t inData, char *buf, int nbytes)
   /*---------------------------------*/
   /* we never want to do that, too slow */
 
-  st = read (inData, buf, nbytes);
+  st = read (inData_buf_read, buf, nbytes);
 
 #else
 
@@ -449,7 +448,7 @@ buf_read (off_t inData, char *buf, int nbytes)
       if (Pars.InputSrc == DISK)
         {
 
-          ActualBufSize = read (inData, rbuf, RBUFSIZE);
+          ActualBufSize = read (inData_buf_read, rbuf, RBUFSIZE);
           nn1 += ActualBufSize;
           bpos = 0;
           bleft = ActualBufSize;
@@ -666,7 +665,7 @@ buf_read (off_t inData, char *buf, int nbytes)
 /*----------------------------------------------------------------------------*/
 
 int
-GEBGetEv (GEB_EVENT * GEV_event, int curEvNo)
+GEBGetEv (GEB_EVENT * GEV_event)
 {
 
   /* declarations */
@@ -2222,7 +2221,7 @@ GEBacq (char *ChatFileName)
 #if(DEBUG2)
 	  printf ("calling GEBGetEv, Pars.CurEvNo=%i\n", Pars.CurEvNo);
 #endif
-	  st = GEBGetEv (&GEB_event, Pars.CurEvNo);
+	  st = GEBGetEv (&GEB_event);
 
 	  if (st == 0 && Pars.CurEvNo < Pars.tsnumwrites)
 	  {
