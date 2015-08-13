@@ -163,7 +163,7 @@ bin_dgod (GEB_EVENT * GEB_event)
   for(j=0;j<ng;j++){
 
     dTg_god = double(DGSEvent[j].event_timestamp) - double(DFMAEvent[i].LEDts);
-    if ((DFMAEvent[i].tid==10)&&(dTg_god>260)&(dTg_god<300)) h2_g_god->Fill(DGSEvent[j].ehi,DFMAEvent[i].ehi);
+    if ((DFMAEvent[i].tid==10)&&(dTg_god>260)&(dTg_god<290)) h2_g_god->Fill(DGSEvent[j].ehi,DFMAEvent[i].ehi);
 
    }
   }
