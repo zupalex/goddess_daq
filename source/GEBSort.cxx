@@ -2695,8 +2695,6 @@ GEBacq (char *ChatFileName)
 
   exit_mode2 ();
 
-  printf ("boniva sancta! ");
-  printf ("...GEBSort (unexpectedly) did not crash!\n");
   printf ("\n ** GEBSort is done at ");
   time_stamp ();
   printf ("\n");
