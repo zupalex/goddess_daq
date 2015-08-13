@@ -52,6 +52,8 @@ class orrubaDet : public siDet {
  		 */
 		unsigned short GetDepth() {return depth;}
 		///Abstract definition of a funtion to get the depositied energy of a strip.
+		bool GetUpStream() {return upStream;}
+		// returns whether detector is upstream or downstream
 		virtual float GetEnergy() = 0;
 		///Abstract defintion of a function to get the position of an event on the detector.
 		virtual TVector3 GetEventPosition() = 0;

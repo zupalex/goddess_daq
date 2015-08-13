@@ -25,6 +25,7 @@ class GoddessData {
 		void InitSuperX3Hists();
 		void InitQQQ5Hists();
 		void InitBB10Hists();
+		void InitGammaHists();
 
 		void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 	
@@ -75,6 +76,11 @@ class GoddessData {
 	std::map<std::string,TH1F*> icE2;
 	std::map<std::string,TH1F*> icE;
 	std::map<std::string,TH1F**> scint;
+
+	// gammas
+	TH1F* upstreamGam;
+	TH1F* downstreamGam;
+
 	
 
 	TTree* tree;

@@ -63,6 +63,9 @@ GoddessData::GoddessData(std::string configFilename)
 	dirOrruba->cd();
 	InitBB10Hists();
 
+	dirOrruba->cd();
+	InitGammaHists();
+
 	gDirectory->cd("/hists");
 }
 void GoddessData::InitBB10Hists() {
@@ -172,6 +175,15 @@ void GoddessData::InitSuperX3Hists() {
 
 
 	}
+
+}
+void GoddessData::InitGammaHists() {
+		TDirectory *dirDet = gDirectory->mkdir("gamma");
+		dirDet->cd();
+		gDirectory->mkdir("gamma")->cd();
+
+		upstreamGam= new TH1F("upstreamGam","gammas gated on upstream particles", 4096, 0, 4096);
+		downstreamGam= new TH1F("downstreamGam","gammas gated on downstream particles", 4096, 0, 4096);
 }
 
 void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
@@ -208,7 +220,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 	}
 
-	dgsEvts->size();
 	// getting data from digital events	
 	for (size_t i=0;i<dgodEvts->size();i++) {
 		DFMAEVENT dgodEvt = dgodEvts->at(i);
@@ -327,6 +338,16 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				}
 			}
 		}
+
+	for (size_t i=0;i<dgsEvts->size();i++) {
+		if (det->GetUpStream()) {
+			upstreamGam->Fill(dgsEvts->at(i).ehi);
+		} else {
+			downstreamGam->Fill(dgsEvts->at(i).ehi);
+		}
+	}
+
+		
 	}
 
 	//Build a total ORRUBA event
