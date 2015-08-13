@@ -46,6 +46,10 @@ class QQQ5 : public orrubaDet {
 		///Construct array of bin edges.
 		void ConstructBins();
 
+	protected:
+		///Determines the position ID string.
+		void SetPosID();
+
 	public:
 		///Default constructor.
 		QQQ5();

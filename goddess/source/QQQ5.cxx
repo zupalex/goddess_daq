@@ -109,6 +109,20 @@ void QQQ5::Clear() {
 	eventPos.SetXYZ(0,0,0);
 }
 
+void QQQ5::SetPosID() {
+	if (upStream) posID.append("U");
+	else posID.append("D");
+
+	static const char *sectorCode[4] = {"A","B","C","D"};	
+	posID.append(sectorCode[sector]);
+
+	posID.append("_");
+
+	if (depth == 0) posID.append("dE");
+	else if (depth == 1) posID.append("E1");
+	else if (depth == 2) posID.append("E2");
+}
+
 
 /**This method is called when a contact energy is updated. We call the parent 
  * siDet::SetRawValue to handle storing the raw and calibrated value. If the update

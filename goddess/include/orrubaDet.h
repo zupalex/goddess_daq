@@ -32,7 +32,7 @@ class orrubaDet : public siDet {
 		SolidVector detPos; //!
 
 		///Determines the position ID string.
-		void SetPosID();
+		virtual void SetPosID();
 	
 	public:
 		///Default constructor.
