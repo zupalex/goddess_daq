@@ -47,7 +47,7 @@ fi
 	fi
 #fi
 
-if [ ${warn} != 1]; then
+if [ ${warn} != 1 ]; then
 	printf "${GREEN}Completed${RESET}. Have a nice day.\n"
 else
 	printf "${YELLOW}Completed${RESET}. Possible errors occured.\n"
