@@ -150,7 +150,7 @@ int bin_agod (GEB_EVENT * GEB_event)
 		if (DGSEvent[j].tpe == GE) {
 		  dTg_agod = double(DGSEvent[j].event_timestamp) - double(AGODEvent[i].timestamp);
 		  for (size_t k=0;k<AGODEvent[i].values.size();k++) {
-			  if ((AGODEvent[i].channels[k]==10)&&(dTg_agod>430)&(dTg_agod<455)) {
+			  if ((AGODEvent[i].channels[k]==10)&&(dTg_agod>407)&(dTg_agod<420)) {
 				  h2_g_agod->Fill(DGSEvent[j].ehi,AGODEvent[i].values[k]);
 			  }
 		  }
