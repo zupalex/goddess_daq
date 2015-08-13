@@ -4,6 +4,8 @@
 #include "GoddessConfig.h"
 #include "ORRUBA.h"
 #include "orrubaDet.h"
+#include "IonChamber.h"
+#include "LiquidScint.h"
 
 
 #include "TH1F.h"
@@ -25,15 +27,14 @@ class GoddessData {
 		void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 	
 	private:
+		struct GammaData {
+			float energy;
+			unsigned long long timestamp;
+		};
 
-	struct GammaData {
-		float energy;
-		unsigned long long timestamp;
-	};
+		GoddessConfig *config;
 
-	GoddessConfig *config;
-
-	ORRUBA *orruba;
+		ORRUBA *orruba;
 
 		void InitSuperX3Hists();
 		void InitQQQ5Hists();
@@ -41,65 +42,69 @@ class GoddessData {
 		void InitGammaHists();
 
 		void FillTrees(std::vector<DGSEVENT> *dgsEvts);
+		void FillHists(std::vector<DGSEVENT> *dgsEvts);
 
-	TH2F* enRawA;
-	TH2F* enRawD;
-	TH2F* enCalA;
-	TH2F* enCalD;
-	
-	// QQQ5s
-	std::map<std::string,TH2F*> QQQenRawFront;
-	std::map<std::string,TH2F*> QQQenCalFront;
-	std::map<std::string,TH2F*> QQQenRawBack;
-	std::map<std::string,TH2F*> QQQenCalBack;
-	
-	std::map<std::string,TH2F*> QQQHitPat;
-	std::map<std::string,TH1F*> QQQFrontMult;
-	std::map<std::string,TH1F*> QQQBackMult;
+		std::map<std::string,Detector*> firedDets;
+		std::map<std::string,orrubaDet*> siDets;
+		IonChamber *ionChamber;
+		std::map<std::string,LiquidScint*> liquidScints;
 
-	// superX3s
-	std::map<std::string,TH2F*> sX3stripEnCal;
-	std::map<std::string,TH2F*> sX3stripEnRaw;
-	std::map<std::string,TH2F*> sX3backEnCal;
-	std::map<std::string,TH2F*> sX3backEnRaw;
-	std::map<std::string,TH2F*> sX3near_far;
-	std::map<std::string,TH2F*> sX3enCal_posRaw;
-	std::map<std::string,TH2F*> sX3enCal_posCal;
-	std::map<std::string,TH2F*> sX3HitPat;
-	std::map<std::string,TH1F*> sX3frontMult;
-	std::map<std::string,TH1F*> sX3backMult;
-	std::map<std::string,TH2F**> sX3nearFar;
-	std::map<std::string,TH2F**> sX3posRaw_enRaw;
-	std::map<std::string,TH2F**> sX3posRaw_enCal;
-	std::map<std::string,TH2F**> sX3posCal_enCal;
+		TH2F* enRawA;
+		TH2F* enRawD;
+		TH2F* enCalA;
+		TH2F* enCalD;
 
-	// IC
-	std::map<std::string,TH1F*> icE1;
-	std::map<std::string,TH1F*> icE2;
-	std::map<std::string,TH1F*> icE;
-	std::map<std::string,TH1F**> scint;
+		// QQQ5s
+		std::map<std::string,TH2F*> QQQenRawFront;
+		std::map<std::string,TH2F*> QQQenCalFront;
+		std::map<std::string,TH2F*> QQQenRawBack;
+		std::map<std::string,TH2F*> QQQenCalBack;
 
-	// gammas
-	TH1F* upstreamGam;
-	TH1F* downstreamGam;
+		std::map<std::string,TH2F*> QQQHitPat;
+		std::map<std::string,TH1F*> QQQFrontMult;
+		std::map<std::string,TH1F*> QQQBackMult;
 
-	
+		// superX3s
+		std::map<std::string,TH2F*> sX3stripEnCal;
+		std::map<std::string,TH2F*> sX3stripEnRaw;
+		std::map<std::string,TH2F*> sX3backEnCal;
+		std::map<std::string,TH2F*> sX3backEnRaw;
+		std::map<std::string,TH2F*> sX3near_far;
+		std::map<std::string,TH2F*> sX3enCal_posRaw;
+		std::map<std::string,TH2F*> sX3enCal_posCal;
+		std::map<std::string,TH2F*> sX3HitPat;
+		std::map<std::string,TH1F*> sX3frontMult;
+		std::map<std::string,TH1F*> sX3backMult;
+		std::map<std::string,TH2F**> sX3nearFar;
+		std::map<std::string,TH2F**> sX3posRaw_enRaw;
+		std::map<std::string,TH2F**> sX3posRaw_enCal;
+		std::map<std::string,TH2F**> sX3posCal_enCal;
 
-	TTree* tree;
-	std::vector<float> *gammaEnergies;
-	std::vector<float> *gammaTimeDiffs;
-	std::map<std::string,orrubaDet*> siDets;
-	std::map<std::string,Detector*> firedDets;
-	std::vector<float> *siStripEn;
-	std::vector<short> *siStripNum;
-	unsigned int siDetMult;
-	unsigned int sectorMult;
-	std::vector<float> *siDetEn;
-	std::vector<std::string> *siDetID;
-	std::vector<int> *siSector;
-	std::vector<bool> *siUpstream;
-	bool analog;
-	bool digital;
+		// IC
+		std::map<std::string,TH1F*> icE1;
+		std::map<std::string,TH1F*> icE2;
+		std::map<std::string,TH1F*> icE;
+		std::map<std::string,TH1F**> scint;
+
+		// gammas
+		TH1F* upstreamGam;
+		TH1F* downstreamGam;
+
+
+
+		TTree* tree;
+		std::vector<float> *gammaEnergies;
+		std::vector<float> *gammaTimeDiffs;
+		std::vector<float> *siStripEn;
+		std::vector<short> *siStripNum;
+		unsigned int siDetMult;
+		unsigned int sectorMult;
+		std::vector<float> *siDetEn;
+		std::vector<std::string> *siDetID;
+		std::vector<int> *siSector;
+		std::vector<bool> *siUpstream;
+		bool analog;
+		bool digital;
 
 };
 

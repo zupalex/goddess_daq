@@ -221,14 +221,22 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 			std::string posID;
 			orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
+			IonChamber *ionChamber_ = dynamic_cast<IonChamber*>(det);
+			LiquidScint *liquidScint_ = dynamic_cast<LiquidScint*>(det);
 			if (siDet) {
 				analog = true;
 				posID = siDet->GetPosID();
 				siDets[posID] = siDet;
 			}
-			//This is not the way to handle this, but it is late.
-			else posID = "ion";
-			firedDets[posID] = det;
+			else if (liquidScint_) {
+				posID = liquidScint_->GetDescription();
+				liquidScints[posID] = liquidScint_;
+			}
+			else if (ionChamber) {
+				posID = "ion";
+				ionChamber = ionChamber_;
+			}
+
 		}
 
 
@@ -261,16 +269,38 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 		std::string posID;
 		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
+		IonChamber *ionChamber_ = dynamic_cast<IonChamber*>(det);
+		LiquidScint *liquidScint_ = dynamic_cast<LiquidScint*>(det);
 		if (siDet) {
 			digital = true;
 			posID = siDet->GetPosID();
 			siDets[posID] = siDet;
 		}
-		//This is not the way to handle this, but it is late.
-		else posID = "ion";
+		else if (liquidScint_) {
+			posID = liquidScint_->GetDescription();
+			liquidScints[posID] = liquidScint_;
+		}
+		else if (ionChamber) {
+			posID = "ion";
+			ionChamber = ionChamber_;
+		}
+
 		firedDets[posID] = det;
 	}
 
+	FillHists(dgsEvts);
+	FillTrees(dgsEvts);
+
+	//We clear everything here since we know what was actually fired.
+	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
+		itr->second->Clear();
+	}
+	firedDets.clear();
+	siDets.clear();
+
+}
+
+void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	// loop over fired detectors
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
 		orrubaDet* det = detItr->second;
@@ -362,15 +392,6 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		
 	}
 
-	FillTrees(dgsEvts);
-
-
-	//We clear everything here since we know what was actually fired.
-	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
-		itr->second->Clear();
-	}
-	firedDets.clear();
-	siDets.clear();
 }
 
 void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {

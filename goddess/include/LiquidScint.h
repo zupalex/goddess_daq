@@ -19,7 +19,7 @@ class LiquidScint : public Detector {
 		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, int rawValue);
 
 		void SetDescription(std::string desc) {description = desc;}; 
-		std::string GetDescription(std::string desc) {return description;}; 
+		std::string GetDescription() {return description;}; 
 
 		void Clear();
 
