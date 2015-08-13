@@ -11,9 +11,9 @@ QQQ5::QQQ5() {
 /**We assuming the position provided for the detector is at the radial center of the
  * detector and the clockwise is aligned at the rotation angle. 
  */
-QQQ5::QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
-	bool upStream, SolidVector position) :
-	orrubaDet(serialNum, sector, depth, upStream, position)
+QQQ5::QQQ5(std::string serial_Num, unsigned short sector_, unsigned short depth_,
+	bool up_Stream, SolidVector position) :
+	orrubaDet(serial_Num, sector_, depth_, up_Stream, position)
 {
 	siDet::SetNumContacts(32,4);
 	ConstructBins();
