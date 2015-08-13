@@ -16,7 +16,7 @@
 #include "GTMerge.h"
 
 int
-main (int argc, char **argv)
+main ()
 {
 
   /* declarations */
