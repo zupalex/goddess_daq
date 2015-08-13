@@ -12,6 +12,9 @@ class Detector : public TObject {
 		///Default destructor.
 		virtual ~Detector();
 
+		static const bool Primary = false;
+		static const bool Secondary = true;
+
 		///Return the number of channels of the type specified.
 		virtual int GetNumChannels(bool secondaryType) = 0;
 
