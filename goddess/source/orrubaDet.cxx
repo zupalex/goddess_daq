@@ -3,9 +3,9 @@
 orrubaDet::orrubaDet() {
 
 }
-orrubaDet::orrubaDet(std::string serialNum, unsigned short sector, 
-	unsigned short depth, bool upStream, SolidVector position) :
-	serialNum(serialNum), sector(sector), depth(depth), upStream(upStream),
+orrubaDet::orrubaDet(std::string serial_Num, unsigned short sector_, 
+	unsigned short depth_, bool up_Stream, SolidVector position) :
+	serialNum(serial_Num), sector(sector_), depth(depth_), upStream(up_Stream),
 	detPos(position)
 {
 	SetPosID();
