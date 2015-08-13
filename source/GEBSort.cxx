@@ -188,13 +188,13 @@ mkTH1I (char *str1, char *str2, int nn, double lo, double hi)
 /*----------------------------------------------------*/
 
 TH2F *
-mkTH2F (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double lo2, double hi2)
+mkTH2F (char *str1, char *str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2)
 {
   TH2F *tmppt;
 
   if (!Pars.UpdateRootFile)
     {
-      tmppt = new TH2F (str1, str2, nn1, lo1, hi1, nn2, lo2, hi2);
+      tmppt = new TH2F (str1, str2, n1, lo1, hi1, n2, lo2, hi2);
       printf ("Created Object \"%s\", %p\n", str1, (void*)tmppt);
     }
   else
@@ -208,13 +208,13 @@ mkTH2F (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double
 }
 
 TH2I *
-mkTH2I (char *str1, char *str2, int nn1, double lo1, double hi1, int nn2, double lo2, double hi2)
+mkTH2I (char *str1, char *str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2)
 {
   TH2I *tmppt;
 
   if (!Pars.UpdateRootFile)
     {
-      tmppt = new TH2I (str1, str2, nn1, lo1, hi1, nn2, lo2, hi2);
+      tmppt = new TH2I (str1, str2, n1, lo1, hi1, n2, lo2, hi2);
       printf ("Created Object \"%s\", %p\n", str1, (void*)tmppt);
     }
   else
@@ -293,7 +293,7 @@ findPolarFromCartesian (float xx, float yy, float zz, float *rr)
 /*-----------------------------------------------------------*/
 
 float
-findAzimuthFromCartesian (float xx, float yy, float zz)
+findAzimuthFromCartesian (float xx, float yy)
 {
 
   float d1;

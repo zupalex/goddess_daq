@@ -258,7 +258,7 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
   /* prototypes */
 
-  float findAzimuthFromCartesian (float, float, float);
+  float findAzimuthFromCartesian (float, float);
   float findPolarFromCartesian (float, float, float, float *);
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
@@ -460,7 +460,7 @@ bin_mode2 (GEB_EVENT * GEB_event)
                 }
 
               polAng = findPolarFromCartesian (ptinp->intpts[j].x, ptinp->intpts[j].y, ptinp->intpts[j].z, &rr);
-              aziAng = findAzimuthFromCartesian (ptinp->intpts[j].x, ptinp->intpts[j].y, ptinp->intpts[j].z);
+              aziAng = findAzimuthFromCartesian (ptinp->intpts[j].x, ptinp->intpts[j].y);
 
               ndethits[detno]++;
               pol[detno] += polAng;

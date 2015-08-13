@@ -308,7 +308,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
   /* prototypes */
 
   int GebTypeStr (int type, char str[]);
-  float findAzimuthFromCartesian (float, float, float);
+  float findAzimuthFromCartesian (float, float);
   float findPolarFromCartesian (float, float, float, float *);
 
 
@@ -499,7 +499,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
             if (grh->gr[j].tracked)
               {
                 polAng = findPolarFromCartesian (grh->gr[j].x0, grh->gr[j].y0, grh->gr[j].z0, &rr);
-                aziAng = findAzimuthFromCartesian (grh->gr[j].x0, grh->gr[j].y0, grh->gr[j].z0);
+                aziAng = findAzimuthFromCartesian (grh->gr[j].x0, grh->gr[j].y0);
 
 
                 /* SMAP coordinates */
