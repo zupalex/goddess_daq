@@ -24,14 +24,14 @@ fi
 echo "Copying data files to ${DIR}"
 
 printf "${BLUE}Copying DGS files${RESET}\n"
-rsync -aP --chmod=a-w dgs1:/media/20140317_1604/user/gsfma330/run_$RUN.dgs* $DIR
+rsync -ahP --chmod=a-w dgs1:/media/20140317_1604/user/gsfma330/run_$RUN.dgs* $DIR
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DGS run files found!\n"
 	warn=1
 fi
 
 printf "${BLUE}Copying DFMA files${RESET}\n"
-rsync -aP --chmod=a-w nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR
+rsync -ahP --chmod=a-w nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DFMA run files found!\n"
 	warn=1
@@ -43,11 +43,11 @@ fi
 		printf "${YELLOW}WARNING:${RESET} ORNL ldf file not found on memory stick!\n"
 		warn=1
 	else 
-		rsync -aP --chmod=a-w /media/4844678136/run$RUN.ldf $DIR
+		rsync -ahP --chmod=a-w /media/4844678136/run$RUN.ldf $DIR
 	fi
 #fi
 
-if [ ${warn} != 1]; then
+if [ ${warn} != 1 ]; then
 	printf "${GREEN}Completed${RESET}. Have a nice day.\n"
 else
 	printf "${YELLOW}Completed${RESET}. Possible errors occured.\n"

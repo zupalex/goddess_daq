@@ -160,11 +160,11 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			upStream ? std::cout << "U" : std::cout << "D";
 			std::cout << ", Sector: " << sector << ", Depth: " << depth << "\n";
 
-			SolidVector pos = GetPosVector(detType, sector, depth, upStream);
+			SolidVector pos_ = GetPosVector(detType, sector, depth, upStream);
 
-			std::cout << " Position: " << pos.x() << ", " << pos.y() << ", " << pos.z();
-			std::cout << ", RotZ: " << pos.RotZ() * TMath::RadToDeg();
-			std::cout << ", RotPhi: " << pos.RotPhi() * TMath::RadToDeg() << "\n";
+			std::cout << " Position: " << pos_.x() << ", " << pos_.y() << ", " << pos_.z();
+			std::cout << ", RotZ: " << pos_.RotZ() * TMath::RadToDeg();
+			std::cout << ", RotPhi: " << pos_.RotPhi() * TMath::RadToDeg() << "\n";
 
 			//Construct object for the specified type.
 			if (detType == "superX3") {	
@@ -181,7 +181,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				std::cerr << " Valid options: ion, superX3, BB10, QQQ5.\n";
 				break;
 			}
-			det->SetDetector(serialNum,sector,depth,upStream, pos);
+			det->SetDetector(serialNum,sector,depth,upStream, pos_);
 			if (IsInsertable(pTypeDaqType, pTypeDaqCh,detType,false)) {
 				chMap[std::make_pair(pTypeDaqType,pTypeDaqCh)] = std::make_pair(det,false);
 			} 
@@ -201,9 +201,9 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		while (std::getline(mapFile, line).good()) {
 			lineCnt++;
 			//Remove comments
-			size_t pos = line.find('#');
-			if (pos != std::string::npos) 
-				line.erase(pos);
+			size_t posT = line.find('#');
+			if (posT != std::string::npos) 
+				line.erase(posT);
 			//Remove leading whitespace.
 			size_t wordStart = line.find_first_not_of(" \t");
 			if (wordStart == std::string::npos) {
