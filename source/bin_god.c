@@ -22,6 +22,7 @@ void sup_god() {
 void bin_god (GEB_EVENT *){
 	std::vector<AGODEVENT> AGODEvts;
 	std::vector<DFMAEVENT> DFMAEvts;
+	std::vector<DGSEVENT> DGSEvts;
 
 	for (unsigned int i=0;i<numAGOD;i++) 
 		AGODEvts.push_back(AGODEvent[i]);
@@ -29,5 +30,8 @@ void bin_god (GEB_EVENT *){
 	for (unsigned int i=0;i<numDGOD;i++) 
 		DFMAEvts.push_back(DFMAEvent[i]);
 
-	godData->Fill(NULL,&DFMAEvts,&AGODEvts);
+	for (int i=0;i<ng;i++) 
+		DGSEvts.push_back(DGSEvent[i]);
+
+	godData->Fill(&DGSEvts,&DFMAEvts,&AGODEvts);
 }
