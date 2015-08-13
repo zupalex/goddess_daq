@@ -5,7 +5,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
-warn=false
+warn=0
 
 if [ $# -ne 2 ] 
   then
@@ -27,27 +27,27 @@ printf "${BLUE}Copying DGS files${RESET}\n"
 rsync -aP --chmod=a-w dgs1:/media/20140317_1604/user/gsfma330/run_$RUN.dgs* $DIR
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DGS run files found!\n"
-	warn=true
+	warn=1
 fi
 
 printf "${BLUE}Copying DFMA files${RESET}\n"
 rsync -aP --chmod=a-w nat2:/media/20150529c/user/gsfma330/run_gsfma330_$RUN* $DIR
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DFMA run files found!\n"
-	warn=true
+	warn=1
 fi
 
 #if [ ! -e $DIR/run$RUN.ldf ] || [ -e /media/4844678136/run$RUN.ldf ]; then 
 	printf "${BLUE}Copying LDF files${RESET}\n"
 	if [ ! -e /media/4844678136/run$RUN.ldf ]; then
 		printf "${YELLOW}WARNING:${RESET} ORNL ldf file not found on memory stick!\n"
-		warn=true
+		warn=1
 	else 
 		rsync -aP --chmod=a-w /media/4844678136/run$RUN.ldf $DIR
 	fi
 #fi
 
-if [ ! ${warn} ]; then
+if [ ${warn} != 1]; then
 	printf "${GREEN}Completed${RESET}. Have a nice day.\n"
 else
 	printf "${YELLOW}Completed${RESET}. Possible errors occured.\n"
