@@ -205,18 +205,18 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			if (posT != std::string::npos) 
 				line.erase(posT);
 			//Remove leading whitespace.
-			size_t wordStart = line.find_first_not_of(" \t");
-			if (wordStart == std::string::npos) {
+			size_t word_Start = line.find_first_not_of(" \t");
+			if (word_Start == std::string::npos) {
 				prevPos = mapFile.tellg();
 				continue;
 			}
-			line.erase(0,wordStart);
+			line.erase(0,word_Start);
 
-			std::istringstream lineStream(line);
+			std::istringstream line_Stream(line);
 			std::string calType, subType;
 			int detChannel;
 			//If we don't understand this line we rewind the stream and let the first parsing section have a chance.
-			if (!(lineStream >> calType >> subType >> detChannel)) {
+			if (!(line_Stream >> calType >> subType >> detChannel)) {
 				mapFile.seekg(prevPos);
 				lineCnt--;
 				break;
@@ -324,7 +324,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 }
 
 void GoddessConfig::ReadPosition(std::string filename) {
-
+  std::cout << "GoddessConfig::ReadPosition isn't implemeted yet. Filename was " << filename << "\n";
 }
 
 /**We check that at the insertion point the previous entry has sufficient 
@@ -505,8 +505,8 @@ bool GoddessConfig::ParseID(std::string id, short& sector, short& depth, bool& u
 SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short depth, bool upStream) {
 	static float barrelRadius = 3.750 * 25.4; //mm
 	static float halfBarrelLength = (4.375 - 0.7) * 25.4; //mm
-	SolidVector pos(0,0,0);
-
+	SolidVector pos(0.0,0.0,0.0);
+	
 	//Compute position for barrel detectors.
 	if (type == "superX3" || type == "BB10") {
 		//The barrel is divided into twelve sectors with the zero sector in the 
@@ -523,11 +523,11 @@ SolidVector GoddessConfig::GetPosVector(std::string type, short sector, short de
 		//The z position is oriented along the beam line and depends only on if the 
 		// detector is upstream or downstream of the target.
 		float z;
-		if (upStream) z = -halfBarrelLength / 2;
-		else z = halfBarrelLength / 2;
+		if (upStream) z = -halfBarrelLength / 2.0;
+		else z = halfBarrelLength / 2.0;
 		//Set the computed x,y,z positions.
 		float rotphi;
-		if (upStream) rotphi = 0;
+		if (upStream) rotphi = 0.0;
  		else rotphi = TMath::Pi();
 
 		pos.SetXYZ(barrelRadius * cos(azimuthal), barrelRadius * sin(azimuthal), z);
