@@ -893,7 +893,7 @@ fclose(fmap1);
 
 
 int
-DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent)
+DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * theDFMAEvent)
 {
 
  /* firmware circa Sept 2014 */
@@ -969,18 +969,18 @@ DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent)
 
   /* extract IDs */
 
-  DFMAEvent->chan_id = (*(ev + 0) & 0x0000000f);
-  DFMAEvent->board_id = ((*(ev + 0) >> 4) & 0xfff);
-  DFMAEvent->id = DFMAEvent->board_id * 10 + DFMAEvent->chan_id;
+  theDFMAEvent->chan_id = (*(ev + 0) & 0x0000000f);
+  theDFMAEvent->board_id = ((*(ev + 0) >> 4) & 0xfff);
+  theDFMAEvent->id = theDFMAEvent->board_id * 10 + theDFMAEvent->chan_id;
 
   /* store the type and type ID */
 
-  DFMAEvent->tpe = tlkup[DFMAEvent->id];
-  DFMAEvent->tid = tid[DFMAEvent->id];
+  theDFMAEvent->tpe = tlkup[theDFMAEvent->id];
+  theDFMAEvent->tid = tid[theDFMAEvent->id];
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
     {
-      printf ("chan_id = %i, board_id=%i, id=%i\n", DFMAEvent->chan_id, DFMAEvent->board_id, DFMAEvent->id);
+      printf ("chan_id = %i, board_id=%i, id=%i\n", theDFMAEvent->chan_id, theDFMAEvent->board_id, theDFMAEvent->id);
     }
 
   /* extract the energy */
@@ -1033,30 +1033,30 @@ DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent)
   /* so making ints of them is not a problem */
 
   rawE = (int) POST_RISE_SUM - (int) PRE_RISE_SUM;
-  DFMAEvent->ehi = rawE/10;
-  if (DFMAEvent->ehi<0)  DFMAEvent->ehi=-DFMAEvent->ehi;
+  theDFMAEvent->ehi = rawE/10;
+  if (theDFMAEvent->ehi<0)  theDFMAEvent->ehi=-theDFMAEvent->ehi;
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
-    printf ("rawE = 0x%8.8x %i, DFMAEvent->ehi= %i\n", rawE, rawE, DFMAEvent->ehi);
+    printf ("rawE = 0x%8.8x %i, theDFMAEvent->ehi= %i\n", rawE, rawE, theDFMAEvent->ehi);
 
   /* extract the LED time stamp */
 
-  DFMAEvent->LEDts = 0;
-  DFMAEvent->LEDts = (unsigned long long int) *(ev + 1);
+  theDFMAEvent->LEDts = 0;
+  theDFMAEvent->LEDts = (unsigned long long int) *(ev + 1);
   ulli1 = (unsigned long long int) (*(ev + 2) & 0x0000ffff);
   ulli1 = (ulli1 << 32);
-  DFMAEvent->LEDts += ulli1;
+  theDFMAEvent->LEDts += ulli1;
 
   /* extract trace */
 
   
-  DFMAEvent->traceLen=0;
+  theDFMAEvent->traceLen=0;
   for (i=0; i<len-HDRLENINTS; i++) {
 
-   DFMAEvent->trace[DFMAEvent->traceLen] = (unsigned long long int) (*(ev + 13 + i) & 0x00003fff);
-   DFMAEvent->traceLen++;
-   DFMAEvent->trace[DFMAEvent->traceLen] = (unsigned long long int) (*(ev + 13 + i) >> 16 & 0x00003fff);
-   DFMAEvent->traceLen++;
+   theDFMAEvent->trace[theDFMAEvent->traceLen] = (unsigned long long int) (*(ev + 13 + i) & 0x00003fff);
+   theDFMAEvent->traceLen++;
+   theDFMAEvent->trace[theDFMAEvent->traceLen] = (unsigned long long int) (*(ev + 13 + i) >> 16 & 0x00003fff);
+   theDFMAEvent->traceLen++;
 
   }
 
@@ -1114,15 +1114,15 @@ DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * DFMAEvent)
 
   prerisesum = PRE_RISE_SUM/400;
   
-  DFMAEvent->baseline = baseline;
-  DFMAEvent->postrisebeg = postrisebeg;
-  DFMAEvent->prerisebeg = prerisebeg;
-  DFMAEvent->postriseend = postriseend;
-  DFMAEvent->preriseend = preriseend;
-  DFMAEvent->peaksample = peaksample;
-  DFMAEvent->basesample = basesample;
-  DFMAEvent->prevTS = prevTS;
-  DFMAEvent->prerisesum = prerisesum;
+  theDFMAEvent->baseline = baseline;
+  theDFMAEvent->postrisebeg = postrisebeg;
+  theDFMAEvent->prerisebeg = prerisebeg;
+  theDFMAEvent->postriseend = postriseend;
+  theDFMAEvent->preriseend = preriseend;
+  theDFMAEvent->peaksample = peaksample;
+  theDFMAEvent->basesample = basesample;
+  theDFMAEvent->prevTS = prevTS;
+  theDFMAEvent->prerisesum = prerisesum;
 
 
   /* done */
@@ -1563,11 +1563,11 @@ for (i=0;i<nsubev;i++) {
 double dTgdssd;
 dTgdssd = 0.0;
 
-int firstge = 1000;
+int geone = 1000;
 
 for(i=0;i<ng;i++){
 
-   if(DGSEvent[i].tpe == GE && firstge == 1000) firstge = i;
+   if(DGSEvent[i].tpe == GE && geone == 1000) geone = i;
 
 }
 
@@ -1600,7 +1600,7 @@ dTgdssd = 0.0;
 for(i=0;i<nsubev;i++){
    if((DFMAEvent[i].LEDts > 0) && (DFMAEvent[i].tpe == DSSD) && (ng > 0)){
 
-        dTgdssd = double(DGSEvent[firstge].event_timestamp) - double(DFMAEvent[i].LEDts);
+        dTgdssd = double(DGSEvent[geone].event_timestamp) - double(DFMAEvent[i].LEDts);
         h2_dTgdssd->Fill(dTgdssd,DFMAEvent[i].tid);
  
 
@@ -1613,7 +1613,7 @@ for(i=0;i<nsubev;i++){
            //printf("\n\nDebugging!");
            //printf("\nEvent number %i",Pars.CurEvNo);
            //printf("\n DFMAEvent[%i].LEDts: %llu",i,DFMAEvent[i].LEDts);
-           //printf("\n DGSEvent[%i].LEDts: %llu",firstge,DGSEvent[firstge].event_timestamp);
+           //printf("\n DGSEvent[%i].LEDts: %llu",geone,DGSEvent[geone].event_timestamp);
 
         } 
 
