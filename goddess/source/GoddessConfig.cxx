@@ -270,7 +270,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			//Get the calibration parameters
 			float param;
 			std::vector< float > calParams;
-			while (lineStream >> param) calParams.push_back(param);
+			while (line_Stream >> param) calParams.push_back(param);
 
 			//Print a line about the calibration function.
 			if (posCal) std::cout << " Pos. ";
