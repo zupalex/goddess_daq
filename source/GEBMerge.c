@@ -257,7 +257,7 @@ GTGetDiskEv (int FileNo, int storeNo)
 /* -------------------------------------------------------------------------- */
 
 int
-reportStats (struct tms *timesThen, int nfiles, float dtb)
+reportStats (struct tms *timesThen, float dtb)
 {
 
   /* declarations */
@@ -935,7 +935,7 @@ main (int argc, char **argv)
   printf ("First TS=%lli, from file %i\n", nextTS, nextTSpoolIndex);
 
 
-  reportStats (&timesThen, nfiles, 0.0);
+  reportStats (&timesThen, 0.0);
   fflush (stdout);
 //if(1)exit(0);
 
@@ -1362,7 +1362,7 @@ main (int argc, char **argv)
           d1 = (double) ulli2 - (double) ulli1;
           d1 /= 100;            /* us */
           d1 /= 1000;           /* ms */
-          reportStats (&timesThen, nfiles, (float) d1);
+          reportStats (&timesThen, (float) d1);
         };
     };
 
@@ -1387,7 +1387,7 @@ done:
   //wr_spe ("dtbtev.spe", &i, dtbtev); DS change 7/31/2015
   printf ("wrote \"dtbtev.spe\"\n");
   printf ("\n");
-  reportStats (&timesThen, nfiles, 0.0);
+  reportStats (&timesThen, 0.0);
 
   printf ("\n");
   r1 = (size + 1) * sizeof (EVENT) / 1024 / 1024.0 / 1024.0;

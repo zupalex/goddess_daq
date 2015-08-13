@@ -170,9 +170,6 @@ void hribfBuffer::PrintBufferHeader()
 	printf("\t%#010llX Number of Words: %llu\n",GetNumOfWords(),GetNumOfWords());
 	printf("\t%10c Buffer number: %llu\n",' ',fBufferNumber);
 }
-void hribfBuffer::ReadRunEnd(bool verbose) 
-{
-}
 
 void hribfBuffer::ReadRunBegin(bool verbose)
 {
@@ -184,7 +181,7 @@ void hribfBuffer::ReadRunBegin(bool verbose)
 
 	std::string facility = ReadString(2,verbose);
 	if (verbose) printf("\t Facility: %s",facility.data());
-	std::string fFormat = ReadString(2,verbose);
+	fFormat = ReadString(2,verbose);
 	if (verbose) printf("\t Format: %s",fFormat.data());
 	std::string type = ReadString(4,verbose);
 	if (verbose) printf("\t Type: %s",type.data());

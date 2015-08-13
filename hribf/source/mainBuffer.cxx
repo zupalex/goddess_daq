@@ -239,7 +239,7 @@ void mainBuffer::Seek(int numOfWords)
 }
 void mainBuffer::SeekBytes(int numOfBytes)
 {
-	if (fCurrentByte + numOfBytes < 0) 
+	if ((int)fCurrentByte + numOfBytes < 0) 
 		fCurrentByte = 0;
 	else
 		fCurrentByte += numOfBytes;
