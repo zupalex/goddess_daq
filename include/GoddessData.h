@@ -90,6 +90,8 @@ class GoddessData {
 	std::vector<float> *gammaTimeDiffs;
 	std::map<std::string,orrubaDet*> siDets;
 	std::map<std::string,Detector*> firedDets;
+	std::vector<float> *siStripEn;
+	std::vector<short> *siStripNum;
 	unsigned int siDetMult;
 	unsigned int sectorMult;
 	std::vector<float> *siDetEn;

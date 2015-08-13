@@ -26,6 +26,8 @@ GoddessData::GoddessData(std::string configFilename)
 	siDetID = new std::vector<std::string>;
 	siSector = new std::vector<int>;
 	siUpstream = new std::vector<bool>;
+	siStripEn = new std::vector<float>;
+	siStripNum = new std::vector<short>;
 
 	gDirectory->pwd();
 	TFile *f = gDirectory->GetFile();
@@ -46,6 +48,8 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("siDetID",&siDetID);
 	tree->Branch("siUpstream",&siUpstream);
 	tree->Branch("siSector",&siSector);
+	tree->Branch("siStripEn",&siStripEn);
+	tree->Branch("siStripNum",&siStripNum);
 
 	// ORRUBA histograms
 	f->cd("/hists");
@@ -410,6 +414,17 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 		std::string detType = det->IsA()->GetName();
 		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
 
+		siDet::ValueMap frontRawEn = det->GetRawEn(siDet::pType);
+		siDet::ValueMap backRawEn = det->GetRawEn(siDet::nType);
+		for (auto itrStrip=frontRawEn.begin();itrStrip!=frontRawEn.end();++itrStrip) {
+			siStripEn->push_back(itrStrip->second);
+			siStripNum->push_back(itrStrip->first);
+		}
+		for (auto itrStrip=backRawEn.begin();itrStrip!=backRawEn.end();++itrStrip) {
+			siStripEn->push_back(itrStrip->second);
+			siStripNum->push_back(itrStrip->first + det->GetNumChannels(siDet::pType));
+		}
+
 
 		if (sector.empty()) {
 			sector = detPosSector;
@@ -448,6 +463,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 	siDetID->clear();
 	siDetEn->clear();
 	siSector->clear();
+	siStripNum->clear();
+	siStripEn->clear();
 	siUpstream->clear();
 	analog = false;
 	digital = false;
