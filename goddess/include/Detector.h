@@ -5,15 +5,16 @@
 
 ///Abstract class defining a detector.
 class Detector : public TObject {
+	public:
+		static const bool Primary = false;
+		static const bool Secondary = true;
+
 	private:
 	public:
 		///Default constructor.
 		Detector();
 		///Default destructor.
 		virtual ~Detector();
-
-		static const bool Primary = false;
-		static const bool Secondary = true;
 
 		///Return the number of channels of the type specified.
 		virtual int GetNumChannels(bool secondaryType) = 0;

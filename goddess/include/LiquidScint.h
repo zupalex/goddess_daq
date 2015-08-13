@@ -5,16 +5,21 @@
 
 class LiquidScint : public Detector {
 	private:
+		std::string description;
 	public:
 		LiquidScint();
+		LiquidScint(std::string desc);
 		virtual ~LiquidScint();
 		static const unsigned short numChannels = 3;
 
 		///Return the number of channels of the type specified.
-		int GetChannels(bool secondary=false) {return numChannels;};
+		int GetNumChannels(bool secondary=false) {return numChannels;};
 
 		///Set the raw energy of the channel.
 		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, int rawValue);
+
+		void SetDescription(std::string desc) {description = desc;}; 
+		std::string GetDescription(std::string desc) {return description;}; 
 
 		void Clear();
 

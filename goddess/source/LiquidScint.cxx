@@ -4,6 +4,12 @@ LiquidScint::LiquidScint() {
 
 }
 
+LiquidScint::LiquidScint(std::string desc) {
+	SetDescription(desc);
+
+}
+
+
 LiquidScint::~LiquidScint() {
 
 }

@@ -133,6 +133,17 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			else 
 				std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
 		}
+		else if (detType == "liquidScint") {
+			int daqType, daqCh;
+			std::string desc;
+			if (!(lineStream >> desc >> daqType >> daqCh)) {
+				break;
+			}
+			liquidScints.push_back(new LiquidScint(desc));
+			if (IsInsertable(daqType,daqCh, detType, false)) {
+				chMap[std::make_pair(daqType,daqCh)] = std::make_pair(liquidScints.back(),false);
+			}
+		}
 		else {
 			int pTypeDaqType, nTypeDaqType;
 			int pTypeDaqCh, nTypeDaqCh = 0;
