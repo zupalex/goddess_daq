@@ -118,10 +118,10 @@ sup_dgs ()
   hTrB = make2D("TrBase",4096,0,4096,110,1,111);
   hFwB = make2D("FwBase",4096,0,4096,110,1,111);
   
-  for (i = 1; i < NGE+1; i++ ){
-    sprintf(str, "E_TrB%i", i) ;
+  //  for (int i = 1; i < NGE+1; i++ ){
+    //    sprintf(str, "E_TrB%i", i) ;
     //hE_TrB[i] = make2D(str,2500,0,5000,1024,0,8192);
-  }
+  //  }
 
 /* list what we have */
 
