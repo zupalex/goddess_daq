@@ -5,6 +5,10 @@
 
 ///Abstract class defining a detector.
 class Detector : public TObject {
+	public:
+		static const bool Primary = false;
+		static const bool Secondary = true;
+
 	private:
 	public:
 		///Default constructor.
