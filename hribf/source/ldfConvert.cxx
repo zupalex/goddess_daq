@@ -45,7 +45,10 @@ int main(int argc, char *argv[]) {
 				bool myriadFail = false;
 				for (int i=0;i<3;i++) {
 					if (values->find(myriadParam[i]) == values->end()) {
-						std::cerr << "ERROR: Timestamp not found in event! Parameters checked: 244-246.\n";
+						std::cerr << "ERROR: Timestamp not found in event! Parameters checked";
+						for (int param=0;param < 3;param++) 	
+							std::cerr << ", " << myriadParam[param];
+						std::cerr << ".\n";
 						std::cerr << "\tFor your reading pleasure an event dump:\n";
 						for (auto itr=values->begin(); itr != values->end(); ++itr) {
 							std::cerr << "\tValue[" << itr->first << "]=" << itr->second << "\n";
