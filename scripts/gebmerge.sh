@@ -44,7 +44,7 @@ fi
 
 #convert ldf to a format that can be merged.
 if [ -e "$DATA_DIR/run$RUN.ldf" ]; then
-	echo "${BLUE}Converting ldf to GEB format.${RESET}"
+	printf "${BLUE}Converting ldf to GEB format.${RESET}\n"
 	ORNL_FILES=.run$RUN.geb
 	./hribfConvert `ls $DATA_DIR/run$RUN.ldf` .run$RUN.geb
 else
