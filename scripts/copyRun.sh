@@ -39,7 +39,7 @@ fi
 
 #if [ ! -e $DIR/run$RUN.ldf ] || [ -e /media/4844678136/run$RUN.ldf ]; then 
 	printf "${BLUE}Copying LDF files${RESET}\n"
-	if [ ! -e /media/4844678136/run$RUN.ldf ]; then
+	if [ ! -e /media/4844678136/run$RUN.ldf ] && [ ! -e $DIR/run$RUN.ldf ]; then
 		printf "${YELLOW}WARNING:${RESET} ORNL ldf file not found on memory stick!\n"
 		warn=1
 	else 
