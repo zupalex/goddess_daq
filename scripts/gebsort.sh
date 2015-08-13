@@ -9,6 +9,11 @@ fi
 RUN=$2
 DIR=$1
 
+if [ ! -e $DIR/GEBMerged_run$RUN.gtd_000 ]; then
+	echo "ERROR: Merged file not found!"	
+	exit 1
+fi
+
 echo "GEBSort started sorting run $RUN at `date`"
 if [ ! -e log ]; then
 	mkdir log
