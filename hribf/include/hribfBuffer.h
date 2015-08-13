@@ -65,7 +65,7 @@ class hribfBuffer : public mainBuffer {
 		///Read the run start buffer.
 		void ReadRunBegin(bool verbose=false);
 		///Read the run end buffer.
-		void ReadRunEnd(bool verbose=false);
+		void ReadRunEnd(bool verbose=false){if (verbose){;}};
 		///Read a data event.
 		int ReadEvent(bool verbose=false);
 		///Reads current scaler event.

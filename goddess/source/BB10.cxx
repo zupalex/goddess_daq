@@ -9,9 +9,9 @@ BB10::BB10() {
 	siDet::SetNumContacts(8,0);
 	Clear();
 }
-BB10::BB10(std::string serialNum, unsigned short sector, unsigned short depth, 
-	bool upStream, SolidVector detPos) :
-	orrubaDet(serialNum, sector, depth, upStream, detPos)
+BB10::BB10(std::string serial_Num, unsigned short sector_, unsigned short depth_, 
+	bool up_Stream, SolidVector det_Pos) :
+	orrubaDet(serial_Num, sector_, depth_, up_Stream, det_Pos)
 {
 	siDet::SetNumContacts(8,0);
 	ConstructBins();

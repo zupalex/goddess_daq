@@ -13,8 +13,8 @@
  * \param[in] numEres The number of anodes summed to compute the residual energy.
  *
  */
-IonChamber::IonChamber(int numAnode, int numScint, int numDE, int numEres) :
-	numDE(numDE), numEres(numEres)
+IonChamber::IonChamber(int numAnode, int numScint, int nDE, int nEres) :
+	numDE(nDE), numEres(nEres)
 {
 	anodeRaw.resize(numAnode);
 	anodeCal.resize(numAnode);
@@ -95,7 +95,7 @@ void IonChamber::SetRawValue(unsigned int channel, bool scintType, int rawValue)
 }
 
 bool IonChamber::ValidAnode(size_t ch) {	
-	if (ch < 0 || ch >= anodeRaw.size()) {
+  if ((int)ch < 0 || ch >= anodeRaw.size()) {
 		std::cerr << "ERROR: Invalid anode channel: " << ch << "\n";
 		return false;
 	}
@@ -103,7 +103,7 @@ bool IonChamber::ValidAnode(size_t ch) {
 }
 
 bool IonChamber::ValidScint(size_t ch) {	
-	if (ch < 0 || ch >= scintRawE.size()) {
+  if ((int)ch < 0 || ch >= scintRawE.size()) {
 		std::cerr << "ERROR: Invalid scintillator channel: " << ch << "\n";
 		return false;
 	}

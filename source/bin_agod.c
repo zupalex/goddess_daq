@@ -34,9 +34,9 @@ extern unsigned int numAGOD;
 extern DGSEVENT DGSEvent[MAXCOINEV];
 extern int ng;
 
-void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
-	AGODEvent->channels.clear();
-	AGODEvent->values.clear();
+void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *theAGODEvent) {
+	theAGODEvent->channels.clear();
+	theAGODEvent->values.clear();
 
 	unsigned int readWords = 0;
 	unsigned long long timestamp = 0;
@@ -49,12 +49,12 @@ void AGODEvDecompose (unsigned int *ev, int len, AGODEVENT *AGODEvent){
 			timestamp |= (unsigned long long) value << (16 * (246-channel));
 		}
 		else {
-			AGODEvent->channels.push_back(channel);	
-			AGODEvent->values.push_back(value);	
+			theAGODEvent->channels.push_back(channel);	
+			theAGODEvent->values.push_back(value);	
 			readWords++;
 		}
 	}	
-	AGODEvent->timestamp = timestamp;	
+	theAGODEvent->timestamp = timestamp;	
 }
 
 TH1D *h1_agod_en;
@@ -136,7 +136,7 @@ int bin_agod (GEB_EVENT * GEB_event)
   dTg_agod = 0.0;
 
   for(unsigned int i=0;i<numAGOD;i++) {
-	//printf("AGOD: %d %d %d %d\n", i, numAGOD, ng, AGODEvent[i].values.size());
+	//printf("AGOD: %d %d %d %d\n", i, numAGOD, ng, theAGODEvent[i].values.size());
 	  if(ng > 0) {
 		  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 			  dTg_agod = double(DGSEvent[0].event_timestamp) - double(AGODEvent[i].timestamp);
