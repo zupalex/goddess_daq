@@ -17,5 +17,7 @@
 #pragma link C++ class ORRUBA+;
 
 #pragma link C++ class vector<Detector*>+;
+#pragma link C++ class vector<orrubaDet*>+;
+#pragma link C++ class vector<float>+;
 
 #endif

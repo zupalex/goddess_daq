@@ -2089,7 +2089,7 @@ GEBacq (char *ChatFileName)
 
 	Pars.f1->SetCompressionLevel(0);
 	Pars.histDir->Write(0,TObject::kOverwrite);
-	Pars.treeDir->Write(0,TObject::kWriteDelete);
+	//Pars.treeDir->Write(0,TObject::kWriteDelete);
 	Pars.f1->Flush();
 
   printf ("we have define the following ROOT spectra:\n");
@@ -2558,7 +2558,7 @@ GEBacq (char *ChatFileName)
 			  {
 					printf("Writing ROOT file\n");
 					Pars.histDir->Write(0,TObject::kOverwrite);
-					Pars.treeDir->Write(0,TObject::kWriteDelete);
+					//Pars.treeDir->Write(0,TObject::kWriteDelete);
 					Pars.f1->Flush();
 
 			  }

@@ -3,6 +3,8 @@
 
 #include "GoddessConfig.h"
 #include "ORRUBA.h"
+#include "orrubaDet.h"
+
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -14,7 +16,6 @@
 #include <array>
 #include <map>
 #include <utility>
-
 
 class GoddessData {
 	public:
@@ -28,11 +29,15 @@ class GoddessData {
 		void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 	
 	private:
+
+	struct GammaData {
+		float energy;
+		unsigned long long timestamp;
+	};
+
 	GoddessConfig *config;
 
 	ORRUBA *orruba;
-
-	std::vector<Detector*> *firedDets;
 
 	TH2F* enRawA;
 	TH2F* enRawD;
@@ -73,7 +78,15 @@ class GoddessData {
 	
 
 	TTree* tree;
-
+	std::vector<float> *gammaEnergies;
+	std::vector<float> *gammaAnalogTimeDiffs;
+	std::vector<float> *gammaDigitalTimeDiffs;
+	std::vector<orrubaDet*> *siDets;
+	std::vector<Detector*> *firedDets;
+	unsigned int siDetMult;
+	unsigned int sectorMult;
+	bool analog;
+	bool digital;
 
 };
 
