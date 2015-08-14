@@ -6,9 +6,11 @@
 class LiquidScint : public Detector {
 	private:
 		std::string description;
- protected:
- 
-		void SetDetID();
+		
+		float enRaw;
+		float psdRaw;
+		float tacRaw;
+		
 	public:
 		LiquidScint();
 		LiquidScint(std::string desc);
@@ -25,6 +27,10 @@ class LiquidScint : public Detector {
 		std::string GetDescription() {return description;}; 
 
 		void Clear();
+
+		float GetRawEnergy();
+		float GetRawPSD();
+		float GetRawTAC();
 
 
 	/// \cond This is just for ROOT and doesn't need to be documented
