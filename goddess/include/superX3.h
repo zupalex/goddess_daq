@@ -24,12 +24,14 @@ class superX3 : public orrubaDet {
 		Float_t binsP[5]; //!
 		///The bin edges along the n-type strips in mm.	
 		Float_t binsN[5]; //!
-		///The bin edges along the p-type strips in mm.	
+		///The bin Centers along the p-type strips in mm.	
 		Float_t binsPCenter[4]; //!
-		///The bin edges along the n-type strips in mm.	
+		///The bin Centers along the n-type strips in mm.	
 		Float_t binsNCenter[4]; //!
 		///The bin edges along the z-axis in mm.	
 		Float_t binsZ[5]; //!
+		///The bin Centers along the z-axis in mm.	
+		Float_t binsZCenter[4]; //!
 		///The bin edges along the phi axis in degrees.	
 		Float_t binsAzimuthal[5]; //!
 		///The bin edges along the phi axis in degrees.	
@@ -97,6 +99,8 @@ class superX3 : public orrubaDet {
 		float* GetNtypeCenterBins() {return binsNCenter;};
 		///Return the bins boundaries along the z (beam) direction in mm.
 		float* GetZbins() {return binsZ;};
+		///Returns the bin centers along the z (beam) direction in mm.
+		float* GetZCenterBins() {return binsNCenter;};
 		///Return the bins along the azimuthal direction in degrees.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
 		///Return the bins along the polar direction in degrees.

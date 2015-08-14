@@ -70,6 +70,7 @@ void superX3::ConstructBins () {
 	for (unsigned int strip=0;strip<4;strip++){
 		binsPCenter[strip] = (binsP[strip] + binsP[strip+1]) / 2;
 		binsNCenter[strip] = (binsN[strip] + binsN[strip+1]) / 2;
+		binsZCenter[strip] = (binsZ[strip] + binsZ[strip+1]) / 2;
 	}
 
 #ifdef VERBOSE
