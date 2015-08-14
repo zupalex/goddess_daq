@@ -6,9 +6,11 @@
 class LiquidScint : public Detector {
 	private:
 		std::string description;
- protected:
- 
-		void SetDetID();
+		
+		float enRaw;
+		float psdRaw;
+		float tacRaw;
+		
 	public:
 		LiquidScint();
 		LiquidScint(std::string desc);
@@ -19,16 +21,16 @@ class LiquidScint : public Detector {
 		int GetNumChannels(bool secondary=false) {return numChannels;};
 
 		///Set the raw energy of the channel.
-<<<<<<< Updated upstream
 		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue);
-=======
-		virtual void SetRawValue(unsigned int detectorChannel, bool smallType, int rawValue);
->>>>>>> Stashed changes
 
 		void SetDescription(std::string desc) {description = desc;}; 
 		std::string GetDescription() {return description;}; 
 
 		void Clear();
+
+		float GetRawEnergy();
+		float GetRawPSD();
+		float GetRawTAC();
 
 
 	/// \cond This is just for ROOT and doesn't need to be documented

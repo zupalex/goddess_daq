@@ -1,4 +1,5 @@
 #include "LiquidScint.h"
+#include <iostream>
 
 LiquidScint::LiquidScint() {
 
@@ -13,45 +14,33 @@ LiquidScint::~LiquidScint() {
 
 }
 
-<<<<<<< Updated upstream
 void LiquidScint::SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue) {
-=======
-void LiquindScint::SetDetID(){
-  if (smallType) posID.append("2x2");
-  else posID.append("4x6");
-
-}
-
-void LiquidScint::SetRawValue(unsigned int detectorChannel, bool smallType, int rawValue) {
   
-  float *enRaw, *psdRaw, *tacRaw;
-  if(smallType){
-    enRaw
-  }
+    if(detectorChannel == 0) enRaw = rawValue;
+    if(detectorChannel == 1) psdRaw = rawValue;
+    if(detectorChannel == 2) tacRaw = rawValue;
 
-
-
-
-  if(detectorChannel < numChannels)
-    SetRawValue(detectorChannel,true,rawValue);
-  else if(detectorChannel > numChannels + numChannels)
-    SetRawValue(detectorChannel,false,rawValue);
-  else 
-    std::cerr << "ERROR: cannot set raw value for individual channel: " << detectorChannel << "!\n"; 
-
-  if(secondaryType) {
-    largeType += GetEnergy(detectorChannel,rawValue); 
-  }
-  else {
-    smallType += GetEnergy(detectorChannel,rawValue);
-  }
->>>>>>> Stashed changes
-
+    if(secondaryType) std::cerr << " No secondary type for Liquid Scint "<< std::endl; 
 }
 
 void LiquidScint::Clear() {
 
+  enRaw = 0;
+  psdRaw = 0;
+  tacRaw = 0;
 
+}
+
+float LiquidScint::GetRawEnergy(){
+  return enRaw;
+}
+
+float LiquidScint::GetRawPSD(){
+  return psdRaw;
+}
+
+float LiquidScint::GetRawTAC(){
+  return tacRaw;
 }
 
 ClassImp(LiquidScint)
