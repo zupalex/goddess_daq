@@ -12,6 +12,7 @@
 #include "QQQ5.h"
 #include "superX3.h"
 #include "BB10.h"
+#include "LiquidScint.h"
 
 #include <iostream>
 
@@ -50,6 +51,12 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("siSector",&siSector);
 	tree->Branch("siStripEn",&siStripEn);
 	tree->Branch("siStripNum",&siStripNum);
+	tree->Branch("siUpstreamMult",&siUpstreamMult);
+	tree->Branch("siDownstreamMult",&siDownstreamMult);
+	tree->Branch("siAnalogMult",&siAnalogMult);
+	tree->Branch("siDigitalMult",&siDigitalMult);
+	tree->Branch("siStripContactMult",&siDetContactMult);
+
 
 	// ORRUBA histograms
 	f->cd("/hists");
@@ -57,6 +64,8 @@ GoddessData::GoddessData(std::string configFilename)
 	dirOrruba->cd();
 	TDirectory *dirRaw = gDirectory->mkdir("raw");
 	dirRaw->cd();
+	TDirectory *dirLiquidScint = gDirectory->mkdir("LiquidScint");
+	dirLiquidScint->cd();
 	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
@@ -75,6 +84,9 @@ GoddessData::GoddessData(std::string configFilename)
 	InitGammaHists();
 
 	gDirectory->cd("/hists");
+
+	InitLiquidScintHists();
+
 }
 void GoddessData::InitBB10Hists() {
 	TClonesArray* bb10s =config->GetBB10s();
@@ -185,6 +197,17 @@ void GoddessData::InitSuperX3Hists() {
 	}
 
 }
+void GoddessData::InitLiquidScintHists() {
+	std::vector<LiquidScint*> liquids = config->GetLiquidScints();
+	int nliquids = liquids.size();
+
+	for (int iLiq=0;iLiq<nliquids;iLiq++) {
+		const char* name=liquids[iLiq]->GetDescription().c_str();
+		LiquidScint_PSD_E.emplace(name,new TH2F(Form("LiquidScint_PSD_E_%s",name),Form("Liquid Scintillator PSD vs E %s",name),512,0,4096,512,0,4096));
+		LiquidScint_tof.emplace(name,new TH1F(Form("LiquidScint_ToF_%s",name),Form("Liquid Scintillator ToF %s",name),512,-4096,4096));
+	}
+}
+
 void GoddessData::InitGammaHists() {
 		TDirectory *dirDet = gDirectory->mkdir("gamma");
 		dirDet->cd();
@@ -226,6 +249,9 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			if (siDet) {
 				analog = true;
 				posID = siDet->GetPosID();
+				if(siDets.find(posID)==siDets.end()) {
+					siAnalogMult++;
+				}
 				siDets[posID] = siDet;
 			}
 			else if (liquidScint_) {
@@ -236,10 +262,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				posID = "ion";
 				ionChamber = ionChamber_;
 			}
-
 		}
-
-
 	}
 
 	// getting data from digital events	
@@ -261,6 +284,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			suppressCh[key]=true;
 			continue;
 		}
+		siDetContactMult++;
 
 		//Take whatever the timestamp is for this channel.
 		//	This is not clear that it is the best method as one detecotr may have various 
@@ -274,6 +298,9 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		if (siDet) {
 			digital = true;
 			posID = siDet->GetPosID();
+			if(siDets.find(posID)==siDets.end()) {
+				siDigitalMult++;
+			}
 			siDets[posID] = siDet;
 		}
 		else if (liquidScint_) {
@@ -297,6 +324,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	}
 	firedDets.clear();
 	siDets.clear();
+	liquidScints.clear();
 
 }
 
@@ -381,16 +409,22 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			}
 		}
 
-	for (size_t i=0;i<dgsEvts->size();i++) {
-		if (det->GetUpStream()) {
-			upstreamGam->Fill(dgsEvts->at(i).ehi);
-		} else {
-			downstreamGam->Fill(dgsEvts->at(i).ehi);
+		for (size_t i=0;i<dgsEvts->size();i++) {
+			if (det->GetUpStream()) {
+				upstreamGam->Fill(dgsEvts->at(i).ehi);
+			} else {
+				downstreamGam->Fill(dgsEvts->at(i).ehi);
+			}
 		}
-	}
 
 		
 	}
+	
+	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
+		//std::cout << ((LiquidScint*)lsItr)->GetDescription() << '\n';
+		
+	}
+		
 
 }
 
@@ -403,6 +437,11 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 		siDetID->push_back(detPosID);
 		siSector->push_back(det->GetSector());
 		siUpstream->push_back(det->GetUpStream());
+		if(det->GetUpStream()) {
+			siUpstreamMult++;
+		} else {
+			siDownstreamMult++;
+		}
 		siDetEn->push_back(det->GetEnergy());
 
 		for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
@@ -487,6 +526,11 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 	siStripNum->clear();
 	siStripEn->clear();
 	siUpstream->clear();
+	siAnalogMult=0;
+	siDigitalMult=0;
+	siDetContactMult=0;
+	siDownstreamMult=0;
+	siUpstreamMult=0;
 	analog = false;
 	digital = false;
 }

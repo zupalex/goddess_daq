@@ -56,6 +56,7 @@ class GoddessConfig {
 		TClonesArray* GetBB10s() {return bb10s;}
 		///Get a vector of all registered QQQ5s.
 		TClonesArray* GetQQQ5s() {return qqq5s;}
+		std::vector<LiquidScint*> GetLiquidScints() {return liquidScints;}
 
 };
 

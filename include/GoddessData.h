@@ -36,6 +36,7 @@ class GoddessData {
 
 		ORRUBA *orruba;
 
+		void InitLiquidScintHists();
 		void InitSuperX3Hists();
 		void InitQQQ5Hists();
 		void InitBB10Hists();
@@ -84,11 +85,16 @@ class GoddessData {
 		std::map<std::string,TH1F*> icE1;
 		std::map<std::string,TH1F*> icE2;
 		std::map<std::string,TH1F*> icE;
-		std::map<std::string,TH1F**> scint;
+		std::map<std::string,TH1F**> scint_T;
+		std::map<std::string,TH1F**> scint_E;
 
 		// gammas
 		TH1F* upstreamGam;
 		TH1F* downstreamGam;
+
+		// liquid scint
+		std::map<std::string,TH2F*> LiquidScint_PSD_E;
+		std::map<std::string,TH1F*> LiquidScint_tof;
 
 
 
@@ -98,11 +104,17 @@ class GoddessData {
 		std::vector<float> *siStripEn;
 		std::vector<short> *siStripNum;
 		unsigned int siDetMult;
+		unsigned int siDownstreamMult;
+		unsigned int siUpstreamMult;
+		unsigned int siDetContactMult;
 		unsigned int sectorMult;
+		unsigned int siAnalogMult;
+		unsigned int siDigitalMult;
 		std::vector<float> *siDetEn;
 		std::vector<std::string> *siDetID;
 		std::vector<int> *siSector;
 		std::vector<bool> *siUpstream;
+
 		bool analog;
 		bool digital;
 
