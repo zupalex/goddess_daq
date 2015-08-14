@@ -13,16 +13,13 @@ LiquidScint::~LiquidScint() {
 
 }
 
-<<<<<<< Updated upstream
-void LiquidScint::SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue) {
-=======
 void LiquindScint::SetDetID(){
   if (smallType) posID.append("2x2");
   else posID.append("4x6");
 
 }
 
-void LiquidScint::SetRawValue(unsigned int detectorChannel, bool smallType, int rawValue) {
+void LiquidScint::SetRawValue(unsigned int detectorChannel, bool smallType, unsigned int rawValue) {
   
   float *enRaw, *psdRaw, *tacRaw;
   if(smallType){
@@ -45,7 +42,6 @@ void LiquidScint::SetRawValue(unsigned int detectorChannel, bool smallType, int 
   else {
     smallType += GetEnergy(detectorChannel,rawValue);
   }
->>>>>>> Stashed changes
 
 }
 

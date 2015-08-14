@@ -19,11 +19,7 @@ class LiquidScint : public Detector {
 		int GetNumChannels(bool secondary=false) {return numChannels;};
 
 		///Set the raw energy of the channel.
-<<<<<<< Updated upstream
 		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue);
-=======
-		virtual void SetRawValue(unsigned int detectorChannel, bool smallType, int rawValue);
->>>>>>> Stashed changes
 
 		void SetDescription(std::string desc) {description = desc;}; 
 		std::string GetDescription() {return description;}; 
