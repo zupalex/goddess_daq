@@ -71,6 +71,7 @@ void superX3::ConstructBins () {
 		binsPCenter[strip] = (binsP[strip] + binsP[strip+1]) / 2;
 		binsNCenter[strip] = (binsN[strip] + binsN[strip+1]) / 2;
 		binsZCenter[strip] = (binsZ[strip] + binsZ[strip+1]) / 2;
+		binsAzimuthalCenter[strip] = (binsAzimuthal[strip] + binsAzimuthal[strip+1]) / 2;
 	}
 
 #ifdef VERBOSE

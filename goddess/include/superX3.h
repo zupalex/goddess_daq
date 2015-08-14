@@ -34,6 +34,8 @@ class superX3 : public orrubaDet {
 		Float_t binsZCenter[4]; //!
 		///The bin edges along the phi axis in degrees.	
 		Float_t binsAzimuthal[5]; //!
+		///The bin centers along the phi axis in degrees.	
+		Float_t binsAzimuthalCenter[4]; //!
 		///The bin edges along the phi axis in degrees.	
 		Float_t binsPolar[5]; //!
 
@@ -103,6 +105,8 @@ class superX3 : public orrubaDet {
 		float* GetZCenterBins() {return binsNCenter;};
 		///Return the bins along the azimuthal direction in degrees.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
+		///Return the bins center along the azimuthal direction in degrees.
+		float* GetAzimuthalCenterBins() {return binsAzimuthalCenter;};
 		///Return the bins along the polar direction in degrees.
 		float* GetPolarBins() {return binsPolar;};
 		
