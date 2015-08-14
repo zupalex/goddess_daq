@@ -3,6 +3,7 @@
 //ROOT Headers
 #include "TDirectory.h"
 #include "TFile.h"
+#include "TMath.h"
 
 //GEBSort Headers
 #include "gdecomp.h"
@@ -82,8 +83,8 @@ GoddessData::GoddessData(std::string configFilename)
 	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 
 	dirOrruba->cd();
-	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,16,32,0,32);
-	endcapHitPatternDownstream = new TH2F("hitEndcapDown","Downstream Endcap Hit Pattern",16,0,16,32,0,32);
+	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
+	endcapHitPatternDownstream = new TH2F("hitEndcapDown","Downstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
 
 
 	dirOrruba->cd();
@@ -351,35 +352,39 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		unsigned short sector = det->GetSector();
 
 		// front=false (p-type = (!n-type))
-		siDet::ValueMap frontRawEn = det->GetRawEn(false);
-		siDet::ValueMap frontCalEn = det->GetCalEn(false);
-		siDet::ValueMap backRawEn = det->GetRawEn(true);
-		siDet::ValueMap backCalEn = det->GetCalEn(true);
+		siDet::ValueMap frontRawEn = det->GetRawEn(siDet::pType);
+		siDet::ValueMap frontCalEn = det->GetCalEn(siDet::pType);
+		siDet::ValueMap backRawEn = det->GetRawEn(siDet::nType);
+		siDet::ValueMap backCalEn = det->GetCalEn(siDet::nType);
 
 		if (detType == "QQQ5") {
-			TH2F *endcapHitPattern;
-			if (det->GetUpStream()) endcapHitPattern = endcapHitPatternUpstream;
-			else endcapHitPattern = endcapHitPatternDownstream;
+			//---Multiplicty---
+			QQQFrontMult[detPosID]->Fill(frontRawEn.size());
+			QQQBackMult[detPosID]->Fill(backRawEn.size());
 
+			//---Energy---
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
-				QQQFrontMult[detPosID]->Fill(frontRawEn.size());
 			}
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				QQQenCalFront[detPosID]->Fill(itr->second, itr->first);
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
-				QQQBackMult[detPosID]->Fill(backRawEn.size());
 			}
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				QQQenCalBack[detPosID]->Fill(itr->second, itr->first);
 			}
 
+			//---Hit Patterns---
+			TH2F *endcapHitPattern;
+			if (det->GetUpStream()) endcapHitPattern = endcapHitPatternUpstream;
+			else endcapHitPattern = endcapHitPatternDownstream;
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
 				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
 					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
-					endcapHitPattern->Fill(4*sector+itrBack->first,itrFront->first);
+					float angle = ((QQQ5*)det)->GetAzimuthalBins()[itrBack->first] * TMath::DegToRad() + TMath::Pi()/16;
+					endcapHitPattern->Fill(angle,itrFront->first);
 				}
 			}
 		}
@@ -575,7 +580,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	siDetContactMult=0;
 	siDownstreamMult=0;
 	siUpstreamMult=0;
-	for (int i=0;i<12;i++) {
+	for (int i=0;i<4;i++) {
 		endCapUpstreamDetMult[i] = 0;
 		endCapDownstreamDetMult[i] = 0;
 		endCapUpstreamContactMult[i] = 0;
