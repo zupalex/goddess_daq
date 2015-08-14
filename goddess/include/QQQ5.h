@@ -31,6 +31,8 @@ class QQQ5 : public orrubaDet {
 		Float_t binsAzimuthal[5]; //!
 		///The bin edges along the phi axis in degrees.	
 		Float_t binsPolar[33]; //!
+		///The bin center along the phi axis in degrees.	
+		Float_t binsPolarcenter[33]; //!
 
 		///Calibrated energy of the p type side.
 		float enPtype;
@@ -83,6 +85,8 @@ class QQQ5 : public orrubaDet {
 		float* GetAzimuthalBins() {return binsAzimuthal;};
 		///Return the bins along the polar direction in degrees.
 		float* GetPolarBins() {return binsPolar;};
+		///Return the bins centers along the polar direction in degrees.
+		float* GetPolarBinsCenter() {return binsPolarcenter;};
 		
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};

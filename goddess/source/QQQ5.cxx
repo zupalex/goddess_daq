@@ -85,6 +85,7 @@ void QQQ5::ConstructBins () {
 	}
 	for (unsigned int strip=0; strip<32; strip++){
 	  binsPcenter[strip] = (binsP[strip] + binsP[strip+1]) / 2;
+	  binsPolarcenter[strip] = (binsPolar[strip] + binsPolar[strip+1]) / 2;
 	}
 	
 #ifdef VERBOSE
