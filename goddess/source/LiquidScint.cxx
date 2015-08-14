@@ -28,7 +28,7 @@ void LiquidScint::Clear() {
   enRaw = 0;
   psdRaw = 0;
   tacRaw = 0;
-
+ 
 }
 
 float LiquidScint::GetRawEnergy(){
