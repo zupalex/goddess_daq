@@ -58,14 +58,14 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("siAnalogMult",&siAnalogMult);
 	tree->Branch("siDigitalMult",&siDigitalMult);
 	tree->Branch("siStripContactMult",&siDetContactMult);
-	tree->Branch("capUpDetMult",&endCapUpstreamDetMult);
-	tree->Branch("barlUpDetMult",&barrelUpstreamDetMult);
-	tree->Branch("capDownDetMult",&endCapDownstreamDetMult);
-	tree->Branch("barlDownDetMult",&barrelDownstreamDetMult);
-	tree->Branch("capUpConMult",&endCapUpstreamContactMult);
-	tree->Branch("capDownConMult",&endCapDownstreamContactMult);
-	tree->Branch("barlUpConMult",&barrelUpstreamContactMult);
-	tree->Branch("barlDownConMult",&barrelDownstreamContactMult);
+	tree->Branch("capUpDetMult",endCapUpstreamDetMult);
+	tree->Branch("barlUpDetMult",barrelUpstreamDetMult);
+	tree->Branch("capDownDetMult",endCapDownstreamDetMult);
+	tree->Branch("barlDownDetMult",barrelDownstreamDetMult);
+	tree->Branch("capUpConMult",endCapUpstreamContactMult);
+	tree->Branch("capDownConMult",endCapDownstreamContactMult);
+	tree->Branch("barlUpConMult",barrelUpstreamContactMult);
+	tree->Branch("barlDownConMult",barrelDownstreamContactMult);
 
 
 	// ORRUBA histograms
@@ -80,6 +80,11 @@ GoddessData::GoddessData(std::string configFilename)
 	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
+
+	dirOrruba->cd();
+	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,16,32,0,32);
+	endcapHitPatternDownstream = new TH2F("hitEndcapDown","Downstream Endcap Hit Pattern",16,0,16,32,0,32);
+
 
 	dirOrruba->cd();
 	InitSuperX3Hists();
@@ -343,6 +348,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		orrubaDet* det = detItr->second;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
+		unsigned short sector = det->GetSector();
 
 		// front=false (p-type = (!n-type))
 		siDet::ValueMap frontRawEn = det->GetRawEn(false);
@@ -351,6 +357,10 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		siDet::ValueMap backCalEn = det->GetCalEn(true);
 
 		if (detType == "QQQ5") {
+			TH2F *endcapHitPattern;
+			if (det->GetUpStream()) endcapHitPattern = endcapHitPatternUpstream;
+			else endcapHitPattern = endcapHitPatternDownstream;
+
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
 				QQQFrontMult[detPosID]->Fill(frontRawEn.size());
@@ -369,6 +379,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
 				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
 					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
+					endcapHitPattern->Fill(4*sector+itrBack->first,itrFront->first);
 				}
 			}
 		}

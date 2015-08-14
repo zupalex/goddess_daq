@@ -55,6 +55,9 @@ class GoddessData {
 		TH2F* enCalA;
 		TH2F* enCalD;
 
+		TH2F *endcapHitPatternUpstream;
+		TH2F *endcapHitPatternDownstream;
+
 		// QQQ5s
 		std::map<std::string,TH2F*> QQQenRawFront;
 		std::map<std::string,TH2F*> QQQenCalFront;
