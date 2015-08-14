@@ -17,6 +17,8 @@ class GoddessConfig {
 		void ReadConfig(std::string filename);
 		///Read the position configuration.
 		void ReadPosition(std::string filename);
+		///Read the config line for the ion chamber. 
+		IonChamber* ReadIonChamberConfig(std::istringstream &line);
 
 		///Map of channels to silicon detector.
 		std::map<std::pair<short, short>, std::pair<Detector*, bool>> chMap;

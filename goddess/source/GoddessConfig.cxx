@@ -112,26 +112,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 		std::cout << "Registering " << detType << " detector: ";
 
 		if (detType == "ion") {
-			int numAnode, numScint, numDE, numEres;
-			int anodeDaqType, anodeDaqCh;
-			int scintDaqType, scintDaqCh;
-			if (!(lineStream >> numAnode >> numScint >> numDE >> numEres >> anodeDaqType >> anodeDaqCh >> scintDaqType >> scintDaqCh)) {
-				break;
-			}
-			std::cout << " Anodes: " << numAnode << ", Scint PMTs: " << numScint;
-			std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
-
-			ionChamber = new IonChamber(numAnode, numScint, numDE, numEres);
-			if (IsInsertable(anodeDaqType, anodeDaqCh, detType, false))  {
-				chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber,false);
-			}
-			else
-				std::cerr << "ERROR: Detector " << serialNum << " p-type will not be unpacked!\n";
-			if (IsInsertable(scintDaqType, scintDaqCh, detType, true)) {
-				chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber,true);
-			}
-			else 
-				std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
+			ionChamber = ReadIonChamberConfig(lineStream);
 		}
 		else if (detType == "liquidScint") {
 			int daqType, daqCh;
@@ -334,8 +315,33 @@ void GoddessConfig::ReadConfig(std::string filename) {
 	}
 }
 
+IonChamber *GoddessConfig::ReadIonChamberConfig(std::istringstream &lineStream) {
+	int numAnode, numScint, numDE, numEres;
+	int anodeDaqType, anodeDaqCh;
+	int scintDaqType, scintDaqCh;
+	if (!(lineStream >> numAnode >> numScint >> numDE >> numEres >> anodeDaqType >> anodeDaqCh >> scintDaqType >> scintDaqCh)) {
+		return NULL;
+	}
+	std::cout << " Anodes: " << numAnode << ", Scint PMTs: " << numScint;
+	std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
+
+	IonChamber *ionChamber_ = new IonChamber(numAnode, numScint, numDE, numEres);
+	if (IsInsertable(anodeDaqType, anodeDaqCh, "ion", false))  {
+		chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber,false);
+	}
+	else
+		std::cerr << "ERROR: Ion chamber anodes will not be unpacked!\n";
+	if (IsInsertable(scintDaqType, scintDaqCh, "ion", true)) {
+		chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber,true);
+	}
+	else 
+		std::cerr << "ERROR: Ion chamber scintillators will not be unpacked!\n";
+
+	return ionChamber_;
+}
+
 void GoddessConfig::ReadPosition(std::string filename) {
-  std::cout << "GoddessConfig::ReadPosition isn't implemeted yet. Filename was " << filename << "\n";
+	std::cout << "GoddessConfig::ReadPosition isn't implemeted yet. Filename was " << filename << "\n";
 }
 
 /**We check that at the insertion point the previous entry has sufficient 
