@@ -1449,8 +1449,6 @@ done:
   gzclose (zFile[i]);
 #endif
 
-  printf ("\n");
-  printf ("Boniva Sancta ;-) >> GEBMerge did not crash << !!\n");
 
   printf ("\n");
   fflush (stdout);
