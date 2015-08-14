@@ -42,7 +42,7 @@ class GoddessData {
 		void InitBB10Hists();
 		void InitGammaHists();
 
-		void FillTrees(std::vector<DGSEVENT> *dgsEvts);
+		void FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 		void FillHists(std::vector<DGSEVENT> *dgsEvts);
 
 		std::map<std::string,Detector*> firedDets;
@@ -100,7 +100,8 @@ class GoddessData {
 
 		TTree* tree;
 		std::vector<float> *gammaEnergies;
-		std::vector<float> *gammaTimeDiffs;
+		std::vector<float> *gammaAnalogTimeDiffs;
+		std::vector<float> *gammaDigitalTimeDiffs;
 		std::vector<float> *siStripEn;
 		std::vector<short> *siStripNum;
 		unsigned int siDetMult;

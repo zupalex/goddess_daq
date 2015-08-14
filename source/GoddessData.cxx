@@ -21,7 +21,8 @@ GoddessData::GoddessData(std::string configFilename)
 	config = new GoddessConfig("goddess.position",configFilename);
 
 	orruba = new ORRUBA();
-	gammaTimeDiffs = new std::vector<float>;
+	gammaAnalogTimeDiffs = new std::vector<float>;
+	gammaDigitalTimeDiffs = new std::vector<float>;
 	gammaEnergies = new std::vector<float>;
 	siDetEn = new std::vector<float>;
 	siDetID = new std::vector<std::string>;
@@ -42,7 +43,8 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("siDetMult",&siDetMult);
 	tree->Branch("sectorMult",&sectorMult);
 	tree->Branch("gamEn",&gammaEnergies);
-	tree->Branch("gamDt",&gammaTimeDiffs);
+	tree->Branch("gamDigitalDt",&gammaDigitalTimeDiffs);
+	tree->Branch("gamAnalogDt",&gammaAnalogTimeDiffs);
 	tree->Branch("digital",&digital);
 	tree->Branch("analog",&analog);
 	tree->Branch("siDetEn",&siDetEn);
@@ -316,7 +318,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	}
 
 	FillHists(dgsEvts);
-	FillTrees(dgsEvts);
+	FillTrees(dgsEvts,dgodEvts,agodEvts);
 
 	//We clear everything here since we know what was actually fired.
 	for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
@@ -428,7 +430,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 
 }
 
-void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
+void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
 
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
 		orrubaDet* det = detItr->second;
@@ -450,16 +452,18 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 		}
 	}
 
-/*
+
 	for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
 		for (size_t i=0;i<agodEvts->size();i++) {
 			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(agodEvts->at(i).timestamp);
+			gammaAnalogTimeDiffs->push_back(dT);
 		}
 		for (size_t i=0;i<dgodEvts->size();i++) {
 			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(dgodEvts->at(i).LEDts);
+			gammaDigitalTimeDiffs->push_back(dT);
 		}
 	}
-*/
+	
 
 	//Build a total ORRUBA event
 	float dE=0, E1=0, E2=0;
@@ -519,7 +523,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts) {
 
 
 	gammaEnergies->clear();
-	gammaTimeDiffs->clear();
+	gammaAnalogTimeDiffs->clear();
+	gammaDigitalTimeDiffs->clear();
 	siDetID->clear();
 	siDetEn->clear();
 	siSector->clear();
