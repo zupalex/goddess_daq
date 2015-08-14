@@ -16,11 +16,15 @@ class QQQ5 : public orrubaDet {
 		TVector3 pStripEdgePos[33]; //!
 		///Vector pointing to mid point of n type strip edge in mm.
 		TVector3 nStripEdgePos[5]; //!
-
+		
 		///The bin edges along the p-type strips in mm.	
 		Float_t binsP[33]; //!
+		///The bin center along the p-type strips in mm.
+		Float_t binsPcenter[32]; //!
 		///The bin edges along the n-type strips in mm.	
 		Float_t binsN[5]; //!
+		///The bin center along the n-type strips in mm.	
+		Float_t binsNcenter[4]; //!
 		///The bin edges along the cylindrical radial directions rho in degrees.	
 		Float_t binsRho[33]; //!
 		///The bin edges along the phi axis in degrees.	
@@ -67,8 +71,12 @@ class QQQ5 : public orrubaDet {
 		static int GetNumPtypeBins() {return 32;}
 		///Return the bins boundaries of the dimension along the p type strips in mm.
 		float* GetPtypeBins() {return binsP;};
+		///Return the bins center of the dimension along the p type strips in mm.
+		float* GetPtypeBinsCenter() {return binsPcenter;};
 		///Return the bins boundaries of the dimension along the n type strips in mm.
 		float* GetNtypeBins() {return binsN;};
+		///Return the bins center of the dimension along the n type strips in mm.
+		float* GetNtypeBinsCenter() {return binsNcenter;};
 		///Return the  in mm.
 		float* GetRhoBins() {return binsRho;};
 		///Return the bins along the azimuthal direction in degrees.

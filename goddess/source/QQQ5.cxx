@@ -76,8 +76,17 @@ void QQQ5::ConstructBins () {
 		int polarStrip = strip;
 		if (detPos.Z() < 0) polarStrip = 32 - strip;
 		binsPolar[polarStrip] = TMath::RadToDeg() * pStripEdgePos[strip].Theta();
+
+		
 	}
 
+	for (unsigned int strip=0; strip<4; strip++){
+	  binsNcenter[strip] = (binsN[strip] + binsN[strip+1]) / 2;
+	}
+	for (unsigned int strip=0; strip<32; strip++){
+	  binsPcenter[strip] = (binsP[strip] + binsP[strip+1]) / 2;
+	}
+	
 #ifdef VERBOSE
 	std::cout << serialNum << "\tcenter:\t";
 	detPos.Print();
