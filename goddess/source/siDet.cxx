@@ -50,7 +50,7 @@ bool siDet::ValidContact(unsigned int contact, bool nType/*=false*/) {
  *	\param[in] channel The channel to be adjusted.
  *	\param[in] rawValue The raw contact value in channels.
  */
-void siDet::SetRawValue(unsigned int channel, int rawValue) {
+void siDet::SetRawValue(unsigned int channel, unsigned int rawValue) {
 	if (channel < numPtype)
 		SetRawValue(channel,false,rawValue);
 	else if (channel < numPtype + numNtype) 
@@ -65,7 +65,7 @@ void siDet::SetRawValue(unsigned int channel, int rawValue) {
  *	\param[in] rawValue The raw contact value in channels.
  *	\param[in] nType Whether the contact selected is n type.
  */
-void siDet::SetRawValue(unsigned int contact, bool nType, int rawValue) {
+void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue) {
 	if (!ValidContact(contact, nType)) return;
 
 	//Get pointer to the raw an calibrated storage location.

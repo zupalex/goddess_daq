@@ -53,9 +53,9 @@ class siDet : public Detector {
 		bool ValidContact(unsigned int contact, bool nType);
 		
 		///Set the raw energy of the channel.
-		virtual void SetRawValue(unsigned int channel, int rawValue);
+		virtual void SetRawValue(unsigned int channel, unsigned int rawValue);
 		///Set the raw energy of the contact and compute the calibrated value.
-		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
+		virtual void SetRawValue(unsigned int contact, bool nType, unsigned int rawValue);
 
 		///Get the calibrated energy of the contact specified.
 		float GetCalEnergy(int contact, bool nType = false);

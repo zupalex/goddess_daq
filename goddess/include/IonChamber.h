@@ -53,7 +53,7 @@ class IonChamber : public Detector {
 		void SetScintTimeCalPars(int ch, std::vector<float> pars);
 
 		///Set the raw energy of the contact and compute the calibrated value.
-		virtual void SetRawValue(unsigned int channel, bool scintType, int rawValue);
+		virtual void SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue);
 
 		///Return the number of channels of the type specified.
 		int GetNumChannels(bool scintType);

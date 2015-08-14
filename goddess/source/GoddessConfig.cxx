@@ -420,7 +420,7 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, 
 /**
  *
  */
-Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, int rawValue) {
+Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned int rawValue) {
 	MapKey key = std::make_pair(daqType, digitizerCh);
 	auto mapItr = chMap.upper_bound(key);
 	if (mapItr == chMap.begin()) {

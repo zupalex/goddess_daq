@@ -54,7 +54,7 @@ void IonChamber::Clear() {
  * \param[in] channel The channel of the ion chamber.
  * \param[in] rawValue The raw DAQ value.
  */
-void IonChamber::SetRawValue(unsigned int channel, bool scintType, int rawValue) {
+void IonChamber::SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue) {
 	if (!scintType && channel	< anodeRaw.size()) {
 		anodeRaw.at(channel) = rawValue;
 		for (size_t power=0;power < parAnodeEnCal.size(); power++)

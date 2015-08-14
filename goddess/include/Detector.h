@@ -20,7 +20,7 @@ class Detector : public TObject {
 		virtual int GetNumChannels(bool secondaryType) = 0;
 
 		///Set the raw energy of the channel.
-		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, int rawValue) = 0;
+		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue) = 0;
 
 		virtual void Clear() = 0;
 

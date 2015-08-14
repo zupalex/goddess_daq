@@ -42,7 +42,7 @@ class GoddessConfig {
 		~GoddessConfig();
 
 		///Gets the detector and contact number for the specified digitizer channel.
-		Detector* SetRawValue(short daqType, short digitizerCh, int rawValue);
+		Detector* SetRawValue(short daqType, short digitizerCh, unsigned int rawValue);
 
 		///Parse and id string to get position details.
 		bool ParseID(std::string id, short& sector, short& depth, bool& upStream);
