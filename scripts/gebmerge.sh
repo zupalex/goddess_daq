@@ -35,7 +35,7 @@ if [ ! -e $MERGE_DIR ]; then
 	exit 3
 fi
 
-if [ ! -e $MERGE_DIR/GEBMerged_run$RUN.gtd_000 ]; then
+if [ -e $MERGE_DIR/GEBMerged_run$RUN.gtd_000 ]; then
 	printf "${YELLOW}ERROR:${RESET} Merged file already exists! Remove manually to overwrite.\n"
 	exit 4
 fi
