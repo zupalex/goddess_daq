@@ -67,6 +67,10 @@ void superX3::ConstructBins () {
 		binsPolar[4-strip] = TMath::RadToDeg() * nStripEdgePos[strip].Theta();
 	}
 
+	for (unsigned int strip=0;strip<4;strip++){
+		binsPCenter[strip] = (binsP[strip] + binsP[strip+1]) / 2;
+		binsNCenter[strip] = (binsN[strip] + binsN[strip+1]) / 2;
+	}
 
 #ifdef VERBOSE
 	std::cout << serialNum << "\tcenter:\t";
