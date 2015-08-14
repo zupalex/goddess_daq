@@ -14,7 +14,7 @@ class siDet : public Detector {
 		///A short hand for a map of vlaues per channel.
 		typedef std::map<short, float> ValueMap;
 		static const bool nType = true;
-		static const bool pType = true;
+		static const bool pType = false;
 
 	private:
 		unsigned short numPtype;
