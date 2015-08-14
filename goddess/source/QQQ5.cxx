@@ -53,7 +53,9 @@ void QQQ5::ConstructBins () {
 			detPos.Z());
 
 		//Azimuthal angle 
-		binsAzimuthal[strip] = TMath::RadToDeg() * nStripEdgePos[strip].Phi();
+		binsAzimuthal[strip] = nStripEdgePos[strip].Phi();
+		while (binsAzimuthal[strip] < 0) binsAzimuthal[strip] += TMath::TwoPi();
+		binsAzimuthal[strip] *= TMath::RadToDeg();
 	}
 
 	//Compute the fraction of the radius in the x and y plane.
