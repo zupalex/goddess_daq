@@ -58,6 +58,14 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("siAnalogMult",&siAnalogMult);
 	tree->Branch("siDigitalMult",&siDigitalMult);
 	tree->Branch("siStripContactMult",&siDetContactMult);
+	tree->Branch("capUpDetMult",&endCapUpstreamDetMult);
+	tree->Branch("barlUpDetMult",&barrelUpstreamDetMult);
+	tree->Branch("capDownDetMult",&endCapDownstreamDetMult);
+	tree->Branch("barlDownDetMult",&barrelDownstreamDetMult);
+	tree->Branch("capUpConMult",&endCapUpstreamContactMult);
+	tree->Branch("capDownConMult",&endCapDownstreamContactMult);
+	tree->Branch("barlUpConMult",&barrelUpstreamContactMult);
+	tree->Branch("barlDownConMult",&barrelDownstreamContactMult);
 
 
 	// ORRUBA histograms
@@ -114,7 +122,6 @@ void GoddessData::InitQQQ5Hists() {
 		const char* name = ((QQQ5*)qqq5s->At(i))->GetPosID().c_str();
 		dirQQQ5->cd();
 		TDirectory *dirDet = gDirectory->mkdir(name);
-		if (!dirDet) fprintf(stderr,"%s Whjat the fuck!\n",name);
 		dirDet->cd();
 		gDirectory->mkdir("en")->cd();
 
@@ -435,13 +442,34 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
 		orrubaDet* det = detItr->second;
 		std::string detPosID = det->GetPosID();
+		std::string detType = det->IsA()->GetName();
 
 		siDetID->push_back(detPosID);
 		siSector->push_back(det->GetSector());
 		siUpstream->push_back(det->GetUpStream());
 		if(det->GetUpStream()) {
 			siUpstreamMult++;
+			if (detType == "QQQ5") {
+				endCapUpstreamDetMult[det->GetSector()]++;
+				endCapUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
+				endCapUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
+			}
+			else {
+				barrelUpstreamDetMult[det->GetSector()]++;
+				barrelUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
+				barrelUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
+			}
 		} else {
+			if (detType == "QQQ5") {
+				endCapDownstreamDetMult[det->GetSector()]++;
+				endCapDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
+				endCapDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
+			}
+			else {
+				barrelDownstreamDetMult[det->GetSector()]++;
+				barrelDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
+				barrelDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
+			}
 			siDownstreamMult++;
 		}
 		siDetEn->push_back(det->GetEnergy());
@@ -536,6 +564,18 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	siDetContactMult=0;
 	siDownstreamMult=0;
 	siUpstreamMult=0;
+	for (int i=0;i<12;i++) {
+		endCapUpstreamDetMult[i] = 0;
+		endCapDownstreamDetMult[i] = 0;
+		endCapUpstreamContactMult[i] = 0;
+		endCapDownstreamContactMult[i] = 0;
+	}
+	for (int i=0;i<12;i++) {
+		barrelUpstreamDetMult[i] = 0;
+		barrelDownstreamDetMult[i] = 0;
+		barrelUpstreamContactMult[i] = 0;
+		barrelDownstreamContactMult[i] = 0;
+	}
 	analog = false;
 	digital = false;
 }

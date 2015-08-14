@@ -111,6 +111,14 @@ class GoddessData {
 		unsigned int sectorMult;
 		unsigned int siAnalogMult;
 		unsigned int siDigitalMult;
+		unsigned int endCapUpstreamDetMult[4];
+		unsigned int endCapDownstreamDetMult[4];
+		unsigned int barrelUpstreamDetMult[12];
+		unsigned int barrelDownstreamDetMult[12];
+		unsigned int endCapUpstreamContactMult[4];
+		unsigned int endCapDownstreamContactMult[4];
+		unsigned int barrelUpstreamContactMult[12];
+		unsigned int barrelDownstreamContactMult[12];
 		std::vector<float> *siDetEn;
 		std::vector<std::string> *siDetID;
 		std::vector<int> *siSector;
