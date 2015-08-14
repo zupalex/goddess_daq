@@ -38,6 +38,11 @@ class siDet : public Detector {
 		std::vector<std::vector<float>> parEnCalP; //!
 		///The calibration parameters for n type contacts
 		std::vector<std::vector<float>> parEnCalN; //!
+	
+		///The threshold values for the p-type contact in channel number.
+		std::vector<int> threshP;
+		///The threshold values for the n-type contact in channel number.
+		std::vector<int> threshN;
 
 	public:
 		///Default constructor.
@@ -69,7 +74,10 @@ class siDet : public Detector {
 		int GetNumChannels(bool nType);
 
 		///Specify the polynomial calibration parameters of the specified contact.
-		bool SetEnergyCalib(std::vector<float> par, int contact, bool nType = false);
+		bool SetEnergyCalib(std::vector<float> par, int contact, bool contactType = siDet::pType);
+
+		///Specify the thresholds for each channel.
+		bool SetThresholds(std::vector<int> thresholds, bool contactType = siDet::pType);
 
 		///Get a map of the raw energies.
 		ValueMap GetRawEn(bool nType);
