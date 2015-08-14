@@ -440,6 +440,10 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 		else std::cerr << ".\n";
 		return NULL;
 	}
+	if (detCh < 0) {
+		std::cerr << "ERROR: Somehow the mapping is corrupted!?\n";
+		return NULL;
+	}
 
 	det->SetRawValue(detCh, secondaryType, rawValue);
 
