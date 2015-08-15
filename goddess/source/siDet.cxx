@@ -87,7 +87,7 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 
 	//Assign raw value and compute calibrated value.
 	*enRaw = rawValue;
-	if (rawValue > threshold) {
+	if (enCal) {
 		*enCal = 0;
 		for (size_t power = 0; power < parEnCal->size(); power++)
 			*enCal += parEnCal->at(power) * pow(rawValue,power);
@@ -97,8 +97,13 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 
 float siDet::GetCalEnergy(int contact, bool nType/*=false*/) {
 	if (!ValidContact(contact, nType)) return 0;
-	if (nType) return enCalN.at(contact);
-	return enCalP.at(contact);
+	ValueMap *enCal;
+	if (nType) enCal = &enCalN;
+	else enCal = & enCalP;
+
+	auto itr = enCal->find(contact);
+	if (itr != enCal->end()) return itr->second;
+	return 0;
 }
 int siDet::GetContactMult(bool nType/*=false*/) {
 	if (nType) return multN;
@@ -116,12 +121,12 @@ bool siDet::SetEnergyCalib(std::vector<float> par, int contact, bool nType/*=fal
 }
 
 bool siDet::SetThresholds(std::vector<int> thresholds, bool contactType/*=siDet::pType*/) {
-	if (!ValidContact(thresholds.size()-1,contactType)) {
-		std::cerr << "ERROR: Vector specified for thresholds was larger than number of contacts (" << thresholds.size() << ">" << GetNumChannels(contactType) << ")!\n";
+	if (thresholds.size() != (unsigned int)GetNumChannels(contactType)) {
+		std::cerr << "ERROR: Vector specified for thresholds was not the equal to the number of contacts (" << thresholds.size() << ">" << GetNumChannels(contactType) << ")!\n";
 		return false;
 	}
 	if (contactType == siDet::nType) threshN = thresholds;
-	threshP = thresholds;
+	else threshP = thresholds;
 	return true;
 }
 
