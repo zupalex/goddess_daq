@@ -121,7 +121,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				break;
 			}
 			liquidScints.push_back(new LiquidScint(desc));
-			if (IsInsertable(daqType,daqCh, detType, false)) {
+			if (IsInsertable(daqType,daqCh, liquidScints.back()->GetNumChannels(Detector::Primary))) {
 				chMap[std::make_pair(daqType,daqCh)] = std::make_pair(liquidScints.back(),false);
 			}
 		}
@@ -174,13 +174,13 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				break;
 			}
 			det->SetDetector(serialNum,sector,depth,upStream, pos_);
-			if (IsInsertable(pTypeDaqType, pTypeDaqCh,detType,false)) {
+			if (IsInsertable(pTypeDaqType, pTypeDaqCh,det->GetNumChannels(siDet::pType))) {
 				chMap[std::make_pair(pTypeDaqType,pTypeDaqCh)] = std::make_pair(det,false);
 			} 
 			else
 				std::cerr << "ERROR: Detector " << serialNum << " p-type will not be unpacked!\n";
 			if (det->GetNumChannels(siDet::nType)) {
-				if (IsInsertable(nTypeDaqType, nTypeDaqCh, detType,true)) {
+				if (IsInsertable(nTypeDaqType, nTypeDaqCh, det->GetNumChannels(siDet::nType))) {
 					chMap[std::make_pair(nTypeDaqType,nTypeDaqCh)] = std::make_pair(det,true);
 				}
 				else 
@@ -352,12 +352,12 @@ IonChamber *GoddessConfig::ReadIonChamberConfig(std::istringstream &lineStream) 
 	std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
 
 	IonChamber *ionChamber_ = new IonChamber(numAnode, numScint, numDE, numEres);
-	if (IsInsertable(anodeDaqType, anodeDaqCh, "ion", false))  {
+	if (IsInsertable(anodeDaqType, anodeDaqCh, ionChamber->GetNumChannels(Detector::Primary)))  {
 		chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber,false);
 	}
 	else
 		std::cerr << "ERROR: Ion chamber anodes will not be unpacked!\n";
-	if (IsInsertable(scintDaqType, scintDaqCh, "ion", true)) {
+	if (IsInsertable(scintDaqType, scintDaqCh, ionChamber->GetNumChannels(Detector::Secondary))) {
 		chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber,true);
 	}
 	else 
@@ -380,7 +380,7 @@ void GoddessConfig::ReadPosition(std::string filename) {
  * \param[in] type The type of detector to insert into the map.
  * \return True if there is no overlapping channels already loaded in the map.
  */
-bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, bool secondaryType) {
+bool GoddessConfig::IsInsertable(short daqType, int daqCh, int numDetCh) {
 	bool insertable = true;
 	std::pair<short, short> key = std::make_pair(daqType, daqCh);
 
@@ -390,21 +390,7 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, 
 		if (mapItr != chMap.end()) {
 			if (mapItr->first.first == daqType) {
 				//Get the number of channels needed for each detector.
-				int numCh = 1;
-				// front == p-type == 0
-				// if secondaryType == true, then we have a backside
-				if (secondaryType) {
-					if (detType == "superX3") numCh = 4;
-					else if (detType == "BB10") return false;
-					else if (detType == "QQQ5") numCh = 4;
-				} else {
-					if (detType == "superX3") numCh = 8;
-					else if (detType == "BB10") numCh = 8;
-					else if (detType == "QQQ5") numCh = 32;
-				}
-
-
-				if (daqCh + numCh > mapItr->first.second) {
+				if (daqCh + numDetCh > mapItr->first.second) {
 					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second.first);
 					if (siDet) 
 						std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " conflicts with detector " << siDet->GetSerialNum() << "\n";
@@ -419,19 +405,9 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, std::string detType, 
 		if (mapItr != chMap.begin()) {
 			--mapItr;
 			if (mapItr->first.first == daqType)  {
-				int numCh = 1;
-				std::string checkType = mapItr->second.first->IsA()->GetName();
-				// front == p-type == 0
-				// if secondaryType == true, then we have a backside
-				if (secondaryType) {
-					if (checkType == "superX3") numCh = 4;
-					else if (checkType == "BB10") return false;
-					else if (checkType == "QQQ5") numCh = 4;
-				} else {
-					if (checkType == "superX3") numCh = 8;
-					else if (checkType == "BB10") numCh = 8;
-					else if (checkType == "QQQ5") numCh = 32;
-				}
+				Detector *checkDet = mapItr->second.first;
+				bool checkSecondaryType = mapItr->second.second;
+				int numCh = checkDet->GetNumChannels(checkSecondaryType);
 
 				if (mapItr->first.second + numCh > daqCh) {
 					orrubaDet* siDet = dynamic_cast<orrubaDet*>(mapItr->second.first);

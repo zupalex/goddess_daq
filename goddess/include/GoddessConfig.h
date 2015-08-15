@@ -35,7 +35,7 @@ class GoddessConfig {
 		std::vector<LiquidScint*> liquidScints;
 		
 		///Check if this type of detector is insertable in the channel map at the specified postion.
-		bool IsInsertable(short daqType, int daqCh, std::string type, bool secondaryType);
+		bool IsInsertable(short daqType, int daqCh, int numDetCh);
 
 	public:
 		///Default constructor.
