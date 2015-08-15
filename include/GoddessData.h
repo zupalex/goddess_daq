@@ -99,10 +99,10 @@ class GoddessData {
 
 		// liquid scint
 		std::map<std::string,TH2F*> LiquidScint_PSD_E;
-		std::map<std::string,TH1F*> LiquidScint_tof;
-
-
-
+		std::map<std::string,TH1F*> LiquidScint_enRaw;
+		std::map<std::string,TH1F*> LiquidScint_psdRaw;
+		std::map<std::string,TH1F*> LiquidScint_tacRaw;
+		
 		TTree* tree;
 		std::vector<float> *gammaEnergies;
 		std::vector<float> *gammaAnalogTimeDiffs;
