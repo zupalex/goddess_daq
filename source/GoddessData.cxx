@@ -68,7 +68,6 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("barlUpConMult",barrelUpstreamContactMult);
 	tree->Branch("barlDownConMult",barrelDownstreamContactMult);
 
-
 	// ORRUBA histograms
 	f->cd("/hists");
 	TDirectory *dirOrruba = gDirectory->mkdir("orruba");
@@ -449,7 +448,6 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	
 	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
 	  std::string description = lsItr->first;
-	  std::cout << description << '\n';
 	  LiquidScint* liquidScintillator = lsItr->second;
 	  LiquidScint_PSD_E[description]->Fill(liquidScintillator->GetRawEnergy(),liquidScintillator->GetRawPSD());
 	  LiquidScint_enRaw[description]->Fill(liquidScintillator->GetRawEnergy());
