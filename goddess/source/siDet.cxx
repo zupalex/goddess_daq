@@ -70,7 +70,7 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 
 	//Get pointer to the raw an calibrated storage location.
 	float *enRaw = 0, *enCal = 0;
-	int threshold = 0;
+	unsigned int threshold = 0;
 	std::vector<float> *parEnCal;
 	if (nType) {
 		enRaw = &(enRawN[contact]);
@@ -88,8 +88,9 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 	//Assign raw value and compute calibrated value.
 	*enRaw = rawValue;
 	if (rawValue > threshold) {
+		*enCal = 0;
 		for (size_t power = 0; power < parEnCal->size(); power++)
-			*enCal += parEnCal->at(power) * pow(*enRaw,power);
+			*enCal += parEnCal->at(power) * pow(rawValue,power);
 	}
 }
 		
