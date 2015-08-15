@@ -54,6 +54,9 @@ class GoddessData {
 		TH2F* enRawD;
 		TH2F* enCalA;
 		TH2F* enCalD;
+		TH1F* analogMult;
+		TH1F* analogADCMult;
+		TH1F* digitalMult;
 
 		TH2F *endcapHitPatternUpstream;
 		TH2F *endcapHitPatternDownstream;
