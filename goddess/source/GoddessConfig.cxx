@@ -208,7 +208,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			std::string calType, subType;
 			int detChannel;
 			//If we don't understand this line we rewind the stream and let the first parsing section have a chance.
-			if (!(line_Stream >> calType >> subType >> detChannel)) {
+			if (!(line_Stream >> calType >> subType)) {
 				mapFile.seekg(prevPos);
 				lineCnt--;
 				break;
@@ -217,6 +217,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			//Determine the calibration type.
 			bool posCal = false;
 			bool timeCal = false;
+			bool thresh = false;
 			if (calType == "posCal") {
 				if (!(detType == "superX3" && subType == "resStrip") && !(detType == "ion" && subType == "scint")) {
 					std::cerr << " WARNING: Ignoring position calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum << "\n";
@@ -233,6 +234,9 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				}
 				timeCal = true;
 			}
+			else if (calType == "thresh") {
+				thresh = true;
+			}
 			else if (calType != "enCal") { 
 				mapFile.seekg(prevPos);
 				lineCnt--;
@@ -245,7 +249,6 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				if (subType != "scint" && subType != "anode") {
 					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
 					std::cerr << "  Valid options: anode, strip.\n";
-					prevPos = mapFile.tellg();
 					continue;
 				}
 			}
@@ -254,7 +257,27 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				else if (subType != "p" && subType != "resStrip") {
 					std::cerr << " ERROR: Unknown subtype '" << subType << "'!\n";
 					std::cerr << "  Valid options: p, n, resStrip.\n";
-					prevPos = mapFile.tellg();
+					continue;
+				}
+			}
+			
+			if (thresh) {
+				int threshold;
+				std::vector< int > thresholds;
+				while (line_Stream >> threshold) thresholds.push_back(threshold);
+				if (det) {
+					bool nType = false;
+					if (subType == "n") nType = true;
+					det->SetThresholds(thresholds,nType); 
+				}
+				else {
+					std::cerr << " WARNING: Threhsolds not implemented for non silicon detectors!\n";
+				}
+				continue;
+			}
+			else {
+				if (!(line_Stream >> detChannel)) {
+					std::cerr << " ERROR: No detector channel specified for calibration!\n";
 					continue;
 				}
 			}
