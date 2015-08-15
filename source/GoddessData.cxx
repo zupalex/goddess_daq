@@ -75,8 +75,6 @@ GoddessData::GoddessData(std::string configFilename)
 	dirOrruba->cd();
 	TDirectory *dirRaw = gDirectory->mkdir("raw");
 	dirRaw->cd();
-	TDirectory *dirLiquidScint = gDirectory->mkdir("LiquidScint");
-	dirLiquidScint->cd();
 	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
@@ -100,7 +98,8 @@ GoddessData::GoddessData(std::string configFilename)
 	InitGammaHists();
 
 	gDirectory->cd("/hists");
-
+	TDirectory *dirLiquidScint = gDirectory->mkdir("LiquidScint");
+	dirLiquidScint->cd();
 	InitLiquidScintHists();
 
 }
@@ -219,7 +218,10 @@ void GoddessData::InitLiquidScintHists() {
 	for (int iLiq=0;iLiq<nliquids;iLiq++) {
 		const char* name=liquids[iLiq]->GetDescription().c_str();
 		LiquidScint_PSD_E.emplace(name,new TH2F(Form("LiquidScint_PSD_E_%s",name),Form("Liquid Scintillator PSD vs E %s",name),512,0,4096,512,0,4096));
-		LiquidScint_tof.emplace(name,new TH1F(Form("LiquidScint_ToF_%s",name),Form("Liquid Scintillator ToF %s",name),512,-4096,4096));
+		LiquidScint_psdRaw.emplace(name,new TH1F(Form("LiquidScint_PSD_%s",name),Form("Liquid Scintillator PSD %s",name),512,0,4096));
+		LiquidScint_enRaw.emplace(name,new TH1F(Form("LiquidScint_E_%s",name),Form("Liquid Scintillator E %s",name),512,0,4096));
+		LiquidScint_tacRaw.emplace(name,new TH1F(Form("LiquidScint_TAC_%s",name),Form("Liquid Scintillator TAC %s",name),512,0,4096));
+
 	}
 }
 
@@ -446,8 +448,13 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	}
 	
 	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
-		//std::cout << ((LiquidScint*)lsItr)->GetDescription() << '\n';
-		
+	  std::string description = lsItr->first;
+	  std::cout << description << '\n';
+	  LiquidScint* liquidScintillator = lsItr->second;
+	  LiquidScint_PSD_E[description]->Fill(liquidScintillator->GetRawEnergy(),liquidScintillator->GetRawPSD());
+	  LiquidScint_enRaw[description]->Fill(liquidScintillator->GetRawEnergy());
+	  LiquidScint_psdRaw[description]->Fill(liquidScintillator->GetRawPSD());
+	  LiquidScint_tacRaw[description]->Fill(liquidScintillator->GetRawTAC());
 	}
 		
 
