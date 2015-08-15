@@ -132,6 +132,10 @@ class GoddessData {
 		bool analog;
 		bool digital;
 
+		std::vector<float> *energy;
+		float psd;
+		  float tac;
+
 };
 
 #endif

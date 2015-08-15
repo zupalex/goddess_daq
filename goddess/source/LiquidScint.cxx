@@ -2,12 +2,12 @@
 #include <iostream>
 
 LiquidScint::LiquidScint() {
-
+  Clear();
 }
 
 LiquidScint::LiquidScint(std::string desc) {
-	SetDescription(desc);
-
+  SetDescription(desc);
+  Clear();
 }
 
 LiquidScint::~LiquidScint() {
@@ -16,11 +16,20 @@ LiquidScint::~LiquidScint() {
 
 void LiquidScint::SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue) {
   
-    if(detectorChannel == 0) enRaw = rawValue;
-    if(detectorChannel == 1) psdRaw = rawValue;
-    if(detectorChannel == 2) tacRaw = rawValue;
+  if(secondaryType){
+    std::cerr << " No secondary type for Liquid Scint "<< std::endl; 
+    return;
+  }
+  
+  if(detectorChannel == 0) enRaw = rawValue;
+  else if(detectorChannel == 1) psdRaw = rawValue;
+  else if(detectorChannel == 2){
+    tacRaw = rawValue;
+    //printf(" %s: %d \n",description.c_str(),rawValue);
+  }
+         
+    
 
-    if(secondaryType) std::cerr << " No secondary type for Liquid Scint "<< std::endl; 
 }
 
 void LiquidScint::Clear() {

@@ -4,7 +4,7 @@
 # are now specified on the command line of GEBSort
 # all other parameters are specified in this chat file
 
-DumpEvery 3000000000
+DumpEvery 30
 
 #-------------------------------------------
 # basic sort parameters 

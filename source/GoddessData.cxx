@@ -278,6 +278,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				posID = "ion";
 				ionChamber = ionChamber_;
 			}
+
 			firedDets[posID] = det;
 		}
 	}
@@ -462,7 +463,11 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	  LiquidScint_PSD_E[description]->Fill(liquidScintillator->GetRawEnergy(),liquidScintillator->GetRawPSD());
 	  LiquidScint_enRaw[description]->Fill(liquidScintillator->GetRawEnergy());
 	  LiquidScint_psdRaw[description]->Fill(liquidScintillator->GetRawPSD());
-	  LiquidScint_tacRaw[description]->Fill(liquidScintillator->GetRawTAC());
+	  if(liquidScintillator->GetRawTAC() != 0){
+	    LiquidScint_tacRaw[description]->Fill(liquidScintillator->GetRawTAC());
+
+	    printf("%s Raw Tac = %f ....Size = %d\n",description.c_str(),liquidScintillator->GetRawTAC(), liquidScints.size());
+	  }
 	}
 		
 
