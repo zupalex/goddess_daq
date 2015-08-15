@@ -465,8 +465,6 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	  LiquidScint_psdRaw[description]->Fill(liquidScintillator->GetRawPSD());
 	  if(liquidScintillator->GetRawTAC() != 0){
 	    LiquidScint_tacRaw[description]->Fill(liquidScintillator->GetRawTAC());
-
-	    printf("%s Raw Tac = %f ....Size = %d\n",description.c_str(),liquidScintillator->GetRawTAC(), liquidScints.size());
 	  }
 	}
 		
