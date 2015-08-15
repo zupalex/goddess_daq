@@ -265,11 +265,14 @@ void GoddessConfig::ReadConfig(std::string filename) {
 				int threshold;
 				std::vector< int > thresholds;
 				while (line_Stream >> threshold) thresholds.push_back(threshold);
-				if (det) {
-					bool nType = false;
-					if (subType == "n") nType = true;
-					det->SetThresholds(thresholds,nType); 
+				if (secondaryType) std::cout << "Setting n-type thresholds to:";
+				else std::cout << "Setting p-type thresholds to:";
+				for (size_t threshNum=0;threshNum < thresholds.size();threshNum++) {
+					if (threshNum % 8 == 0) std::cout << "\n  ";
+					std::cout << thresholds.at(threshNum) << " ";
 				}
+				std::cout << "\n";
+				if (det) det->SetThresholds(thresholds,secondaryType); 
 				else {
 					std::cerr << " WARNING: Threhsolds not implemented for non silicon detectors!\n";
 				}
