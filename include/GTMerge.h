@@ -61,8 +61,8 @@
 /*---------------*/
 
 typedef struct AGODEVENT {
-	std::vector<short> channels;
-	std::vector<short> values;
+	std::vector<unsigned short> channels;
+	std::vector<unsigned short> values;
 	unsigned long long timestamp;
 } AGODEVENT;
 
