@@ -20,6 +20,10 @@ class BB10 : public orrubaDet {
 		Float_t binsP[9]; //!
 		///The bin edges along the phi axis in radians.	
 		Float_t binsAzimuthal[9]; //!
+		///The bin centers along the p-type strips in mm.	
+		Float_t binsPCenter[8]; //!
+		///The bin centers along the phi axis in radians.	
+		Float_t binsAzimuthalCenter[8]; //!
 
 		///Energy of the p type side.
 		Float_t enPtype;
@@ -47,6 +51,10 @@ class BB10 : public orrubaDet {
 		float* GetPtypeBins() {return binsP;};
 		///Return the bins along the azimuthal direction.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
+		///Return the bins centers of the dimension along the p type strips.
+		float* GetPtypeBins() {return binsPCenter;};
+		///Return the bin centers along the azimuthal direction.
+		float* GetAzimuthalBins() {return binsAzimuthalCenter;};
 
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
