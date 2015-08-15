@@ -78,6 +78,9 @@ GoddessData::GoddessData(std::string configFilename)
 	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
 	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
+	analogMult = new TH1F("analogMult", "Number of triggers in the analog system;Multiplicty;Counts / Multiplicty", 5,0,5);
+	analogADCMult = new TH1F("analogADCMult", "Number of ADCs readout per trigger;Multiplicty;Counts / Multiplicty", 400,0,400);
+	digitalMult = new TH1F("digitalMult", "Number of triggers in the digital system;Multiplicty;Counts / Multiplicty", 400,0,400);
 
 	dirOrruba->cd();
 	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
@@ -237,10 +240,12 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	//Map of channels to suppress, This occurs if they were not found in the map.
 	static std::map<std::pair<short, short>, bool> suppressCh;
 
+	analogMult->Fill(agodEvts->size());
 	// getting data from analog events
 	for (size_t i=0;i<agodEvts->size();i++) {
 		AGODEVENT agodEvt = agodEvts->at(i);
 
+		analogADCMult->Fill(agodEvt.values.size());
 		for (size_t j=0;j<agodEvt.values.size();j++) {
 			short value = agodEvt.values[j];
 			short channel = agodEvt.channels[j];
@@ -283,6 +288,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		}
 	}
 
+	digitalMult->Fill(dgodEvts->size());
 	// getting data from digital events	
 	for (size_t i=0;i<dgodEvts->size();i++) {
 		DFMAEVENT dgodEvt = dgodEvts->at(i);
@@ -362,8 +368,8 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 
 		if (detType == "QQQ5") {
 			//---Multiplicty---
-			QQQFrontMult[detPosID]->Fill(frontRawEn.size());
-			QQQBackMult[detPosID]->Fill(backRawEn.size());
+			QQQFrontMult[detPosID]->Fill(frontCalEn.size());
+			QQQBackMult[detPosID]->Fill(backCalEn.size());
 
 			//---Energy---
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
