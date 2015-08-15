@@ -58,6 +58,8 @@ class GoddessData {
 		TH2F *endcapHitPatternUpstream;
 		TH2F *endcapHitPatternDownstream;
 
+		TH2F *CsX3HitPattern;
+
 		// QQQ5s
 		std::map<std::string,TH2F*> QQQenRawFront;
 		std::map<std::string,TH2F*> QQQenCalFront;

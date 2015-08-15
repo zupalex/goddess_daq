@@ -102,7 +102,7 @@ class superX3 : public orrubaDet {
 		///Return the bins boundaries along the z (beam) direction in mm.
 		float* GetZbins() {return binsZ;};
 		///Returns the bin centers along the z (beam) direction in mm.
-		float* GetZCenterBins() {return binsNCenter;};
+		float* GetZCenterBins() {return binsZCenter;};
 		///Return the bins along the azimuthal direction in degrees.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
 		///Return the bins center along the azimuthal direction in degrees.
