@@ -278,6 +278,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				posID = "ion";
 				ionChamber = ionChamber_;
 			}
+			firedDets[posID] = det;
 		}
 	}
 
