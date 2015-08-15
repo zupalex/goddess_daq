@@ -55,7 +55,7 @@ void BB10::ConstructBins () {
 		binsAzimuthal[strip] = TMath::RadToDeg() * pStripEdgePos[strip].Phi();
 	}
 
-	for (unsigned int strip=-;strip<8;strip++){
+	for (unsigned int strip=0;strip<8;strip++){
 		binsPCenter[strip] = (binsP[strip] + binsP[strip+1]) / 2;
 		binsAzimuthalCenter[strip] = (binsAzimuthal[strip] + binsAzimuthal[strip+1]) / 2;
 	}

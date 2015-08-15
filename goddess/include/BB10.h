@@ -52,9 +52,9 @@ class BB10 : public orrubaDet {
 		///Return the bins along the azimuthal direction.
 		float* GetAzimuthalBins() {return binsAzimuthal;};
 		///Return the bins centers of the dimension along the p type strips.
-		float* GetPtypeBins() {return binsPCenter;};
+		float* GetPtypeBinCenters() {return binsPCenter;};
 		///Return the bin centers along the azimuthal direction.
-		float* GetAzimuthalBins() {return binsAzimuthalCenter;};
+		float* GetAzimuthalBinCenters() {return binsAzimuthalCenter;};
 
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
