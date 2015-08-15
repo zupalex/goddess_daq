@@ -381,8 +381,8 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			TH2F *endcapHitPattern;
 			if (det->GetUpStream()) endcapHitPattern = endcapHitPatternUpstream;
 			else endcapHitPattern = endcapHitPatternDownstream;
-			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
-				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
+			for (auto itrFront=frontCalEn.begin();itrFront!=frontCalEn.end();++itrFront) {
+				for (auto itrBack=backCalEn.begin();itrBack!=backCalEn.end();++itrBack) {
 					QQQHitPat[detPosID]->Fill(itrFront->first,itrBack->first);
 					float angle = ((QQQ5*)det)->GetAzimuthalBins()[itrBack->first] * TMath::DegToRad() + TMath::Pi()/16;
 					endcapHitPattern->Fill(angle,itrFront->first);
