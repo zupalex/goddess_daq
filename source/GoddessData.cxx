@@ -85,6 +85,7 @@ GoddessData::GoddessData(std::string configFilename)
 	dirOrruba->cd();
 	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
 	endcapHitPatternDownstream = new TH2F("hitEndcapDown","Downstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
+	CsX3HitPattern = new TH2F("CsX3Hit","Cumulative SuperX3 Hit Pattern",8,-80,80,48,0,360);
 
 
 	dirOrruba->cd();
@@ -207,7 +208,6 @@ void GoddessData::InitSuperX3Hists() {
 
 		sX3backMult.emplace(name,new TH1F(Form("sX3BackMult_%s",name),
 			Form("super X3 %s multiplicity;multiplicity",name),20,0,20));
-
 
 	}
 
@@ -429,9 +429,19 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			// hit pattern
 			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
 				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
-					sX3HitPat[detPosID]->Fill(itrFront->first,itrBack->first);	
+					sX3HitPat[detPosID]->Fill(itrFront->first,itrBack->first);
+					float angle2 = ((superX3*)det)->GetAzimuthalCenterBins()[itrFront->first];
+					float zbin = ((superX3*)det)->GetZCenterBins()[itrBack->first];
+					if (angle2 < 0){
+					CsX3HitPattern->Fill(zbin,angle2+360);
+					}
+					else{
+					CsX3HitPattern->Fill(zbin,angle2);
+					}
 				}
 			}
+			
+			
 		}
 
 		for (size_t i=0;i<dgsEvts->size();i++) {
@@ -442,7 +452,6 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			}
 		}
 
-		
 	}
 	
 	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
