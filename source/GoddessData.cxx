@@ -160,7 +160,7 @@ void GoddessData::InitSuperX3Hists() {
 
 	TClonesArray *sx3s = config->GetSuperX3s();
 	int nsx3s = sx3s->GetEntries();
-	std::cout << nsx3s << "\n";
+
 	for (int i=0;i< nsx3s;i++) {
 		const char* name = ((std::string)((superX3*)sx3s->At(i))->GetPosID()).c_str();
 		const char* dir=Form("%s",name);
@@ -169,17 +169,17 @@ void GoddessData::InitSuperX3Hists() {
 		dirDet->cd();
 
 		gDirectory->mkdir("en")->cd();
-		sX3stripEnRaw.emplace(name, new TH2F(Form("sX3stripEnRaw%s",name),
-			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 8, 0,8));
+		sX3stripEnRaw[name] = new TH2F(Form("sX3stripEnRaw%s",name),
+			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 8, 0,8);
 
-		sX3stripEnCal.emplace(name, new TH2F(Form("sX3stripEnCal%s",name),
-			Form("SuperX3 strip cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 8, 0,8));
+		sX3stripEnCal[name] = new TH2F(Form("sX3stripEnCal%s",name),
+			Form("SuperX3 strip cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 8, 0,8);
 
-		sX3backEnRaw.emplace(name, new TH2F(Form("sX3backEnRaw%s",name),
-			Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 4, 0,4));
+		sX3backEnRaw[name] = new TH2F(Form("sX3backEnRaw%s",name),
+			Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name),512,0,4096, 4, 0,4);
 
-		sX3backEnCal.emplace(name, new TH2F(Form("sX3backEnCal%s",name),
-			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 4, 0,4));
+		sX3backEnCal[name] = new TH2F(Form("sX3backEnCal%s",name),
+			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name),512,0,4096, 4, 0,4);
 
 		dirDet->cd();
 		gDirectory->mkdir("pos")->cd();
@@ -227,10 +227,15 @@ void GoddessData::InitLiquidScintHists() {
 
 	for (int iLiq=0;iLiq<nliquids;iLiq++) {
 		const char* name=liquids[iLiq]->GetDescription().c_str();
-		LiquidScint_PSD_E.emplace(name,new TH2F(Form("LiquidScint_PSD_E_%s",name),Form("Liquid Scintillator PSD vs E %s",name),512,0,4096,512,0,4096));
-		LiquidScint_psdRaw.emplace(name,new TH1F(Form("LiquidScint_PSD_%s",name),Form("Liquid Scintillator PSD %s",name),512,0,4096));
-		LiquidScint_enRaw.emplace(name,new TH1F(Form("LiquidScint_E_%s",name),Form("Liquid Scintillator E %s",name),512,0,4096));
-		LiquidScint_tacRaw.emplace(name,new TH1F(Form("LiquidScint_TAC_%s",name),Form("Liquid Scintillator TAC %s",name),512,0,4096));
+		LiquidScint_PSD_E[name] = new TH2F(Form("LiquidScint_PSD_E_%s",name),Form("Liquid Scintillator PSD vs E %s",name),512,0,4096,512,0,4096);
+		LiquidScint_psdRaw[name] = new TH1F(Form("LiquidScint_PSD_%s",name),Form("Liquid Scintillator PSD %s",name),4096,0,4096);
+		LiquidScint_enRaw[name] = new TH1F(Form("LiquidScint_E_%s",name),Form("Liquid Scintillator E %s",name),4096,0,4096);
+		LiquidScint_tacRaw[name] = new TH1F(Form("LiquidScint_TAC_%s",name),Form("Liquid Scintillator TAC %s",name),4096,0,4096);
+		hLiqRawEnNeuGate[name] = new TH1F(Form("hLiqRawEnNeuGate_%s",name),Form("Liquid Scint Raw E, Neutron Gated %s;Energy [ch]",name),4096,0,4096);
+		hLiqPSDNeuGate[name] = new TH1F(Form("hLiqPSDNeuGate_%s",name),Form("Liquid Scint PSD, Neutron Gated %s;PSD [ch]",name),4096,0,4096);
+		hLiqTACNeuGate[name] = new TH1F(Form("hLiqTACNeuGate_%s",name),Form("Liquid Scint TAC, Neutron Gated %s;TAC [ch]",name),4096,0,4096);
+		hGamNeuGate[name] = new TH1F(Form("hGamNeuGate_%s",name),Form("Gammas, Neutron Gated %s;Energy [ch]",name),1000,0,4000);
+		hGamVsLiqNeuGate[name] = new TH2F(Form("hGamVsLiqNeuGate_%s",name),Form("Gammas vs Liquid E, Neutron Gated %s;Energy [ch]",name),512,0,4096,500,0,4000);
 
 	}
 }
@@ -491,18 +496,33 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	
 	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
 	  std::string description = lsItr->first;
-	  LiquidScint* liquidScintillator = lsItr->second;
-	  LiquidScint_PSD_E[description]->Fill(liquidScintillator->GetRawEnergy(),liquidScintillator->GetRawPSD());
-	  LiquidScint_enRaw[description]->Fill(liquidScintillator->GetRawEnergy());
-	  LiquidScint_psdRaw[description]->Fill(liquidScintillator->GetRawPSD());
-	  if(liquidScintillator->GetRawTAC() != 0){
-	    LiquidScint_tacRaw[description]->Fill(liquidScintillator->GetRawTAC());
+	  LiquidScint* liquidScint = lsItr->second;
+
+		float rawEnergy = liquidScint->GetRawEnergy();
+		float psd_ = liquidScint->GetRawPSD();
+		float tac_ = liquidScint->GetRawTAC();
+
+	  LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
+	  LiquidScint_enRaw[description]->Fill(rawEnergy);
+	  LiquidScint_psdRaw[description]->Fill(psd_);
+	  if(tac_ != 0){
+	    LiquidScint_tacRaw[description]->Fill(tac_);
+	  }
+
+	  //Rough neutron gates.
+	  if ((description == "90deg" && psd_ > 350 && tac_ < 660) || (description == "downstream" && psd_ > 725 && tac_ > 2141)) {
+		  hLiqRawEnNeuGate[description]->Fill(rawEnergy);
+		  hLiqPSDNeuGate[description]->Fill(psd_);
+		  hLiqTACNeuGate[description]->Fill(tac_);
+		  for (size_t i=0;i<dgsEvts->size();i++) {
+			  hGamNeuGate[description]->Fill(dgsEvts->at(i).ehi);
+			  hGamVsLiqNeuGate[description]->Fill(rawEnergy,dgsEvts->at(i).ehi);
+		  }
 	  }
 	}
 
 	detMult->Fill(siDets.size());
 	hDetPosMult->Fill(numSectorHits.size());	
-
 }
 
 void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {

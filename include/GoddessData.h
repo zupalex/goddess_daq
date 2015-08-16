@@ -108,6 +108,11 @@ class GoddessData {
 		std::map<std::string,TH1F*> LiquidScint_enRaw;
 		std::map<std::string,TH1F*> LiquidScint_psdRaw;
 		std::map<std::string,TH1F*> LiquidScint_tacRaw;
+		std::map<std::string,TH1F*> hLiqPSDNeuGate;
+		std::map<std::string,TH1F*> hLiqRawEnNeuGate;
+		std::map<std::string,TH1F*> hLiqTACNeuGate;
+		std::map<std::string,TH1F*> hGamNeuGate;
+		std::map<std::string,TH2F*> hGamVsLiqNeuGate;
 		
 		TTree* tree;
 		TTree* corr;
