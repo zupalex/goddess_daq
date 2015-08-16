@@ -61,7 +61,9 @@ void superX3::ConstructBins () {
 		//Z Position of each nStrip edge
 		binsZ[strip] = nStripEdgePos[strip].Z();
 		//Azimuthal angle 
-		binsAzimuthal[strip] = TMath::RadToDeg() * pStripEdgePos[strip].Phi();
+		binsAzimuthal[strip] = pStripEdgePos[strip].Phi();
+		if (binsAzimuthal[strip] < 0) binsAzimuthal[strip] += TMath::TwoPi();
+		binsAzimuthal[strip] *= TMath::RadToDeg();
 		//Polar angle is computed in reverse as the higher strips are at smaller
 		//	angles and the list must be in ascending order.
 		binsPolar[4-strip] = TMath::RadToDeg() * nStripEdgePos[strip].Theta();
