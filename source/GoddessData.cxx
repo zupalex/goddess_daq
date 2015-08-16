@@ -68,6 +68,9 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("barlUpConMult",barrelUpstreamContactMult);
 	tree->Branch("barlDownConMult",barrelDownstreamContactMult);
 
+	tree=new TTree("god","GODDESS Tree");
+	corr=new TTree("corr","Correlated Particle Gamma");
+
 	// ORRUBA histograms
 	f->cd("/hists");
 	TDirectory *dirOrruba = gDirectory->mkdir("orruba");
@@ -81,11 +84,13 @@ GoddessData::GoddessData(std::string configFilename)
 	analogMult = new TH1F("analogMult", "Number of triggers in the analog system;Multiplicty;Counts / Multiplicty", 5,0,5);
 	analogADCMult = new TH1F("analogADCMult", "Number of ADCs readout per trigger;Multiplicty;Counts / Multiplicty", 400,0,400);
 	digitalMult = new TH1F("digitalMult", "Number of triggers in the digital system;Multiplicty;Counts / Multiplicty", 400,0,400);
+	hDetPosMult = new TH1F("detPosMult", "Number of sectors hit in an event;Sector Multiplicity;Counts / Multiplicity", 32,0,32);
+	detMult = new TH1F("detMult", "Number of detectors hit in an event; Detector Multiplicity;Counts / Multiplicty",48,0,48);
 
 	dirOrruba->cd();
 	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
 	endcapHitPatternDownstream = new TH2F("hitEndcapDown","Downstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
-	CsX3HitPattern = new TH2F("CsX3Hit","Cumulative SuperX3 Hit Pattern",8,-80,80,48,0,360);
+	sX3HitPattern = new TH2F("sX3HitPattern","Cumulative SuperX3 Hit Pattern",8,-80,80,48,0,360);
 
 
 	dirOrruba->cd();
@@ -180,6 +185,7 @@ void GoddessData::InitSuperX3Hists() {
 		gDirectory->mkdir("pos")->cd();
 
 		sX3nearFar[name] = new TH2F*[4];
+		sX3nearFarCal[name] = new TH2F*[4];
 		sX3posRaw_enRaw[name] = new TH2F*[4];
 		sX3posRaw_enCal[name] = new TH2F*[4];
 		sX3posCal_enCal[name] = new TH2F*[4];
@@ -196,6 +202,8 @@ void GoddessData::InitSuperX3Hists() {
 
 			sX3nearFar[name][strip] = new TH2F(Form("sX3nearFar_%s_%i",name,strip),
 				Form("sX3 near strip vs far strip %s %i", name,strip), 512,0,4096,512,0,4096);
+			sX3nearFarCal[name][strip] = new TH2F(Form("sX3nearFarCal_%s_%i",name,strip),
+				Form("sX3 near strip vs far calibrated strip %s %i", name,strip), 512,0,4096,512,0,4096);
 		}
 
 		dirDet->cd();
@@ -353,12 +361,14 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 }
 
 void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
+	std::map<std::string, int> numSectorHits;
+
 	// loop over fired detectors
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
 		orrubaDet* det = detItr->second;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
-		unsigned short sector = det->GetSector();
+		//unsigned short sector = det->GetSector();
 
 		// front=false (p-type = (!n-type))
 		siDet::ValueMap frontRawEn = det->GetRawEn(siDet::pType);
@@ -367,19 +377,28 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		siDet::ValueMap backCalEn = det->GetCalEn(siDet::nType);
 
 		if (detType == "QQQ5") {
+			//---Raw Energy---
+			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
+				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
+			}
+			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
+				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
+			}
+
+			//Lets ignore the hits with all strips below threhsold.
+			if (det->GetContactMult() == 0) {
+				continue;
+				det->Clear();
+				siDets.erase(detItr);
+			}
+
 			//---Multiplicty---
 			QQQFrontMult[detPosID]->Fill(frontCalEn.size());
 			QQQBackMult[detPosID]->Fill(backCalEn.size());
 
-			//---Energy---
-			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
-				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
-			}
+			//---Cal Energy---
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				QQQenCalFront[detPosID]->Fill(itr->second, itr->first);
-			}
-			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
-				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
 			}
 			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
 				QQQenCalBack[detPosID]->Fill(itr->second, itr->first);
@@ -401,10 +420,15 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		if (detType == "superX3") {
 			superX3 *sx3= (superX3*) det;
 
-			sX3frontMult[detPosID]->Fill(frontRawEn.size());
+			//---Raw Energy---
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 				sX3stripEnRaw[detPosID]->Fill(itr->second, itr->first);
 			}
+			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
+				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
+			}
+
+			//---Raw Positions---
 			//for loop over 8 contacts/4 strips
 			for (int i=0;i<4;i++) {
 				if ((frontRawEn.find(2*i)!=frontRawEn.end()) && (frontRawEn.find(2*i+1)!=frontRawEn.end())) {
@@ -412,45 +436,43 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 					sX3nearFar[detPosID][i]->Fill(frontRawEn[2*i], frontRawEn[2*i+1]);
 				}
 			}
+			//Lets ignore the hits with all strips below threhsold.
+			if (det->GetContactMult() == 0) {
+				continue;
+				det->Clear();
+				siDets.erase(detItr);
+			}
 
+			sX3frontMult[detPosID]->Fill(frontCalEn.size());
+			sX3backMult[detPosID]->Fill(backCalEn.size());
 			
+			//---Cal Energy---
 			for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
 				sX3stripEnCal[detPosID]->Fill(itr->second, itr->first);
 			}
+			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
+				sX3backEnCal[detPosID]->Fill(itr->second,itr->first);
+			}
+
 			//for loop over 8 contacts/4 strips
 			for (int i=0;i<4;i++) {
 				if ((frontCalEn.find(2*i)!=frontCalEn.end()) && (frontCalEn.find(2*i+1)!=frontCalEn.end())) {
 					sX3posRaw_enCal[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontCalEn[2*i]+frontCalEn[2*i+1]);
 					sX3posCal_enCal[detPosID][i]->Fill(sx3->GetStripPosCal()[i],frontCalEn[2*i]+frontCalEn[2*i+1]);
-					sX3nearFar[detPosID][i]->Fill(frontCalEn[2*i], frontCalEn[2*i+1]);
+					sX3nearFarCal[detPosID][i]->Fill(frontCalEn[2*i], frontCalEn[2*i+1]);
 				}
 			}
 
-			sX3backMult[detPosID]->Fill(backRawEn.size());
-			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
-				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
-			}
-
-			for (auto itr=backCalEn.begin(); itr!=backCalEn.end();++itr) {
-				sX3backEnCal[detPosID]->Fill(itr->second,itr->first);
-			}
-
+			numSectorHits[detPosID]++;
 			// hit pattern
-			for (auto itrFront=frontRawEn.begin();itrFront!=frontRawEn.end();++itrFront) {
-				for (auto itrBack=backRawEn.begin();itrBack!=backRawEn.end();++itrBack) {
+			for (auto itrFront=frontCalEn.begin();itrFront!=frontCalEn.end();++itrFront) {
+				for (auto itrBack=backCalEn.begin();itrBack!=backCalEn.end();++itrBack) {
 					sX3HitPat[detPosID]->Fill(itrFront->first,itrBack->first);
-					float angle2 = ((superX3*)det)->GetAzimuthalCenterBins()[itrFront->first];
-					float zbin = ((superX3*)det)->GetZCenterBins()[itrBack->first];
-					if (angle2 < 0){
-					CsX3HitPattern->Fill(zbin,angle2+360);
-					}
-					else{
-					CsX3HitPattern->Fill(zbin,angle2);
-					}
+					float angle = ((superX3*)det)->GetAzimuthalCenterBins()[itrFront->first];
+					float zPos = ((superX3*)det)->GetZCenterBins()[itrBack->first];
+					sX3HitPattern->Fill(zPos,angle);
 				}
 			}
-			
-			
 		}
 
 		for (size_t i=0;i<dgsEvts->size();i++) {
@@ -473,7 +495,9 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	    LiquidScint_tacRaw[description]->Fill(liquidScintillator->GetRawTAC());
 	  }
 	}
-		
+
+	detMult->Fill(siDets.size());
+	hDetPosMult->Fill(numSectorHits.size());	
 
 }
 

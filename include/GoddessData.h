@@ -57,11 +57,13 @@ class GoddessData {
 		TH1F* analogMult;
 		TH1F* analogADCMult;
 		TH1F* digitalMult;
+		TH1F* detMult;
+		TH1F* hDetPosMult;
 
 		TH2F *endcapHitPatternUpstream;
 		TH2F *endcapHitPatternDownstream;
 
-		TH2F *CsX3HitPattern;
+		TH2F *sX3HitPattern;
 
 		// QQQ5s
 		std::map<std::string,TH2F*> QQQenRawFront;
@@ -85,6 +87,7 @@ class GoddessData {
 		std::map<std::string,TH1F*> sX3frontMult;
 		std::map<std::string,TH1F*> sX3backMult;
 		std::map<std::string,TH2F**> sX3nearFar;
+		std::map<std::string,TH2F**> sX3nearFarCal;
 		std::map<std::string,TH2F**> sX3posRaw_enRaw;
 		std::map<std::string,TH2F**> sX3posRaw_enCal;
 		std::map<std::string,TH2F**> sX3posCal_enCal;
@@ -107,6 +110,7 @@ class GoddessData {
 		std::map<std::string,TH1F*> LiquidScint_tacRaw;
 		
 		TTree* tree;
+		TTree* corr;
 		std::vector<float> *gammaEnergies;
 		std::vector<float> *gammaAnalogTimeDiffs;
 		std::vector<float> *gammaDigitalTimeDiffs;
