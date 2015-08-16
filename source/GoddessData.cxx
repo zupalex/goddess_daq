@@ -90,7 +90,7 @@ GoddessData::GoddessData(std::string configFilename)
 	dirOrruba->cd();
 	endcapHitPatternUpstream = new TH2F("hitEndcapUp","Upstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
 	endcapHitPatternDownstream = new TH2F("hitEndcapDown","Downstream Endcap Hit Pattern",16,0,TMath::TwoPi(),32,0,32);
-	sX3HitPattern = new TH2F("sX3HitPattern","Cumulative SuperX3 Hit Pattern",8,-80,80,48,0,360);
+	sX3HitPattern = new TH2F("sX3HitPattern","Cumulative SuperX3 Hit Pattern;Azimuthal Angle [deg];Z Position [mm]",48,0,360,8,-80,80);
 
 
 	dirOrruba->cd();
@@ -474,7 +474,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 					sX3HitPat[detPosID]->Fill(itrFront->first,itrBack->first);
 					float angle = ((superX3*)det)->GetAzimuthalCenterBins()[itrFront->first];
 					float zPos = ((superX3*)det)->GetZCenterBins()[itrBack->first];
-					sX3HitPattern->Fill(zPos,angle);
+					sX3HitPattern->Fill(angle,zPos);
 				}
 			}
 		}
