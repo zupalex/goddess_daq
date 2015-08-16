@@ -16,6 +16,7 @@ void PrintPlots(std::string outputDir, int num){
   TH2F* agod_energy = (TH2F*)curr->Get("hists/agod/agod_en");
   TH2F* dtg_analog_god = (TH2F*)curr->Get("hists/agod/dTg_agod");
  
+  TH2F* dgs_ehi = (TH2F*)curr->Get("hists/dgs/EhiRaw");
 
   TCanvas* c = new TCanvas(Form("GODDESS_RUN%i",num),Form("GODDESS_RUN%i",num),800,800);
   c->Divide(2,2);
@@ -32,7 +33,14 @@ void PrintPlots(std::string outputDir, int num){
   gPad->SetLogz();
   dtg_analog_god->Draw("colz");
 
-  c->Print(Form("%s/Plots_%i.pdf",outputDir.c_str(),num));
+  c->Print(Form("Plots_run%i.pdf(",outputDir.c_str(),num));
+
+  c->Clear();
+  c->Divide(1,1);
+  gPad->SetLogz();
+  dgs_ehi->Draw("colz");
+
+  c->Print(Form("Plots_run%i.pdf)",outputDir.c_str(),num));
 
 
 }
