@@ -105,9 +105,12 @@ float siDet::GetCalEnergy(int contact, bool nType/*=false*/) {
 	if (itr != enCal->end()) return itr->second;
 	return 0;
 }
-int siDet::GetContactMult(bool nType/*=false*/) {
-	if (nType) return multN;
-	return multP;
+int siDet::GetContactMult() {
+	return enCalP.size() + enCalN.size();
+}
+int siDet::GetContactMult(bool contactType) {
+	if (contactType == siDet::nType) return enCalN.size();
+	return enCalP.size();
 }
 
 /*

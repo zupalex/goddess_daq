@@ -29,11 +29,6 @@ class siDet : public Detector {
 		///Vector of calibrated energies for n type contacts.
 		ValueMap enCalN;
 
-		///Multiplicity of p type contacts.
-		unsigned int multP;
-		///Multiplicity of n type contacts.
-		unsigned int multN;
-
 		///The calibration parameters for p type contacts
 		std::vector<std::vector<float>> parEnCalP; //!
 		///The calibration parameters for n type contacts
@@ -64,8 +59,10 @@ class siDet : public Detector {
 
 		///Get the calibrated energy of the contact specified.
 		float GetCalEnergy(int contact, bool nType = false);
-		///Return the number of fired contacts.
-		int GetContactMult(bool nType = false);
+		///Return the total number of fired contacts above theshold.
+		int GetContactMult();
+		///Return the number of fired contacts above threhsold for the specified type.
+		int GetContactMult(bool contactType);
 
 		///Return true if the contact energy was set.
 		bool ContactHit(int contact, bool nType);
