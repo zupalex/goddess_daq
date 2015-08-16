@@ -44,15 +44,18 @@ if [ $? != 0 ]; then
 	warn=1
 fi
 
-#if [ ! -e $DIR/run$RUN.ldf ] || [ -e /media/4844678136/run$RUN.ldf ]; then 
-	printf "${BLUE}Copying LDF files${RESET}\n"
-	if [ ! -e /media/4844678136/run$RUN.ldf ] && [ ! -e $DIR/run$RUN.ldf ]; then
-		printf "${YELLOW}WARNING:${RESET} ORNL ldf file not found on memory stick!\n"
+printf "${BLUE}Copying LDF files${RESET}\n"
+	
+if [ -e /media/4844678136/run$RUN.ldf ]; then
+	rsync -ahP --chmod=a-wx /media/4844678136/run$RUN.ldf $DIR/
+	if [ $? != 0 ]; then
+		printf "${YELLOW}WARNING:${RESET} No ORNL ldf run file found!\n"
 		warn=1
-	else 
-		rsync -ahP --chmod=a-wx /media/4844678136/run$RUN.ldf $DIR/
 	fi
-#fi
+elif [ ! -e $DIR/run$RUN.ldf ]; then
+	printf "${YELLOW}WARNING:${RESET} ORNL ldf file not found on memory stick!\n"
+	warn=1
+fi
 
 if [ ${warn} != 1 ]; then
 	printf "${GREEN}Completed${RESET}. Have a nice day.\n"
