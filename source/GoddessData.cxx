@@ -431,9 +431,11 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			//---Raw Positions---
 			//for loop over 8 contacts/4 strips
 			for (int i=0;i<4;i++) {
-				if ((frontRawEn.find(2*i)!=frontRawEn.end()) && (frontRawEn.find(2*i+1)!=frontRawEn.end())) {
-					sX3posRaw_enRaw[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontRawEn[2*i]+frontRawEn[2*i+1]);
-					sX3nearFar[detPosID][i]->Fill(frontRawEn[2*i], frontRawEn[2*i+1]);
+				unsigned short near = sx3->GetNearContact(i);
+				unsigned short far = sx3->GetFarContact(i);
+				if ((frontRawEn.find(near)!=frontRawEn.end()) && (frontRawEn.find(far)!=frontRawEn.end())) {
+					sX3posRaw_enRaw[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontRawEn[near] + frontRawEn[near]);
+					sX3nearFar[detPosID][i]->Fill(frontRawEn[far], frontRawEn[near]);
 				}
 			}
 			//Lets ignore the hits with all strips below threhsold.
@@ -456,10 +458,12 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 
 			//for loop over 8 contacts/4 strips
 			for (int i=0;i<4;i++) {
-				if ((frontCalEn.find(2*i)!=frontCalEn.end()) && (frontCalEn.find(2*i+1)!=frontCalEn.end())) {
-					sX3posRaw_enCal[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontCalEn[2*i]+frontCalEn[2*i+1]);
-					sX3posCal_enCal[detPosID][i]->Fill(sx3->GetStripPosCal()[i],frontCalEn[2*i]+frontCalEn[2*i+1]);
-					sX3nearFarCal[detPosID][i]->Fill(frontCalEn[2*i], frontCalEn[2*i+1]);
+				unsigned short near = sx3->GetNearContact(i);
+				unsigned short far = sx3->GetFarContact(i);
+				if ((frontCalEn.find(near)!=frontCalEn.end()) && (frontCalEn.find(far)!=frontCalEn.end())) {
+					sX3posRaw_enCal[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontCalEn[near]+frontCalEn[far]);
+					sX3posCal_enCal[detPosID][i]->Fill(sx3->GetStripPosCal()[i],frontCalEn[near]+frontCalEn[far]);
+					sX3nearFarCal[detPosID][i]->Fill(frontCalEn[far], frontCalEn[near]);
 				}
 			}
 

@@ -129,6 +129,10 @@ class superX3 : public orrubaDet {
 		float GetNtypeEnergy() {return enNtype;};
 		///Return the total energy deposited in the detector.
 		float GetEnergy() {return enCal;};
+		///Return the contact for the near end of the strip. 
+		unsigned short GetNearContact(unsigned short strip);
+		///Return the contact for the far end of the strip. 
+		unsigned short GetFarContact(unsigned short strip);
 
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
