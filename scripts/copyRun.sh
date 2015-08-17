@@ -31,7 +31,7 @@ fi
 echo "Copying data files to ${DIR}"
 
 printf "${BLUE}Copying DGS files${RESET}\n"
-rsync -ahP --chmod=a-wx dgs1:/media/20140317_1604/user/gsfma330/run_$RUN.dgs* $DIR/
+rsync -ahP --chmod=a-wx dgs1:/esata/esata1/user/gsfma330/run_$RUN.dgs* $DIR/
 if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DGS run files found!\n"
 	warn=1
