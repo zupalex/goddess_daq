@@ -392,9 +392,9 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 
 			//Lets ignore the hits with all strips below threhsold.
 			if (det->GetContactMult() == 0) {
-				continue;
 				det->Clear();
 				siDets.erase(detItr);
+				continue;
 			}
 
 			//---Multiplicty---
@@ -445,9 +445,9 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			}
 			//Lets ignore the hits with all strips below threhsold.
 			if (det->GetContactMult() == 0) {
-				continue;
 				det->Clear();
 				siDets.erase(detItr);
+				continue;
 			}
 
 			sX3frontMult[detPosID]->Fill(frontCalEn.size());
