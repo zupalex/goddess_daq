@@ -33,6 +33,10 @@ class orrubaDet : public siDet {
 
 		///Determines the position ID string.
 		virtual void SetPosID();
+		
+		//Detector daq type
+		unsigned short daqtype;
+
 	
 	public:
 		///Default constructor.
@@ -64,6 +68,9 @@ class orrubaDet : public siDet {
 
 		void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
 		virtual void ConstructBins() = 0;
+
+		void SetDAQType(unsigned short daqtype);
+		unsigned short GetDAQType(){return daqtype;};
 
 	/// \cond This is just for ROOT and doesn't need to be documented
 	ClassDef(orrubaDet,1);

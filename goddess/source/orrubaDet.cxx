@@ -41,5 +41,13 @@ void orrubaDet::SetDetector(std::string serialNum_, unsigned short sector_, unsi
 
 }
 
+void orrubaDet::SetDAQType(unsigned short daqtype_){
+
+  daqtype = daqtype_;
+
+}
+
+
+
 ClassImp(orrubaDet)
 

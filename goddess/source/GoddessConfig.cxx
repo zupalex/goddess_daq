@@ -176,12 +176,14 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			det->SetDetector(serialNum,sector,depth,upStream, pos_);
 			if (IsInsertable(pTypeDaqType, pTypeDaqCh,det->GetNumChannels(siDet::pType))) {
 				chMap[std::make_pair(pTypeDaqType,pTypeDaqCh)] = std::make_pair(det,false);
+				det->SetDAQType(pTypeDaqType);
 			} 
 			else
 				std::cerr << "ERROR: Detector " << serialNum << " p-type will not be unpacked!\n";
 			if (det->GetNumChannels(siDet::nType)) {
 				if (IsInsertable(nTypeDaqType, nTypeDaqCh, det->GetNumChannels(siDet::nType))) {
 					chMap[std::make_pair(nTypeDaqType,nTypeDaqCh)] = std::make_pair(det,true);
+					det->SetDAQType(nTypeDaqType);
 				}
 				else 
 					std::cerr << "ERROR: Detector " << serialNum << " n-type will not be unpacked!\n";
