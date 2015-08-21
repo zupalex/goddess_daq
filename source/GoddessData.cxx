@@ -77,10 +77,10 @@ GoddessData::GoddessData(std::string configFilename)
 	dirOrruba->cd();
 	TDirectory *dirRaw = gDirectory->mkdir("raw");
 	dirRaw->cd();
-	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
-	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",512,0,4096,400,0,400);
-	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
-	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",512,0,4096,400,0,400);
+	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",4196,0,4096,400,0,400);
+	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",4196,0,1E6,400,0,400);
+	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",4196,0,4096,400,0,400);
+	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",4196,0,1E6,400,0,400);
 	analogMult = new TH1F("analogMult", "Number of triggers in the analog system;Multiplicty;Counts / Multiplicty", 5,0,5);
 	analogADCMult = new TH1F("analogADCMult", "Number of ADCs readout per trigger;Multiplicty;Counts / Multiplicty", 400,0,400);
 	digitalMult = new TH1F("digitalMult", "Number of triggers in the digital system;Multiplicty;Counts / Multiplicty", 400,0,400);
@@ -273,8 +273,8 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 		analogADCMult->Fill(agodEvt.values.size());
 		for (size_t j=0;j<agodEvt.values.size();j++) {
-			short value = agodEvt.values[j];
-			short channel = agodEvt.channels[j];
+			unsigned short value = agodEvt.values[j];
+			unsigned short channel = agodEvt.channels[j];
 			//unsigned long long timestamp = agodEvt.timestamp;
 
 			enRawA->Fill(value,channel);
@@ -318,8 +318,8 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	// getting data from digital events	
 	for (size_t i=0;i<dgodEvts->size();i++) {
 		DFMAEVENT dgodEvt = dgodEvts->at(i);
-		short value=dgodEvt.ehi;
-		short channel=dgodEvt.tid;
+		unsigned int value=dgodEvt.ehi;
+		unsigned short channel=dgodEvt.tid;
 		//unsigned long long timestamp = dgodEvt.LEDts;
 
 		enRawD->Fill(value,channel);
