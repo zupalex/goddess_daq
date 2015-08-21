@@ -9,7 +9,7 @@ set_source_files_properties(${GEBSort_SOURCES} ${GEBMerge_SOURCES} ag2mode2.c
 mkMap.c PROPERTIES LANGUAGE CXX)
 
 add_executable(GEBSort_nogeb ${GEBSort_SOURCES} $<TARGET_OBJECTS:ORRUBA_OBJECT>)
-target_link_libraries(GEBSort_nogeb ${ROOT_LIBRARIES} ORRUBA_LIB)
+target_link_libraries(GEBSort_nogeb ${ROOT_LIBRARIES})
 
 add_executable(mkMap mkMap.c)
 
