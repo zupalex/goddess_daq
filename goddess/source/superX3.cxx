@@ -34,7 +34,10 @@ void superX3::ConstructBins () {
 	float nStripPitch = 75 / 4; //mm
 
 	//float detRotation = TMath::PiOver2() + detPos.Theta();
-	if (fabs(detPos.RotZ() - (TMath::PiOver2() + detPos.Phi())) > 0.001) 
+	float computedRotZ = detPos.Phi() + TMath::PiOver2();
+	if (computedRotZ < 0) computedRotZ += TMath::TwoPi();
+	float angleDiff = detPos.RotZ() - computedRotZ;
+	if (fabs(angleDiff) > 0.001) 
 		std::cerr << "WARNING: Detector " << serialNum << " is not normal to the XY radial direction! " << detPos.RotZ() << " != " << TMath::PiOver2() + detPos.Phi() << "\n";
 
 	SolidVector cornerPos(detPos.X() - 2 * pStripPitch * cos(detPos.RotZ()) * cos(detPos.RotPhi()),
