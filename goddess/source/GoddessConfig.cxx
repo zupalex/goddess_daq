@@ -444,7 +444,8 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 	int detCh = digitizerCh - mapItr->first.second;
 
 	if (detCh >= det->GetNumChannels(secondaryType)) {
-		std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << "! Computed detector ch " << detCh << " was larger than expected number of channels, " << det->GetNumChannels(secondaryType);
+		std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << std::setw(3) << digitizerCh << "!";
+		std::cerr << " Computed detector ch " << std::setw(2) << detCh << " was larger than expected number of channels, " << std::setw(2) << det->GetNumChannels(secondaryType);
 		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
 		if (siDet) std::cerr << ", in mapped det " << siDet->GetSerialNum() << ".\n";
 		else std::cerr << ".\n";
