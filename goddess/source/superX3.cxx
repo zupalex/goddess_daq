@@ -135,28 +135,31 @@ void superX3::UpdatePosition(int strip) {
 	//Check if both contacts have had there energy set.
 	if (!ContactHit(nearContact, false) || !ContactHit(farContact, false)) return;
 
+	/// -- collect energy values that were "calibrated" alread in siDet class
 	float nearEnergy = GetCalEnergy(nearContact);
 	float farEnergy = GetCalEnergy(farContact);
 
-	//Compute the strip energy by 
-	//E = N + p0 + p1 * F + p2 * F^2 ...
-	float stripEnergy = nearEnergy ;
-	for (size_t power = 0; power < parStripEnCal[strip].size(); power++)
-		stripEnergy += parStripEnCal[strip].at(power) * pow(farEnergy,power);
-	enCalPstrip[strip] = stripEnergy;
+	/// -- use more parameters to handle resistive strip end to end calibration
+	/// -- need to have 4 parameters in goddess.config file for all p-strips in SX3 detectors
+	float nearCalEnergy = (nearEnergy-parStripEnCal[nearContact].at(2));
+	float farCalEnergy = (farEnergy-parStripEnCal[farContact].at(2)) * parStripEnCal[farContact].at(3);
+	ncalEn[strip] = nearCalEnergy;
+	fcalEn[strip] = farCalEnergy;
+
+	/// -- so far, no energy calibration, only end to end gain matching
+	float stripEnergy = nearEnergy + farEnergy;
+	float stripCalEnergy = nearCalEnergy + farCalEnergy;
+
+	enCalPstrip[strip] = stripCalEnergy;
 
 	//Compute the resistive strip position by
-	// P_raw = (N - F) / E 
-	// P_cal = p0 + p1 * P_raw + p2 * P_raw^2
+	// Pos = (N - F) / E 
 	float stripPosRaw_ = (nearEnergy - farEnergy) / stripEnergy;
-	float stripPosCal_ = 0.0;
-	for (size_t power = 0; power < parPosCal[strip].size(); power++)
-		stripPosCal_ += parPosCal[strip].at(power) * pow (stripPosRaw_, power);
+	float stripPosCal_ = (nearCalEnergy - farCalEnergy) / stripCalEnergy;
 
 	stripPosRaw[strip] = stripPosRaw_;
 	stripPosCal[strip] = stripPosCal_;
 	
-
 	//Compute the event position.
 	//If the p and n strip multiplicity is 1 we can easily find the position.
 	if (enCalPstrip.size() == 1) {
@@ -265,7 +268,6 @@ int superX3::GetStrip(int contact) {
 	int strip = contact / 2;
 	return strip;
 }
-
 
 ClassImp(superX3)
 

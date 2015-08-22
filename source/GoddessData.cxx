@@ -142,15 +142,15 @@ void GoddessData::InitQQQ5Hists() {
 
 		int maxRawEn = 4096;
 		int qqq5_Enbins = 4096;
-		if (daqType == GEB_TYPE_DFMA) maxRawEn = 4e4;
+		if (daqType == GEB_TYPE_DFMA) maxRawEn = 1e6;
 		
 		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name.c_str()),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,32,0,32));
 
-		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name.c_str()),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,32,0,32));
+		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name.c_str()),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,10,32,0,32));
 
 		QQQenRawBack.emplace(name,new TH2F(Form("QQQenRawBack_%s",name.c_str()),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,4,0,4));
 
-		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name.c_str()),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,4,0,4));
+		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name.c_str()),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,10,4,0,4));
 
 		dirDet->cd();
 		gDirectory->mkdir("mult")->cd();
@@ -180,7 +180,7 @@ void GoddessData::InitSuperX3Hists() {
 
 		int maxRawEn = 4096;
 		int sx3_Enbins = 4096;
-		if (daqType == GEB_TYPE_DFMA) maxRawEn = 4e4;
+		if (daqType == GEB_TYPE_DFMA) maxRawEn = 1e6;
 
 		sX3stripEnRaw[name] = new TH2F(Form("sX3stripEnRaw%s",name.c_str()),
 			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 8, 0,8);
@@ -205,18 +205,18 @@ void GoddessData::InitSuperX3Hists() {
 
 		for (int strip=0; strip < 4; strip++) {
 			sX3posRaw_enCal[name][strip] = new TH2F(Form("sX3posRaw_enCal_%s_%i",name.c_str(),strip),
-				Form("super X3 raw position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,512,0,4096);
+				Form("super X3 raw position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,512,0,maxRawEn);
 
 			sX3posCal_enCal[name][strip] = new TH2F(Form("sX3posCal_enCal_%s_%i",name.c_str(),strip),
-				Form("super X3 cal position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,512,0,4096);
+				Form("super X3 cal position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,512,0,maxRawEn);
 
 			sX3posRaw_enRaw[name][strip] = new TH2F(Form("sX3posRaw_enRaw_%s_%i",name.c_str(),strip),
-				Form("super X3 raw position vs raw energy %s_%i",name.c_str(),strip),512, -1,1,512,0,4096);
+				Form("super X3 raw position vs raw energy %s_%i",name.c_str(),strip),512, -1,1,512,0,maxRawEn);
 
 			sX3nearFar[name][strip] = new TH2F(Form("sX3nearFar_%s_%i",name.c_str(),strip),
-				Form("sX3 near strip vs far strip %s %i", name.c_str(),strip), 512,0,4096,512,0,4096);
+				Form("sX3 near strip vs far strip %s %i", name.c_str(),strip), 512,0,maxRawEn,512,0,maxRawEn);
 			sX3nearFarCal[name][strip] = new TH2F(Form("sX3nearFarCal_%s_%i",name.c_str(),strip),
-				Form("sX3 near strip vs far calibrated strip %s %i", name.c_str(),strip), 512,0,4096,512,0,4096);
+				Form("sX3 near strip vs far calibrated strip %s %i", name.c_str(),strip), 512,0,maxRawEn,512,0,maxRawEn);
 		}
 
 		dirDet->cd();
@@ -452,7 +452,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 				unsigned short near = sx3->GetNearContact(i);
 				unsigned short far = sx3->GetFarContact(i);
 				if ((frontRawEn.find(near)!=frontRawEn.end()) && (frontRawEn.find(far)!=frontRawEn.end())) {
-					sX3posRaw_enRaw[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontRawEn[near] + frontRawEn[near]);
+				  sX3posRaw_enRaw[detPosID][i]->Fill(((frontRawEn[far]-frontRawEn[near])/(frontRawEn[far]+frontRawEn[near])),(frontRawEn[far] + frontRawEn[near]));
 					sX3nearFar[detPosID][i]->Fill(frontRawEn[far], frontRawEn[near]);
 				}
 			}
@@ -473,14 +473,17 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 				sX3backEnCal[detPosID]->Fill(itr->second,itr->first);
 			}
 
+			
 			//for loop over 8 contacts/4 strips
+			/// -- Trying to take the values that were further calibrated in superX3 class 
+			/// -- and fill histograms here. All are returning zeros.
 			for (int i=0;i<4;i++) {
-				unsigned short near = sx3->GetNearContact(i);
-				unsigned short far = sx3->GetFarContact(i);
-				if ((frontCalEn.find(near)!=frontCalEn.end()) && (frontCalEn.find(far)!=frontCalEn.end())) {
-					sX3posRaw_enCal[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],frontCalEn[near]+frontCalEn[far]);
-					sX3posCal_enCal[detPosID][i]->Fill(sx3->GetStripPosCal()[i],frontCalEn[near]+frontCalEn[far]);
-					sX3nearFarCal[detPosID][i]->Fill(frontCalEn[far], frontCalEn[near]);
+			  unsigned short near = sx3->GetNearContact(i);
+			  unsigned short far = sx3->GetFarContact(i);
+			        if ((frontCalEn.find(near)!=frontCalEn.end()) && (frontCalEn.find(far)!=frontCalEn.end())) {
+				  sX3posRaw_enCal[detPosID][i]->Fill(sx3->GetStripPosRaw()[i],sx3->GetStripEnergies()[i]);
+				  sX3posCal_enCal[detPosID][i]->Fill(sx3->GetStripPosCal()[i],sx3->GetStripEnergies()[i]);
+				  sX3nearFarCal[detPosID][i]->Fill(sx3->GetNearCalEnergy()[i],sx3->GetFarCalEnergy()[i]);
 				}
 			}
 

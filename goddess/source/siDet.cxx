@@ -89,8 +89,8 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 	*enRaw = rawValue;
 	if (enCal) {
 		*enCal = 0;
-		for (size_t power = 0; power < parEnCal->size(); power++)
-			*enCal += parEnCal->at(power) * pow(rawValue,power);
+		//for (size_t power = 0; power < parEnCal->size(); power++)
+		*enCal += (rawValue - parEnCal->at(0)) * parEnCal->at(1);//parEnCal->at(power) * pow(rawValue,power);
 	}
 }
 		

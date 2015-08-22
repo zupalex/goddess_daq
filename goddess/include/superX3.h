@@ -49,9 +49,14 @@ class superX3 : public orrubaDet {
 		float enCal;
 
 		///Computed raw position of event.
-		ValueMap stripPosRaw;
+		siDet::ValueMap stripPosRaw;
 		///Computed calibrated position of event.
-		ValueMap stripPosCal;
+		siDet::ValueMap stripPosCal;
+
+		///Computed calibrated energy of near contact
+		Float_t ncalEn[4];
+		///Computed calibrated energy of far contact
+		Float_t fcalEn[4];
 
 		///The number of contacts fired on a strip.
 		int stripContactMult[4];
@@ -133,6 +138,12 @@ class superX3 : public orrubaDet {
 		unsigned short GetNearContact(unsigned short strip);
 		///Return the contact for the far end of the strip. 
 		unsigned short GetFarContact(unsigned short strip);
+		
+		/// -- Make new functions to be used in GoddessData to fill histograms
+		///Return the calibrated energy for the near end of the strip
+		float* GetNearCalEnergy() {return ncalEn;};
+		///Return the calibrated energy for the far end of the strip
+		float* GetFarCalEnergy() {return fcalEn;};
 
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
