@@ -65,6 +65,11 @@ class GoddessData {
 
 		TH2F *sX3HitPattern;
 
+		// BB10s
+		std::map<std::string,TH2F*> BB10RawEn;
+		std::map<std::string,TH2F*> BB10CalEn;
+
+
 		// QQQ5s
 		std::map<std::string,TH2F*> QQQenRawFront;
 		std::map<std::string,TH2F*> QQQenCalFront;

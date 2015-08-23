@@ -114,17 +114,26 @@ GoddessData::GoddessData(std::string configFilename)
 void GoddessData::InitBB10Hists() {
 	TClonesArray* bb10s =config->GetBB10s();
 	int nbb10s = bb10s->GetEntries();
-
 	TDirectory *dirBB10 = gDirectory->mkdir("bb10");
+	
 	for (int i = 0; i < nbb10s; i++) {
-		const char* name = ((std::string)((BB10*)bb10s->At(i))->GetPosID()).c_str();
+	  BB10* bb10 = (BB10*) bb10s->At(i);
+	        std::string name = bb10->GetPosID();
+		int daqType = bb10->GetDAQType();
 		dirBB10->cd();
-		gDirectory->mkdir(name)->cd();
+		TDirectory *dirDet = gDirectory->mkdir(name.c_str());
+		dirDet->cd();
 		gDirectory->mkdir("en")->cd();
 
-
+		int maxRawEn = 4096;
+		int BB10_Enbins = 4096;
+		if (daqType == GEB_TYPE_DFMA) maxRawEn = 5e5;
+		BB10RawEn.emplace(name,new TH2F(Form("BB10RawEn_%s",name.c_str()),Form("Raw BB10 %s energy per strip;Energy [Ch];Channel",name.c_str()), BB10_Enbins,0,maxRawEn,8,0,8));
+		BB10CalEn.emplace(name,new TH2F(Form("BB10CalEn_%s",name.c_str()),Form("Cal BB10 %s energy per strip;Energy [Ch];Channel",name.c_str()), BB10_Enbins,0,10,8,0,8));
+		
 	}
 }
+
 void GoddessData::InitQQQ5Hists() {
 
 	TClonesArray *qqq5s=config->GetQQQ5s();
@@ -205,18 +214,18 @@ void GoddessData::InitSuperX3Hists() {
 
 		for (int strip=0; strip < 4; strip++) {
 			sX3posRaw_enCal[name][strip] = new TH2F(Form("sX3posRaw_enCal_%s_%i",name.c_str(),strip),
-				Form("super X3 raw position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,512,0,maxRawEn);
+				Form("super X3 raw position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,1024,0,maxRawEn);
 
 			sX3posCal_enCal[name][strip] = new TH2F(Form("sX3posCal_enCal_%s_%i",name.c_str(),strip),
-				Form("super X3 cal position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,512,0,maxRawEn);
+				Form("super X3 cal position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,1024,0,maxRawEn);
 
 			sX3posRaw_enRaw[name][strip] = new TH2F(Form("sX3posRaw_enRaw_%s_%i",name.c_str(),strip),
-				Form("super X3 raw position vs raw energy %s_%i",name.c_str(),strip),512, -1,1,512,0,maxRawEn);
+				Form("super X3 raw position vs raw energy %s_%i",name.c_str(),strip),512, -1,1,1024,0,maxRawEn);
 
 			sX3nearFar[name][strip] = new TH2F(Form("sX3nearFar_%s_%i",name.c_str(),strip),
-				Form("sX3 near strip vs far strip %s %i", name.c_str(),strip), 512,0,maxRawEn,512,0,maxRawEn);
+				Form("sX3 near strip vs far strip %s %i", name.c_str(),strip), 1024,0,maxRawEn,1024,0,maxRawEn);
 			sX3nearFarCal[name][strip] = new TH2F(Form("sX3nearFarCal_%s_%i",name.c_str(),strip),
-				Form("sX3 near strip vs far calibrated strip %s %i", name.c_str(),strip), 512,0,maxRawEn,512,0,maxRawEn);
+				Form("sX3 near strip vs far calibrated strip %s %i", name.c_str(),strip), 1024,0,maxRawEn,1024,0,maxRawEn);
 		}
 
 		dirDet->cd();
@@ -393,6 +402,17 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		siDet::ValueMap frontCalEn = det->GetCalEn(siDet::pType);
 		siDet::ValueMap backRawEn = det->GetRawEn(siDet::nType);
 		siDet::ValueMap backCalEn = det->GetCalEn(siDet::nType);
+
+		if(detType =="BB10"){
+		  //---Raw Energy---
+		  for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
+		    BB10RawEn[detPosID]->Fill(itr->second, itr->first);
+		  }
+		  //---Cal Energy---
+		  for (auto itr=frontCalEn.begin(); itr!=frontCalEn.end();++itr) {
+		    BB10CalEn[detPosID]->Fill(itr->second, itr->first);
+		  }
+		}
 
 		if (detType == "QQQ5") {
 			//---Raw Energy---
