@@ -441,7 +441,8 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 	--mapItr;
 	Detector *det = mapItr->second.first;
 	bool secondaryType = mapItr->second.second;
-	int detCh = digitizerCh - mapItr->first.second;
+	int detCh;
+	detCh = digitizerCh - mapItr->first.second;
 
 	if (detCh >= det->GetNumChannels(secondaryType)) {
 		std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << std::setw(3) << digitizerCh << "!";

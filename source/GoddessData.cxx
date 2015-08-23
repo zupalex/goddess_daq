@@ -80,7 +80,7 @@ GoddessData::GoddessData(std::string configFilename)
 	enRawA = new TH2F("enRawA","Raw Analog Energies;Energy [Ch];Channel",4196,0,4096,400,0,400);
 	enRawD = new TH2F("enRawD","Raw Digital Energies;Energy [Ch];Channel",4196,0,1E6,400,0,400);
 	enCalA = new TH2F("enCalA","Calibrated Analog Energies;Energy [MeV];Channel",4196,0,4096,400,0,400);
-	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",4196,0,1E6,400,0,400);
+	enCalD = new TH2F("enCalD","Calibrated Digital Energies;Energy [MeV];Channel",4196,0,4096,400,0,400);
 	analogMult = new TH1F("analogMult", "Number of triggers in the analog system;Multiplicty;Counts / Multiplicty", 5,0,5);
 	analogADCMult = new TH1F("analogADCMult", "Number of ADCs readout per trigger;Multiplicty;Counts / Multiplicty", 400,0,400);
 	digitalMult = new TH1F("digitalMult", "Number of triggers in the digital system;Multiplicty;Counts / Multiplicty", 400,0,400);
@@ -142,7 +142,7 @@ void GoddessData::InitQQQ5Hists() {
 
 		int maxRawEn = 4096;
 		int qqq5_Enbins = 4096;
-		if (daqType == GEB_TYPE_DFMA) maxRawEn = 1e6;
+		if (daqType == GEB_TYPE_DFMA) maxRawEn = 5e5;
 		
 		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name.c_str()),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,32,0,32));
 
@@ -180,7 +180,7 @@ void GoddessData::InitSuperX3Hists() {
 
 		int maxRawEn = 4096;
 		int sx3_Enbins = 4096;
-		if (daqType == GEB_TYPE_DFMA) maxRawEn = 1e6;
+		if (daqType == GEB_TYPE_DFMA) maxRawEn = 5e5;
 
 		sX3stripEnRaw[name] = new TH2F(Form("sX3stripEnRaw%s",name.c_str()),
 			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 8, 0,8);
@@ -192,7 +192,7 @@ void GoddessData::InitSuperX3Hists() {
 			Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 4, 0,4);
 
 		sX3backEnCal[name] = new TH2F(Form("sX3backEnCal%s",name.c_str()),
-			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 4, 0,4);
+			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name.c_str()),sx3_Enbins,0,10, 4, 0,4);
 
 		dirDet->cd();
 		gDirectory->mkdir("pos")->cd();
@@ -445,17 +445,18 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				sX3backEnRaw[detPosID]->Fill(itr->second,itr->first);
 			}
-
+			
 			//---Raw Positions---
 			//for loop over 8 contacts/4 strips
 			for (int i=0;i<4;i++) {
-				unsigned short near = sx3->GetNearContact(i);
-				unsigned short far = sx3->GetFarContact(i);
-				if ((frontRawEn.find(near)!=frontRawEn.end()) && (frontRawEn.find(far)!=frontRawEn.end())) {
-				  sX3posRaw_enRaw[detPosID][i]->Fill(((frontRawEn[far]-frontRawEn[near])/(frontRawEn[far]+frontRawEn[near])),(frontRawEn[far] + frontRawEn[near]));
-					sX3nearFar[detPosID][i]->Fill(frontRawEn[far], frontRawEn[near]);
+			  unsigned short near = sx3->GetNearContact(i);
+			  unsigned short far = sx3->GetFarContact(i);
+			  if ( (frontRawEn.find(near)!=frontRawEn.end()) && (frontRawEn.find(far)!=frontRawEn.end()) ) {
+				  sX3posRaw_enRaw[detPosID][i]->Fill( ((frontRawEn[far]-frontRawEn[near])/(frontRawEn[far]+frontRawEn[near])) , (frontRawEn[far] + frontRawEn[near]) );
+				  sX3nearFar[detPosID][i]->Fill(frontRawEn[far], frontRawEn[near]);
 				}
-			}
+			}	
+
 			//Lets ignore the hits with all strips below threhsold.
 			if (det->GetContactMult() == 0) {
 				det->Clear();
