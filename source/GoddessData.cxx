@@ -129,7 +129,7 @@ void GoddessData::InitBB10Hists() {
 		int BB10_Enbins = 4096;
 		if (daqType == GEB_TYPE_DFMA) maxRawEn = 5e5;
 		BB10RawEn.emplace(name,new TH2F(Form("BB10RawEn_%s",name.c_str()),Form("Raw BB10 %s energy per strip;Energy [Ch];Channel",name.c_str()), BB10_Enbins,0,maxRawEn,8,0,8));
-		BB10CalEn.emplace(name,new TH2F(Form("BB10CalEn_%s",name.c_str()),Form("Cal BB10 %s energy per strip;Energy [Ch];Channel",name.c_str()), BB10_Enbins,0,10,8,0,8));
+		BB10CalEn.emplace(name,new TH2F(Form("BB10CalEn_%s",name.c_str()),Form("Cal BB10 %s energy per strip;Energy [Ch];Channel",name.c_str()), BB10_Enbins,0,15,8,0,8));
 		
 	}
 }
@@ -155,11 +155,11 @@ void GoddessData::InitQQQ5Hists() {
 		
 		QQQenRawFront.emplace(name,new TH2F(Form("QQQenRawFront_%s",name.c_str()),Form("Raw QQQ5 %s energy per front strip;Energy [Ch];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,32,0,32));
 
-		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name.c_str()),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,10,32,0,32));
+		QQQenCalFront.emplace(name,new TH2F(Form("QQQenCalFront_%s",name.c_str()),Form("Cal QQQ5 %s energy per front strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,15,32,0,32));
 
 		QQQenRawBack.emplace(name,new TH2F(Form("QQQenRawBack_%s",name.c_str()),Form("Raw QQQ5 %s energy per back strip;Energy [Ch];Channel",name.c_str()), qqq5_Enbins,0,maxRawEn,4,0,4));
 
-		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name.c_str()),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,10,4,0,4));
+		QQQenCalBack.emplace(name,new TH2F(Form("QQQenCalBack_%s",name.c_str()),Form("Cal QQQ5 %s energy per back strip;Energy [MeV];Channel",name.c_str()), qqq5_Enbins,0,15,4,0,4));
 
 		dirDet->cd();
 		gDirectory->mkdir("mult")->cd();
@@ -193,16 +193,14 @@ void GoddessData::InitSuperX3Hists() {
 
 		sX3stripEnRaw[name] = new TH2F(Form("sX3stripEnRaw%s",name.c_str()),
 			Form("SuperX3 strip raw energy vs strip %s;energy [ch];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 8, 0,8);
-
 		sX3stripEnCal[name] = new TH2F(Form("sX3stripEnCal%s",name.c_str()),
 			Form("SuperX3 strip cal energy vs strip %s;energy [keV];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 8, 0,8);
-
 		sX3backEnRaw[name] = new TH2F(Form("sX3backEnRaw%s",name.c_str()),
 			Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 4, 0,4);
-
 		sX3backEnCal[name] = new TH2F(Form("sX3backEnCal%s",name.c_str()),
-			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name.c_str()),sx3_Enbins,0,10, 4, 0,4);
-
+			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name.c_str()),sx3_Enbins,0,15, 4, 0,4);
+		sx3StripTotEn[name] = new TH2F(Form("sX3StripTotEn%s",name.c_str()),Form("SuperX3 total energy vs strip %s;energy [keV];strip", name.c_str()),1024,0,maxRawEn, 4, 0,4);
+		
 		dirDet->cd();
 		gDirectory->mkdir("pos")->cd();
 
@@ -211,7 +209,7 @@ void GoddessData::InitSuperX3Hists() {
 		sX3posRaw_enRaw[name] = new TH2F*[4];
 		sX3posRaw_enCal[name] = new TH2F*[4];
 		sX3posCal_enCal[name] = new TH2F*[4];
-
+		
 		for (int strip=0; strip < 4; strip++) {
 			sX3posRaw_enCal[name][strip] = new TH2F(Form("sX3posRaw_enCal_%s_%i",name.c_str(),strip),
 				Form("super X3 raw position vs cal energy %s_%i",name.c_str(),strip),512, -1,1,1024,0,maxRawEn);
@@ -474,7 +472,8 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			  if ( (frontRawEn.find(near)!=frontRawEn.end()) && (frontRawEn.find(far)!=frontRawEn.end()) ) {
 				  sX3posRaw_enRaw[detPosID][i]->Fill( ((frontRawEn[far]-frontRawEn[near])/(frontRawEn[far]+frontRawEn[near])) , (frontRawEn[far] + frontRawEn[near]) );
 				  sX3nearFar[detPosID][i]->Fill(frontRawEn[far], frontRawEn[near]);
-				}
+				  sx3StripTotEn[detPosID]->Fill(frontRawEn[far]+frontRawEn[near], i );
+			  }
 			}	
 
 			//Lets ignore the hits with all strips below threhsold.

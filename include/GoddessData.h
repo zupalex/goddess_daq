@@ -85,6 +85,7 @@ class GoddessData {
 		std::map<std::string,TH2F*> sX3stripEnRaw;
 		std::map<std::string,TH2F*> sX3backEnCal;
 		std::map<std::string,TH2F*> sX3backEnRaw;
+		std::map<std::string,TH2F*> sx3StripTotEn;
 		std::map<std::string,TH2F*> sX3near_far;
 		std::map<std::string,TH2F*> sX3enCal_posRaw;
 		std::map<std::string,TH2F*> sX3enCal_posCal;
@@ -96,7 +97,8 @@ class GoddessData {
 		std::map<std::string,TH2F**> sX3posRaw_enRaw;
 		std::map<std::string,TH2F**> sX3posRaw_enCal;
 		std::map<std::string,TH2F**> sX3posCal_enCal;
-
+		
+		
 		// IC
 		std::map<std::string,TH1F*> icE1;
 		std::map<std::string,TH1F*> icE2;
