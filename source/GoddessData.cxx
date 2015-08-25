@@ -67,8 +67,8 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("capDownConMult",endCapDownstreamContactMult);
 	tree->Branch("barlUpConMult",barrelUpstreamContactMult);
 	tree->Branch("barlDownConMult",barrelDownstreamContactMult);
+	tree->Branch("DAQchannel",&DAQchannel);
 
-	tree=new TTree("god","GODDESS Tree");
 	corr=new TTree("corr","Correlated Particle Gamma");
 
 	// ORRUBA histograms
@@ -199,7 +199,7 @@ void GoddessData::InitSuperX3Hists() {
 			Form("SuperX3 back raw energy vs strip %s;energy [ch];strip", name.c_str()),sx3_Enbins,0,maxRawEn, 4, 0,4);
 		sX3backEnCal[name] = new TH2F(Form("sX3backEnCal%s",name.c_str()),
 			Form("SuperX3 back cal energy vs strip %s;energy [keV];strip", name.c_str()),sx3_Enbins,0,15, 4, 0,4);
-		sx3StripTotEn[name] = new TH2F(Form("sX3StripTotEn%s",name.c_str()),Form("SuperX3 total energy vs strip %s;energy [keV];strip", name.c_str()),1024,0,maxRawEn, 4, 0,4);
+		sx3StripTotEn[name] = new TH2F(Form("sX3StripTotEn%s",name.c_str()),Form("SuperX3 total energy vs strip %s;energy [ch];strip", name.c_str()),1024,0,maxRawEn, 4, 0,4);
 		
 		dirDet->cd();
 		gDirectory->mkdir("pos")->cd();
@@ -282,6 +282,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		for (size_t j=0;j<agodEvt.values.size();j++) {
 			unsigned short value = agodEvt.values[j];
 			unsigned short channel = agodEvt.channels[j];
+			DAQchannel=channel;
 			//unsigned long long timestamp = agodEvt.timestamp;
 
 			enRawA->Fill(value,channel);
@@ -329,6 +330,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		unsigned short channel=dgodEvt.tid;
 		//unsigned long long timestamp = dgodEvt.LEDts;
 
+		DAQchannel=channel;
 		enRawD->Fill(value,channel);
 
 		std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
@@ -411,11 +413,10 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		    BB10CalEn[detPosID]->Fill(itr->second, itr->first);
 		  }
 		}
-
 		if (detType == "QQQ5") {
 			//---Raw Energy---
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
-				QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
+			        QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
 			}
 			for (auto itr=backRawEn.begin(); itr!=backRawEn.end();++itr) {
 				QQQenRawBack[detPosID]->Fill(itr->second, itr->first);
