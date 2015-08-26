@@ -151,7 +151,13 @@ class GoddessData {
 		bool analog;
 		bool digital;
 
-		unsigned short DAQchannel;		
+		unsigned short DAQchannel;
+		float DAQCh_Energy[400];
+
+		float NeutEnergy;
+		float NeutPSD;
+		float NeutTAC;
+		int NeutID;
 		
 		std::vector<float> *energy;
 		float psd;

@@ -68,6 +68,11 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("barlUpConMult",barrelUpstreamContactMult);
 	tree->Branch("barlDownConMult",barrelDownstreamContactMult);
 	tree->Branch("DAQchannel",&DAQchannel);
+	tree->Branch("DAQCh_Energy",DAQCh_Energy,"DAQCh_Energy[400]/F");
+	tree->Branch("NeutEnergy",&NeutEnergy);
+	tree->Branch("NeutPSD",&NeutPSD);
+	tree->Branch("NeutTAC",&NeutTAC);
+	tree->Branch("NeutID",&NeutID);
 
 	corr=new TTree("corr","Correlated Particle Gamma");
 
@@ -283,6 +288,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			unsigned short value = agodEvt.values[j];
 			unsigned short channel = agodEvt.channels[j];
 			DAQchannel=channel;
+			DAQCh_Energy[channel] = value;
 			//unsigned long long timestamp = agodEvt.timestamp;
 
 			enRawA->Fill(value,channel);
@@ -331,6 +337,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		//unsigned long long timestamp = dgodEvt.LEDts;
 
 		DAQchannel=channel;
+		//DAQCh_Energy[channel] = value; //filling this will overwrite the analog
 		enRawD->Fill(value,channel);
 
 		std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
@@ -384,7 +391,9 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 	firedDets.clear();
 	siDets.clear();
 	liquidScints.clear();
-
+	
+	for (int i = 0; i < 400; i++) {DAQCh_Energy[i] = 0.0;}
+	
 }
 
 void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
@@ -507,7 +516,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 				  sX3nearFarCal[detPosID][i]->Fill(sx3->GetNearCalEnergy()[i],sx3->GetFarCalEnergy()[i]);
 				}
 			}
-
+			
 			numSectorHits[detPosID]++;
 			// hit pattern
 			for (auto itrFront=frontCalEn.begin();itrFront!=frontCalEn.end();++itrFront) {
@@ -537,6 +546,12 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		float rawEnergy = liquidScint->GetRawEnergy();
 		float psd_ = liquidScint->GetRawPSD();
 		float tac_ = liquidScint->GetRawTAC();
+		
+		NeutEnergy = rawEnergy;
+		NeutPSD = psd_;
+		NeutTAC = tac_;
+		if(description == "90deg")NeutID = 1;
+		if(description == "downstream")NeutID = 2;
 
 	  LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
 	  LiquidScint_enRaw[description]->Fill(rawEnergy);
