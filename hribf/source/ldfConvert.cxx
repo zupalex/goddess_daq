@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 	
 	unsigned int eventCnt=0;
 	unsigned int myriadMalformed = 0;
-	unsigned int twoWordMyriadMalformed = 0;
+	unsigned int invertedOrderMalformed = 0;
 	unsigned int myriadMissing = 0;
 	std::map<unsigned short, unsigned short> *values = buffer.GetMap();
 	while (buffer.ReadNextBuffer() > 0) {
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 					continue;
 				}
 				if (timestamp < lastTimestamp) {
-					twoWordMyriadMalformed++;
+					invertedOrderMalformed++;
 					/*
 					std::cerr << "WARNING: Current timestamp smaller than last timestamp!\n";
 					std::cerr << "Timestamp:\t" << timestamp << " " << std::hex << timestamp << std::dec << "\n";		
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 	std::cout << "Converted " << eventCnt << " events.           \n";
 	std::cout << "Missing Myriad Events: " << myriadMissing << " " << (float)myriadMissing*100/eventCnt << "%\n";
 	std::cout << "Single Word Malformed Myriad Events: " << myriadMalformed << " " << (float)myriadMalformed*100/eventCnt << "%\n";
-	std::cout << "Two Word Malformed Myriad Events: " << twoWordMyriadMalformed << " " << (float)twoWordMyriadMalformed*100/eventCnt << "%\n";
+	std::cout << "Inverted Timestamp Order Events: " << invertedOrderMalformed << " " << (float)invertedOrderMalformed*100/eventCnt << "%\n";
 
 	return 0;
 }
