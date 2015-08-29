@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
 	
 	unsigned int eventCnt=0;
 	unsigned int myriadMalformed = 0;
+	unsigned int twoWordMyriadMalformed = 0;
 	unsigned int myriadMissing = 0;
 	std::map<unsigned short, unsigned short> *values = buffer.GetMap();
 	while (buffer.ReadNextBuffer() > 0) {
@@ -37,6 +38,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (buffer.GetBufferType() == hribfBuffer::BUFFER_TYPE_DATA) {
+			unsigned long long int lastTimestamp = 0;
 			while (buffer.GetEventsRemaining()) {
 				eventCnt++;
 
@@ -77,6 +79,14 @@ int main(int argc, char *argv[]) {
 
 					continue;
 				}
+				if (timestamp < lastTimestamp) {
+					twoWordMyriadMalformed++;
+					/*
+					std::cerr << "WARNING: Current timestamp smaller than last timestamp!\n";
+					std::cerr << "Timestamp:\t" << timestamp << " " << std::hex << timestamp << std::dec << "\n";		
+					std::cerr << "Last Timestamp:\t" << lastTimestamp << " " << std::hex <<  lastTimestamp << std::dec << "\n";		
+					*/
+				}
 
 				int length = values->size() * 2 * sizeof(short);
 				output.write((char*) &type,sizeof(int));
@@ -86,14 +96,15 @@ int main(int argc, char *argv[]) {
 					output.write((char*)&(itr->first), sizeof(short));
 					output.write((char*)&(itr->second), sizeof(short));
 				}
-
-			}
+				lastTimestamp = timestamp;
+			} // Next event
 		}
 
 	}
 	std::cout << "Converted " << eventCnt << " events.           \n";
-	std::cout << "Malformed Myriad Events: " << myriadMalformed << " " << (float)myriadMalformed*100/eventCnt << "%\n";
 	std::cout << "Missing Myriad Events: " << myriadMissing << " " << (float)myriadMissing*100/eventCnt << "%\n";
+	std::cout << "Single Word Malformed Myriad Events: " << myriadMalformed << " " << (float)myriadMalformed*100/eventCnt << "%\n";
+	std::cout << "Two Word Malformed Myriad Events: " << twoWordMyriadMalformed << " " << (float)twoWordMyriadMalformed*100/eventCnt << "%\n";
 
 	return 0;
 }
