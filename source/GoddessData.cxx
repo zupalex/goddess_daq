@@ -73,7 +73,7 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("NeutPSD",&NeutPSD);
 	tree->Branch("NeutTAC",&NeutTAC);
 	tree->Branch("NeutID",&NeutID);
-
+	
 	corr=new TTree("corr","Correlated Particle Gamma");
 
 	// ORRUBA histograms
@@ -285,7 +285,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 
 		analogADCMult->Fill(agodEvt.values.size());
 		for (size_t j=0;j<agodEvt.values.size();j++) {
-			unsigned short value = agodEvt.values[j];
+			unsigned long int value = agodEvt.values[j];
 			unsigned short channel = agodEvt.channels[j];
 			DAQchannel=channel;
 			DAQCh_Energy[channel] = value;
@@ -550,9 +550,9 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		NeutEnergy = rawEnergy;
 		NeutPSD = psd_;
 		NeutTAC = tac_;
-		if(description == "90deg")NeutID = 1;
-		if(description == "downstream")NeutID = 2;
-
+		if(description =="90deg") NeutID = 1;
+		else NeutID = 2;
+				
 	  LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
 	  LiquidScint_enRaw[description]->Fill(rawEnergy);
 	  LiquidScint_psdRaw[description]->Fill(psd_);

@@ -159,6 +159,7 @@ class GoddessData {
 		float NeutTAC;
 		int NeutID;
 		
+		
 		std::vector<float> *energy;
 		float psd;
 		  float tac;
