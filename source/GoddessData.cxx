@@ -613,13 +613,19 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		}
 		siDetEn->push_back(det->GetEnergy());
 
-		for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
-			//gammaTimeDiffs->push_back(dT);
-			gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);
-		}
+
 	}
 
+	
+	for (unsigned int dgsEvtNum=0;dgsEvtNum<(dgsEvts->size());dgsEvtNum++) {
+	  // type 1 = Germanium detectors, type 2 = BGO
+	  if ((int)dgsEvts->at(dgsEvtNum).tpe < 2) 
+	    {
+	      gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);	
+	    }
 
+	}
+ 	
 	for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
 		for (size_t i=0;i<agodEvts->size();i++) {
 			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(agodEvts->at(i).timestamp);
