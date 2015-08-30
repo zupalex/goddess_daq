@@ -45,7 +45,9 @@ class GoddessData {
 		void FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 		void FillHists(std::vector<DGSEVENT> *dgsEvts);
 
+		///Map of all fired detectors in an event keyed by position ID.
 		std::map<std::string,Detector*> firedDets;
+		///Map of fired silicon detectors in an event keyed by position ID.
 		std::map<std::string,orrubaDet*> siDets;
 		IonChamber *ionChamber;
 		std::map<std::string,LiquidScint*> liquidScints;

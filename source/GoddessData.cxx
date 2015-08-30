@@ -310,10 +310,11 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			if (siDet) {
 				analog = true;
 				posID = siDet->GetPosID();
+				//We only push the detector back onto the silicon stack if we haven't already added it.
 				if(siDets.find(posID)==siDets.end()) {
+					siDets[posID] = siDet;
 					siAnalogMult++;
 				}
-				siDets[posID] = siDet;
 			}
 			else if (liquidScint_) {
 				posID = liquidScint_->GetDescription();
@@ -364,10 +365,11 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		if (siDet) {
 			digital = true;
 			posID = siDet->GetPosID();
+			//We only push the detector back onto the silicon stack if we haven't already added it.
 			if(siDets.find(posID)==siDets.end()) {
+				siDets[posID] = siDet;
 				siDigitalMult++;
 			}
-			siDets[posID] = siDet;
 		}
 		else if (liquidScint_) {
 			posID = liquidScint_->GetDescription();
@@ -399,19 +401,26 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 	std::map<std::string, int> numSectorHits;
 
+	unsigned short numDetsOverThresh = 0;
 	// loop over fired detectors
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
+		//Get detector pointer from iteratot
 		orrubaDet* det = detItr->second;
+		//Get some information about the detector.
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
 		//unsigned short sector = det->GetSector();
+		
+		if (det->GetContactMult()) numDetsOverThresh++;
 
-		// front=false (p-type = (!n-type))
+		//Get the maps of the raw and calibrated energies for front and back.
+		// Each map has the channel that fired as the key.
 		siDet::ValueMap frontRawEn = det->GetRawEn(siDet::pType);
 		siDet::ValueMap frontCalEn = det->GetCalEn(siDet::pType);
 		siDet::ValueMap backRawEn = det->GetRawEn(siDet::nType);
 		siDet::ValueMap backCalEn = det->GetCalEn(siDet::nType);
 
+		//Handle BB10 detectors.
 		if(detType =="BB10"){
 		  //---Raw Energy---
 		  for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
@@ -422,7 +431,8 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		    BB10CalEn[detPosID]->Fill(itr->second, itr->first);
 		  }
 		}
-		if (detType == "QQQ5") {
+		//Handle QQQ5 detectors.
+		else if (detType == "QQQ5") {
 			//---Raw Energy---
 			for (auto itr=frontRawEn.begin(); itr!=frontRawEn.end();++itr) {
 			        QQQenRawFront[detPosID]->Fill(itr->second, itr->first);
@@ -433,8 +443,6 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 
 			//Lets ignore the hits with all strips below threhsold.
 			if (det->GetContactMult() == 0) {
-				det->Clear();
-				siDets.erase(detItr);
 				continue;
 			}
 
@@ -461,9 +469,9 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 					endcapHitPattern->Fill(angle,itrFront->first);
 				}
 			}
-		}
-
-		if (detType == "superX3") {
+		} //Done with QQQ5 detectors
+		//Handle Super X3 detectors
+		else if (detType == "superX3") {
 			superX3 *sx3= (superX3*) det;
 
 			//---Raw Energy---
@@ -486,10 +494,8 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 			  }
 			}	
 
-			//Lets ignore the hits with all strips below threhsold.
+			//Lets ignore the detectors with all strips below threhsold.
 			if (det->GetContactMult() == 0) {
-				det->Clear();
-				siDets.erase(detItr);
 				continue;
 			}
 			sX3frontMult[detPosID]->Fill(frontCalEn.size());
@@ -527,18 +533,20 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 					sX3HitPattern->Fill(angle,zPos);
 				}
 			}
-		}
+		} //Done with Super X3 detectors
 
+		//Loop over the DGS events.
 		for (size_t i=0;i<dgsEvts->size();i++) {
+			//Fill a histogram based on upstream / downstream.
 			if (det->GetUpStream()) {
 				upstreamGam->Fill(dgsEvts->at(i).ehi);
 			} else {
 				downstreamGam->Fill(dgsEvts->at(i).ehi);
 			}
 		}
-
-	}
+	} //Finished looping over fired silicon detectors.
 	
+	//Begin loop of liquid scintillators.
 	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
 	  std::string description = lsItr->first;
 	  LiquidScint* liquidScint = lsItr->second;
@@ -546,33 +554,35 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		float rawEnergy = liquidScint->GetRawEnergy();
 		float psd_ = liquidScint->GetRawPSD();
 		float tac_ = liquidScint->GetRawTAC();
-		
+	
 		NeutEnergy = rawEnergy;
 		NeutPSD = psd_;
 		NeutTAC = tac_;
 		if(description =="90deg") NeutID = 1;
 		else NeutID = 2;
 				
-	  LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
-	  LiquidScint_enRaw[description]->Fill(rawEnergy);
-	  LiquidScint_psdRaw[description]->Fill(psd_);
-	  if(tac_ != 0){
-	    LiquidScint_tacRaw[description]->Fill(tac_);
-	  }
+		//Fill Raw properties.
+		LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
+		LiquidScint_enRaw[description]->Fill(rawEnergy);
+		LiquidScint_psdRaw[description]->Fill(psd_);
+		if(tac_ != 0){
+			LiquidScint_tacRaw[description]->Fill(tac_);
+		}
 
-	  //Rough neutron gates.
-	  if ((description == "90deg" && psd_ > 350 && tac_ < 660) || (description == "downstream" && psd_ > 725 && tac_ > 2141)) {
-		  hLiqRawEnNeuGate[description]->Fill(rawEnergy);
-		  hLiqPSDNeuGate[description]->Fill(psd_);
-		  hLiqTACNeuGate[description]->Fill(tac_);
-		  for (size_t i=0;i<dgsEvts->size();i++) {
-			  hGamNeuGate[description]->Fill(dgsEvts->at(i).ehi);
-			  hGamVsLiqNeuGate[description]->Fill(rawEnergy,dgsEvts->at(i).ehi);
-		  }
-	  }
-	}
+		//Rough neutron gates based on PSD and Timing.
+		if ((description == "90deg" && psd_ > 350 && tac_ < 660) || (description == "downstream" && psd_ > 725 && tac_ > 2141)) {
+			hLiqRawEnNeuGate[description]->Fill(rawEnergy);
+			hLiqPSDNeuGate[description]->Fill(psd_);
+			hLiqTACNeuGate[description]->Fill(tac_);
+			for (size_t i=0;i<dgsEvts->size();i++) {
+				hGamNeuGate[description]->Fill(dgsEvts->at(i).ehi);
+				hGamVsLiqNeuGate[description]->Fill(rawEnergy,dgsEvts->at(i).ehi);
+			}
+		}
+	} //End loop over liquid scintillators.
 
-	detMult->Fill(siDets.size());
+	//Fill the detector and position multiplicty histograms.
+	detMult->Fill(numDetsOverThresh);
 	hDetPosMult->Fill(numSectorHits.size());	
 }
 
@@ -580,6 +590,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
 		orrubaDet* det = detItr->second;
+		//Skip detectors with no contacts above threshold.
+		if (det->GetContactMult() == 0) continue;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
 
