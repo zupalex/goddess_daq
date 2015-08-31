@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 int usage(std::string executable) {
 	std::cout << "Usage: " << executable << " input.ldf output.geb\n";
@@ -28,12 +29,14 @@ int main(int argc, char *argv[]) {
 	unsigned int myriadMalformed = 0;
 	unsigned int invertedOrderMalformed = 0;
 	unsigned int myriadMissing = 0;
+	float avgNumADCs = 0;
+	float stdDevNumADCs = 0;
 	std::map<unsigned short, unsigned short> *values = buffer.GetMap();
 	while (buffer.ReadNextBuffer() > 0) {
 
 		//Print a buffer counter so the user sees that it is working.
-		printf("Buffer: %d File: %5.2f%%\r",buffer.GetBufferNumber(),buffer.GetFilePositionPercentage());
 		if (buffer.GetBufferNumber() % 100 == 0) {
+			printf("Buffer: %d File: %5.2f%%\r",buffer.GetBufferNumber(),buffer.GetFilePositionPercentage());
 			fflush(stdout);
 		}
 
@@ -96,12 +99,21 @@ int main(int argc, char *argv[]) {
 					output.write((char*)&(itr->first), sizeof(short));
 					output.write((char*)&(itr->second), sizeof(short));
 				}
+
+				//Compute average number of ADCs triggered
+				avgNumADCs = avgNumADCs + (values->size() - avgNumADCs) / eventCnt;
+				if (eventCnt > 1) stdDevNumADCs = stdDevNumADCs + (float)(eventCnt) / (eventCnt -1) * pow(avgNumADCs - values->size(),2);
+
 				lastTimestamp = timestamp;
 			} // Next event
-		}
+		} //If Data Buffer
 
-	}
+	} //next Buffer
+
+	stdDevNumADCs = sqrt(1./(eventCnt - 1.) * stdDevNumADCs);
+
 	std::cout << "Converted " << eventCnt << " events.           \n";
+	std::cout << "Avg number of ADCs per event: " << avgNumADCs << " +/- " << stdDevNumADCs << "\n";
 	std::cout << "Missing Myriad Events: " << myriadMissing << " " << (float)myriadMissing*100/eventCnt << "%\n";
 	std::cout << "Single Word Malformed Myriad Events: " << myriadMalformed << " " << (float)myriadMalformed*100/eventCnt << "%\n";
 	std::cout << "Inverted Timestamp Order Events: " << invertedOrderMalformed << " " << (float)invertedOrderMalformed*100/eventCnt << "%\n";
