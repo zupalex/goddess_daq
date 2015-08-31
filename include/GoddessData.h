@@ -149,18 +149,27 @@ class GoddessData {
 		std::vector<std::string> *siDetID;
 		std::vector<int> *siSector;
 		std::vector<bool> *siUpstream;
+		std::vector<float> *lr;
+		std::vector<float> *x;
+		std::vector<float> *dTG_god;
+		std::vector<float> *ppacde;
+		std::vector<float> *icde1;
+		std::vector<float> *icde2;
+		std::vector<float> *icde3;
 
 		bool analog;
 		bool digital;
+		bool Neutron;
 
 		unsigned short DAQchannel;
 		float DAQCh_Energy[400];
 
-		float NeutEnergy;
-		float NeutPSD;
-		float NeutTAC;
-		int NeutID;
-		
+		std::vector<float> *NeutEnergy;
+		std::vector<float> *NeutPSD;
+		std::vector<float> *NeutTAC;
+		std::vector<float> *NeutID;
+
+		float timeFlag;
 		
 		std::vector<float> *energy;
 		float psd;

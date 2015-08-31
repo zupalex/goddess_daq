@@ -46,8 +46,8 @@ fi
 
 printf "${BLUE}Copying LDF files${RESET}\n"
 	
-if [ -e /media/4844678136/run$RUN.ldf ]; then
-	rsync -ahP --chmod=a-wx /media/4844678136/run$RUN.ldf $DIR/
+if [ -e /media/TOPDRAWER/run$RUN.ldf ]; then
+	rsync -ahP --chmod=a-wx /media/TOPDRAWER/run$RUN.ldf $DIR/
 	if [ $? != 0 ]; then
 		printf "${YELLOW}WARNING:${RESET} No ORNL ldf run file found!\n"
 		warn=1

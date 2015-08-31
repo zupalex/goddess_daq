@@ -33,14 +33,14 @@ void PrintPlots(std::string outputDir, int num){
   gPad->SetLogz();
   dtg_analog_god->Draw("colz");
 
-  c->Print(Form("Plots_run%i.pdf(",num));
+  c->Print(Form("%s/Plots_run%i.pdf(",outputDir.c_str(),num));
 
   c->Clear();
   c->Divide(1,1);
   gPad->SetLogz();
   dgs_ehi->Draw("colz");
 
-  c->Print(Form("Plots_run%i.pdf)",num));
+  c->Print(Form("%s/Plots_run%i.pdf)",outputDir.c_str(),num));
 
 
 }

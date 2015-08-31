@@ -33,5 +33,7 @@ void bin_god (GEB_EVENT *){
 	for (int i=0;i<ng;i++) 
 		DGSEvts.push_back(DGSEvent[i]);
 
+
+
 	godData->Fill(&DGSEvts,&DFMAEvts,&AGODEvts);
 }

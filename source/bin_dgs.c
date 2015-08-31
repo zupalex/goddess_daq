@@ -25,9 +25,6 @@
 #define NGSGE 110
 #include "gsang.h"
 
-
-
-
 #if(0)
 typedef struct PAYLOAD
 {
