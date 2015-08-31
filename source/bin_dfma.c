@@ -563,6 +563,9 @@ sup_dfma ()
   //float pi;//unused
   int i,j;
 
+  // gDirectory->mkdir("fma")->cd();
+
+
   TH1D *mkTH1D (char *, char *, int, double, double);
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 

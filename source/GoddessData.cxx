@@ -31,6 +31,18 @@ GoddessData::GoddessData(std::string configFilename)
 	siUpstream = new std::vector<bool>;
 	siStripEn = new std::vector<float>;
 	siStripNum = new std::vector<short>;
+	x = new std::vector<float>;
+	lr=new std::vector<float>;
+	dTG_god = new std::vector<float>;
+	ppacde = new std::vector<float>;
+	icde1 = new std::vector<float>;
+	icde2 = new std::vector<float>;
+	icde3 = new std::vector<float>;
+	NeutID = new std::vector<float>;
+	NeutPSD =  new std::vector<float>;
+	NeutEnergy =  new std::vector<float>;
+	NeutTAC =  new std::vector<float>;
+
 
 	gDirectory->pwd();
 	TFile *f = gDirectory->GetFile();
@@ -73,7 +85,16 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("NeutPSD",&NeutPSD);
 	tree->Branch("NeutTAC",&NeutTAC);
 	tree->Branch("NeutID",&NeutID);
-	
+	tree->Branch("Neutron",&Neutron);
+	tree->Branch("X",&x);
+	tree->Branch("LR",&lr);
+	tree->Branch("ppacde",&ppacde);
+	tree->Branch("icde1",&icde1);
+	tree->Branch("icde2",&icde2);
+	tree->Branch("icde3",&icde3);
+	tree->Branch("dTG_god",&dTG_god);	
+	tree->Branch("DTFlag",&timeFlag);
+
 	corr=new TTree("corr","Correlated Particle Gamma");
 
 	// ORRUBA histograms
@@ -317,6 +338,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 				}
 			}
 			else if (liquidScint_) {
+			        Neutron = true;
 				posID = liquidScint_->GetDescription();
 				liquidScints[posID] = liquidScint_;
 			}
@@ -554,12 +576,12 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		float rawEnergy = liquidScint->GetRawEnergy();
 		float psd_ = liquidScint->GetRawPSD();
 		float tac_ = liquidScint->GetRawTAC();
-	
-		NeutEnergy = rawEnergy;
-		NeutPSD = psd_;
-		NeutTAC = tac_;
-		if(description =="90deg") NeutID = 1;
-		else NeutID = 2;
+		
+		NeutEnergy->push_back(rawEnergy);
+		NeutPSD->push_back(psd_);
+		NeutTAC->push_back(tac_);
+		if(description =="90deg") NeutID->push_back(1);
+		else NeutID->push_back(2);
 				
 		//Fill Raw properties.
 		LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
@@ -703,10 +725,54 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	if (valid) {
 		orruba->SetEvent(sector,dE,E1,E2,pos);
 	}
+
+	unsigned int left =0;
+	unsigned int right = 0;
+	for (unsigned int i=0;i<dgodEvts->size();i++) {
+	  if(dgodEvts->at(i).tpe == FP){
+	    dgodEvts->at(i).ehi=dgodEvts->at(i).ehi/30;
+	    if (dgodEvts->at(i).tid==1) { left=dgodEvts->at(i).ehi;}
+	    if (dgodEvts->at(i).tid==2) { right=dgodEvts->at(i).ehi;}
+	    if (dgodEvts->at(i).tid==3) { ppacde->push_back(dgodEvts->at(i).ehi); }
+	    if (dgodEvts->at(i).tid==5) { icde1->push_back(dgodEvts->at(i).ehi); }
+	    if (dgodEvts->at(i).tid==6) { icde2->push_back(dgodEvts->at(i).ehi);}
+	    if (dgodEvts->at(i).tid==7) { icde3->push_back(dgodEvts->at(i).ehi); }
+	    if(left>0 && right>0){
+	      x->push_back(left-right+8000);
+	      lr->push_back(left+right);
+	    }
+	  }
+	  if( (dgodEvts->at(i).LEDts > 0) && (dgodEvts->at(i).tpe == FP) ){
+	    for (unsigned int j=0;j<dgodEvts->size();j++) {
+	      if(dgodEvts->at(j).tpe == DSSD && dgodEvts->at(j).tid>0 && dgodEvts->at(j).tid<107 ){
+		  dTG_god->push_back( (double)(dgodEvts->at(j).LEDts) - (double)(dgodEvts->at(i).LEDts));
+		  if( (double)(dgodEvts->at(j).LEDts) - (double)(dgodEvts->at(i).LEDts) > 250 && (double)(dgodEvts->at(j).LEDts) - (double)(dgodEvts->at(i).LEDts) < 280){
+		    timeFlag = 1;
+		  }
+		  else timeFlag =0;
+	      }
+	    }
+
+	  }
+    
+	}
+
+
+
 	siDetMult = siDets.size();
 	tree->Fill();
-
-
+	
+	NeutEnergy->clear();
+	NeutPSD->clear();
+	NeutID->clear();
+	NeutTAC->clear();
+	lr->clear();
+	x->clear();
+	dTG_god->clear();
+	ppacde->clear();
+	icde1->clear();
+	icde2->clear();
+	icde3->clear();
 	gammaEnergies->clear();
 	gammaAnalogTimeDiffs->clear();
 	gammaDigitalTimeDiffs->clear();

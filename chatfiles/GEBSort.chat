@@ -4,14 +4,16 @@
 # are now specified on the command line of GEBSort
 # all other parameters are specified in this chat file
 
-DumpEvery 600
+DumpEvery 900
 
 #-------------------------------------------
 # basic sort parameters 
 
-nevents           100000000000000000000
+nevents           100000
 printevents       10
-beta              0.127
+beta		  0.13	
+#beta             0.127
+#beta		  0.0	
 modwrite          1000000000
 tsnumwrites       50
 gglen             2600

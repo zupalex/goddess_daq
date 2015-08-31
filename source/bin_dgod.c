@@ -40,6 +40,8 @@ TH2F *h2_god_en;
 TH2F *h2_dTg_god;
 TH2F *h2_g_god;
 
+TH1D *h1_x, *h1_x_g;
+
 /*-----------------------------------------------------*/
 
 int
@@ -57,6 +59,10 @@ sup_dgod ()
   h2_dTg_god = mkTH2F((char *)"dTg_god",(char *)"dTg_god",4000,-2000,2000,400,0,400);
 
   h2_g_god  = mkTH2F((char *)"g_god",(char *)"g_god",4000,0,4000,4000,0,400000);
+
+  h1_x = mkTH1D((char *)"x",(char *)"x",16000,0,16000);
+  h1_x_g = mkTH1D((char *)"xg",(char *)"x",16000,0,16000);
+
 	gDirectory->cd("/");
 
   /* list what we have */
@@ -167,6 +173,59 @@ bin_dgod (GEB_EVENT * GEB_event)
 
    }
   }
+ 
+ // start fma stuffs
+
+ unsigned int left = 0;
+ unsigned int right = 0;
+ unsigned int lr = 0;
+ unsigned int x = 0;
+
+ for (i=0;i<nsubev;i++) {
+   if(DFMAEvent[i].tpe == FP){
+     DFMAEvent[i].ehi=DFMAEvent[i].ehi/30;
+     if (DFMAEvent[i].tid==1) { left=DFMAEvent[i].ehi;}
+     if (DFMAEvent[i].tid==2) { right=DFMAEvent[i].ehi; }
+   }
+    
+ }
+
+ if( (left>0)&&(right>0) ){
+   x=left-right+8000;
+   lr=left+right;
+ }
+
+ h1_x->Fill(x);
+
+// Si-FMA 
+
+ unsigned int left_g=0;
+ unsigned int right_g=0;	
+
+for(i=0;i<nsubev;i++){
+  if((DFMAEvent[i].LEDts > 0) && (DFMAEvent[i].tpe == FP) ){
+    
+    for(j=0;j<nsubev;j++){    
+      if  ((DFMAEvent[j].tpe == DSSD)&&(DFMAEvent[j].tid>0)&&(DFMAEvent[j].tid<107)) {
+	dTg_god = double(DFMAEvent[j].LEDts) - double(DFMAEvent[i].LEDts);
+	
+	if ((dTg_god>130)&&(dTg_god<170)) {
+	  if (DFMAEvent[i].tid==1) { left_g=DFMAEvent[i].ehi;}
+	  if (DFMAEvent[i].tid==2) { right_g=DFMAEvent[i].ehi;}
+	  // Fill 1d gated x spectrum
+				if((left_g>0)&&(right_g>0)){	
+				  x=(left_g-right_g+8000);
+				  h1_x_g->Fill(x);
+				}
+	}
+      }
+    }
+  }	
+ }
+ 
+
+ 
+
 
 
   /* done */

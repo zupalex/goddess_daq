@@ -1601,7 +1601,7 @@ GEBacq (char *ChatFileName)
   int sup_mode3 ();
   int sup_gtcal ();
   int sup_dgs ();
-  //int sup_dfma ();
+  int sup_dfma ();
 	void sup_god();
   int sup_dgod ();
   void sup_agod ();
@@ -2077,7 +2077,8 @@ GEBacq (char *ChatFileName)
 	Pars.histDir->cd();
   sup_dgs ();
 	Pars.histDir->cd();
-  //sup_dfma ();
+	//sup_dfma ();
+	//Pars.histDir->cd();
   sup_god();
 	Pars.histDir->cd();
   sup_dgod ();
