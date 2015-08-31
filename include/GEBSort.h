@@ -59,7 +59,7 @@ typedef struct GEB_event
 typedef struct PARS
 {
   char ROOTFile[STRLEN];
-  int nEvents;
+  unsigned long long int nEvents;
   char ROOTFileOption[STRLEN];
   char GTSortInputFile[STRLEN];
   int UseShareMemFile;

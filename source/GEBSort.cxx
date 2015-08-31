@@ -1253,9 +1253,9 @@ GEBSort_read_chat (char *name)
 
       if ((p = strstr (str, "nevents")) != NULL)
         {
-          nret = sscanf (str, "%s %i", str1, &Pars.nEvents);
+          nret = sscanf (str, "%s %lu", str1, &Pars.nEvents);
           CheckNoArgs (nret, 2, str);
-          printf ("will sort a max of %i events\n", Pars.nEvents);
+          printf ("will sort a max of %lu events\n", Pars.nEvents);
           fflush (stdout);
 
         }
