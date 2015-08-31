@@ -114,7 +114,7 @@ struct gebData
 {
   int type;                     /* type of data following */
   int length;
-  long long timestamp;
+  unsigned long long timestamp;
 };
 
 typedef struct crys_intpts3 CRYS_INTPTS3;

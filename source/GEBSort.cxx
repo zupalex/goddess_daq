@@ -673,7 +673,8 @@ GEBGetEv (GEB_EVENT * GEV_event)
   static int nn = 0, ii = 0, nbadTS = 0, firsttime = 1;
   int siz, i1;
   int stType = 0;
-  long long int TS, dTS;
+  unsigned long long int TS;
+	long long int dTS;
   char str[256];
 
   /* prototypes */
@@ -695,7 +696,7 @@ GEBGetEv (GEB_EVENT * GEV_event)
       siz = buf_read (inData, (char *) GEV_event->ptgd[ii], sizeof (GEBDATA));
       if (siz != sizeof (GEBDATA))
         {
-          printf ("failed to read %u bytes for header, got %i\n", sizeof (GEBDATA), siz);
+          printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
           return (1);
         };
       Pars.nbytes += siz;
@@ -762,7 +763,7 @@ GEBGetEv (GEB_EVENT * GEV_event)
   printf ("Pars.curTS=%lli, TS=%lli\n", Pars.curTS, TS);
 #endif
 
-  while ((TS - Pars.curTS) < Pars.dTS)
+  while ((long long)(TS - Pars.curTS) < Pars.dTS)
     {
       /*read geb header */
 

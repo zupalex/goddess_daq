@@ -411,7 +411,8 @@ main (int argc, char **argv)
   int nfiles = 0, maxNoEvents = 0, nPoolEvents = 0, siz;
   int i1, i2, badRead, nfe, ii, njb = 0, njf = 0;
   int i, j, st, nextTSpoolIndex, nn, argcoffset = 0;
-  long long int oldListTS = 0, dTS, lltmp, oldTS, lli1;
+  unsigned long long int oldListTS = 0, oldTS; 
+  long long int dTS, lltmp, lli1;
   unsigned long long int nextTS, ulli1, ulli2;
   float dtbtev[LENSP];
   float ehigain[NGE + 1], ehioffset[NGE + 1], r1;
