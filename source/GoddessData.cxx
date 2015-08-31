@@ -631,7 +631,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	
 	for (unsigned int dgsEvtNum=0;dgsEvtNum<(dgsEvts->size());dgsEvtNum++) {
 	  // type 1 = Germanium detectors, type 2 = BGO
-	  if ((int)dgsEvts->at(dgsEvtNum).tpe < 2) 
+	  if ((int)dgsEvts->at(dgsEvtNum).tpe ==GE) 
 	    {
 	      gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);	
 	    }
