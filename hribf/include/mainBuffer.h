@@ -169,6 +169,8 @@ class mainBuffer
 		unsigned int GetWritePosition() {return fWritePosition;}
 		///Return the number of events remaining in the current buffer.
 		unsigned int GetEventsRemaining() {return fNumOfEvents - fEventNumber;};
+		///Return the current event number.
+		unsigned int GetEventNumber() {return fEventNumber;}
 
 		///Read out next word in the buffer.
 		ULong64_t GetWord();

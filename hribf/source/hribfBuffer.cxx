@@ -29,6 +29,7 @@ int hribfBuffer::ReadEvent(bool verbose) {
 	}
 
 	ClearEvent();
+	std::vector<UShort_t> multParameterChannels;
 
 	while (GetBufferPositionBytes() < GetNumOfBytes()) {
 		UInt_t datum = GetWord();
@@ -36,6 +37,15 @@ int hribfBuffer::ReadEvent(bool verbose) {
 		//break if we find the trailer word.
 		if (datum == (UInt_t) -1) {
 			if (verbose) printf("\t%#06X Trailer\n",datum);
+			if (!multParameterChannels.empty()) {
+				fprintf(stderr,"ERROR: Multiple values set for buffer %d, event %d, parameter: (Only last values are stored!)\n",GetBufferNumber(),GetEventNumber());
+				for (auto itr = multParameterChannels.begin(); itr != multParameterChannels.end(); ++itr) {
+					if (itr != multParameterChannels.begin()) fprintf(stderr,", ");
+					fprintf(stderr,"%3d",*itr);
+				}
+				fprintf(stderr,"!\n");
+			}
+
 			break;
 		}
 		UShort_t channel = datum & 0x7FFF;
@@ -47,6 +57,8 @@ int hribfBuffer::ReadEvent(bool verbose) {
 
 		//if (values.size() <= channel) values.resize(channel+1);
 		values[channel]=value;
+		paramMults[channel]++;
+		if (paramMults[channel] == 2) multParameterChannels.push_back(channel);
 	}
 
 	//Increment the number of Events read.

@@ -24,6 +24,7 @@ class hribfBuffer : public mainBuffer {
 		void ReadPAC(bool verbose = false);
 	
 		std::map<unsigned short, unsigned short> values;
+		std::map<unsigned short, unsigned int> paramMults;
 
 
 	public:
@@ -78,7 +79,7 @@ class hribfBuffer : public mainBuffer {
 		///Print a summary of the buffer header.
 		void PrintBufferHeader();
 
-		void ClearEvent() {values.clear();};
+		void ClearEvent() {values.clear();paramMults.clear();};
 		std::map<unsigned short, unsigned short> *GetMap() {return &values;};
 };
 
