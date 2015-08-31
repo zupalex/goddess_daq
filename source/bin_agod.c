@@ -61,6 +61,7 @@ TH1D *h1_agod_en;
 TH2F *h2_agod_en;
 TH2F *h2_dTg_agod;
 TH2F *h2_g_agod;
+TH1D *h1_agod_dTS;
 
 /*-----------------------------------------------------*/
 
@@ -74,6 +75,7 @@ void sup_agod()
 
   h1_agod_en = mkTH1D((char *)"agod_all_en",(char *)"agod_all_en",4096,0,4096);
   h2_agod_en = mkTH2F((char *)"agod_en",(char *)"agod_en",4096,0,4096,400,0,400);
+  h1_agod_dTS = mkTH1D((char *)"agod_dTS",(char *)"agod_dTS",1000,-2E10,2E10);
 
   h2_dTg_agod = mkTH2F((char *)"dTg_agod",(char *)"dTg_agod",4000,-2000,2000,400,0,400);
 
@@ -93,6 +95,8 @@ void sup_agod()
 
 int bin_agod (GEB_EVENT * GEB_event)
 {
+
+	static unsigned long long lastTS = 0;
 
   /* declarations */
 
@@ -124,6 +128,8 @@ int bin_agod (GEB_EVENT * GEB_event)
 
   // histogram incrementation 
   for (unsigned int i=0;i<numAGOD;i++) {
+		h1_agod_dTS->Fill((long long)(AGODEvent[i].timestamp - lastTS));
+		lastTS = AGODEvent[i].timestamp;
 	  for (size_t j=0;j<AGODEvent[i].values.size();j++) {
 		  h2_agod_en->Fill(AGODEvent[i].values[j],AGODEvent[i].channels[j]);
 		  h1_agod_en->Fill(AGODEvent[i].values[j]);
