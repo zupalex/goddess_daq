@@ -2045,25 +2045,25 @@ GEBacq (char *ChatFileName)
 	Pars.f1->Write(0,TObject::kWriteDelete);
 	Pars.histDir->cd();
 
-	gDirectory->mkdir("GEBSort")->cd();
-  /* spectra that are always there */
-  for (i = 0; i <= NGE; i++)
-  {
-	  sprintf (str2, "CC");
-	  sprintf (str1, "ehi%3.3i", i);
-	  ehi[i] = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-	  ehi[i]->SetXTitle ("Channel");
-	  ehi[i]->SetYTitle ("Counts");
-  };
+	//gDirectory->mkdir("GEBSort")->cd();
+  ///* spectra that are always there */
+  //for (i = 0; i <= NGE; i++)
+  //{
+	//  sprintf (str2, "CC");
+	//  sprintf (str1, "ehi%3.3i", i);
+	//  ehi[i] = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
+	//  ehi[i]->SetXTitle ("Channel");
+	//  ehi[i]->SetYTitle ("Counts");
+  //};
 
-  sprintf (str1, "dtbtev");
-  sprintf (str2, "dtbtev");
-  dtbtev = mkTH2F (str1, str2, DTBTEVLEN / 2, 0, DTBTEVLEN, MAX_GEB_TYPE, 1, MAX_GEB_TYPE);
-  gDirectory->cd("/");
-  sprintf (str1, "delta t");
-  dtbtev->SetXTitle (str1);
-  sprintf (str1, "type");
-  dtbtev->SetYTitle (str1);
+  //sprintf (str1, "dtbtev");
+  //sprintf (str2, "dtbtev");
+  //dtbtev = mkTH2F (str1, str2, DTBTEVLEN / 2, 0, DTBTEVLEN, MAX_GEB_TYPE, 1, MAX_GEB_TYPE);
+  //gDirectory->cd("/");
+  //sprintf (str1, "delta t");
+  //dtbtev->SetXTitle (str1);
+  //sprintf (str1, "type");
+  //dtbtev->SetYTitle (str1);
 
 	Pars.histDir->cd();
   /* spectra for different types of data */
@@ -2288,8 +2288,8 @@ GEBacq (char *ChatFileName)
 		  {
 			  dTS = GEB_event.ptgd[i]->timestamp - firtsTSinEvent;
 			  d1 = (double) dTS;
-			  if (d1 >= (double) 0 && d1 < RATELEN)
-				  dtbtev->Fill (d1, GEB_event.ptgd[i]->type, 1);
+			  //if (d1 >= (double) 0 && d1 < RATELEN)
+				  //dtbtev->Fill (d1, GEB_event.ptgd[i]->type, 1);
 		  };
 
 	  };

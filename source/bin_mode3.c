@@ -27,8 +27,8 @@
 
 /* pointers to ROOT spectra */
 
-TH1D *ehi_sum_mode3;
-TH2F *SegE;
+//TH1D *ehi_sum_mode3;
+//TH2F *SegE;
 
 /* parameters */
 
@@ -52,23 +52,23 @@ sup_mode3 ()
 
   /* initialize */
 
-	gDirectory->mkdir("bin_mode3")->cd();
+	//gDirectory->mkdir("bin_mode3")->cd();
 
 
   /* define spectra */
 
-  sprintf (str1, "ehi_sum_mode3");
-  sprintf (str2, "ehi_sum_mode3");
-  ehi_sum_mode3 = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-  ehi_sum_mode3->SetXTitle (str1);
-
-  sprintf (str1, "SegE");
-  sprintf (str2, "SegE");
-  SegE = mkTH2F (str1, str2, MAXSEGNO, 1, MAXSEGNO, SHORTLEN, 1, LONGLEN);
-  SegE->SetXTitle ("Crystal#*36+seg#");
-  SegE->SetYTitle ("segment energy");
-
-	gDirectory->cd("/");
+//  sprintf (str1, "ehi_sum_mode3");
+//  sprintf (str2, "ehi_sum_mode3");
+//  ehi_sum_mode3 = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
+//  ehi_sum_mode3->SetXTitle (str1);
+//
+//  sprintf (str1, "SegE");
+//  sprintf (str2, "SegE");
+//  SegE = mkTH2F (str1, str2, MAXSEGNO, 1, MAXSEGNO, SHORTLEN, 1, LONGLEN);
+//  SegE->SetXTitle ("Crystal#*36+seg#");
+//  SegE->SetYTitle ("segment energy");
+//
+//	gDirectory->cd("/");
 
   /* list what we have */
 
@@ -245,14 +245,14 @@ bin_mode3 (GEB_EVENT * GEB_event)
           if (Event.ehi > 10 && Event.ehi < LONGLEN)
             {
 
-            ehi_sum_mode3->Fill ((double) Event.ehi, 1);
+            //ehi_sum_mode3->Fill ((double) Event.ehi, 1);
 
             /* unsuppressed segment energy spectra */
 
-            if (Event.id > 0 && Event.id < MAXSEGNO)
-              SegE->Fill ((double) Event.id, (double) Event.ehi);
+            //if (Event.id > 0 && Event.id < MAXSEGNO)
+              //SegE->Fill ((double) Event.id, (double) Event.ehi);
 
-            };
+            }
 
 
           /* extract LED external time, per documentation */
@@ -328,7 +328,7 @@ bin_mode3 (GEB_EVENT * GEB_event)
 
       if (Event.ehi > 10 && Event.ehi < LONGLEN)
         if (Event.id > 0 && Event.id < MAXSEGNO)
-          SegE->Fill ((double) Event.id, (double) Event.ehi);
+          //SegE->Fill ((double) Event.id, (double) Event.ehi);
     };
 #endif
 

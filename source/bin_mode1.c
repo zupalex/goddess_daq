@@ -33,27 +33,27 @@
 /* pointers to ROOT spectra */
 
 
-TH2F *SMAP_firsthits;
-TH1D *fmsp;
-TH2F *ecos_raw;
-TH2F *ecos_dopcor;
-TH1D *dopfac;
-TH1D *polangle;
-TH1D *gmult;
-TH1D *sumTrackE;
-TH1D *TrackE_1gate;
-TH1D *TrackE_2gates;
-TH1D *TrackE_3gates;
-TH2F *fomXe;
-TH2F *ndetXfom;
-TH2F *HK;
-TH1D *rate_mode1;
-TH2F *gg;
-TH2F *ndet_e;
-TH2F *rad_e;
-TH1D *radius_first;
-TH2F *evsr_first;
-TH2F *ngamXsumTrackE;
+//TH2F *SMAP_firsthits;
+//TH1D *fmsp;
+//TH2F *ecos_raw;
+//TH2F *ecos_dopcor;
+//TH1D *dopfac;
+//TH1D *polangle;
+//TH1D *gmult;
+//TH1D *sumTrackE;
+//TH1D *TrackE_1gate;
+//TH1D *TrackE_2gates;
+//TH1D *TrackE_3gates;
+//TH2F *fomXe;
+//TH2F *ndetXfom;
+//TH2F *HK;
+//TH1D *rate_mode1;
+//TH2F *gg;
+//TH2F *ndet_e;
+//TH2F *rad_e;
+//TH1D *radius_first;
+//TH2F *evsr_first;
+//TH2F *ngamXsumTrackE;
 
 typedef struct PAYLOAD
 {
@@ -122,142 +122,142 @@ sup_mode1 ()
   TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
   int get_a_seed (unsigned int *);
 
-	gDirectory->mkdir("bin_mode1")->cd();
+	//gDirectory->mkdir("bin_mode1")->cd();
 
   /* define spectra */
 
-  sprintf (str1, "ecos_raw");
-  sprintf (str2, "ecos_raw");
-  ecos_raw = mkTH2F (str1, str2, 2048, 0, 2047, 1000, -1, 1);
-  sprintf (str1, "uncorrected Energy");
-  ecos_raw->SetXTitle (str1);
-  sprintf (str1, "cos()");
-  ecos_raw->SetYTitle (str1);
+  //sprintf (str1, "ecos_raw");
+  //sprintf (str2, "ecos_raw");
+  //ecos_raw = mkTH2F (str1, str2, 2048, 0, 2047, 1000, -1, 1);
+  //sprintf (str1, "uncorrected Energy");
+  //ecos_raw->SetXTitle (str1);
+  //sprintf (str1, "cos()");
+  //ecos_raw->SetYTitle (str1);
 
-  sprintf (str1, "ecos_dopcor");
-  sprintf (str2, "ecos_dopcor");
-  ecos_dopcor = mkTH2F (str1, str2, 2048, 0, 2047, 1000, -1, 1);
-  sprintf (str1, "doppler corrected Energy");
-  ecos_dopcor->SetXTitle (str1);
-  sprintf (str1, "cos()");
-  ecos_dopcor->SetYTitle (str1);
+  //sprintf (str1, "ecos_dopcor");
+  //sprintf (str2, "ecos_dopcor");
+  //ecos_dopcor = mkTH2F (str1, str2, 2048, 0, 2047, 1000, -1, 1);
+  //sprintf (str1, "doppler corrected Energy");
+  //ecos_dopcor->SetXTitle (str1);
+  //sprintf (str1, "cos()");
+  //ecos_dopcor->SetYTitle (str1);
 
-  sprintf (str1, "SMAP_firsthits");
-  sprintf (str2, "SMAP_firsthits");
-  SMAP_firsthits = mkTH2F (str1, str2, 256, -180, 180, 256, 0, 180);
-  sprintf (str1, "horizontal");
-  SMAP_firsthits->SetXTitle (str1);
-  sprintf (str1, "vertical");
-  SMAP_firsthits->SetYTitle (str1);
+  //sprintf (str1, "SMAP_firsthits");
+  //sprintf (str2, "SMAP_firsthits");
+  //SMAP_firsthits = mkTH2F (str1, str2, 256, -180, 180, 256, 0, 180);
+  //sprintf (str1, "horizontal");
+  //SMAP_firsthits->SetXTitle (str1);
+  //sprintf (str1, "vertical");
+  //SMAP_firsthits->SetYTitle (str1);
 
-  sprintf (str1, "fm");
-  sprintf (str2, "figure of merit");
-  fmsp = mkTH1D (str1, str2, 1024, 0, 2.1);
-  fmsp->SetXTitle (str1);
+  //sprintf (str1, "fm");
+  //sprintf (str2, "figure of merit");
+  //fmsp = mkTH1D (str1, str2, 1024, 0, 2.1);
+  //fmsp->SetXTitle (str1);
 
-  sprintf (str1, "polangle");
-  sprintf (str2, "polangle");
-  polangle = mkTH1D (str1, str2, 1024, 0, 180);
-  polangle->SetXTitle (str1);
+  //sprintf (str1, "polangle");
+  //sprintf (str2, "polangle");
+  //polangle = mkTH1D (str1, str2, 1024, 0, 180);
+  //polangle->SetXTitle (str1);
 
-  sprintf (str1, "dopfac");
-  sprintf (str2, "dopfac");
-  dopfac = mkTH1D (str1, str2, 2048, MINDOPFAC, MAXDOPFAC);
-  dopfac->SetXTitle (str1);
+  //sprintf (str1, "dopfac");
+  //sprintf (str2, "dopfac");
+  //dopfac = mkTH1D (str1, str2, 2048, MINDOPFAC, MAXDOPFAC);
+  //dopfac->SetXTitle (str1);
 
-  sprintf (str1, "gmult");
-  sprintf (str2, "tracked gamma ray mutiplicity");
-  gmult = mkTH1D (str1, str2, 21, 0, 20);
-  gmult->SetXTitle (str1);
+  //sprintf (str1, "gmult");
+  //sprintf (str2, "tracked gamma ray mutiplicity");
+  //gmult = mkTH1D (str1, str2, 21, 0, 20);
+  //gmult->SetXTitle (str1);
 
-  sprintf (str1, "sumTrackE");
-  sumTrackE = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
-  sumTrackE->SetXTitle (str1);
+  //sprintf (str1, "sumTrackE");
+  //sumTrackE = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
+  //sumTrackE->SetXTitle (str1);
 
-  sprintf (str1, "TrackE_1gate");
-  TrackE_1gate = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
-  TrackE_1gate->SetXTitle (str1);
+  //sprintf (str1, "TrackE_1gate");
+  //TrackE_1gate = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
+  //TrackE_1gate->SetXTitle (str1);
 
-  sprintf (str1, "TrackE_2gates");
-  TrackE_2gates = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
-  TrackE_2gates->SetXTitle (str1);
+  //sprintf (str1, "TrackE_2gates");
+  //TrackE_2gates = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
+  //TrackE_2gates->SetXTitle (str1);
 
-  sprintf (str1, "TrackE_3gates");
-  TrackE_3gates = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
-  TrackE_3gates->SetXTitle (str1);
+  //sprintf (str1, "TrackE_3gates");
+  //TrackE_3gates = mkTH1D (str1, str1, LONGLEN, 1, LONGLEN);
+  //TrackE_3gates->SetXTitle (str1);
 
-  sprintf (str1, "fomXe");
-  sprintf (str2, "fomXe");
-  fomXe = mkTH2F (str1, str2, LONGLEN, 1, LONGLEN, 200, 0, 2.0);
-  fomXe->SetXTitle ("e");
-  fomXe->SetYTitle ("fom");
+  //sprintf (str1, "fomXe");
+  //sprintf (str2, "fomXe");
+  //fomXe = mkTH2F (str1, str2, LONGLEN, 1, LONGLEN, 200, 0, 2.0);
+  //fomXe->SetXTitle ("e");
+  //fomXe->SetYTitle ("fom");
 
-  sprintf (str1, "ndetXfom");
-  ndetXfom = mkTH2F (str1, str1, 8, 1, 8, 200, 0, 2.0);
-  ndetXfom->SetXTitle ("ndet (# interaction points)");
-  ndetXfom->SetYTitle ("fom");
+  //sprintf (str1, "ndetXfom");
+  //ndetXfom = mkTH2F (str1, str1, 8, 1, 8, 200, 0, 2.0);
+  //ndetXfom->SetXTitle ("ndet (# interaction points)");
+  //ndetXfom->SetYTitle ("fom");
 
-  sprintf (str1, "ngamXsumTrackE");
-  sprintf (str2, "# gammarays vs gamma ray energy");
-  ngamXsumTrackE = mkTH2F (str1, str2, MAXNGAM, 1, MAXNGAM, LONGLEN, 1, LONGLEN);
-  sprintf (str1, "ngam");
-  ngamXsumTrackE->SetXTitle (str1);
-  sprintf (str1, "sumTrackE");
-  ngamXsumTrackE->SetYTitle (str1);
+  //sprintf (str1, "ngamXsumTrackE");
+  //sprintf (str2, "# gammarays vs gamma ray energy");
+  //ngamXsumTrackE = mkTH2F (str1, str2, MAXNGAM, 1, MAXNGAM, LONGLEN, 1, LONGLEN);
+  //sprintf (str1, "ngam");
+  //ngamXsumTrackE->SetXTitle (str1);
+  //sprintf (str1, "sumTrackE");
+  //ngamXsumTrackE->SetYTitle (str1);
 
-  sprintf (str1, "HK");
-  sprintf (str2, "HK");
-  HK = mkTH2F (str1, str2, 1024, 0, MAXK, 1024, 0, MAXH);
-  sprintf (str1, "K, # gamma rays");
-  HK->SetXTitle (str1);
-  sprintf (str1, "H, summed energy");
-  HK->SetYTitle (str1);
+  //sprintf (str1, "HK");
+  //sprintf (str2, "HK");
+  //HK = mkTH2F (str1, str2, 1024, 0, MAXK, 1024, 0, MAXH);
+  //sprintf (str1, "K, # gamma rays");
+  //HK->SetXTitle (str1);
+  //sprintf (str1, "H, summed energy");
+  //HK->SetYTitle (str1);
 
-  sprintf (str1, "rate_mode1");
-  sprintf (str2, "rate_mode1");
-  rate_mode1 = mkTH1D (str1, str2, RATELEN, 0, RATELEN);
-  rate_mode1->SetXTitle (str1);
+  //sprintf (str1, "rate_mode1");
+  //sprintf (str2, "rate_mode1");
+  //rate_mode1 = mkTH1D (str1, str2, RATELEN, 0, RATELEN);
+  //rate_mode1->SetXTitle (str1);
 
-  sprintf (str1, "gg");
-  sprintf (str2, "tracked gg matrix");
-  gg = mkTH2F (str1, str2, Pars.GGMAX, 1, Pars.GGMAX, Pars.GGMAX, 1, Pars.GGMAX);
-  sprintf (str1, "g1");
-  gg->SetXTitle (str1);
-  sprintf (str1, "g2");
-  gg->SetYTitle (str1);
-
-
-  sprintf (str1, "ndet_e");
-  sprintf (str2, "interaction points vs gamma energy");
-  ndet_e = mkTH2F (str1, str2, 9, 1, 10, Pars.GGMAX, 1, (double) Pars.GGMAX);
-  sprintf (str1, "ndet");
-  ndet_e->SetXTitle (str1);
-  sprintf (str1, "e");
-  ndet_e->SetYTitle (str1);
-
-  sprintf (str1, "rad_e");
-  sprintf (str2, "rad_e");
-  rad_e = mkTH2F (str1, str2, 2048, 0, 300, Pars.GGMAX, 1, Pars.GGMAX);
-  sprintf (str1, "radius");
-  rad_e->SetXTitle (str1);
-  sprintf (str1, "E (keV)");
-  rad_e->SetYTitle (str1);
-
-  sprintf (str1, "radius_first");
-  sprintf (str2, "radius (first points)");
-  radius_first = mkTH1D (str1, str2, 4096, RMIN, RMAX);
-  radius_first->SetXTitle (str1);
-
-  sprintf (str1, "evsr_first");
-  sprintf (str2, "evsr_first");
-  evsr_first = mkTH2F (str1, str2, MEDIUMLEN, RMIN, RMAX, MEDIUMLEN, 1, MEDIUMLEN);
-  sprintf (str1, "radius (cm)");
-  evsr_first->SetXTitle (str1);
-  sprintf (str1, "energy");
-  evsr_first->SetYTitle (str1);
+  //sprintf (str1, "gg");
+  //sprintf (str2, "tracked gg matrix");
+  //gg = mkTH2F (str1, str2, Pars.GGMAX, 1, Pars.GGMAX, Pars.GGMAX, 1, Pars.GGMAX);
+  //sprintf (str1, "g1");
+  //gg->SetXTitle (str1);
+  //sprintf (str1, "g2");
+  //gg->SetYTitle (str1);
 
 
-	gDirectory->cd("/");
+  //sprintf (str1, "ndet_e");
+  //sprintf (str2, "interaction points vs gamma energy");
+  //ndet_e = mkTH2F (str1, str2, 9, 1, 10, Pars.GGMAX, 1, (double) Pars.GGMAX);
+  //sprintf (str1, "ndet");
+  //ndet_e->SetXTitle (str1);
+  //sprintf (str1, "e");
+  //ndet_e->SetYTitle (str1);
+
+  //sprintf (str1, "rad_e");
+  //sprintf (str2, "rad_e");
+  //rad_e = mkTH2F (str1, str2, 2048, 0, 300, Pars.GGMAX, 1, Pars.GGMAX);
+  //sprintf (str1, "radius");
+  //rad_e->SetXTitle (str1);
+  //sprintf (str1, "E (keV)");
+  //rad_e->SetYTitle (str1);
+
+  //sprintf (str1, "radius_first");
+  //sprintf (str2, "radius (first points)");
+  //radius_first = mkTH1D (str1, str2, 4096, RMIN, RMAX);
+  //radius_first->SetXTitle (str1);
+
+  //sprintf (str1, "evsr_first");
+  //sprintf (str2, "evsr_first");
+  //evsr_first = mkTH2F (str1, str2, MEDIUMLEN, RMIN, RMAX, MEDIUMLEN, 1, MEDIUMLEN);
+  //sprintf (str1, "radius (cm)");
+  //evsr_first->SetXTitle (str1);
+  //sprintf (str1, "energy");
+  //evsr_first->SetYTitle (str1);
+
+
+	//gDirectory->cd("/");
   /* list what we have */
 
 //  printf (" we have define the following spectra:\n");
@@ -360,12 +360,12 @@ bin_mode1 (GEB_EVENT * GEB_event)
           d1 /= 100000000;
           d1 /= 60;
           if (d1 > 0 && d1 < (double) RATELEN)
-            rate_mode1->Fill (d1, 1 / 60.0);
+            //rate_mode1->Fill (d1, 1 / 60.0);
           nMode1++;
 
           grh = (TRACKED_GAMMA_HIT *) GEB_event->ptinp[i];
 
-          gmult->Fill (grh->ngam, 1);
+          //gmult->Fill (grh->ngam, 1);
 
           /* check for multiplicity requirements */
 
@@ -413,10 +413,10 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     if (j == 0)
                       if (rr / 10 > RMIN && rr / 10 < RMAX)
                         {
-                          radius_first->Fill ((double) rr / 10, 1);
+                          //radius_first->Fill ((double) rr / 10, 1);
 			  //need to make sure the following if statment is supposed to control the evsr Fill
                           if (grh->gr[j].esum > 0 && grh->gr[j].esum < MEDIUMLEN){};  
-                          evsr_first->Fill ((double) rr / 10, grh->gr[j].esum);
+                          //evsr_first->Fill ((double) rr / 10, grh->gr[j].esum);
                         };
 
                     /* dot with beam direction */
@@ -432,7 +432,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     if (dp > 1.0)
                       dp = 1.0;
                     polang[j] = acosf (dp);
-                    polangle->Fill (polang[j] / M_PI * 180, 1);
+                    //polangle->Fill (polang[j] / M_PI * 180, 1);
 
                     if (grh->gr[j].ndet >= Pars.ndetlimlo && grh->gr[j].ndet <= Pars.ndetlimhi)
                       {
@@ -442,7 +442,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
                         if (d1 > Pars.GGMAX)
                           d1 = Pars.GGMAX - 1;
 
-                        rad_e->Fill (rr, d1, 1.0);
+                        //rad_e->Fill (rr, d1, 1.0);
                       };
 
                     /* find a bin doppler factor */
@@ -450,7 +450,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     rr = 1.0 - Pars.beta * Pars.beta;
                     doppler_factor[j] = sqrt (rr) / (1.0 - Pars.beta * cos (polang[j]));
                     if (doppler_factor[j] > MINDOPFAC && doppler_factor[j] < MAXDOPFAC)
-                      dopfac->Fill (doppler_factor[j], 1);
+                      //dopfac->Fill (doppler_factor[j], 1);
 
                     if (Pars.CurEvNo <= Pars.NumToPrint)
                       {
@@ -464,14 +464,14 @@ bin_mode1 (GEB_EVENT * GEB_event)
                 if (grh->gr[j].tracked)
                   {
 
-                    ecos_raw->Fill (grh->gr[j].esum, cos (polang[j]));
+                    //ecos_raw->Fill (grh->gr[j].esum, cos (polang[j]));
 
                     if (Pars.CurEvNo <= Pars.NumToPrint)
                       printf ("dopler correction: esum %f e0 %f e1 %f -> ", grh->gr[j].esum, grh->gr[j].e0,
                               grh->gr[j].e1);
 
                     grh->gr[j].esum /= doppler_factor[j];
-                    ecos_dopcor->Fill (grh->gr[j].esum, cos (polang[j]));
+                    //ecos_dopcor->Fill (grh->gr[j].esum, cos (polang[j]));
                     grh->gr[j].e0 /= doppler_factor[j];
                     grh->gr[j].e1 /= doppler_factor[j];
                     if (Pars.CurEvNo <= Pars.NumToPrint)
@@ -489,9 +489,9 @@ bin_mode1 (GEB_EVENT * GEB_event)
             if (grh->gr[j].tracked)
               if (grh->gr[j].ndet >= Pars.ndetlimlo && grh->gr[j].ndet <= Pars.ndetlimhi)
                 {
-                  if (grh->gr[j].ndet < 10)
-                    if (grh->gr[j].esum < Pars.GGMAX)
-                      ndet_e->Fill ((double) grh->gr[j].ndet, (double) grh->gr[j].esum, 1);
+                  //if (grh->gr[j].ndet < 10)
+                    //if (grh->gr[j].esum < Pars.GGMAX)
+                      //ndet_e->Fill ((double) grh->gr[j].ndet, (double) grh->gr[j].esum, 1);
                 };
 
 
@@ -517,9 +517,9 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     fflush (stdout);
                   };
 
-                if (sX > -180 && sX < 180)
-                  if (sY > 0 && sY < 180)
-                    SMAP_firsthits->Fill (sX, sY, 1);
+              //  if (sX > -180 && sX < 180)
+              //    if (sY > 0 && sY < 180)
+              //      //SMAP_firsthits->Fill (sX, sY, 1);
               };
 
 
@@ -535,15 +535,15 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     if (grh->gr[j].ndet >= Pars.ndetlimlo && grh->gr[j].ndet <= Pars.ndetlimhi)
                       {
 
-                        fomXe->Fill (d1, grh->gr[j].fom, 1);
+                        //fomXe->Fill (d1, grh->gr[j].fom, 1);
 //                        printf("*** %f %f\n", (float)d1, (float)grh->gr[j].fom);
 
                         if (grh->gr[j].fom >= Pars.fomlo[grh->gr[j].ndet])
                           if (grh->gr[j].fom <= Pars.fomhi[grh->gr[j].ndet])
                             {
-                              sumTrackE->Fill (d1, 1);
-                              if (grh->ngam < MAXNGAM)
-                                ngamXsumTrackE->Fill (grh->ngam, d1, 1);
+                              //sumTrackE->Fill (d1, 1);
+                              //if (grh->ngam < MAXNGAM)
+                                //ngamXsumTrackE->Fill (grh->ngam, d1, 1);
                             };
                       };
               };
@@ -554,8 +554,8 @@ bin_mode1 (GEB_EVENT * GEB_event)
             if (grh->gr[j].tracked)
               if (grh->gr[j].fom >= 0 && grh->gr[j].fom < 2.0)
                 {
-                  fmsp->Fill (grh->gr[j].fom, 1);
-                  ndetXfom->Fill (grh->gr[j].ndet, grh->gr[j].fom);
+                  //fmsp->Fill (grh->gr[j].fom, 1);
+                  //ndetXfom->Fill (grh->gr[j].ndet, grh->gr[j].fom);
                 }
 
           /* HK matrix */
@@ -572,7 +572,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
               {
 //                printf ("HK: ngam=%i, %f %f\n", grh->ngam, (float) d1, (float) d2);
 //                fflush (stdout);
-                HK->Fill (d1, d2, 1);
+                //HK->Fill (d1, d2, 1);
               };
 
 
@@ -654,15 +654,15 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     {
                       if (gate_spe[e1] == 0)
                         {
-                          TrackE_1gate->Fill ((double) e1, 1);
+                          //TrackE_1gate->Fill ((double) e1, 1);
                         };
                     };
                 };
               for (ii = 0; ii < imult; ii++)
                 {
                   e1 = (int) e_good[ii];
-                  if (newgat >= 2)
-                    TrackE_1gate->Fill ((double) e1, 1);
+                  //if (newgat >= 2)
+                    //TrackE_1gate->Fill ((double) e1, 1);
                 };
 // double gates 
 
@@ -673,15 +673,15 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     {
                       if (gate_spe[e1] == 0)
                         {
-                          TrackE_2gates->Fill ((double) e1, 1);
+                          //TrackE_2gates->Fill ((double) e1, 1);
                         };
                     };
                 };
               for (ii = 0; ii < imult; ii++)
                 {
                   e1 = (int) e_good[ii];
-                  if (newgat >= 3)
-                    TrackE_2gates->Fill ((double) e1, 1);
+                  //if (newgat >= 3)
+                    //TrackE_2gates->Fill ((double) e1, 1);
 
                 };
 
@@ -692,7 +692,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
                     {
                       if (gate_spe[e1] == 0)
                         {
-                          TrackE_3gates->Fill ((double) e1, 1);
+                          //TrackE_3gates->Fill ((double) e1, 1);
                         };
                     };
                 };
@@ -702,7 +702,7 @@ bin_mode1 (GEB_EVENT * GEB_event)
                   if (newgat >= 4)
                     {
 
-                      TrackE_3gates->Fill ((double) e1, 1);
+                      //TrackE_3gates->Fill ((double) e1, 1);
                     };
 
                 };
@@ -738,8 +738,8 @@ bin_mode1 (GEB_EVENT * GEB_event)
                                   if (d2 > Pars.GGMAX)
                                     d2 = Pars.GGMAX;
 
-                                  gg->Fill (d1, d2, 1.0);
-                                  gg->Fill (d2, d1, 1.0);
+                                  //gg->Fill (d1, d2, 1.0);
+                                  //gg->Fill (d2, d1, 1.0);
 
                                 };
 

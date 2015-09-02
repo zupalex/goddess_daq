@@ -26,19 +26,19 @@ float egamBinWidth;
 
 /* pointers to ROOT spectra */
 
-TH2F *SMAP_allhits;
-TH1D *hitpat;
-TH1D *CCmult;
-TH1D *CCsum;
-TH1D *CCsum_s;
-TH1D *CCadd;
-TH1D *radius_all;
-TH1D *rate_mode2;
-TH2F *CCe;
-TH2F *ggCC;
-TH2F *evsr_all;
-TH2F *z_plot;
-TH2F *xy_plot;
+//TH2F *SMAP_allhits;
+//TH1D *hitpat;
+//TH1D *CCmult;
+//TH1D *CCsum;
+//TH1D *CCsum_s;
+//TH1D *CCadd;
+//TH1D *radius_all;
+//TH1D *rate_mode2;
+//TH2F *CCe;
+//TH2F *ggCC;
+//TH2F *evsr_all;
+//TH2F *z_plot;
+//TH2F *xy_plot;
 
 /* parameters */
 
@@ -79,101 +79,101 @@ sup_mode2 ()
       ndethits[i] = 0;
     };
 
-	gDirectory->mkdir("bin_mode2")->cd();
-
-  /* define spectra */
-
-  sprintf (str1, "hitpat");
-  sprintf (str2, "hitpat");
-  hitpat = mkTH1D (str1, str2, 200, 1, 200);
-  sprintf (str1, "det number");
-  hitpat->SetXTitle (str1);
-
-  sprintf (str1, "CCmult");
-  sprintf (str2, "CCmult");
-  CCmult = mkTH1D (str1, str2, 21, 0, 20);
-  sprintf (str1, "CCmult");
-  CCmult->SetXTitle (str1);
-
-  sprintf (str1, "CCsum");
-  sprintf (str2, "CCsum");
-  CCsum = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-  sprintf (str1, "(keV)");
-  CCsum->SetXTitle (str1);
-
-  sprintf (str1, "CCsum_s");
-  sprintf (str2, "CCsum_s");
-  CCsum_s = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-  sprintf (str1, "(keV)");
-  CCsum_s->SetXTitle (str1);
-
-  sprintf (str1, "CCadd");
-  sprintf (str2, "CCadd");
-  CCadd = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-  sprintf (str1, "(keV)");
-  CCadd->SetXTitle (str1);
-
-  sprintf (str1, "radius_all");
-  sprintf (str2, "radius (all points)");
-  radius_all = mkTH1D (str1, str2, 4096, RMIN, RMAX);
-  radius_all->SetXTitle (str1);
-
-  sprintf (str1, "rate_mode2");
-  sprintf (str2, "rate_mode2");
-  rate_mode2 = mkTH1D (str1, str2, RATELEN, 0, RATELEN);
-  rate_mode2->SetXTitle (str1);
-
-  /* star map of GRETA */
-
-  sprintf (str1, "evsr_all");
-  sprintf (str2, "evsr_all");
-  evsr_all = mkTH2F (str1, str2, MEDIUMLEN, RMIN, RMAX, MEDIUMLEN, 1, MEDIUMLEN);
-  sprintf (str1, "energy");
-  evsr_all->SetXTitle (str1);
-  sprintf (str1, "radius");
-  evsr_all->SetYTitle (str1);
-
-  sprintf (str1, "SMAP_allhits");
-  sprintf (str2, "SMAP_allhits");
-  SMAP_allhits = mkTH2F (str1, str2, 720, -180, 180, 360, 0, 180);
-  sprintf (str1, "Azimuth");
-  SMAP_allhits->SetXTitle (str1);
-  sprintf (str1, "Polar");
-  SMAP_allhits->SetYTitle (str1);
-
-  sprintf (str1, "CCe");
-  sprintf (str2, "CCe");
-  CCe = mkTH2F (str1, str2, MAXDETPOS, 1, MAXDETPOS, LONGLEN, 1, LONGLEN);
-  sprintf (str1, "crystal #");
-  CCe->SetXTitle (str1);
-  sprintf (str1, "cc energy");
-  CCe->SetYTitle (str1);
-
-  sprintf (str1, "ggCC");
-  sprintf (str2, "ggCC");
-  ggCC = mkTH2F (str1, str2, Pars.GGMAX, 1, Pars.GGMAX, Pars.GGMAX, 1, Pars.GGMAX);
-  sprintf (str1, "g1");
-  ggCC->SetXTitle (str1);
-  sprintf (str1, "g2");
-  ggCC->SetYTitle (str1);
-
-  sprintf (str1, "z_plot");
-  sprintf (str2, "z_plot");
-  z_plot = mkTH2F (str1, str2, NUMAGATAPOS+1, 0, NUMAGATAPOS, 1024, 0, 100);
-  sprintf (str1, "crystal");
-  z_plot->SetXTitle (str1);
-  sprintf (str1, "z values");
-  z_plot->SetYTitle (str1);
-
-  sprintf (str1, "xy_plot");
-  sprintf (str2, "xy_plot");
-  xy_plot = mkTH2F (str1, str2, 1024, -60, 60, 1024, -60, 60);
-  sprintf (str1, "crystal");
-  xy_plot->SetXTitle (str1);
-  sprintf (str1, "z values");
-  xy_plot->SetYTitle (str1);
-
-	gDirectory->cd("/");
+//	gDirectory->mkdir("bin_mode2")->cd();
+//
+//  /* define spectra */
+//
+//  sprintf (str1, "hitpat");
+//  sprintf (str2, "hitpat");
+//  hitpat = mkTH1D (str1, str2, 200, 1, 200);
+//  sprintf (str1, "det number");
+//  hitpat->SetXTitle (str1);
+//
+//  sprintf (str1, "CCmult");
+//  sprintf (str2, "CCmult");
+//  CCmult = mkTH1D (str1, str2, 21, 0, 20);
+//  sprintf (str1, "CCmult");
+//  CCmult->SetXTitle (str1);
+//
+//  sprintf (str1, "CCsum");
+//  sprintf (str2, "CCsum");
+//  CCsum = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
+//  sprintf (str1, "(keV)");
+//  CCsum->SetXTitle (str1);
+//
+//  sprintf (str1, "CCsum_s");
+//  sprintf (str2, "CCsum_s");
+//  CCsum_s = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
+//  sprintf (str1, "(keV)");
+//  CCsum_s->SetXTitle (str1);
+//
+//  sprintf (str1, "CCadd");
+//  sprintf (str2, "CCadd");
+//  CCadd = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
+//  sprintf (str1, "(keV)");
+//  CCadd->SetXTitle (str1);
+//
+//  sprintf (str1, "radius_all");
+//  sprintf (str2, "radius (all points)");
+//  radius_all = mkTH1D (str1, str2, 4096, RMIN, RMAX);
+//  radius_all->SetXTitle (str1);
+//
+//  sprintf (str1, "rate_mode2");
+//  sprintf (str2, "rate_mode2");
+//  rate_mode2 = mkTH1D (str1, str2, RATELEN, 0, RATELEN);
+//  rate_mode2->SetXTitle (str1);
+//
+//  /* star map of GRETA */
+//
+//  sprintf (str1, "evsr_all");
+//  sprintf (str2, "evsr_all");
+//  evsr_all = mkTH2F (str1, str2, MEDIUMLEN, RMIN, RMAX, MEDIUMLEN, 1, MEDIUMLEN);
+//  sprintf (str1, "energy");
+//  evsr_all->SetXTitle (str1);
+//  sprintf (str1, "radius");
+//  evsr_all->SetYTitle (str1);
+//
+//  sprintf (str1, "SMAP_allhits");
+//  sprintf (str2, "SMAP_allhits");
+//  SMAP_allhits = mkTH2F (str1, str2, 720, -180, 180, 360, 0, 180);
+//  sprintf (str1, "Azimuth");
+//  SMAP_allhits->SetXTitle (str1);
+//  sprintf (str1, "Polar");
+//  SMAP_allhits->SetYTitle (str1);
+//
+//  sprintf (str1, "CCe");
+//  sprintf (str2, "CCe");
+//  CCe = mkTH2F (str1, str2, MAXDETPOS, 1, MAXDETPOS, LONGLEN, 1, LONGLEN);
+//  sprintf (str1, "crystal #");
+//  CCe->SetXTitle (str1);
+//  sprintf (str1, "cc energy");
+//  CCe->SetYTitle (str1);
+//
+//  sprintf (str1, "ggCC");
+//  sprintf (str2, "ggCC");
+//  ggCC = mkTH2F (str1, str2, Pars.GGMAX, 1, Pars.GGMAX, Pars.GGMAX, 1, Pars.GGMAX);
+//  sprintf (str1, "g1");
+//  ggCC->SetXTitle (str1);
+//  sprintf (str1, "g2");
+//  ggCC->SetYTitle (str1);
+//
+//  sprintf (str1, "z_plot");
+//  sprintf (str2, "z_plot");
+//  z_plot = mkTH2F (str1, str2, NUMAGATAPOS+1, 0, NUMAGATAPOS, 1024, 0, 100);
+//  sprintf (str1, "crystal");
+//  z_plot->SetXTitle (str1);
+//  sprintf (str1, "z values");
+//  z_plot->SetYTitle (str1);
+//
+//  sprintf (str1, "xy_plot");
+//  sprintf (str2, "xy_plot");
+//  xy_plot = mkTH2F (str1, str2, 1024, -60, 60, 1024, -60, 60);
+//  sprintf (str1, "crystal");
+//  xy_plot->SetXTitle (str1);
+//  sprintf (str1, "z values");
+//  xy_plot->SetYTitle (str1);
+//
+//	gDirectory->cd("/");
 
   /* list what we have */
 
@@ -313,7 +313,7 @@ bin_mode2 (GEB_EVENT * GEB_event)
           d1 /= 100000000;
           d1 /= 60;
           if (d1 > 0 && d1 < (double) RATELEN)
-            rate_mode2->Fill (d1, 1 / 60.0);
+            //rate_mode2->Fill (d1, 1 / 60.0);
 
           /* find basic info */
 
@@ -323,14 +323,14 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
           /* make z_plot and xy_plot */
 
-          for (j = 0; j < ptinp->num; j++)
-            {
-            if (Pars.AGATA_data==0)
-              z_plot->Fill((double)(moduleno * 4 + crystalno),(double)ptinp->intpts[j].z,1.0);
-            else if (Pars.AGATA_data==1)
-              z_plot->Fill((double)(moduleno * 3 + crystalno),(double)ptinp->intpts[j].z,1.0);
-             xy_plot->Fill((double)ptinp->intpts[j].x,(double)ptinp->intpts[j].y,1.0);
-            };
+          //for (j = 0; j < ptinp->num; j++)
+          //  {
+          //  if (Pars.AGATA_data==0)
+          //    //z_plot->Fill((double)(moduleno * 4 + crystalno),(double)ptinp->intpts[j].z,1.0);
+          //  //else if (Pars.AGATA_data==1)
+          //    //z_plot->Fill((double)(moduleno * 3 + crystalno),(double)ptinp->intpts[j].z,1.0);
+          //   //xy_plot->Fill((double)ptinp->intpts[j].x,(double)ptinp->intpts[j].y,1.0);
+          //  }
 
 
           if (Pars.CurEvNo <= Pars.NumToPrint)
@@ -363,7 +363,7 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
           /* hit pattern */
 
-          hitpat->Fill ((double) detno, 1);
+          //hitpat->Fill ((double) detno, 1);
 
           /* worldmap all hits */
 
@@ -468,10 +468,10 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
               if (rr > RMIN && rr < RMAX)
                 {
-                  radius_all->Fill ((double) rr, 1);
+                  //radius_all->Fill ((double) rr, 1);
 		  //need to make sure if the following if statement controls the evsr Fill
                   if (ptinp->intpts[j].e > 0 && ptinp->intpts[j].e < MEDIUMLEN){};
-                  evsr_all->Fill ((double) rr, ptinp->intpts[j].e);
+                  //evsr_all->Fill ((double) rr, ptinp->intpts[j].e);
                 };
 
               /* SMAP coordinates */
@@ -491,22 +491,22 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
               /* update */
 
-              if (sX >= -180 && sX <= 180 && sY >= 0 && sY <= 180)
-                SMAP_allhits->Fill (sX, sY, 1);
-              else
-                {
+              //if (sX >= -180 && sX <= 180 && sY >= 0 && sY <= 180)
+                //SMAP_allhits->Fill (sX, sY, 1);
+              //else
+                //{
                   if (nperrors < 10)
                     {
                       nperrors++;
                       printf ("error: sX,sY= ( %11.6f , %11.6f )\n", sX, sY);
 //                          exit (1);
                     };
-                };
+                //};
             };
 
           /* simple dopler corrected sum of CC energies */
 
-          CCsum_s->Fill (ptinp->tot_e / Pars.modCCdopfac[ptinp->crystal_id], 1);
+          //CCsum_s->Fill (ptinp->tot_e / Pars.modCCdopfac[ptinp->crystal_id], 1);
 
 
           /* quietly rescale all interaction energies to the CC energy */
@@ -551,8 +551,8 @@ bin_mode2 (GEB_EVENT * GEB_event)
           if (detno > 0 && detno < MAXDETPOS)
             if (ptinp->tot_e > 0 && ptinp->tot_e < LONGLEN)
               {
-                CCsum->Fill ((double) ptinp->tot_e, 1);
-                CCe->Fill ((double) detno, (double) ptinp->tot_e, 1);
+                //CCsum->Fill ((double) ptinp->tot_e, 1);
+                //CCe->Fill ((double) detno, (double) ptinp->tot_e, 1);
 //                ehi[detno]->Fill ((double) ptinp->tot_e, 1);
               };
 
@@ -562,17 +562,17 @@ bin_mode2 (GEB_EVENT * GEB_event)
 
   /* update added energy spectrum */
 
-  CCadd->Fill ((double) addedEnergy, 1);
+  //CCadd->Fill ((double) addedEnergy, 1);
 
   /* fill the ggCC martrix */
 
-  CCmult->Fill (nCCenergies, 1);
+  //CCmult->Fill (nCCenergies, 1);
   if (nCCenergies >= Pars.multlo && nCCenergies <= Pars.multhi)
     for (i = 0; i < nCCenergies; i++)
       for (j = i + 1; j < nCCenergies; j++)
         {
-          ggCC->Fill (CCenergies[i], CCenergies[j], 1.0);
-          ggCC->Fill (CCenergies[j], CCenergies[i], 1.0);
+          //ggCC->Fill (CCenergies[i], CCenergies[j], 1.0);
+          //ggCC->Fill (CCenergies[j], CCenergies[i], 1.0);
         };
 
   /* done */
