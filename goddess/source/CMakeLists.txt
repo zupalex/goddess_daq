@@ -5,7 +5,7 @@ orrubaDet.h superX3.h BB10.h QQQ5.h IonChamber.h LiquidScint.h LINKDEF ORRUBALin
 root_generate_dictionary(GoddessStructDictionary GoddessStruct.h LINKDEF GoddessLinkDef.h)
 
 if (${ROOT_VERSION} VERSION_GREATER "6.0")
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm ${CMAKE_CURRENT_BINARY_DIR}/GoddessStructDictionary_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 set (ORRUBA_SOURCES SolidVector.cxx Detector.cxx siDet.cxx orrubaDet.cxx

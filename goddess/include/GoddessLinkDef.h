@@ -8,6 +8,7 @@
 #pragma link C++ struct GamData+;
 #pragma link C++ struct SiData+;
 #pragma link C++ struct IonData+;
-//#pragma link C++ class vector<SiDet>+;
+#pragma link C++ class vector<GamData>+;
+#pragma link C++ class vector<SiData>+;
 
 #endif
