@@ -577,6 +577,11 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		
 	}
 
+	//Now we loop over the siMap and dump them to a vector for storage.
+	for (auto itr = siMap.begin(); itr != siMap.end(); ++itr) {
+		siData->push_back(itr->second);
+	}
+
 	//Loop over the DGS events	
 	for (unsigned int dgsEvtNum=0;dgsEvtNum<(dgsEvts->size());dgsEvtNum++) {
 		GamData datum;
@@ -593,7 +598,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		datum.E = ionChamber->GetAnodeE();
 	}
 
-	tree->Fill();
+	if (!dgsEvts->empty() && !siDets.empty()) tree->Fill();
 	
 	gamData->clear();
 	siData->clear();
