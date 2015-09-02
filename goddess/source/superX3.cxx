@@ -141,8 +141,11 @@ void superX3::UpdatePosition(int strip) {
 
 	/// -- use more parameters to handle resistive strip end to end calibration
 	/// -- need to have 4 parameters in goddess.config file for all p-strips in SX3 detectors
-	float nearCalEnergy = (nearEnergy-parStripEnCal[nearContact].at(2));
-	float farCalEnergy = (farEnergy-parStripEnCal[farContact].at(2)) * parStripEnCal[farContact].at(3);
+	// Karl needs to fix this!!! It is causing seg faults! CRT
+	//float nearCalEnergy = (nearEnergy-parStripEnCal[nearContact].at(2));
+	//float farCalEnergy = (farEnergy-parStripEnCal[farContact].at(2)) * parStripEnCal[farContact].at(3);
+	float nearCalEnergy = 0;
+	float farCalEnergy = 0;	
 	ncalEn[strip] = nearCalEnergy;
 	fcalEn[strip] = farCalEnergy;
 

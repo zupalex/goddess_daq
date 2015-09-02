@@ -459,6 +459,21 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 
 	det->SetRawValue(detCh, secondaryType, rawValue);
 
+	std::string detType = det->IsA()->GetName();
+
+	if(detType == "superX3"){
+		((superX3*)det)->SetRawValue(detCh, secondaryType, rawValue);
+	}
+	else if(detType == "QQQ5"){
+		((QQQ5*)det)->SetRawValue(detCh, secondaryType, rawValue);
+	}
+	else if(detType == "BB10"){
+		((BB10*)det)->SetRawValue(detCh, secondaryType, rawValue);
+	}
+	else{
+		det->SetRawValue(detCh, secondaryType, rawValue);
+	}
+
 	return det;
 	
 }
