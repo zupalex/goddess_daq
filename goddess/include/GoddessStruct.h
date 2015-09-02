@@ -27,6 +27,8 @@ struct SiData {
 	bool barrel;
 	///True if upstream, otherwise occured downstream.
 	bool upstream;
+	///The string describing which sector the islicon stack is located in.
+	std::string sectorStr;
 };
 
 ///Structure of the ion chamber data, including the scintillator.

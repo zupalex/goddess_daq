@@ -551,8 +551,19 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 
 		//Get the first part of the position ID indicating the location in the barrel / end cap.
 		std::string sectorStr = detPosID.substr(0,detPosID.find('_'));
+		//Check if this position has been defined before.
+		bool firstDet = false;
+		if (siMap.find(sectorStr) == siMap.end()) firstDet = true;
 		//Get the data matching the sector string, if it doens't exist a new datum is ctreated automatically.
 		SiData *datum = &siMap[sectorStr];
+
+		//If this sector is new we need to initialize it with default values.
+		if (firstDet) {
+			datum->dE = 0;
+			datum->E1 = 0;
+			datum->E2 = 0;
+			datum->sectorStr = sectorStr;
+		}
 
 		//Set the detector location info.
 		//This is redundant for each layer , but its quick for now.
@@ -568,12 +579,16 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 
 		//Get the interaction position, for now we just use the E1 layer
 		if (det->GetDepth() == 1) datum->pos = det->GetEventPosition();
-		
+	
 	}
 
 	//Now we loop over the siMap and dump them to a vector for storage.
 	for (auto itr = siMap.begin(); itr != siMap.end(); ++itr) {
-		siData->push_back(itr->second);
+		SiData datum = itr->second;
+		//We only push back if there was an E1 value.
+		if (datum.E1) {
+			siData->push_back(datum);
+		}
 	}
 
 	//Loop over the DGS events	
@@ -592,7 +607,12 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		datum.E = ionChamber->GetAnodeE();
 	}
 
-	if (!dgsEvts->empty() && !siDets.empty()) tree->Fill();
+	//Deal with the neutron detectors
+	for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) {
+		LiquidScint *liqDet = lsItr->second;	
+	}
+
+	if (!gamData->empty() && !siData->empty()) tree->Fill();
 	
 	gamData->clear();
 	siData->clear();

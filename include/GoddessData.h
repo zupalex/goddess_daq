@@ -134,11 +134,6 @@ class GoddessData {
 		unsigned short DAQchannel;
 		float DAQCh_Energy[400];
 
-		std::vector<float> *NeutEnergy;
-		std::vector<float> *NeutPSD;
-		std::vector<float> *NeutTAC;
-		std::vector<float> *NeutID;
-
 		float timeFlag;
 		
 		std::vector<float> *energy;
