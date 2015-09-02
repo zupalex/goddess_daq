@@ -21,28 +21,9 @@ GoddessData::GoddessData(std::string configFilename)
 {
 	config = new GoddessConfig("goddess.position",configFilename);
 
-	orruba = new ORRUBA();
-	gammaAnalogTimeDiffs = new std::vector<float>;
-	gammaDigitalTimeDiffs = new std::vector<float>;
-	gammaEnergies = new std::vector<float>;
-	siDetEn = new std::vector<float>;
-	siDetID = new std::vector<std::string>;
-	siSector = new std::vector<int>;
-	siUpstream = new std::vector<bool>;
-	siStripEn = new std::vector<float>;
-	siStripNum = new std::vector<short>;
-	x = new std::vector<float>;
-	lr=new std::vector<float>;
-	dTG_god = new std::vector<float>;
-	ppacde = new std::vector<float>;
-	icde1 = new std::vector<float>;
-	icde2 = new std::vector<float>;
-	icde3 = new std::vector<float>;
-	NeutID = new std::vector<float>;
-	NeutPSD =  new std::vector<float>;
-	NeutEnergy =  new std::vector<float>;
-	NeutTAC =  new std::vector<float>;
-
+	gamData = new std::vector<GamData>;
+	siData = new std::vector<SiData>;
+	ionData = new std::vector<IonData>;
 
 	gDirectory->pwd();
 	TFile *f = gDirectory->GetFile();
@@ -52,50 +33,8 @@ GoddessData::GoddessData(std::string configFilename)
 	}
 	f->cd("/trees");
 	tree=new TTree("god","GODDESS Tree");
-	tree->Branch("orruba",&orruba);
-	tree->Branch("siDetMult",&siDetMult);
-	tree->Branch("sectorMult",&sectorMult);
-	tree->Branch("gamEn",&gammaEnergies);
-	tree->Branch("gamDigitalDt",&gammaDigitalTimeDiffs);
-	tree->Branch("gamAnalogDt",&gammaAnalogTimeDiffs);
-	tree->Branch("digital",&digital);
-	tree->Branch("analog",&analog);
-	tree->Branch("siDetEn",&siDetEn);
-	tree->Branch("siDetID",&siDetID);
-	tree->Branch("siUpstream",&siUpstream);
-	tree->Branch("siSector",&siSector);
-	tree->Branch("siStripEn",&siStripEn);
-	tree->Branch("siStripNum",&siStripNum);
-	tree->Branch("siUpstreamMult",&siUpstreamMult);
-	tree->Branch("siDownstreamMult",&siDownstreamMult);
-	tree->Branch("siAnalogMult",&siAnalogMult);
-	tree->Branch("siDigitalMult",&siDigitalMult);
-	tree->Branch("siStripContactMult",&siDetContactMult);
-	tree->Branch("capUpDetMult",endCapUpstreamDetMult);
-	tree->Branch("barlUpDetMult",barrelUpstreamDetMult);
-	tree->Branch("capDownDetMult",endCapDownstreamDetMult);
-	tree->Branch("barlDownDetMult",barrelDownstreamDetMult);
-	tree->Branch("capUpConMult",endCapUpstreamContactMult);
-	tree->Branch("capDownConMult",endCapDownstreamContactMult);
-	tree->Branch("barlUpConMult",barrelUpstreamContactMult);
-	tree->Branch("barlDownConMult",barrelDownstreamContactMult);
-	tree->Branch("DAQchannel",&DAQchannel);
-	tree->Branch("DAQCh_Energy",DAQCh_Energy,"DAQCh_Energy[400]/F");
-	tree->Branch("NeutEnergy",&NeutEnergy);
-	tree->Branch("NeutPSD",&NeutPSD);
-	tree->Branch("NeutTAC",&NeutTAC);
-	tree->Branch("NeutID",&NeutID);
-	tree->Branch("Neutron",&Neutron);
-	tree->Branch("X",&x);
-	tree->Branch("LR",&lr);
-	tree->Branch("ppacde",&ppacde);
-	tree->Branch("icde1",&icde1);
-	tree->Branch("icde2",&icde2);
-	tree->Branch("icde3",&icde3);
-	tree->Branch("dTG_god",&dTG_god);	
-	tree->Branch("DTFlag",&timeFlag);
-
-	corr=new TTree("corr","Correlated Particle Gamma");
+	tree->Branch("gam",&gamData);
+	tree->Branch("si",&siData);
 
 	// ORRUBA histograms
 	f->cd("/hists");
@@ -329,16 +268,14 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			IonChamber *ionChamber_ = dynamic_cast<IonChamber*>(det);
 			LiquidScint *liquidScint_ = dynamic_cast<LiquidScint*>(det);
 			if (siDet) {
-				analog = true;
 				posID = siDet->GetPosID();
 				//We only push the detector back onto the silicon stack if we haven't already added it.
 				if(siDets.find(posID)==siDets.end()) {
 					siDets[posID] = siDet;
-					siAnalogMult++;
+					//siAnalogMult++;
 				}
 			}
 			else if (liquidScint_) {
-			        Neutron = true;
 				posID = liquidScint_->GetDescription();
 				liquidScints[posID] = liquidScint_;
 			}
@@ -373,7 +310,7 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 			suppressCh[key]=true;
 			continue;
 		}
-		siDetContactMult++;
+		//siDetContactMult++;
 
 		//Take whatever the timestamp is for this channel.
 		//	This is not clear that it is the best method as one detecotr may have various 
@@ -385,12 +322,11 @@ void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *d
 		IonChamber *ionChamber_ = dynamic_cast<IonChamber*>(det);
 		LiquidScint *liquidScint_ = dynamic_cast<LiquidScint*>(det);
 		if (siDet) {
-			digital = true;
 			posID = siDet->GetPosID();
 			//We only push the detector back onto the silicon stack if we haven't already added it.
 			if(siDets.find(posID)==siDets.end()) {
 				siDets[posID] = siDet;
-				siDigitalMult++;
+				//siDigitalMult++;
 			}
 		}
 		else if (liquidScint_) {
@@ -609,6 +545,8 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 }
 
 void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
+	///A map of SiData based on the position in the barrel.
+	std::map<std::string, SiData> siMap;
 
 	for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) {
 		orrubaDet* det = detItr->second;
@@ -617,189 +555,48 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
 
-		siDetID->push_back(detPosID);
-		siSector->push_back(det->GetSector());
-		siUpstream->push_back(det->GetUpStream());
-		if(det->GetUpStream()) {
-			siUpstreamMult++;
-			if (detType == "QQQ5") {
-				endCapUpstreamDetMult[det->GetSector()]++;
-				endCapUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
-				endCapUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
-			}
-			else {
-				barrelUpstreamDetMult[det->GetSector()]++;
-				barrelUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
-				barrelUpstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
-			}
-		} else {
-			if (detType == "QQQ5") {
-				endCapDownstreamDetMult[det->GetSector()]++;
-				endCapDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
-				endCapDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
-			}
-			else {
-				barrelDownstreamDetMult[det->GetSector()]++;
-				barrelDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::pType);
-				barrelDownstreamContactMult[det->GetSector()] += det->GetContactMult(siDet::nType);
-			}
-			siDownstreamMult++;
-		}
-		siDetEn->push_back(det->GetEnergy());
+		//Get the first part of the position ID indicating the location in the barrel / end cap.
+		std::string sectorStr = detPosID.substr(0,detPosID.find('_'));
+		//Get the data matching the sector string, if it doens't exist a new datum is ctreated automatically.
+		SiData *datum = &siMap[sectorStr];
 
+		//Set the detector location info.
+		//This is redundant for each layer , but its quick for now.
+		datum->sector = det->GetSector();
+		if (detType == "QQQ5") datum->barrel = false;
+		else datum->barrel = true;
+		datum->upstream = det->GetUpStream();
 
+		//Get depostied energy for each layer.
+		if (det->GetDepth() == 0) datum->dE = det->GetEnergy();
+		else if (det->GetDepth() == 1) datum->E1 = det->GetEnergy();
+		else if (det->GetDepth() == 2) datum->E2 = det->GetEnergy();
+
+		//Get the interaction position, for now we just use the E1 layer
+		if (det->GetDepth() == 1) datum->pos = det->GetEventPosition();
+		
 	}
 
-	
+	//Loop over the DGS events	
 	for (unsigned int dgsEvtNum=0;dgsEvtNum<(dgsEvts->size());dgsEvtNum++) {
-	  // type 1 = Germanium detectors, type 2 = BGO
-	  if ((int)dgsEvts->at(dgsEvtNum).tpe ==GE) 
-	    {
-	      gammaEnergies->push_back(dgsEvts->at(dgsEvtNum).ehi);	
-	    }
-
-	}
- 	
-	for (unsigned int dgsEvtNum=0;dgsEvtNum<dgsEvts->size();dgsEvtNum++) {
-		for (size_t i=0;i<agodEvts->size();i++) {
-			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(agodEvts->at(i).timestamp);
-			gammaAnalogTimeDiffs->push_back(dT);
-		}
-		for (size_t i=0;i<dgodEvts->size();i++) {
-			int dT = double(dgsEvts->at(dgsEvtNum).event_timestamp) - double(dgodEvts->at(i).LEDts);
-			gammaDigitalTimeDiffs->push_back(dT);
-		}
-	}
-	
-
-	//Build a total ORRUBA event
-	float dE=0, E1=0, E2=0;
-	TVector3 pos(0,0,0);
-	std::string sector;
-	bool valid = true;
-	sectorMult = 0;
-	for (auto itr=siDets.begin();itr!=siDets.end(); ++itr) {
-		orrubaDet* det = itr->second;
-		std::string detPosID = det->GetPosID();
-		unsigned short depth = det->GetDepth();
-		std::string detType = det->IsA()->GetName();
-		std::string detPosSector = detPosID.substr(0, detPosID.length() - 3);
-
-		siDet::ValueMap frontRawEn = det->GetRawEn(siDet::pType);
-		siDet::ValueMap backRawEn = det->GetRawEn(siDet::nType);
-		for (auto itrStrip=frontRawEn.begin();itrStrip!=frontRawEn.end();++itrStrip) {
-			siStripEn->push_back(itrStrip->second);
-			siStripNum->push_back(itrStrip->first);
-		}
-		for (auto itrStrip=backRawEn.begin();itrStrip!=backRawEn.end();++itrStrip) {
-			siStripEn->push_back(itrStrip->second);
-			siStripNum->push_back(itrStrip->first + det->GetNumChannels(siDet::pType));
-		}
-
-
-		if (sector.empty()) {
-			sector = detPosSector;
-			sectorMult++;
-		}
-		//If we had detectors from different quadrants we give up on the event.
-		else if (sector != detPosSector) {
-			sectorMult++;
-			valid = false;
-		}
-		if (depth == 0) {
-			if (!dE) dE = det->GetEnergy();
-		}
-		else if (depth == 1) {
-			if (!E1) E1 = det->GetEnergy();
-		}
-		else if (depth == 2) {
-			if (!E2) E2 = det->GetEnergy();
-		}
-		if (detType == "superX3" || detType == "QQQ5") {
-			//Save the position if a position has not been saved or
-			//	if this is a QQQ5 dE layer.
-			if (!pos.Mag2() || (detType == "QQQ5" && depth == 0))
-				pos = det->GetEventPosition();
-		}
-	} 
-	if (valid) {
-		orruba->SetEvent(sector,dE,E1,E2,pos);
+		GamData datum;
+		datum.en = dgsEvts->at(dgsEvtNum).ehi;
+		datum.type = dgsEvts->at(dgsEvtNum).tpe;
+		gamData->push_back(datum);
 	}
 
-	unsigned int left =0;
-	unsigned int right = 0;
-	for (unsigned int i=0;i<dgodEvts->size();i++) {
-	  if(dgodEvts->at(i).tpe == FP){
-	    dgodEvts->at(i).ehi=dgodEvts->at(i).ehi/30;
-	    if (dgodEvts->at(i).tid==1) { left=dgodEvts->at(i).ehi;}
-	    if (dgodEvts->at(i).tid==2) { right=dgodEvts->at(i).ehi;}
-	    if (dgodEvts->at(i).tid==3) { ppacde->push_back(dgodEvts->at(i).ehi); }
-	    if (dgodEvts->at(i).tid==5) { icde1->push_back(dgodEvts->at(i).ehi); }
-	    if (dgodEvts->at(i).tid==6) { icde2->push_back(dgodEvts->at(i).ehi);}
-	    if (dgodEvts->at(i).tid==7) { icde3->push_back(dgodEvts->at(i).ehi); }
-	    if(left>0 && right>0){
-	      x->push_back(left-right+8000);
-	      lr->push_back(left+right);
-	    }
-	  }
-	  if( (dgodEvts->at(i).LEDts > 0) && (dgodEvts->at(i).tpe == FP) ){
-	    for (unsigned int j=0;j<dgodEvts->size();j++) {
-	      if(dgodEvts->at(j).tpe == DSSD && dgodEvts->at(j).tid>0 && dgodEvts->at(j).tid<107 ){
-		  dTG_god->push_back( (double)(dgodEvts->at(j).LEDts) - (double)(dgodEvts->at(i).LEDts));
-		  if( (double)(dgodEvts->at(j).LEDts) - (double)(dgodEvts->at(i).LEDts) > 250 && (double)(dgodEvts->at(j).LEDts) - (double)(dgodEvts->at(i).LEDts) < 280){
-		    timeFlag = 1;
-		  }
-		  else timeFlag =0;
-	      }
-	    }
-
-	  }
-    
+	//Deal with the ion chamber
+	if (firedDets.find("ion") != firedDets.end()) {
+		IonData datum;
+		datum.dE = ionChamber->GetAnodeDE();
+		datum.resE = ionChamber->GetAnodeResE();
+		datum.E = ionChamber->GetAnodeE();
 	}
 
-
-
-	siDetMult = siDets.size();
 	tree->Fill();
 	
-	NeutEnergy->clear();
-	NeutPSD->clear();
-	NeutID->clear();
-	NeutTAC->clear();
-	lr->clear();
-	x->clear();
-	dTG_god->clear();
-	ppacde->clear();
-	icde1->clear();
-	icde2->clear();
-	icde3->clear();
-	gammaEnergies->clear();
-	gammaAnalogTimeDiffs->clear();
-	gammaDigitalTimeDiffs->clear();
-	siDetID->clear();
-	siDetEn->clear();
-	siSector->clear();
-	siStripNum->clear();
-	siStripEn->clear();
-	siUpstream->clear();
-	siAnalogMult=0;
-	siDigitalMult=0;
-	siDetContactMult=0;
-	siDownstreamMult=0;
-	siUpstreamMult=0;
-	for (int i=0;i<4;i++) {
-		endCapUpstreamDetMult[i] = 0;
-		endCapDownstreamDetMult[i] = 0;
-		endCapUpstreamContactMult[i] = 0;
-		endCapDownstreamContactMult[i] = 0;
-	}
-	for (int i=0;i<12;i++) {
-		barrelUpstreamDetMult[i] = 0;
-		barrelDownstreamDetMult[i] = 0;
-		barrelUpstreamContactMult[i] = 0;
-		barrelDownstreamContactMult[i] = 0;
-	}
-	analog = false;
-	digital = false;
+	gamData->clear();
+	siData->clear();
+	ionData->clear();
 }
 

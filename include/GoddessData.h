@@ -6,6 +6,7 @@
 #include "orrubaDet.h"
 #include "IonChamber.h"
 #include "LiquidScint.h"
+#include "GoddessStruct.h"
 
 
 #include "TH1F.h"
@@ -34,7 +35,12 @@ class GoddessData {
 
 		GoddessConfig *config;
 
-		ORRUBA *orruba;
+		///The pointer to the vector of gamma information.
+		std::vector<GamData> *gamData;
+		///Pointer to the vector of silicon information.
+		std::vector<SiData> *siData;
+		///Pointer to the vector of ion chamber information.
+		std::vector<IonData> *ionData;
 
 		void InitLiquidScintHists();
 		void InitSuperX3Hists();
@@ -124,42 +130,6 @@ class GoddessData {
 		std::map<std::string,TH2F*> hGamVsLiqNeuGate;
 		
 		TTree* tree;
-		TTree* corr;
-		std::vector<float> *gammaEnergies;
-		std::vector<float> *gammaAnalogTimeDiffs;
-		std::vector<float> *gammaDigitalTimeDiffs;
-		std::vector<float> *siStripEn;
-		std::vector<short> *siStripNum;
-		unsigned int siDetMult;
-		unsigned int siDownstreamMult;
-		unsigned int siUpstreamMult;
-		unsigned int siDetContactMult;
-		unsigned int sectorMult;
-		unsigned int siAnalogMult;
-		unsigned int siDigitalMult;
-		unsigned int endCapUpstreamDetMult[4];
-		unsigned int endCapDownstreamDetMult[4];
-		unsigned int barrelUpstreamDetMult[12];
-		unsigned int barrelDownstreamDetMult[12];
-		unsigned int endCapUpstreamContactMult[4];
-		unsigned int endCapDownstreamContactMult[4];
-		unsigned int barrelUpstreamContactMult[12];
-		unsigned int barrelDownstreamContactMult[12];
-		std::vector<float> *siDetEn;
-		std::vector<std::string> *siDetID;
-		std::vector<int> *siSector;
-		std::vector<bool> *siUpstream;
-		std::vector<float> *lr;
-		std::vector<float> *x;
-		std::vector<float> *dTG_god;
-		std::vector<float> *ppacde;
-		std::vector<float> *icde1;
-		std::vector<float> *icde2;
-		std::vector<float> *icde3;
-
-		bool analog;
-		bool digital;
-		bool Neutron;
 
 		unsigned short DAQchannel;
 		float DAQCh_Energy[400];

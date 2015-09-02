@@ -57,6 +57,12 @@ class IonChamber : public Detector {
 
 		///Return the number of channels of the type specified.
 		int GetNumChannels(bool scintType);
+		///Return the energy loss total for the anode dE section.
+		float GetAnodeDE() {return dE;};
+		///Return the residual energy loss total for the anode Eres section.
+		float GetAnodeResE() {return dE;};
+		///Return the total energy loss.
+		float GetAnodeE() {return E;};
 
 		///Check if the specified anode channel has been declared.
 		bool ValidAnode(size_t ch);
