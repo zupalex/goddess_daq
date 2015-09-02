@@ -513,12 +513,6 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		float psd_ = liquidScint->GetRawPSD();
 		float tac_ = liquidScint->GetRawTAC();
 		
-		NeutEnergy->push_back(rawEnergy);
-		NeutPSD->push_back(psd_);
-		NeutTAC->push_back(tac_);
-		if(description =="90deg") NeutID->push_back(1);
-		else NeutID->push_back(2);
-				
 		//Fill Raw properties.
 		LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
 		LiquidScint_enRaw[description]->Fill(rawEnergy);
