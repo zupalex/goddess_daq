@@ -1,3 +1,6 @@
+#ifndef GEBSORT_H
+#define GEBSORT_H
+
 #include "TFile.h"
 #include "gdecomp.h"
 #include "veto_pos.h"
@@ -191,4 +194,4 @@ typedef struct TRACKED_GAMMA_HIT {
 //  TH2F *mkTH2F (char *, char *, int , double , double , int , double , double );
 //  TH1D *mkTH1D (char *, char *, int , double , double );
 
-
+#endif
