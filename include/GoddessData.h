@@ -14,6 +14,7 @@
 #include "TTree.h"
 
 #include "GTMerge.h"
+#include "GEBSort.h"
 
 #include <vector>
 #include <array>
@@ -25,7 +26,7 @@ class GoddessData {
 		GoddessData(std::string configFilename);
 		~GoddessData();
 		
-		void Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
+		void Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 	
 	private:
 		struct GammaData {
@@ -35,6 +36,8 @@ class GoddessData {
 
 		GoddessConfig *config;
 
+		///The lowest timestamp int he current event.
+		unsigned long long firstTimestamp;
 		///The pointer to the vector of gamma information.
 		std::vector<GamData> *gamData;
 		///Pointer to the vector of silicon information.

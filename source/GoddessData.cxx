@@ -33,6 +33,7 @@ GoddessData::GoddessData(std::string configFilename)
 	}
 	f->cd("/trees");
 	tree=new TTree("god","GODDESS Tree");
+	tree->Branch("timestamp",&firstTimestamp);
 	tree->Branch("gam",&gamData);
 	tree->Branch("si",&siData);
 
@@ -234,9 +235,16 @@ void GoddessData::InitGammaHists() {
 		downstreamGam= new TH1F("downstreamGam","gammas gated on downstream particles", 4096, 0, 4096);
 }
 
-void GoddessData::Fill(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
+void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) {
 	//Map of channels to suppress, This occurs if they were not found in the map.
 	static std::map<std::pair<short, short>, bool> suppressCh;
+
+	//Loop over GEB_event and get the lowest timestmap
+	firstTimestamp = gebEvt->ptgd[0]->timestamp;
+	for (int i = 1; i < gebEvt->mult; i++)
+		if (gebEvt->ptgd[i]->timestamp < firstTimestamp)
+			firstTimestamp = gebEvt->ptgd[i]->timestamp;
+
 
 	analogMult->Fill(agodEvts->size());
 	// getting data from analog events

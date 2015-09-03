@@ -19,7 +19,7 @@ void sup_god() {
 	godData = new GoddessData("goddess.config");
 }
 
-void bin_god (GEB_EVENT *){
+void bin_god (GEB_EVENT *gebEvt){
 	std::vector<AGODEVENT> AGODEvts;
 	std::vector<DFMAEVENT> DFMAEvts;
 	std::vector<DGSEVENT> DGSEvts;
@@ -35,5 +35,5 @@ void bin_god (GEB_EVENT *){
 
 
 
-	godData->Fill(&DGSEvts,&DFMAEvts,&AGODEvts);
+	godData->Fill(gebEvt, &DGSEvts,&DFMAEvts,&AGODEvts);
 }
