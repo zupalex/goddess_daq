@@ -38,6 +38,20 @@ GoddessData::GoddessData(std::string configFilename)
 	tree->Branch("gam",&gamData);
 	tree->Branch("si",&siData);
 
+	// Neutron stuff for Mike F.
+	NeutID = new std::vector<float>;
+	NeutPSD =  new std::vector<float>;
+	NeutEnergy =  new std::vector<float>;
+	NeutTAC =  new std::vector<float>;
+
+	// Neutron branches for Mike F.
+	mike_tree = new TTree("mike","Neutron Tree");
+	mike_tree->Branch("E",&NeutEnergy);
+	mike_tree->Branch("PSD",&NeutPSD);
+	mike_tree->Branch("TAC",&NeutTAC);
+	mike_tree->Branch("ID",&NeutID);
+	mike_tree->Branch("neutron",&Neutron);
+
 	// ORRUBA histograms
 	f->cd("/hists");
 	TDirectory *dirOrruba = gDirectory->mkdir("orruba");
@@ -514,6 +528,12 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts) {
 		float rawEnergy = liquidScint->GetRawEnergy();
 		float psd_ = liquidScint->GetRawPSD();
 		float tac_ = liquidScint->GetRawTAC();
+
+		NeutEnergy->push_back(rawEnergy);
+		NeutPSD->push_back(psd_);
+		NeutTAC->push_back(tac_);
+		if(description =="90deg") NeutID->push_back(1);
+		else NeutID->push_back(2);
 		
 		//Fill Raw properties.
 		LiquidScint_PSD_E[description]->Fill(rawEnergy,psd_);
@@ -629,6 +649,12 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	}
 
 	if (!gamData->empty() && !siData->empty()) tree->Fill();
+	if(!NeutEnergy->empty()){ mike_tree->Fill(); }
+
+	NeutEnergy->clear();
+	NeutPSD->clear();
+	NeutID->clear();
+	NeutTAC->clear();
 	
 	gamData->clear();
 	siData->clear();

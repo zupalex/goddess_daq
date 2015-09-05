@@ -132,6 +132,13 @@ class GoddessData {
 		std::map<std::string,TH1F*> hGamNeuGate;
 		std::map<std::string,TH2F*> hGamVsLiqNeuGate;
 		
+		TTree *mike_tree;
+		std::vector<float> *NeutID;
+		std::vector<float> *NeutPSD;
+		std::vector<float> *NeutEnergy;
+		std::vector<float> *NeutTAC;
+		bool Neutron;
+
 		TTree* tree;
 
 		unsigned short DAQchannel;
