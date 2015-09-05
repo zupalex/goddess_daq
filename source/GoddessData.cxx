@@ -16,6 +16,7 @@
 #include "LiquidScint.h"
 
 #include <iostream>
+#include <limits.h>
 
 GoddessData::GoddessData(std::string configFilename)
 {
@@ -257,19 +258,18 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 			unsigned short channel = agodEvt.channels[j];
 			DAQchannel=channel;
 			DAQCh_Energy[channel] = value;
-			//unsigned long long timestamp = agodEvt.timestamp;
+			unsigned long long timestamp = agodEvt.timestamp;
 
 			enRawA->Fill(value,channel);
 
 			std::pair<short, short> key = std::make_pair(GEB_TYPE_AGOD, channel);
 			if (suppressCh.find(key) != suppressCh.end()) continue;
 
-			Detector *det = config->SetRawValue(GEB_TYPE_AGOD, channel, value);
+			Detector *det = config->SetRawValue(GEB_TYPE_AGOD, channel, value, timestamp);
 			if (!det) {
 				suppressCh[key] = true;
 				continue;
 			}	
-			//det->SetTimestamp(timestamp);
 
 			std::string posID;
 			orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
@@ -302,7 +302,7 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 		DFMAEVENT dgodEvt = dgodEvts->at(i);
 		unsigned int value=dgodEvt.ehi;
 		unsigned short channel=dgodEvt.tid;
-		//unsigned long long timestamp = dgodEvt.LEDts;
+		unsigned long long timestamp = dgodEvt.LEDts;
 
 		DAQchannel=channel;
 		//DAQCh_Energy[channel] = value; //filling this will overwrite the analog
@@ -313,17 +313,11 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 			continue;
 		}
 
-		Detector *det=config->SetRawValue(GEB_TYPE_DFMA,channel,value);
+		Detector *det=config->SetRawValue(GEB_TYPE_DFMA,channel,value, timestamp);
 		if (!det) {
 			suppressCh[key]=true;
 			continue;
 		}
-		//siDetContactMult++;
-
-		//Take whatever the timestamp is for this channel.
-		//	This is not clear that it is the best method as one detecotr may have various 
-		//	timestamps
-		//det->SetTimestamp(timestamp);
 
 		std::string posID;
 		orrubaDet* siDet = dynamic_cast<orrubaDet*>(det);
@@ -571,14 +565,17 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 			datum->E1 = 0;
 			datum->E2 = 0;
 			datum->sectorStr = sectorStr;
+
+			//Set the detector location info.
+			datum->sector = det->GetSector();
+			if (detType == "QQQ5") datum->barrel = false;
+			else datum->barrel = true;
+			datum->upstream = det->GetUpStream();
+			datum->time = ULLONG_MAX;
 		}
 
-		//Set the detector location info.
-		//This is redundant for each layer , but its quick for now.
-		datum->sector = det->GetSector();
-		if (detType == "QQQ5") datum->barrel = false;
-		else datum->barrel = true;
-		datum->upstream = det->GetUpStream();
+		unsigned int dTS = det->GetTimeStamp() - firstTimestamp;
+		if (dTS < datum->time) datum->time = dTS;
 
 		//Get depostied energy for each layer.
 		if (det->GetDepth() == 0) datum->dE = det->GetEnergy();
@@ -604,6 +601,11 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		GamData datum;
 		datum.en = dgsEvts->at(dgsEvtNum).ehi;
 		datum.type = dgsEvts->at(dgsEvtNum).tpe;
+
+		//Compute delta time from start of event.
+		datum.time = dgsEvts->at(dgsEvtNum).event_timestamp - firstTimestamp;
+
+		//Push back the gamma data.
 		gamData->push_back(datum);
 	}
 
@@ -613,6 +615,12 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		datum.dE = ionChamber->GetAnodeDE();
 		datum.resE = ionChamber->GetAnodeResE();
 		datum.E = ionChamber->GetAnodeE();
+
+		//Compute delta time from start of event.
+		//datum.time = det->GetTimeStamp() - firstTimestamp;
+
+		//Push back the ion data.
+		ionData->push_back(datum);
 	}
 
 	//Deal with the neutron detectors

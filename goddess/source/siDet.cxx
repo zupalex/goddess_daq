@@ -1,6 +1,7 @@
 #include "siDet.h"
 #include <cmath>
 #include <iostream>
+#include <limits.h>
 
 siDet::siDet():
 	numPtype(0), numNtype(0)
@@ -17,6 +18,8 @@ void siDet::Clear() {
 	enRawN.clear();
 	enCalP.clear();
 	enCalN.clear();
+	timeP.clear();
+	timeN.clear();
 }
 
 void siDet::SetNumContacts(int pType, int nType/*=0*/) {
@@ -52,9 +55,9 @@ bool siDet::ValidContact(unsigned int contact, bool nType/*=false*/) {
  */
 void siDet::SetRawValue(unsigned int channel, unsigned int rawValue) {
 	if (channel < numPtype)
-		SetRawValue(channel,false,rawValue);
+		SetRawValue(channel,siDet::pType,rawValue);
 	else if (channel < numPtype + numNtype) 
-		SetRawValue(channel,true,rawValue);
+		SetRawValue(channel,siDet::nType,rawValue);
 	else
 		std::cerr << "ERROR: Cannot set raw value for invalid channel: " << channel << "!\n";
 }
@@ -69,24 +72,24 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 	if (!ValidContact(contact, nType)) return;
 
 	//Get pointer to the raw an calibrated storage location.
-	float *enRaw = 0, *enCal = 0;
+	float *enCal = 0;
 	unsigned int threshold = 0;
 	std::vector<float> *parEnCal;
 	if (nType) {
-		enRaw = &(enRawN[contact]);
+		enRawN[contact] = rawValue;
 		if (contact < threshN.size()) threshold = threshN.at(contact);
 		if (rawValue > threshold) enCal = &(enCalN[contact]);
 		parEnCal = &(parEnCalN[contact]);
+		
 	}
 	else {
-		enRaw = &(enRawP[contact]);
+		enRawP[contact] = rawValue;
 		if (contact < threshP.size()) threshold = threshP.at(contact);
 		if (rawValue > threshold) enCal = &(enCalP[contact]);
 		parEnCal = &(parEnCalP[contact]);
 	}
 
 	//Assign raw value and compute calibrated value.
-	*enRaw = rawValue;
 	if (enCal) {
 		*enCal = 0;
 		//for (size_t power = 0; power < parEnCal->size(); power++)
@@ -94,7 +97,15 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 	}
 }
 		
-
+void siDet::SetTimeStamp(unsigned int contact, bool contactType, unsigned long long timestamp /*=0*/) {
+	if (!ValidContact(contact, contactType)) return;
+	if (contactType == siDet::nType) {
+		timeN[contact] = timestamp;
+	}
+	else {
+		timeP[contact] = timestamp;
+	}
+}
 float siDet::GetCalEnergy(int contact, bool nType/*=false*/) {
 	if (!ValidContact(contact, nType)) return 0;
 	ValueMap *enCal;
@@ -156,5 +167,15 @@ bool siDet::ContactHit(int contact, bool nType) {
 	return true;
 }
 
+unsigned long long siDet::GetTimeStamp() {
+	unsigned long long timestamp = ULLONG_MAX;
+	for (auto itr = timeP.begin(); itr != timeP.end(); ++itr) {
+		if (timestamp > itr->second) timestamp = itr->second;
+	}
+	for (auto itr = timeN.begin(); itr != timeN.end(); ++itr) {
+		if (timestamp > itr->second) timestamp = itr->second;
+	}
+	return timestamp;
+}
 
 ClassImp(siDet)

@@ -22,6 +22,9 @@ class Detector : public TObject {
 		///Set the raw energy of the channel.
 		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue) = 0;
 
+		///Set the timestamp for the channel.
+		virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp) = 0;
+
 		virtual void Clear() = 0;
 
 	/// \cond This is just for ROOT and doesn't need to be documented

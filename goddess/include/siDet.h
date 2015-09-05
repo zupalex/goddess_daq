@@ -11,8 +11,10 @@
  */
 class siDet : public Detector {
 	public: 
-		///A short hand for a map of vlaues per channel.
+		///A short hand for a map of values per channel.
 		typedef std::map<short, float> ValueMap;
+		///A short hand for a map of timestamps per channel.
+		typedef std::map<short, unsigned long long> TimeMap;
 		static const bool nType = true;
 		static const bool pType = false;
 
@@ -28,6 +30,11 @@ class siDet : public Detector {
 		ValueMap enCalP;
 		///Vector of calibrated energies for n type contacts.
 		ValueMap enCalN;
+
+		///Map of p-type contact timestamps.
+		TimeMap timeP;
+		///Map of n-type contact timestamps.
+		TimeMap timeN;
 
 		///The calibration parameters for p type contacts
 		std::vector<std::vector<float>> parEnCalP; //!
@@ -56,6 +63,8 @@ class siDet : public Detector {
 		virtual void SetRawValue(unsigned int channel, unsigned int rawValue);
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, unsigned int rawValue);
+		///Set the timestamp for the channel.
+		virtual void SetTimeStamp(unsigned int contact, bool contactType, unsigned long long timestamp);
 
 		///Get the calibrated energy of the contact specified.
 		float GetCalEnergy(int contact, bool nType = false);
@@ -63,6 +72,9 @@ class siDet : public Detector {
 		int GetContactMult();
 		///Return the number of fired contacts above threhsold for the specified type.
 		int GetContactMult(bool contactType);
+
+		///Return the smallest timestamp.
+		unsigned long long GetTimeStamp();
 
 		///Return true if the contact energy was set.
 		bool ContactHit(int contact, bool nType);

@@ -430,7 +430,7 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, int numDetCh) {
 /**
  *
  */
-Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned int rawValue) {
+Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned int rawValue, unsigned long long timestamp /*=0*/) {
 	MapKey key = std::make_pair(daqType, digitizerCh);
 	auto mapItr = chMap.upper_bound(key);
 	if (mapItr == chMap.begin()) {
@@ -473,6 +473,8 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 	else{
 		det->SetRawValue(detCh, secondaryType, rawValue);
 	}
+
+	det->SetTimeStamp(detCh, secondaryType, timestamp);
 
 	return det;
 	

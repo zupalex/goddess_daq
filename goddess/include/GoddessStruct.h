@@ -9,6 +9,8 @@ struct GamData {
 	float en;
 	///The type of gamma ray detector. GE=1, BGO=2
 	int type;
+	///The time of the gamma relative to the beginning of the event.
+	unsigned int time;
 };
 
 ///Structure of silicon data from ORRUBA
@@ -29,6 +31,8 @@ struct SiData {
 	bool upstream;
 	///The string describing which sector the islicon stack is located in.
 	std::string sectorStr;
+	///The time of the particle relative to the beginning of the event.
+	unsigned int time;
 };
 
 ///Structure of the ion chamber data, including the scintillator.
@@ -43,5 +47,7 @@ struct IonData {
 	float scintE[4];
 	///Timing of the siPMTs.
 	float scintT[4];
+	///The time of the ion relative to the beginning of the event.
+	unsigned int time;
 };
 #endif

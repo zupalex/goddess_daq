@@ -54,6 +54,8 @@ class IonChamber : public Detector {
 
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue);
+		///Set the timestamp for the channel.
+		virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp) {};
 
 		///Return the number of channels of the type specified.
 		int GetNumChannels(bool scintType);
