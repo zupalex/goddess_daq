@@ -109,7 +109,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 			break;
 		}
 		//Report the one we are registering.
-		std::cout << "Registering " << detType << " detector: ";
+		std::cout << "Registering " << detType << " detector: \n";
 
 		if (detType == "ion") {
 			ionChamber = ReadIonChamberConfig(lineStream);
@@ -354,13 +354,13 @@ IonChamber *GoddessConfig::ReadIonChamberConfig(std::istringstream &lineStream) 
 	std::cout << " dE: " << numDE << " anodes, Eres " << numEres << "\n";
 
 	IonChamber *ionChamber_ = new IonChamber(numAnode, numScint, numDE, numEres);
-	if (IsInsertable(anodeDaqType, anodeDaqCh, ionChamber->GetNumChannels(Detector::Primary)))  {
-		chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber,false);
+	if (IsInsertable(anodeDaqType, anodeDaqCh, ionChamber_->GetNumChannels(Detector::Primary)))  {
+		chMap[std::make_pair(anodeDaqType,anodeDaqCh)] = std::make_pair(ionChamber_,false);
 	}
 	else
 		std::cerr << "ERROR: Ion chamber anodes will not be unpacked!\n";
-	if (IsInsertable(scintDaqType, scintDaqCh, ionChamber->GetNumChannels(Detector::Secondary))) {
-		chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber,true);
+	if (IsInsertable(scintDaqType, scintDaqCh, ionChamber_->GetNumChannels(Detector::Secondary))) {
+		chMap[std::make_pair(scintDaqType,scintDaqCh)] = std::make_pair(ionChamber_,true);
 	}
 	else 
 		std::cerr << "ERROR: Ion chamber scintillators will not be unpacked!\n";
@@ -457,9 +457,8 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 		return NULL;
 	}
 
-	det->SetRawValue(detCh, secondaryType, rawValue);
-
 	std::string detType = det->IsA()->GetName();
+	
 
 	if(detType == "superX3"){
 		((superX3*)det)->SetRawValue(detCh, secondaryType, rawValue);
@@ -469,6 +468,9 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 	}
 	else if(detType == "BB10"){
 		((BB10*)det)->SetRawValue(detCh, secondaryType, rawValue);
+	} 
+	else if (detType == "IonChamber"){
+		((IonChamber*)det)->SetRawValue(detCh, secondaryType, rawValue);
 	}
 	else{
 		det->SetRawValue(detCh, secondaryType, rawValue);

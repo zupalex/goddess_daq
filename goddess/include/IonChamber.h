@@ -62,7 +62,7 @@ class IonChamber : public Detector {
 		///Return the energy loss total for the anode dE section.
 		float GetAnodeDE() {return dE;};
 		///Return the residual energy loss total for the anode Eres section.
-		float GetAnodeResE() {return dE;};
+		float GetAnodeResE() {return resE;};
 		///Return the total energy loss.
 		float GetAnodeE() {return E;};
 

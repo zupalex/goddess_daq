@@ -57,7 +57,7 @@ void IonChamber::Clear() {
 void IonChamber::SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue) {
 	if (!scintType && channel	< anodeRaw.size()) {
 		anodeRaw.at(channel) = rawValue;
-		for (size_t power=0;power < parAnodeEnCal.size(); power++)
+		for (size_t power=0;power < parAnodeEnCal.at(channel).size(); power++)
 			anodeCal.at(channel) += parAnodeEnCal.at(channel).at(power) * pow(rawValue, power);
 
 		//Compute the dE values	
@@ -77,14 +77,15 @@ void IonChamber::SetRawValue(unsigned int channel, bool scintType, unsigned int 
 			//We perform integer division to get the appropriate PMT number.
 			channel /= 2;
 			scintRawE.at(channel) = rawValue;
-			for (size_t power=0;power < parScintEnCal.size(); power++)
+			for (size_t power=0;power < parScintEnCal.at(channel).size(); power++) {
 				scintCalE.at(channel) += parScintEnCal.at(channel).at(power) * pow(rawValue, power);
+			}
 		}
 		else {
 			//We perform integer division to get the appropriate PMT number.
 			channel /= 2;
 			scintRawT.at(channel) = rawValue;
-			for (size_t power=0;power < parScintTimeCal.size(); power++)
+			for (size_t power=0;power < parScintTimeCal.at(channel).size(); power++)
 				scintCalT.at(channel) += parScintTimeCal.at(channel).at(power) * pow(rawValue, power);
 		}
 	}

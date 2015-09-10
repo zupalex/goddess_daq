@@ -10,5 +10,6 @@
 #pragma link C++ struct IonData+;
 #pragma link C++ class vector<GamData>+;
 #pragma link C++ class vector<SiData>+;
+#pragma link C++ class vector<IonData>+;
 
 #endif
