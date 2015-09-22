@@ -37,6 +37,7 @@ int hribfBuffer::ReadEvent(bool verbose) {
 		//break if we find the trailer word.
 		if (datum == (UInt_t) -1) {
 			if (verbose) printf("\t%#06X Trailer\n",datum);
+			/*
 			if (!multParameterChannels.empty()) {
 				fprintf(stderr,"ERROR: Multiple values set for buffer %d, event %d, parameter: (Only last values are stored!)\n",GetBufferNumber(),GetEventNumber());
 				for (auto itr = multParameterChannels.begin(); itr != multParameterChannels.end(); ++itr) {
@@ -45,6 +46,7 @@ int hribfBuffer::ReadEvent(bool verbose) {
 				}
 				fprintf(stderr,"!\n");
 			}
+			*/
 
 			break;
 		}
