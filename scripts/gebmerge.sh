@@ -79,7 +79,7 @@ echo "GEBMerge started at `date`"
 err=$?
 #Remove intermediate converted file
 rm -f .run$RUN.geb
-if [ $err == 0 ]; then
+if [ $err = 0 ]; then
 	printf "${GREEN}GEBMerge DONE at `date`${RESET}\n"
 else
 	printf "${RED}GEBMerge FAILED at `date`${RESET}\n"
