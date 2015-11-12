@@ -25,9 +25,9 @@ class BB10 : public orrubaDet {
 		///The bin centers along the phi axis in radians.	
 		Float_t binsAzimuthalCenter[8]; //!
 
-		///Energy of the p type side.
-		Float_t enPtype;
-	
+		///Pair strip# and energy of the p type side.
+		std::pair<int,float> enPtype;
+
 		///The constructed position of the event.
 		TVector3 eventPos; 
 
@@ -58,11 +58,13 @@ class BB10 : public orrubaDet {
 
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
-		///Return the energy from the p type side.
-		float GetPtypeEnergy() {return enPtype;};
+		///Return a pair of (strip#,energy) from the p type side.
+		std::pair<int,float> GetPtypeEnergy() {return enPtype;};
+		///Returns 0, Needed to be added to be used globally in orrubaDet
+		std::pair<int,float> GetNtypeEnergy() {return std::make_pair(0,0.0);};
 		///Return the total energy deposited in the detector.
-		float GetEnergy() {return enPtype;};
-
+		float GetEnergy() {return enPtype.second;};
+		
 		///Set the raw energy of the contact and compute the calibrated value.
 		virtual void SetRawValue(unsigned int contact, bool nType, int rawValue);
 

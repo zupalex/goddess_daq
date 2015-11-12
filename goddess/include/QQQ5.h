@@ -34,10 +34,10 @@ class QQQ5 : public orrubaDet {
 		///The bin center along the phi axis in degrees.	
 		Float_t binsPolarcenter[33]; //!
 
-		///Calibrated energy of the p type side.
-		float enPtype;
-		///Calibrated energy of the n type side.
-		float enNtype;
+		///Pair strip# and calibrated energy of the p type side.
+		std::pair<int,float> enPtype;
+		///Pair strip# and calibrated energy of the n type side.
+		std::pair<int,float> enNtype;
 		///The total deposited energy in the detector.
 		float enCal;
 
@@ -90,10 +90,10 @@ class QQQ5 : public orrubaDet {
 		
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
-		///Return the energy from the p type side.
-		float GetPtypeEnergy() {return enPtype;};
-		///Return the energy from the n type side.
-		float GetNtypeEnergy() {return enNtype;};
+		///Return a pair (strip#,energy)from the p type side.
+		std::pair<int,float> GetPtypeEnergy() {return enPtype;};
+		///Return a pair (strip#,energy) from the n type side.
+		std::pair<int,float> GetNtypeEnergy() {return enNtype;};
 		///Return the total energy deposited in the detector.
 		float GetEnergy() {return enCal;};
 

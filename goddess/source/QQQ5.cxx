@@ -114,8 +114,8 @@ void QQQ5::ConstructBins () {
 void QQQ5::Clear() {
 	siDet::Clear();
 
-	enPtype = 0;
-	enNtype = 0;
+	enPtype = std::make_pair(0,0.0);
+	enNtype = std::make_pair(0,0.0);
 	enCal = 0;
 
 	eventPos.SetXYZ(0,0,0);
@@ -156,11 +156,13 @@ void QQQ5::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 	siDet::SetRawValue(contact, nType, rawValue);
 
 	if (nType) {
-		enNtype += GetCalEnergy(contact, nType);
+	        enNtype.first = contact;
+		enNtype.second += GetCalEnergy(contact, nType);
 		enCal += GetCalEnergy(contact, nType);
 	}
 	else {
-		enPtype += GetCalEnergy(contact, nType);
+	        enPtype.first = contact;
+		enPtype.second += GetCalEnergy(contact, nType);
 		enCal += GetCalEnergy(contact, nType);
 	}
 }

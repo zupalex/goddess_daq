@@ -106,8 +106,8 @@ void superX3::Clear() {
 		stripContactMult[i] = 0;
 	}
 
-	enPtype = 0;
-	enNtype = 0;
+	enPtype = std::make_pair(0,0.0);
+	enNtype = std::make_pair(0,0.0);
 	enCal = 0;
 
 	eventPos.SetXYZ(0,0,0);
@@ -133,39 +133,35 @@ void superX3::UpdatePosition(int strip) {
 	}
 
 	//Check if both contacts have had there energy set.
+	//This does not work! 
 	if (!ContactHit(nearContact, false) || !ContactHit(farContact, false)) return;
 
-	/// -- collect energy values that were "calibrated" alread in siDet class
+	//Collect energy values that were gain matched in siDet class
 	float nearEnergy = GetCalEnergy(nearContact);
 	float farEnergy = GetCalEnergy(farContact);
 
-	/// -- use more parameters to handle resistive strip end to end calibration
-	/// -- need to have 4 parameters in goddess.config file for all p-strips in SX3 detectors
-	// Karl needs to fix this!!! It is causing seg faults! CRT
-	//float nearCalEnergy = (nearEnergy-parStripEnCal[nearContact].at(2));
-	//float farCalEnergy = (farEnergy-parStripEnCal[farContact].at(2)) * parStripEnCal[farContact].at(3);
-	float nearCalEnergy = 0;
-	float farCalEnergy = 0;	
-	ncalEn[strip] = nearCalEnergy;
-	fcalEn[strip] = farCalEnergy;
-
-	/// -- so far, no energy calibration, only end to end gain matching
+	//This works
+	if(nearEnergy==0 || farEnergy==0) return;
+	
 	float stripEnergy = nearEnergy + farEnergy;
-	float stripCalEnergy = nearCalEnergy + farCalEnergy;
 
-	enCalPstrip[strip] = stripCalEnergy;
-
+	//Energy calibrations done here using parameters in front of enCal resStrip in goddess.config
+	float stripCalEnergy = (stripEnergy - parStripEnCal[strip].at(0))*parStripEnCal[strip].at(1);
+	enCalPstrip[strip] += stripCalEnergy;
+	enPtype.first = strip;
+	enPtype.second += stripCalEnergy;
+		
 	//Compute the resistive strip position by
 	// Pos = (N - F) / E 
 	float stripPosRaw_ = (nearEnergy - farEnergy) / stripEnergy;
-	float stripPosCal_ = (nearCalEnergy - farCalEnergy) / stripCalEnergy;
+	float stripPosCal_ = stripPosRaw_;//put in position calibration parameters here
 
-	stripPosRaw[strip] = stripPosRaw_;
-	stripPosCal[strip] = stripPosCal_;
+	stripPosRaw[strip] += stripPosRaw_;
+	stripPosCal[strip] += stripPosCal_;
 	
 	//Compute the event position.
 	//If the p and n strip multiplicity is 1 we can easily find the position.
-	if (enCalPstrip.size() == 1) {
+	//if (enCalPstrip.size() == 1) {
 		//We construct the event position from the following:
 		//	X: The middle point of the pStrip
 		//	Y: The middle point of the pStrip
@@ -173,10 +169,10 @@ void superX3::UpdatePosition(int strip) {
 		float xValue = (pStripEdgePos[strip].X() + pStripEdgePos[strip + 1].X()) / 2.;
 		float yValue = (pStripEdgePos[strip].Y() + pStripEdgePos[strip + 1].Y()) / 2.;
 		eventPos.SetXYZ(xValue, yValue, stripPosCal_);
-	}
-	//Otherwise we just zero the vector.
-	else eventPos.SetXYZ(0,0,0);
-	
+		//}
+	//Otherwise we just zero the vector. Why???
+	//else  eventPos.SetXYZ(0,0,0);
+	    
 }
 /**The near contacts, even numbered, are closest to the cable header.
  *
@@ -249,26 +245,27 @@ void superX3::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 
 	if (nType) {
 		//Set the energy value only if the multiplicity is 1.
-		enNtype += GetCalEnergy(contact, nType);
+	        enNtype.first = contact;
+	        enNtype.second += GetCalEnergy(contact, nType);
 		enCal += GetCalEnergy(contact, nType);
 	}
 	else {
 		//Determine which strip this contact is in.
-		int strip = GetStrip(contact);
+  	        int strip = GetStrip(contact);
 		stripContactMult[strip]++;
 
 		//If more than one contact fired we can compute position and energy. 
 		if (stripContactMult[strip] > 1) {
 			UpdatePosition(GetStrip(contact));
 			//Store the energy only if the multiplicity is one.
-			enPtype += enCalPstrip[strip];
+			//enPtype += enCalPstrip[strip];//this is filled in UpdatePosition
 			enCal += GetCalEnergy(contact, nType);
 		}
 	}
 }
 
 int superX3::GetStrip(int contact) {
-	int strip = contact / 2;
+        int strip = contact / 2;
 	return strip;
 }
 

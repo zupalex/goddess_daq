@@ -63,6 +63,11 @@ class orrubaDet : public siDet {
 
 		///Abstract definition of a funtion to get the depositied energy of a strip.
 		virtual float GetEnergy() = 0;
+		///Abstract definition of a funtion to get the strip number and depositied energy of a front strip.
+		virtual std::pair<int,float> GetPtypeEnergy() = 0;
+		///Abstract definition of a funtion to get the strip number and depositied energy of a back strip.
+		virtual std::pair<int,float> GetNtypeEnergy() = 0;
+		
 		///Abstract defintion of a function to get the position of an event on the detector.
 		virtual TVector3 GetEventPosition() = 0;
 

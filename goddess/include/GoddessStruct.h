@@ -33,6 +33,11 @@ struct SiData {
 	std::string sectorStr;
 	///The time of the particle relative to the beginning of the event.
 	unsigned int time;
+        ///The front side strip number
+        int Pstrip;
+        ///The back side strip number
+        int Nstrip;
+  
 };
 
 ///Structure of the ion chamber data, including the scintillator.

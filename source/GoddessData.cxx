@@ -557,7 +557,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		if (det->GetContactMult() == 0) continue;
 		std::string detPosID = det->GetPosID();
 		std::string detType = det->IsA()->GetName();
-
+		
 		//Get the first part of the position ID indicating the location in the barrel / end cap.
 		std::string sectorStr = detPosID.substr(0,detPosID.find('_'));
 		//Check if this position has been defined before.
@@ -580,15 +580,33 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		if (detType == "QQQ5") datum->barrel = false;
 		else datum->barrel = true;
 		datum->upstream = det->GetUpStream();
+		
+		if(det->GetPtypeEnergy().second != 0.0){
+		  datum->Pstrip = det->GetPtypeEnergy().first;
+		  
+		  //Get depostied energy for each layer.
+		  if (det->GetDepth() == 0) datum->dE = det->GetPtypeEnergy().second;
+		  else if (det->GetDepth() == 1) datum->E1 = det->GetPtypeEnergy().second;
+		  else if (det->GetDepth() == 2) datum->E2 = det->GetPtypeEnergy().second;
+		}
+		if(det->GetNtypeEnergy().second != 0.0){
+		  datum->Nstrip = det->GetNtypeEnergy().first;//backRawEn.begin()->first;
+		  
+		  //Get depostied energy for each layer.
+		  if (det->GetDepth() == 0) datum->dE = det->GetNtypeEnergy().second;
+		  else if (det->GetDepth() == 1) datum->E1 = det->GetNtypeEnergy().second;
+		  else if (det->GetDepth() == 2) datum->E2 = det->GetNtypeEnergy().second;
+		  
+		}
 
-		//Get depostied energy for each layer.
-		if (det->GetDepth() == 0) datum->dE = det->GetEnergy();
-		else if (det->GetDepth() == 1) datum->E1 = det->GetEnergy();
-		else if (det->GetDepth() == 2) datum->E2 = det->GetEnergy();
+		//if (det->GetDepth() == 0) datum->dE = det->GetEnergy();
+		//else if (det->GetDepth() == 1) datum->E1 = det->GetEnergy();
+		//else if (det->GetDepth() == 2) datum->E2 = det->GetEnergy();
 
 		//Get the interaction position, for now we just use the E1 layer
-		if (det->GetDepth() == 1) datum->pos = det->GetEventPosition();
-	
+		if (det->GetDepth() == 1 && detType=="superX3") datum->pos = det->GetEventPosition();
+		  
+
 	}
 
 	//Now we loop over the siMap and dump them to a vector for storage.
@@ -623,7 +641,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	}
 
 	//if (!gamData->empty() && !siData->empty()) tree->Fill();
-	std::cout << ionData->size() << '\n';
+	//std::cout << ionData->size() << '\n';
 	tree->Fill();
 	
 	gamData->clear();

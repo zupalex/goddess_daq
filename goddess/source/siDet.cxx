@@ -91,9 +91,10 @@ void siDet::SetRawValue(unsigned int contact, bool nType, unsigned int rawValue)
 
 	//Assign raw value and compute calibrated value.
 	if (enCal) {
-		*enCal = 0;
+		//*enCal = 0;
 		//for (size_t power = 0; power < parEnCal->size(); power++)
-		*enCal += (rawValue - parEnCal->at(0)) * parEnCal->at(1);//parEnCal->at(power) * pow(rawValue,power);
+		//*enCal += parEnCal->at(power) * pow(rawValue,power);
+		*enCal = (rawValue - parEnCal->at(0)) * parEnCal->at(1);
 	}
 }
 		

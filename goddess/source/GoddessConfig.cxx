@@ -43,6 +43,7 @@ GoddessConfig::~GoddessConfig() {
  * superX3 1234-56 U0dE 13 0 19 8
  *  enCal p 0 1 2 3 
  *  enCal p 1 1 2 3 
+ *  enCal resStrip 0 1 2 3 
  *  posCal resStrip 0 1 2 3 
  *
  * This configuration example defines a superX3 detector with serial number 1234-56
@@ -54,6 +55,9 @@ GoddessConfig::~GoddessConfig() {
  * number of parameters can be listed in increasing order. 
  * \note The position calibration is only available for resStrip of superX3 
  *  detectors.
+ * \note For resistive strips (superX3) the first calibration parameters are end to end gain matching offset and slopes
+ * \note SuperX3 strip energy calibration parameters (i.e. slope and offset) are entered in after "enCal resStrip" 
+ * \note SuperX3 strip position calibration parameters are entered in after "posCal resStrip" 
  *
  * Also supported, is an ion detector with a built-in scintillator. An example of a
  * typical configuration follows:

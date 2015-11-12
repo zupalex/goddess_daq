@@ -41,10 +41,10 @@ class superX3 : public orrubaDet {
 
 		///Calibrated energy of p type strips.
 		siDet::ValueMap enCalPstrip;
-		///Calibrated energy of the p type side.
-		float enPtype;
-		///Calibrated energy of the n type side.
-		float enNtype;
+		///Pair strip# and calibrated energy of the p type side.
+		std::pair<int,float> enPtype;
+		///Pair strip# and calibrated energy of the n type side.
+		std::pair<int,float> enNtype;
 		///The total deposited energy in the detector.
 		float enCal;
 
@@ -53,9 +53,9 @@ class superX3 : public orrubaDet {
 		///Computed calibrated position of event.
 		siDet::ValueMap stripPosCal;
 
-		///Computed calibrated energy of near contact
+		///NOT FILLED!! Computed calibrated energy of near contact
 		Float_t ncalEn[4];
-		///Computed calibrated energy of far contact
+		///NOT FILLED!! Computed calibrated energy of far contact
 		Float_t fcalEn[4];
 
 		///The number of contacts fired on a strip.
@@ -128,10 +128,10 @@ class superX3 : public orrubaDet {
 		siDet::ValueMap GetStripPosCal() {return stripPosCal;};
 		///Return the computed event position.
 		TVector3 GetEventPosition() {return eventPos;};
-		///Return the energy from the p type side.
-		float GetPtypeEnergy() {return enPtype;};
-		///Return the energy from the n type side.
-		float GetNtypeEnergy() {return enNtype;};
+		///Return a pair (strip#,energy) from the n type side.
+		std::pair<int,float> GetPtypeEnergy() {return enPtype;};
+		///Return a pair (strip#,energy) from the n type side.
+		std::pair<int,float> GetNtypeEnergy() {return enNtype;};
 		///Return the total energy deposited in the detector.
 		float GetEnergy() {return enCal;};
 		///Return the contact for the near end of the strip. 
@@ -140,9 +140,9 @@ class superX3 : public orrubaDet {
 		unsigned short GetFarContact(unsigned short strip);
 		
 		/// -- Make new functions to be used in GoddessData to fill histograms
-		///Return the calibrated energy for the near end of the strip
+		///NOT FILLED!! Return the calibrated energy for the near end of the strip
 		float* GetNearCalEnergy() {return ncalEn;};
-		///Return the calibrated energy for the far end of the strip
+		///NOT FILLED!! Return the calibrated energy for the far end of the strip
 		float* GetFarCalEnergy() {return fcalEn;};
 
 		///Set the raw energy of the contact and compute the calibrated value.

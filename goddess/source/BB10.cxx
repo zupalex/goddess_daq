@@ -77,7 +77,7 @@ void BB10::ConstructBins () {
 
 void BB10::Clear() {
 	siDet::Clear();
-	enPtype = 0;
+	enPtype = std::make_pair(0,0.0);
 	
 	eventPos.SetXYZ(0,0,0);
 }
@@ -95,7 +95,8 @@ void BB10::SetRawValue(unsigned int contact, bool nType, int rawValue) {
 	siDet::SetRawValue(contact, nType, rawValue);
 
 	if (!nType) {
-		enPtype += GetCalEnergy(contact, nType);
+	        enPtype.first = contact;
+		enPtype.second += GetCalEnergy(contact, nType);
 	}
 
 
