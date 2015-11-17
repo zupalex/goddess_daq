@@ -141,7 +141,7 @@ void superX3::UpdatePosition(int strip) {
 	float farEnergy = GetCalEnergy(farContact);
 
 	//This works
-	if(nearEnergy==0 || farEnergy==0) return;
+	if((nearEnergy==0 || farEnergy==0) || (nearEnergy<0 || farEnergy<0)) return;
 	
 	float stripEnergy = nearEnergy + farEnergy;
 
