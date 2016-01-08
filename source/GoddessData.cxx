@@ -581,6 +581,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		else datum->barrel = true;
 		datum->upstream = det->GetUpStream();
 		
+		datum->depth = det->GetDepth();
+
 		if(det->GetPtypeEnergy().second != 0.0){
 		  datum->Pstrip = det->GetPtypeEnergy().first;
 		  
@@ -613,9 +615,9 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	for (auto itr = siMap.begin(); itr != siMap.end(); ++itr) {
 		SiData datum = itr->second;
 		//We only push back if there was an E1 value.
-		if (datum.E1) {
+		//if (datum.E1) {
 			siData->push_back(datum);
-		}
+		//}
 	}
 
 	//Loop over the DGS events	
@@ -623,6 +625,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		GamData datum;
 		datum.en = dgsEvts->at(dgsEvtNum).ehi;
 		datum.type = dgsEvts->at(dgsEvtNum).tpe;
+		datum.num = dgsEvts->at(dgsEvtNum).tid;
 		gamData->push_back(datum);
 	}
 
