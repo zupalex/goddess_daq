@@ -9,6 +9,8 @@ struct GamData {
 	float en;
 	///The type of gamma ray detector. GE=1, BGO=2
 	int type;
+	//The number of the gamma ray detector
+	int num;
 	///The time of the gamma relative to the beginning of the event.
 	unsigned int time;
 };
@@ -37,6 +39,7 @@ struct SiData {
         int Pstrip;
         ///The back side strip number
         int Nstrip;
+	int depth;
   
 };
 
