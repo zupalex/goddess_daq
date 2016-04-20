@@ -58,6 +58,8 @@ class GoddessData {
 		void InitBB10Hists();
 		void InitGammaHists();
 
+		float GetSiEnergies(orrubaDet *det, int strip, bool isNType);
+
 		void FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt);
 		void FillHists(std::vector<DGSEVENT> *dgsEvts);
 
