@@ -41,9 +41,16 @@ class GoddessData {
 		///The pointer to the vector of gamma information.
 		std::vector<GamData> *gamData;
 		///Pointer to the vector of silicon information.
-		std::vector<SiData> *siData;
+	        std::vector<SiData> *siData;
 		///Pointer to the vector of ion chamber information.
 		std::vector<IonData> *ionData;
+
+		///The pointer to the vector containing channels number for the raw tree
+		std::vector<unsigned short> *rawChannels;
+		///The pointer to the vector containing raw values for the raw tree
+		std::vector<unsigned long int> *rawValues;
+		///The pointer to the vector containings the daq type identifier (digital==16 / analog==19)
+		std::vector<bool> *isDigital;
 
 		void InitLiquidScintHists();
 		void InitSuperX3Hists();
@@ -140,6 +147,7 @@ class GoddessData {
 		bool Neutron;
 
 		TTree* tree;
+		TTree* rawTree;
 
 		unsigned short DAQchannel;
 		float DAQCh_Energy[400];

@@ -111,7 +111,7 @@ float siDet::GetCalEnergy(int contact, bool nType/*=false*/) {
 	if (!ValidContact(contact, nType)) return 0;
 	ValueMap *enCal;
 	if (nType) enCal = &enCalN;
-	else enCal = & enCalP;
+	else enCal = &enCalP;
 
 	auto itr = enCal->find(contact);
 	if (itr != enCal->end()) return itr->second;
