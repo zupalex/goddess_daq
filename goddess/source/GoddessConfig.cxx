@@ -82,7 +82,7 @@ void GoddessConfig::ReadConfig(std::string filename) {
 	std::ifstream mapFile(filename);	
 
 	if (!mapFile.good()) {
-		std::cerr << "ERROR: Unable to read configuration file: " << filename << "\n";
+		std::cerr << "ERROR: Unable to read configuration file: " << filename << " !\n";
 		return;
 	}
 

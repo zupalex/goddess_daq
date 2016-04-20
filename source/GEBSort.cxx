@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include <assert.h>
 #include <string.h>
 #include <math.h>
@@ -39,6 +40,8 @@
 #include "gdecomp.h"
 #include "GEBSort.h"
 #include "GTMerge.h"
+
+using namespace std;
 
 //#define MAXFLOAT 3.40282347e+38 //already defined in math.h
 #define MAXINT   2147483647
@@ -945,8 +948,11 @@ main (int argc, char **argv)
 
   /* initialize */
 
+  Pars.noCalib = false;
+  Pars.noMapping = false;
   Pars.InputSrc = NOTDEF;
   Pars.HaveRootFileName = 0;
+  strcpy (Pars.ConfigFile, "Uninitialized");
   sprintf (Pars.ROOTFileOption, "UNDEFINED");
   Pars.GGMAX = 2000;
   Pars.ndetlimlo = 1;
@@ -1062,6 +1068,12 @@ main (int argc, char **argv)
             printf ("\n");
 
           }
+        else if ((p = strstr (argv[j], "-nevent")) != NULL)
+          {
+            j++;
+            sscanf(argv[j++], "%ull", &Pars.nEvents);
+            printf ("Overriding the amount of events which will be treated: %d\n", Pars.nEvents);
+          }
         else if ((p = strstr (argv[j], "-chat")) != NULL)
           {
             j++;
@@ -1070,6 +1082,24 @@ main (int argc, char **argv)
             system ("ulimit -a");
             HaveChatFile = 1;
           }
+	else if ((p = strstr (argv[j], "-config")) != NULL)
+	  {
+            j++;
+            strcpy (Pars.ConfigFile, argv[j++]);
+            printf ("will read config file from: %s ...\n", Pars.ConfigFile);
+	  }
+	else if ((p = strstr (argv[j], "-nocalib")) != NULL)
+	  {
+            j++;
+	    printf ("/!\\ will process the run without applying the calibration parameters /!\\\n");
+            Pars.noCalib = true;
+	  }
+	else if ((p = strstr (argv[j], "-nomapping")) != NULL)
+	  {
+            j++;
+	    printf ("raw tree with the pairs <channel, value> will be added to the file\n");
+            Pars.noMapping = true;
+	  }
         else if ((p = strstr (argv[j], "-rootfile")) != NULL)
           {
             j++;
@@ -1127,6 +1157,55 @@ main (int argc, char **argv)
 
           }
       };
+
+  /* checking if the config file has been specified. If not then we auto-assign a config file based on the run number */
+  if(strcmp (Pars.ConfigFile, "Uninitialized") == 0)
+    {
+      string inFileName = Pars.GTSortInputFile;
+
+      short inRunPos1 = inFileName.find("run", 0) + 3;
+      short inRunPos2 = inFileName.find(".gtd", 0);
+
+      int treatedRun = stoi(inFileName.substr(inRunPos1, inRunPos2- inRunPos1));
+
+      printf("\nConfig File left has not been initialized... Trying to retrieve it for run# %d", treatedRun);
+
+      vector<string> configFileList;
+      configFileList.clear();
+      
+      FILE *dir_scan;
+      char buff[512];
+      
+      dir_scan = popen("ls ./*.config", "r");
+      
+      while (fgets(buff, sizeof(buff), dir_scan) != NULL) configFileList.push_back(buff);
+      
+      for(int fItr = 0; fItr < configFileList.size(); fItr++)
+	{
+	  short fstRunStartPos = configFileList[fItr].find("runs", 0) + 4;
+	  short separatorPos = configFileList[fItr].find("_to_", 0);
+	  short sdRunEndPos = configFileList[fItr].find(".config", 0);
+
+	  int lowBound = stoi(configFileList[fItr].substr(fstRunStartPos, separatorPos - fstRunStartPos));
+	  int upBound = stoi(configFileList[fItr].substr(separatorPos + 4, sdRunEndPos - separatorPos + 4));
+
+	  if(treatedRun >= lowBound && treatedRun <= upBound)
+	    {
+	      strcpy (Pars.ConfigFile, (configFileList[fItr].substr(2, sdRunEndPos + 5)).c_str()); // the last character we want is at the position sdRunEndPos + 7 but we start from position 2...
+
+	      break;
+	    }
+	}
+
+      if(strcmp (Pars.ConfigFile, "Uninitialized") == 0)
+	{
+	  cerr << "UNABLED TO RETRIEVE CONFIG FILE AUTOMATICALLY" << endl;
+	  cerr << "SPECIFY IT OR CHECK THAT ONE EXISTS FOR THE RUN YOU'RE TRYING TO TREAT" << endl;
+
+	  return -1;
+	}
+      else printf ("\nwill read config file from: %s ...\n", Pars.ConfigFile);
+    }
 
   /* now start the sorter */
   if (HaveChatFile)
@@ -1254,11 +1333,14 @@ GEBSort_read_chat (char *name)
 
       if ((p = strstr (str, "nevents")) != NULL)
         {
-          nret = sscanf (str, "%s %lu", str1, &Pars.nEvents);
-          CheckNoArgs (nret, 2, str);
-          printf ("will sort a max of %lu events\n", Pars.nEvents);
-          fflush (stdout);
+	  if (Pars.nEvents == 2000000000)
+	    {
+	      nret = sscanf (str, "%s %lu", str1, &Pars.nEvents);
+	      CheckNoArgs (nret, 2, str);
+	    }
 
+	  printf ("will sort a max of %lu events\n", Pars.nEvents);
+	  fflush (stdout);
         }
       else if (str[0] == 35)
         {
@@ -1652,7 +1734,15 @@ GEBacq (char *ChatFileName)
   printf ("\n");
   fflush (stdout);
 
-  Pars.nEvents = 2000000000;
+  if(Pars.nEvents == 0) 
+    {
+      printf ("Number of events to treat not been specified... Initialized to an arbitrary value of 2000000000");
+      printf ("\n");
+    }
+
+  printf ("\n******** Number of Events which will be treated (max) : %d **********\n", Pars.nEvents);
+
+  Pars.nEvents = (Pars.nEvents == 0) ? 2000000000 : Pars.nEvents;
   Pars.WeWereSignalled = FALSE; /* signal  */
   Pars.UseRootFile = FALSE;
   Pars.SizeShareMemFile = FALSE;

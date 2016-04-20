@@ -5,6 +5,7 @@
 #include "GoddessConfig.h"
 
 #include <iostream>
+#include <string>
 
 extern DFMAEVENT DFMAEvent[MAXCOINEV];
 extern DGSEVENT DGSEvent[MAXCOINEV];
@@ -13,10 +14,15 @@ extern AGODEVENT AGODEvent[MAXCOINEV];
 extern unsigned int numAGOD, numDGOD;
 extern int ng;
 
+extern PARS Pars;
+
 GoddessData *godData;
 
 void sup_god() {
-	godData = new GoddessData("goddess.config");
+  std::string testconf = Pars.ConfigFile;
+  godData = new GoddessData(testconf);
+  //godData = new GoddessData("goddess.config");
+  //godData = new GoddessData("goddess_95Mo_runs200_to_352.config");
 }
 
 void bin_god (GEB_EVENT *gebEvt){

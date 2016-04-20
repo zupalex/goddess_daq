@@ -4,6 +4,7 @@
 #include "TFile.h"
 #include "gdecomp.h"
 #include "veto_pos.h"
+#include <string>
 
 
 #define TAPE 0
@@ -61,6 +62,9 @@ typedef struct GEB_event
 
 typedef struct PARS
 {
+  char ConfigFile[STRLEN];
+  bool noCalib;
+  bool noMapping;
   char ROOTFile[STRLEN];
   unsigned long long int nEvents;
   char ROOTFileOption[STRLEN];
