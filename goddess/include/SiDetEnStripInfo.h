@@ -29,7 +29,7 @@ class SiDetEnStripInfo
   PNPair<float> eSum;
   
   ///The energies collected by the resistive strips in case of a SX3 type detector. "Near" and "Far" contacts can be accessed using the "p" and "n" members respectively
-  PNPair<float> resE;
+  PNPair<float> eRes;
   
   ///All the strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
   PNPair<int> strip;

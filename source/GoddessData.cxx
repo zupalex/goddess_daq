@@ -672,8 +672,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 		  
 		  if(energy_near > 0.0 && energy_far > 0.0)
 		    {
-		      bufferInfo->resE.p.push_back(energy_near);
-		      bufferInfo->resE.n.push_back(energy_far);
+		      bufferInfo->eRes.p.push_back(energy_near);
+		      bufferInfo->eRes.n.push_back(energy_far);
 		    }
 		}
 	    }

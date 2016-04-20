@@ -8,7 +8,7 @@ void SiDetEnStripInfo::Clear()
 {
   e.Clear();
   eSum.Clear();
-  resE.Clear();
+  eRes.Clear();
   strip.Clear();
   stripMax.Clear();
 }
