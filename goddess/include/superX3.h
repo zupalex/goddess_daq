@@ -92,7 +92,7 @@ class superX3 : public orrubaDet {
 		void SetStripEnCalibPars(int strip,std::vector<float>);
 
 		///Return the strip in which the specified contact is attached.
-		int GetStrip(int contact);
+		static int GetStrip(int contact);
 
 		///Return the number of bins.
 		int GetNumBins() {return 4;}
@@ -135,9 +135,9 @@ class superX3 : public orrubaDet {
 		///Return the total energy deposited in the detector.
 		float GetEnergy() {return enCal;};
 		///Return the contact for the near end of the strip. 
-		unsigned short GetNearContact(unsigned short strip);
+		static unsigned short GetNearContact(unsigned short strip);
 		///Return the contact for the far end of the strip. 
-		unsigned short GetFarContact(unsigned short strip);
+		static unsigned short GetFarContact(unsigned short strip);
 		
 		/// -- Make new functions to be used in GoddessData to fill histograms
 		///NOT FILLED!! Return the calibrated energy for the near end of the strip

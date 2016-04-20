@@ -179,8 +179,9 @@ void superX3::UpdatePosition(int strip) {
  * \param[in] strip The strip number for which we should compute the contact number.
  * \return The number of the contact nearest the header for the specified strip.
  */
-unsigned short superX3::GetNearContact(unsigned short strip) {
-	return 2 * strip;
+unsigned short superX3::GetNearContact(unsigned short strip) 
+{
+  return strip > 1 ? 2 * strip + 1 : 2 * strip;
 }
 
 /**The far contacts, odd numbered, are farthest to the cable header.
@@ -188,8 +189,9 @@ unsigned short superX3::GetNearContact(unsigned short strip) {
  * \param[in] strip The strip number for which we should compute the contact number.
  * \return The number of the contact farthest form the header for the specified strip.
  */
-unsigned short superX3::GetFarContact(unsigned short strip) {
-	return 2 * strip + 1;
+unsigned short superX3::GetFarContact(unsigned short strip) 
+{
+  return strip > 1 ? 2 * strip : 2 * strip + 1;
 }
 
 
