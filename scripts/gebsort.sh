@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ $# -lt 3 ] 
 then
@@ -43,12 +43,13 @@ do
     elif [ "$arg" = "nomapping" ]; then
 	NOMAPPINGFLAG="-nomapping"
 	echo "raw tree with the pairs <channel, value> will be added to the file"
-    elif [[ "$arg" != "${arg/nevents=/}" ]]; then
-	NEVENTS="${arg/nevents=/}"
+    elif [ "$arg" != "${arg##nevents=}" ]; then
+	NEVENTS="${arg##nevents=}"
 	NEVENTSARG="-nevents $NEVENTS"
 	echo "Number of events to treat set to $NEVENTS"
-    elif [[ "$arg" != "${arg/config=/}" ]]; then
-	CONFIGFILEARG="-config ${arg/config=/}"
+    elif [ "$arg" != "${arg##config=}" ]; then
+	CONFIGFILEARG="-config ${arg##config=}"
+	echo "Forced use of the following config file: ${arg##config=}"
     fi
 done
 
