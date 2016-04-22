@@ -1,5 +1,7 @@
 #include "SiDetEnStripInfo.h"
 #include "TMath.h"
+#include "superX3.h"
+#include "TClass.h"
 
 SiDetEnStripInfo::SiDetEnStripInfo(){}
 SiDetEnStripInfo::~SiDetEnStripInfo(){}
@@ -100,6 +102,75 @@ void SiDetEnStripInfo::GetEnSumAndStripMax(bool isNType)
 	      eSum.p.push_back(enSum[multG]);
 	      stripMax.p.push_back(sMax[multG]);
 	    }
+	}
+    }
+}
+
+void SiDetEnStripInfo::AddStripEnergyPair(orrubaDet *det, int strip_, bool isNType, bool doCalib)
+{
+  std::string detType = det->IsA()->GetName();
+  bool isSuperX3 = (detType == "superX3");
+
+  std::vector<int> *strips = isNType ? &strip.n : &strip.p;
+
+  std::vector<float> *energies = isNType ? &e.n : &e.p;
+
+  float en_ = 0.0;
+  int st_ = isSuperX3 ? superX3::GetStrip(strip_) : strip_;
+
+  if(!(isSuperX3 && det->GetDepth() == 1 && !isNType))
+    {
+      if(!doCalib) en_ = det->GetRawEn(isNType).find(st_)->second;
+      else en_ = det->GetCalEn(isNType).find(st_)->second;
+
+      if(en_ > 0.0)
+	{
+	  strips->push_back(st_);
+	  energies->push_back(en_);
+	}
+    }
+  else
+    {
+      if(std::find(strips->begin(), strips->end(), st_) == strips->end())
+	{
+	  int nearStrip = superX3::GetNearContact(st_);
+	  int farStrip = superX3::GetFarContact(st_);
+      
+	  float en_near = 0.0;
+	  float en_far = 0.0;
+      
+	  if(!doCalib)
+	    {
+	      en_near = det->GetRawEn(isNType).find(nearStrip)->second;
+	      en_far = det->GetRawEn(isNType).find(farStrip)->second;
+	    }
+	  else
+	    {
+	      en_near = det->GetCalEn(isNType).find(nearStrip)->second;
+	      en_far = det->GetCalEn(isNType).find(farStrip)->second;	  
+	    }
+      
+	  en_ = en_near + en_far;
+	  
+	  if(en_near > 0.0 || en_far > 0.0)
+	    {
+	      strips->push_back(st_);
+	      energies->push_back(en_);
+	      
+	      eRes.p.push_back(en_near > 0.0 ? en_near : -10); //If no energy, we push it to -10 to not pollute the histogram when plotting from 0.
+	      eRes.n.push_back(en_far > 0.0 ? en_far : -10); //If no energy, we push it to -10 to not pollute the histogram when plotting from 0.      
+	    }
+
+	  /*
+	  if(en_near > 0.0 && en_far > 0.0)
+	    {
+	      strips->push_back(st_);
+	      energies->push_back(en_);
+
+	      eRes.p.push_back(en_near);
+	      eRes.n.push_back(en_far);
+	    }
+	  */
 	}
     }
 }

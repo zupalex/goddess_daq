@@ -594,16 +594,6 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts)
   hDetPosMult->Fill(numSectorHits.size());	
 }
 
-float GoddessData::GetSiEnergies(orrubaDet *det, int strip, bool isNType)
-{
-  float en_ = 0.0;
-
-  if(Pars.noCalib) en_ = det->GetRawEn(isNType).find(strip)->second;
-  else en_ = det->GetCalEn(isNType).find(strip)->second;
-
-  return en_;
-}
-
 void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) 
 {
   ///A map of SiData based on the position in the barrel.
@@ -613,7 +603,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
     {
       orrubaDet* det = detItr->second;
       //Skip detectors with no contacts above threshold.
-      if (det->GetContactMult() == 0) continue;
+      if (!Pars.noCalib && det->GetContactMult() == 0) continue;
       std::string detPosID = det->GetPosID();
       std::string detType = det->IsA()->GetName();
 		
@@ -660,39 +650,26 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
       
       bufferInfo->Clear();
 
-      if(det->GetPtypeEnergy().second != 0.0)
+      //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
+      siDet::ValueMap enPMap, enNMap;
+
+      switch(Pars.noCalib)
 	{
-	  siDet::ValueMap enCalP_cpy = det->GetCalEn(false);
+	case false: 
+	  enPMap = det->GetCalEn(false);
+	  enNMap = det->GetCalEn(true);
+	  break;
+	case true:
+	  enPMap = det->GetRawEn(false);
+	  enNMap = det->GetRawEn(true);
+	  break;
+	}
 
-	  //Get the strips which fired and the energy deposites in each of them for the front side
-	  for(auto stripItr = enCalP_cpy.begin(); stripItr != enCalP_cpy.end(); ++stripItr)
+      if(enPMap.size() > 0)
+	{
+	  for(auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr)
 	    {	      
-	      //stripItr->first return the "contact". In case the detector is not superX3, contact# == strip#, otherwise we convert the contact# into strip#
-	      int strip_ = (detType=="superX3" ? superX3::GetStrip(stripItr->first) : stripItr->first);	     
-	      
-	      float energy_ = GetSiEnergies(det, strip_, false);
-
-	      if(energy_ > 0.0) 
-		{
-		  bufferInfo->strip.p.push_back(strip_);
-		  bufferInfo->e.p.push_back(energy_);
-		}
-	      
-	      //Get the energy of the near and far contact in case of a resistive strip
-	      if(det->GetDepth() == 1 && detType=="superX3" && det->GetPtypeEnergy().second > 0.0)
-		{	  
-		  int nearStrip = superX3::GetNearContact(strip_);
-		  int farStrip = superX3::GetFarContact(strip_);
-		  
-		  float energy_near = GetSiEnergies(det, nearStrip, false);
-		  float energy_far = GetSiEnergies(det, farStrip, false);
-		  
-		  if(energy_near > 0.0 && energy_far > 0.0)
-		    {
-		      bufferInfo->eRes.p.push_back(energy_near);
-		      bufferInfo->eRes.n.push_back(energy_far);
-		    }
-		}
+	      bufferInfo->AddStripEnergyPair(det, stripItr->first, false, !Pars.noCalib); //stripItr->first gives the strip#
 	    }
 	  
 	  if(!Pars.noCalib)
@@ -701,22 +678,12 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
 	    }
 	}
 
-      if(det->GetNtypeEnergy().second != 0.0)
+      if(enNMap.size() > 0)
 	{
-	  siDet::ValueMap enCalP_cpy = det->GetCalEn(true);
-
 	  //Get the strips which fired and the energy deposites in each of them for the front side
-	  for(auto stripIter = enCalP_cpy.begin(); stripIter != enCalP_cpy.end(); ++stripIter)
+	  for(auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr)
 	    {
-	      int strip_ = stripIter->first;
-	      
-	      float energy_ = GetSiEnergies(det, strip_, true);
-
-	      if(energy_ > 0.0)
-		{
-		  bufferInfo->strip.n.push_back(strip_);
-		  bufferInfo->e.n.push_back(energy_);
-		}
+	      bufferInfo->AddStripEnergyPair(det, stripItr->first, true, !Pars.noCalib);
 	    }
 
 	  if(!Pars.noCalib)
