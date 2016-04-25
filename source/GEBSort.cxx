@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <iostream>
 
 #include <signal.h>
 #include <time.h>
@@ -1080,7 +1081,12 @@ main (int argc, char **argv)
             j++;
             strcpy (ChatFileName, argv[j++]);
             printf ("will read sorting instructions from chatfile: %s\n", ChatFileName);
-            system ("ulimit -a");
+            int sysRet = system ("ulimit -a");
+	    if(sysRet == -1)
+	      {
+		std::cerr << "ERROR WHILE READING SORTING INSTRUCTIONS FROM CHATFILE !!!!!" << std::endl;
+		return -1;
+	      }
             HaveChatFile = 1;
           }
 	else if ((p = strstr (argv[j], "-config")) != NULL)
@@ -1200,7 +1206,7 @@ main (int argc, char **argv)
       
       while (fgets(buff, sizeof(buff), dir_scan) != NULL) configFileList.push_back(buff);
       
-      for(int fItr = 0; fItr < configFileList.size(); fItr++)
+      for(unsigned short fItr = 0; fItr < configFileList.size(); fItr++)
 	{
 	  short fstRunStartPos = configFileList[fItr].find("runs", 0) + 4;
 	  short separatorPos = configFileList[fItr].find("_to_", 0);
@@ -1355,11 +1361,11 @@ GEBSort_read_chat (char *name)
         {
 	  if (Pars.nEvents == 2000000000)
 	    {
-	      nret = sscanf (str, "%s %lu", str1, &Pars.nEvents);
+	      nret = sscanf (str, "%s %llu", str1, &Pars.nEvents);
 	      CheckNoArgs (nret, 2, str);
 	    }
 
-	  printf ("will sort a max of %lu events\n", Pars.nEvents);
+	  printf ("will sort a max of %llu events\n", Pars.nEvents);
 	  fflush (stdout);
         }
       else if (str[0] == 35)
@@ -1388,7 +1394,7 @@ GEBSort_read_chat (char *name)
         }
       else if ((p = strstr (str, "firstEvent")) != NULL)
         {
-          nret = sscanf (str, "%s %i", str1, &Pars.firstEvent);
+          nret = sscanf (str, "%s %u", str1, &Pars.firstEvent);
           CheckNoArgs (nret, 2, str);
           printf ("will start sorting at event %d\n", Pars.firstEvent);
           fflush (stdout);
@@ -1450,7 +1456,7 @@ GEBSort_read_chat (char *name)
         }
       else if ((p = strstr (str, "tsnumwrites")) != NULL)
         {
-          nret = sscanf (str, "%s %i", str1, &Pars.tsnumwrites);
+          nret = sscanf (str, "%s %u", str1, &Pars.tsnumwrites);
           CheckNoArgs (nret, 2, str);
 
         }
@@ -1534,7 +1540,7 @@ GEBSort_read_chat (char *name)
         }
       else if ((p = strstr (str, "printevents")) != NULL)
         {
-          nret = sscanf (str, "%s %i", str1, &Pars.NumToPrint);
+          nret = sscanf (str, "%s %u", str1, &Pars.NumToPrint);
           CheckNoArgs (nret, 2, str);
           printf ("will print details of the first %i events\n", Pars.NumToPrint);
           fflush (stdout);
@@ -1661,7 +1667,7 @@ GEBacq (char *ChatFileName)
   int NprintEvNo = 0, in, zero = 0;
   GEB_EVENT GEB_event;
   int st = 0, eov = 0, i1, i2, i, j, nret, siz;
-  char str[256], str1[256], str2[246];
+  char str[256], str1[256];
   FILE *fp;
   time_t t1, t2;
   char *p, buffer[512];
@@ -1674,7 +1680,7 @@ GEBacq (char *ChatFileName)
   long long int tcur = 0;
   unsigned int typehit[MAX_GEB_TYPE];
   FILE *TSfile;
-  TH2F *dtbtev;
+  //  TH2F *dtbtev;//unused
   unsigned long long int firtsTSinEvent, dTS;
 //  int dim;
 //  float rr[LONGLEN + 1];
@@ -1760,7 +1766,7 @@ GEBacq (char *ChatFileName)
       printf ("\n");
     }
 
-  printf ("\n******** Number of Events which will be treated (max) : %d **********\n", Pars.nEvents);
+  printf ("\n******** Number of Events which will be treated (max) : %llu **********\n", Pars.nEvents);
 
   Pars.nEvents = (Pars.nEvents == 0) ? 2000000000 : Pars.nEvents;
   Pars.WeWereSignalled = FALSE; /* signal  */
@@ -1818,19 +1824,36 @@ GEBacq (char *ChatFileName)
 	  {
 
 		  memset (buffer, zero, sizeof (buffer));
-		  fgets (buffer, 150, fp0);
+		  if(!fgets (buffer, 150, fp0))
+		    { 
+		      std::cerr << "ERROR WHILE READING AGATA_crmat.dat !!!!!" << std::endl;
+		      return -1;
+		    }
+
 		  sscanf (buffer, "%i %i %lf %lf %lf ", ir, dummy_i, &Pars.TrX[j], &Pars.TrY[j], &Pars.TrZ[j]);
 
 		  memset (buffer, zero, sizeof (buffer));
-		  fgets (buffer, 150, fp0);
+		  if(!fgets (buffer, 150, fp0))
+		    { 
+		      std::cerr << "ERROR WHILE READING AGATA_crmat.dat !!!!!" << std::endl;
+		      return -1;
+		    }
 		  sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotxx[j], &Pars.rotxy[j], &Pars.rotxz[j]);
 
 		  memset (buffer, zero, sizeof (buffer));
-		  fgets (buffer, 150, fp0);
+		  if(!fgets (buffer, 150, fp0))
+		    { 
+		      std::cerr << "ERROR WHILE READING AGATA_crmat.dat !!!!!" << std::endl;
+		      return -1;
+		    }
 		  sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotyx[j], &Pars.rotyy[j], &Pars.rotyz[j]);
 
 		  memset (buffer, zero, sizeof (buffer));
-		  fgets (buffer, 150, fp0);
+		  if(!fgets (buffer, 150, fp0))
+		    { 
+		      std::cerr << "ERROR WHILE READING AGATA_crmat.dat !!!!!" << std::endl;
+		      return -1;
+		    }
 		  sscanf (buffer, "%i %lf %lf %lf  ", dummy_i, &Pars.rotzx[j], &Pars.rotzy[j], &Pars.rotzz[j]);
 
 		  j++;
@@ -1880,7 +1903,7 @@ GEBacq (char *ChatFileName)
 		  exit (1);
 	  }
 	  else
-		  printf ("input file \"%s\" is open, inData=%lli\n", Pars.GTSortInputFile, inData);
+		  printf ("input file \"%s\" is open, inData=%li\n", Pars.GTSortInputFile, inData);
 
 	  /* find the very first GEB header to find start TS */
 
@@ -1899,7 +1922,7 @@ GEBacq (char *ChatFileName)
 
 	  close (inData);
 	  inData = open (Pars.GTSortInputFile, O_RDONLY, 0);
-	  printf ("reopened input file, inData=%lli \n", inData);
+	  printf ("reopened input file, inData=%li \n", inData);
 
 #endif
 
@@ -2062,7 +2085,7 @@ GEBacq (char *ChatFileName)
   /* delete any command file */
 
   sprintf (str, "\\rm -f %s", CommandFileName);
-  system (str);
+  if(system (str)){}
   printf ("deleted %s\n", str);
 
   /*------------------------------------------*/
@@ -2558,7 +2581,7 @@ GEBacq (char *ChatFileName)
 		  {
 
 			  printf ("found command file: %s\n", CommandFileName);
-			  fgets (str, STRLEN, fp);
+			  if(fgets (str, STRLEN, fp)){}
 			  printf ("with command: %s\n", str);
 
 			  if ((p = strstr (str, "DumpEvery")) != NULL)
@@ -2654,7 +2677,7 @@ GEBacq (char *ChatFileName)
 
 			  fclose (fp);
 			  sprintf (str, "\\rm %s", CommandFileName);
-			  system (str);
+			  if(system (str)){}
 			  printf ("%s\n", str);
 
 		  }

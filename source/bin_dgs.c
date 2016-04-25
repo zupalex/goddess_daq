@@ -221,7 +221,7 @@ DGSEvDecompose_v3 (unsigned int *ev, int len, DGSEVENT * theDGSEvent)
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
     {
-      printf ("event len=%i (%i bytes) >\n", len, len * sizeof (unsigned int));
+      printf ("event len=%i (%lu bytes) >\n", len, len * sizeof (unsigned int));
       for (i = 0; i < len; i++)
         {
           printf ("%3i[doc: %3i]: %12u, 0x%8.8x; ", i, i + 1, *(ev + i), *(ev + i));
@@ -584,30 +584,31 @@ bin_dgs (GEB_EVENT * GEB_event)
 //////////////////////////////////////////////////////////////////////////////
 TH2F *make2D (const char* txt, int xln,int xlo,int xhi,int yln,int ylo,int yhi)
 {
-char str[STRLEN];
+  char *str = (char*)calloc(STRLEN, sizeof(char));;
+  strcpy(str, txt);
 
 TH2F *mkTH2F (char *, char *, int, double, double, int, double, double);
 
 
 TH2F *h2D;
 
-  sprintf(str,txt);
-  h2D = mkTH2F(str,str,xln,xlo,xhi,yln,ylo,yhi);
-  
-  return h2D;
+//sprintf(str,txt);
+ h2D = mkTH2F(str,str,xln,xlo,xhi,yln,ylo,yhi);
+ 
+ return h2D;
 }
 //////////////////////////////////////////////////////////////////////////////
 TH1D *make1D (const char* txt, int xln,int xlo,int xhi)
 {
-char str[STRLEN];
-double xlod,xhid;
-TH1D *mkTH1D (char *, char *, int, double, double);
-TH1D *h1D;
+  char *str = (char*)calloc(STRLEN, sizeof(char));
+  strcpy(str, txt);
+  double xlod,xhid;
+  TH1D *mkTH1D (char *, char *, int, double, double);
+  TH1D *h1D;
 
   xlod = xlo;
   xhid = xhi;
   
-  sprintf(str,txt);
   h1D = mkTH1D(str,str,xln,xlod,xhid);
   return h1D;
 }

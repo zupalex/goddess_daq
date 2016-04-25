@@ -23,7 +23,7 @@ class LiquidScint : public Detector {
 		///Set the raw energy of the channel.
 		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue);
 		///Set the timestamp for the channel.
-		virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp) {};
+		virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp);
 
 		void SetDescription(std::string desc) {description = desc;}; 
 		std::string GetDescription() {return description;}; 

@@ -15,6 +15,7 @@
 #include <zlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <iostream>
 
 /* ------- */
 /* globals */
@@ -214,7 +215,7 @@ GTGetDiskEv (int FileNo, int storeNo)
 #endif
   if (siz != sizeof (GEBDATA))
     {
-      printf ("failed to read %i bytes for header, got %i\n", sizeof (GEBDATA), siz);
+      printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
 
       return (1);
     };
@@ -417,7 +418,7 @@ main (int argc, char **argv)
   float dtbtev[LENSP];
   float ehigain[NGE + 1], ehioffset[NGE + 1], r1;
   FILE *fp;
-  char str[132], str1[512];
+  char str[STRLEN], str1[512];
   unsigned int seed = 0;
   struct tms timesThen;
   int i7, i8, reportinterval;
@@ -542,7 +543,7 @@ main (int argc, char **argv)
           CheckNoArgs (nret, 2, str);
           assert (size <= MAXBIGBUFSIZ);
           r1 = (size * sizeof (EVENT) + (size + 1) * sizeof (int)) / 1024.0 / 1024.0;
-          printf ("sizeof(EVENT)= %i\n", sizeof (EVENT));
+          printf ("sizeof(EVENT)= %lu\n", sizeof (EVENT));
           printf ("will use a bigbuffer size of %i, or %7.3f MBytes\n", size, r1);
         }
       else if ((p = strstr (str, "nprint")) != NULL)
@@ -758,7 +759,12 @@ main (int argc, char **argv)
   if (fp == NULL)
     {
       printf ("need a \"map.dat\" file to run\n");
-      system ("./mkMap > map.dat");
+      int sysRet = system ("./mkMap > map.dat");
+      if(sysRet == -1) 
+	{
+	  std::cerr << "ERROR WHILE MAKING map.dat !!!!!!!!!" << std::endl;
+	  return -1;
+	}
       printf ("just made you one...\n");
       fp = fopen ("map.dat", "r");
       assert (fp != NULL);
@@ -1431,7 +1437,12 @@ done:
   printf ("wrote %i events and %lli bytes\n", control.nwritten,nstat->outbytes );
   sprintf (str, "file %s_*; ls -l %s_*", argv[2], argv[2]);
   printf("executing \"%s\"", str);
-  system (str);
+  int sysRet = system (str);
+  if(sysRet == -1)
+    {
+      std::cerr << "ERROR WHILE TRYING TO EXECUTE " << str << std::endl;
+      return -1;
+    }
   fflush (stdout);
   printf ("\n");
   fflush (stdout);

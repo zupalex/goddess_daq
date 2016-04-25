@@ -113,7 +113,7 @@ sup_mode1 ()
 {
   /* declarations */
 
-  char str1[STRLEN], str2[STRLEN];
+  //char str1[STRLEN], str2[STRLEN];//unused
   //float pi; //unused
   //int i; //unused
   unsigned int seed;

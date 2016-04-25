@@ -33,19 +33,19 @@ void SiDetEnStripInfo::GetEnSumAndStripMax(bool isNType)
 
   stripsGroups.clear(); 
 
-  for(int en = 0; en < enToSum.size(); en++)
-    {
-      int sGroup = -10;
+  unsigned short sGroup = 0;
 
+  for(unsigned short en = 0; en < enToSum.size(); en++)
+    {
       if(stripsGroups.size() == 0)
 	{
 	  goto ADDNEWSTRIPSGROUP;
 	}
       else
 	{
-	  for(int gr = 0; gr < stripsGroups.size(); gr++)
+	  for(unsigned short gr = 0; gr < stripsGroups.size(); gr++)
 	    {
-	      for(int st = 0; st < stripsGroups[gr].size(); st++)
+	      for(unsigned short st = 0; st < stripsGroups[gr].size(); st++)
 		{
 		  if(TMath::Abs(stripToTreat[en] -  stripsGroups[gr][st]) <= 1)
 		    {
@@ -64,34 +64,31 @@ void SiDetEnStripInfo::GetEnSumAndStripMax(bool isNType)
 
 	  newStripsGroup.push_back(stripToTreat[en]);
 	  stripsGroups.push_back(newStripsGroup);
-	  sGroup = 0;    
+	  sGroup = stripsGroups.size()-1;    
       }
       
     DOSUM:
-      if(sGroup >= 0)
+      if(sGroup == enSum.size())
 	{
-	  if(sGroup == enSum.size())
-	    {
-	      enSum.push_back(enToSum[en]);
-	      enMax.push_back(enToSum[en]);
-	      sMax.push_back(stripToTreat[en]);
-	    }
-	  else 
-	    {
-	      enSum[sGroup] += enToSum[en];
+	  enSum.push_back(enToSum[en]);
+	  enMax.push_back(enToSum[en]);
+	  sMax.push_back(stripToTreat[en]);
+	}
+      else 
+	{
+	  enSum[sGroup] += enToSum[en];
 
-	      if(enToSum[en] > enMax[sGroup])
-		{
-		  enMax[sGroup] = enToSum[en];
-		  sMax[sGroup] = stripToTreat[en];
-		}
+	  if(enToSum[en] > enMax[sGroup])
+	    {
+	      enMax[sGroup] = enToSum[en];
+	      sMax[sGroup] = stripToTreat[en];
 	    }
 	}
     }
 
   if(enSum.size() > 0)
     {
-      for(int multG = 0; multG < enSum.size(); multG++)
+      for(unsigned short multG = 0; multG < enSum.size(); multG++)
 	{
 	  if(isNType)
 	    {

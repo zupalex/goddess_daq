@@ -413,7 +413,7 @@ int mainBuffer::ReadNextBuffer() {
 	if (static_cast<unsigned int>(fFile.gcount()) != GetBufferSizeBytes()) {
 		if (fFile.gcount() !=0) {
 			fflush(stdout);
-			fprintf(stderr,"ERROR: Read %i bytes expected %u!\n",fFile.gcount(),GetBufferSize());
+			fprintf(stderr,"ERROR: Read %li bytes expected %u!\n",fFile.gcount(),GetBufferSize());
 		}
 		return 0;
 	}

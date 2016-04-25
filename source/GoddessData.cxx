@@ -1,3 +1,6 @@
+
+
+
 #include "GoddessData.h"
 
 //ROOT Headers
@@ -420,7 +423,7 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
       rawTree->Fill();
     }
   
-  if(Pars.noCalib != -1) FillTrees(dgsEvts,dgodEvts,agodEvts);
+  if(Pars.noCalib != -1) FillTrees(dgsEvts/*,dgodEvts,agodEvts*/);
 
   //We clear everything here since we know what was actually fired.
   for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
@@ -617,7 +620,7 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts)
   hDetPosMult->Fill(numSectorHits.size());	
 }
 
-void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) 
+void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts*/) 
 {
   //Reminder: Pars.noCalib == ...
   //                          0 writes just the sorted and calibrated tree.
@@ -790,7 +793,8 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
   //Deal with the neutron detectors
   for (auto lsItr=liquidScints.begin();lsItr!=liquidScints.end();++lsItr) 
     {
-      LiquidScint *liqDet = lsItr->second;	
+      //UNCOMMENT THIS OR DO SOMETHING HERE WHEN WE WANT TO USE IT
+      //LiquidScint *liqDet = lsItr->second;	
     }
 
   //if (!gamData->empty() && !siData->empty()) tree->Fill();

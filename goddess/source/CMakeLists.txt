@@ -2,10 +2,14 @@
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 root_generate_dictionary(ORRUBADictionary ORRUBA.h Detector.h siDet.h
 orrubaDet.h superX3.h BB10.h QQQ5.h IonChamber.h LiquidScint.h LINKDEF ORRUBALinkDef.h)
-root_generate_dictionary(GoddessStructDictionary PNPair.h SiDetEnStripInfo.h GoddessStruct.h LINKDEF GoddessLinkDef.h)
+root_generate_dictionary(GSSupportDictionnary PNPair.h SiDetEnStripInfo.h LINKDEF GSSupportLinkDef.h)
+root_generate_dictionary(GoddessStructDictionary GoddessStruct.h LINKDEF GoddessLinkDef.h)
 
 if (${ROOT_VERSION} VERSION_GREATER "6.0")
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm ${CMAKE_CURRENT_BINARY_DIR}/GoddessStructDictionary_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ORRUBADictionary_rdict.pcm 
+	  ${CMAKE_CURRENT_BINARY_DIR}/GSSupportDictionnary_rdict.pcm 
+	  ${CMAKE_CURRENT_BINARY_DIR}/GoddessStructDictionary_rdict.pcm DESTINATION 
+	  ${CMAKE_INSTALL_PREFIX})
 endif()
 
 set (ORRUBA_SOURCES SolidVector.cxx Detector.cxx siDet.cxx orrubaDet.cxx
@@ -16,13 +20,19 @@ add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 add_library(ORRUBA SHARED $<TARGET_OBJECTS:ORRUBA_OBJECT>)
 target_link_libraries(ORRUBA ${ROOT_LIBRARIES})
 
-set (GODDESSSTRUCT_SOURCES SiDetEnStripInfo.cxx GoddessStructDictionary.cxx)
+set (GSSUPPORT_SOURCES SiDetEnStripInfo.cxx GSSupportDictionnary.cxx)
+
+add_library(GSSupport_OBJECT OBJECT ${GSSUPPORT_SOURCES})
+add_library(GSSupport SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
+target_link_libraries(GSSupport ${ROOT_LIBRARIES} ${ORRUBA})
+
+set (GODDESSSTRUCT_SOURCES GoddessStructDictionary.cxx)
 
 add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
 add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
-target_link_libraries(GoddessStruct ${ROOT_LIBRARIES} ${ORRUBA})
+target_link_libraries(GoddessStruct ${ROOT_LIBRARIES})
 
-install(TARGETS ORRUBA GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ORRUBA GSSupport GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 

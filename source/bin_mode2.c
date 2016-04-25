@@ -63,7 +63,7 @@ sup_mode2 ()
      };
    */
 
-  char str1[STRLEN], str2[STRLEN];
+  //char str1[STRLEN], str2[STRLEN]; //unused
   //float pi, il;//unused
   int i;
 
@@ -312,15 +312,16 @@ bin_mode2 (GEB_EVENT * GEB_event)
           d1 = (double) (GEB_event->ptgd[i]->timestamp - t0);
           d1 /= 100000000;
           d1 /= 60;
-          if (d1 > 0 && d1 < (double) RATELEN)
+
+          //if (d1 > 0 && d1 < (double) RATELEN)
             //rate_mode2->Fill (d1, 1 / 60.0);
-
-          /* find basic info */
-
-          crystalno = (ptinp->crystal_id & 0x0003);
+	    
+	    /* find basic info */
+	    
+	    crystalno = (ptinp->crystal_id & 0x0003);
           moduleno = ((ptinp->crystal_id & 0xfffc) >> 2);
           detno = moduleno * 4 + crystalno;
-
+	  
           /* make z_plot and xy_plot */
 
           //for (j = 0; j < ptinp->num; j++)

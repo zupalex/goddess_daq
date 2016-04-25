@@ -788,7 +788,8 @@ if(fmap1!=0) printf("Read mapfile ok... ");
 
 for(i=0;i<161;i++){
 
-   fscanf(fmap1,"%d %d %d %f %f %i", &strip, &phystrip, &thr, &off, &gain, &baseline);
+  if(fscanf(fmap1,"%d %d %d %f %f %i", &strip, &phystrip, &thr, &off, &gain, &baseline)){}
+
    map_fr[strip].thr = thr;
    map_fr[strip].phystrip = phystrip;
    map_fr[strip].off = off;
@@ -807,7 +808,8 @@ fmap1=fopen("MAP_FILES/dssd_ba_calib_gsfma324.map","read");
 
  for(i=0;i<161;i++){
 
-   fscanf(fmap1,"%d %d %d %f %f %i", &strip, &phystrip, &thr, &off, &gain, &baseline);
+   if(fscanf(fmap1,"%d %d %d %f %f %i", &strip, &phystrip, &thr, &off, &gain, &baseline)){}
+
    map_ba[strip].thr = thr;
    map_ba[strip].phystrip = phystrip;
    map_ba[strip].off = off; 
@@ -950,7 +952,7 @@ DFMAEvDecompose_v3 (unsigned int *ev, int len, DFMAEVENT * theDFMAEvent)
 
   if (Pars.CurEvNo <= Pars.NumToPrint)
     {
-      printf ("event len=%i (%i bytes) >\n", len, len * sizeof (unsigned int));
+      printf ("event len=%i (%lu bytes) >\n", len, len * sizeof (unsigned int));
       for (i = 0; i < len; i++)
         {
           printf ("%3i[doc: %3i]: %12u, 0x%8.8x; ", i, i + 1, *(ev + i), *(ev + i));

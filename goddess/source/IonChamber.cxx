@@ -48,51 +48,59 @@ void IonChamber::Clear() {
 	resE = 0;
 	E = 0;
 }
+
 /**Set the raw value of the specified channel and compute the calibrated value.
  * The dE, resE and E are computed. 
  *
  * \param[in] channel The channel of the ion chamber.
  * \param[in] rawValue The raw DAQ value.
  */
-void IonChamber::SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue) {
-	if (!scintType && channel	< anodeRaw.size()) {
-		anodeRaw.at(channel) = rawValue;
-		for (size_t power=0;power < parAnodeEnCal.at(channel).size(); power++)
-			anodeCal.at(channel) += parAnodeEnCal.at(channel).at(power) * pow(rawValue, power);
+void IonChamber::SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue) 
+{
+  if (!scintType && channel	< anodeRaw.size()) {
+    anodeRaw.at(channel) = rawValue;
+    for (size_t power=0;power < parAnodeEnCal.at(channel).size(); power++)
+      anodeCal.at(channel) += parAnodeEnCal.at(channel).at(power) * pow(rawValue, power);
 
-		//Compute the dE values	
-		dE = 0;
-		for (int ch=0;ch<numDE;ch++) 
-			dE += anodeRaw.at(ch);
+    //Compute the dE values	
+    dE = 0;
+    for (int ch=0;ch<numDE;ch++) 
+      dE += anodeRaw.at(ch);
 
-		resE = 0;
-		for (int ch=0;ch<numEres;ch++) 
-			resE += anodeRaw.at(ch + numDE);
+    resE = 0;
+    for (int ch=0;ch<numEres;ch++) 
+      resE += anodeRaw.at(ch + numDE);
 
-		E = dE + resE;
-	}
-	else if (scintType && channel < scintRawE.size()) {
-		//We expect the energy signal and then the time.
-		if (channel % 2 == 0) {
-			//We perform integer division to get the appropriate PMT number.
-			channel /= 2;
-			scintRawE.at(channel) = rawValue;
-			for (size_t power=0;power < parScintEnCal.at(channel).size(); power++) {
-				scintCalE.at(channel) += parScintEnCal.at(channel).at(power) * pow(rawValue, power);
-			}
-		}
-		else {
-			//We perform integer division to get the appropriate PMT number.
-			channel /= 2;
-			scintRawT.at(channel) = rawValue;
-			for (size_t power=0;power < parScintTimeCal.at(channel).size(); power++)
-				scintCalT.at(channel) += parScintTimeCal.at(channel).at(power) * pow(rawValue, power);
-		}
-	}
-	else {
-		std::cerr << "ERROR: The channel specified, " << channel << " is not valid! Unable to set the energy.\n";
-		return;
-	}
+    E = dE + resE;
+  }
+  else if (scintType && channel < scintRawE.size()) {
+    //We expect the energy signal and then the time.
+    if (channel % 2 == 0) {
+      //We perform integer division to get the appropriate PMT number.
+      channel /= 2;
+      scintRawE.at(channel) = rawValue;
+      for (size_t power=0;power < parScintEnCal.at(channel).size(); power++) {
+	scintCalE.at(channel) += parScintEnCal.at(channel).at(power) * pow(rawValue, power);
+      }
+    }
+    else {
+      //We perform integer division to get the appropriate PMT number.
+      channel /= 2;
+      scintRawT.at(channel) = rawValue;
+      for (size_t power=0;power < parScintTimeCal.at(channel).size(); power++)
+	scintCalT.at(channel) += parScintTimeCal.at(channel).at(power) * pow(rawValue, power);
+    }
+  }
+  else {
+    std::cerr << "ERROR: The channel specified, " << channel << " is not valid! Unable to set the energy.\n";
+    return;
+  }
+}
+
+///Dummy definition of SetTimeStamp to avoid warning flood about unused variables...
+void IonChamber::SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp) 
+{
+  if (secondaryType && detectorChannel && timestamp) {}
 }
 
 bool IonChamber::ValidAnode(size_t ch) {	

@@ -43,7 +43,7 @@ sup_mode3 ()
 {
   /* declarations */
 
-  char str1[STRLEN], str2[STRLEN];
+  //  char str1[STRLEN], str2[STRLEN];//unused
   //float pi;//unused
   //int i, i1;//unused
 
