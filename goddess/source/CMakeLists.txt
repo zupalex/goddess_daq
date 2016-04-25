@@ -20,7 +20,7 @@ set (GODDESSSTRUCT_SOURCES SiDetEnStripInfo.cxx GoddessStructDictionary.cxx)
 
 add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
 add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
-target_link_libraries(GoddessStruct ${ROOT_LIBRARIES})
+target_link_libraries(GoddessStruct ${ROOT_LIBRARIES} ${ORRUBA})
 
 install(TARGETS ORRUBA GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
 

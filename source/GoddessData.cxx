@@ -41,11 +41,28 @@ GoddessData::GoddessData(std::string configFilename)
     return;
   }
   f->cd("/trees");
-  tree=new TTree("god","GODDESS Tree");
-  tree->Branch("timestamp",&firstTimestamp);
-  tree->Branch("gam",&gamData);
-  tree->Branch("si",&siData, 32000, 0);
-  tree->Branch("ic",&ionData);
+
+  if(Pars.noCalib >= 0)
+    {
+      tree=new TTree("god","GODDESS Tree");
+      tree->Branch("timestamp",&firstTimestamp);
+      tree->Branch("gam",&gamData);
+      tree->Branch("si",&siData, 32000, 0);
+      tree->Branch("ic",&ionData);
+    }
+
+  if(Pars.noCalib == 2)
+    {
+      gamData_snc = new std::vector<GamData>;
+      siData_snc = new std::vector<SiData>;
+      ionData_snc = new std::vector<IonData>;
+      
+      sortedTree=new TTree("sorted","GODDESS Sorted not Calibrated Tree");
+      sortedTree->Branch("timestamp",&firstTimestamp);
+      sortedTree->Branch("gam",&gamData_snc);
+      sortedTree->Branch("si",&siData_snc, 32000, 0);
+      sortedTree->Branch("ic",&ionData_snc);      
+    }
   
   if(Pars.noMapping)
     {
@@ -397,7 +414,13 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
     }
 
   //FillHists(dgsEvts);
-  FillTrees(dgsEvts,dgodEvts,agodEvts);
+  
+  if(Pars.noMapping)
+    {
+      rawTree->Fill();
+    }
+  
+  if(Pars.noCalib != -1) FillTrees(dgsEvts,dgodEvts,agodEvts);
 
   //We clear everything here since we know what was actually fired.
   for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
@@ -596,126 +619,151 @@ void GoddessData::FillHists(std::vector<DGSEVENT> *dgsEvts)
 
 void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts) 
 {
-  ///A map of SiData based on the position in the barrel.
-  std::map<std::string, SiData> siMap;
+  //Reminder: Pars.noCalib == ...
+  //                          0 writes just the sorted and calibrated tree.
+  //                          1 writes just the sorted but non calibrated tree.
+  //                          2 writes both the sorted calibrated and non calibrated trees.
+  //The following line declares and defines and int used to loop...
+  // ->twice if we need to fill 2 different trees (Pars.noCalib == 2) or 
+  // ->just once if we just want to get one tree in the end (Pars.noCalib == 0 or 1)
+  int noCalType = Pars.noCalib == 2 ? 2 : 1;
 
-  for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) 
+  for(int nc = 0; nc < noCalType; nc++)
     {
-      orrubaDet* det = detItr->second;
-      //Skip detectors with no contacts above threshold.
-      if (!Pars.noCalib && det->GetContactMult() == 0) continue;
-      std::string detPosID = det->GetPosID();
-      std::string detType = det->IsA()->GetName();
-		
-      //Get the first part of the position ID indicating the location in the barrel / end cap.
-      std::string sectorStr = detPosID.substr(0,detPosID.find('_'));
-      //std::string sectorStr = detPosID;
-      //Check if this position has been defined before.
-      bool firstDet = false;
+      ///A map of SiData based on the position in the barrel.
+      std::map<std::string, SiData> siMap;
       
-      if (siMap.find(sectorStr) == siMap.end()) 
+      siMap.clear();
+
+      for (auto detItr=siDets.begin();detItr!=siDets.end(); ++detItr) 
 	{
-	  firstDet = true;
-	}
-
-      //Get the data matching the sector string, if it doens't exist a new datum is ctreated automatically.
-      SiData *datum = &siMap[sectorStr];
-
-      if(firstDet)
-      	{
-	  datum->dE.Clear();
-	  datum->E1.Clear();
-	  datum->E2.Clear();
-
-	  //Set the detector location info.
-	  datum->sector = det->GetSector();
-
-	  if (detType == "QQQ5") datum->isBarrel = false;
-	  else datum->isBarrel = true;
-
-	  datum->isUpstream = det->GetUpStream();
-
-	  //Set the telescope ID to make the selection of a specific portion of the detection system easier. See GoddessStruct.h for more info.
-	  datum->telescopeID = 1000 * (datum->isBarrel+1) + 100 * (datum->isUpstream+1) + datum->sector;
-	}
-
-      SiDetEnStripInfo *bufferInfo = 0;
-
-      switch(det->GetDepth())
-	{
-	case 0: bufferInfo = &datum->dE; break;
-	case 1: bufferInfo = &datum->E1; break;
-	case 2: bufferInfo = &datum->E2; break;
-	}
-      
-      bufferInfo->Clear();
-
-      //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
-      siDet::ValueMap enPMap, enNMap;
-
-      switch(Pars.noCalib)
-	{
-	case false: 
-	  enPMap = det->GetCalEn(false);
-	  enNMap = det->GetCalEn(true);
-	  break;
-	case true:
-	  enPMap = det->GetRawEn(false);
-	  enNMap = det->GetRawEn(true);
-	  break;
-	}
-
-      if(enPMap.size() > 0)
-	{
-	  for(auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr)
-	    {	      
-	      bufferInfo->AddStripEnergyPair(det, stripItr->first, false, !Pars.noCalib); //stripItr->first gives the strip#
+	  orrubaDet* det = detItr->second;
+	  //Skip detectors with no contacts above threshold.
+	  if (Pars.noCalib > 0 && det->GetContactMult() == 0) continue;
+	  std::string detPosID = det->GetPosID();
+	  std::string detType = det->IsA()->GetName();
+	  
+	  //Get the first part of the position ID indicating the location in the barrel / end cap.
+	  std::string sectorStr = detPosID.substr(0,detPosID.find('_'));
+	  //std::string sectorStr = detPosID;
+	  //Check if this position has been defined before.
+	  bool firstDet = false;
+	  
+	  if (siMap.find(sectorStr) == siMap.end()) 
+	    {
+	      firstDet = true;
 	    }
 	  
-	  if(!Pars.noCalib)
+	  //Get the data matching the sector string, if it doens't exist a new datum is ctreated automatically.
+	  SiData *datum = &siMap[sectorStr];
+	  
+	  if(firstDet)
 	    {
-	      bufferInfo->GetEnSumAndStripMax(false);
+	      datum->dE.Clear();
+	      datum->E1.Clear();
+	      datum->E2.Clear();
+	      
+	      //Set the detector location info.
+	      datum->sector = det->GetSector();
+	      
+	      if (detType == "QQQ5") datum->isBarrel = false;
+	      else datum->isBarrel = true;
+	      
+	      datum->isUpstream = det->GetUpStream();
+	      
+	      //Set the telescope ID to make the selection of a specific portion of the detection system easier. See GoddessStruct.h for more info.
+	      datum->telescopeID = 1000 * (datum->isBarrel+1) + 100 * (datum->isUpstream+1) + datum->sector;
 	    }
+	  
+	  SiDetEnStripInfo *bufferInfo = 0;
+	  
+	  switch(det->GetDepth())
+	    {
+	    case 0: bufferInfo = &datum->dE; break;
+	    case 1: bufferInfo = &datum->E1; break;
+	    case 2: bufferInfo = &datum->E2; break;
+	    }
+	  
+	  bufferInfo->Clear();
+	  
+	  //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
+	  siDet::ValueMap enPMap, enNMap;
+	  
+	  switch(Pars.noCalib + nc)
+	    {
+	    case 0: 
+	      enPMap = det->GetCalEn(false);
+	      enNMap = det->GetCalEn(true);
+	      break;
+	    case 1:
+	      enPMap = det->GetRawEn(false);
+	      enNMap = det->GetRawEn(true);
+	      break;
+	    case 2:
+	      enPMap = det->GetCalEn(false);
+	      enNMap = det->GetCalEn(true);
+	      break;
+	    case 3:
+	      enPMap = det->GetRawEn(false);
+	      enNMap = det->GetRawEn(true);
+	      break;
+	    }
+	  
+	  if(enPMap.size() > 0)
+	    {
+	      for(auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr)
+		{	      
+		  bufferInfo->AddStripEnergyPair(enPMap, stripItr->first, false, detType, det->GetDepth()); //stripItr->first gives the strip#
+		}
+	      
+	      if(!Pars.noCalib)
+		{
+		  bufferInfo->GetEnSumAndStripMax(false);
+		}
+	    }
+	  
+	  if(enNMap.size() > 0)
+	    {
+	      //Get the strips which fired and the energy deposites in each of them for the front side
+	      for(auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr)
+		{
+		  bufferInfo->AddStripEnergyPair(enNMap, stripItr->first, true, detType, det->GetDepth());
+		}
+	      
+	      if(!Pars.noCalib)
+		{
+		  bufferInfo->GetEnSumAndStripMax(true);
+		}
+	    }
+	  
+	  //Get the interaction position, for now we just use the E1 layer
+	  //if (det->GetDepth() == 1 && detType=="superX3" && det->GetPtypeEnergy().second > 0.0) datum->pos = det->GetEventPosition();
+	  //if(std::abs( det->GetEventPosition().Z() )>10 && detType=="superX3"  && det->GetPtypeEnergy().second != 0.0) std::cout << "Det: "<< sectorStr <<  "   En(p,n):" << det->GetPtypeEnergy().second << " " << det->GetNtypeEnergy().second << "  strip(p,n):"<< det->GetPtypeEnergy().first << " " << det->GetNtypeEnergy().first << "   XYZ:" << det->GetEventPosition().X() << " " << det->GetEventPosition().Y() << " " << det->GetEventPosition().Z() << std::endl; 
 	}
-
-      if(enNMap.size() > 0)
-	{
-	  //Get the strips which fired and the energy deposites in each of them for the front side
-	  for(auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr)
-	    {
-	      bufferInfo->AddStripEnergyPair(det, stripItr->first, true, !Pars.noCalib);
-	    }
-
-	  if(!Pars.noCalib)
-	    {
-	      bufferInfo->GetEnSumAndStripMax(true);
-	    }
-	}
-
-      //Get the interaction position, for now we just use the E1 layer
-      //if (det->GetDepth() == 1 && detType=="superX3" && det->GetPtypeEnergy().second > 0.0) datum->pos = det->GetEventPosition();
-      //if(std::abs( det->GetEventPosition().Z() )>10 && detType=="superX3"  && det->GetPtypeEnergy().second != 0.0) std::cout << "Det: "<< sectorStr <<  "   En(p,n):" << det->GetPtypeEnergy().second << " " << det->GetNtypeEnergy().second << "  strip(p,n):"<< det->GetPtypeEnergy().first << " " << det->GetNtypeEnergy().first << "   XYZ:" << det->GetEventPosition().X() << " " << det->GetEventPosition().Y() << " " << det->GetEventPosition().Z() << std::endl; 
-    }
-
-  /*
-  if(siMap.size() > 0) 
-    {
-      std::cout << std::endl << "------------ Event #" << Pars.CurEvNo << " -----------" << std::endl;
-      std::cout << "Checking the siMap keys :" << std::endl;
-    }
-  */
-
-  //Now we loop over the siMap and dump them to a vector for storage.
-  for (auto itr = siMap.begin(); itr != siMap.end(); ++itr) 
-    {
-      SiData datum = itr->second;
-      //We only push back if there was an E1 value.
-      //if (datum.E1) {
-      //if(siMap.size() > 0) std::cout << "Found key: " << itr->first << " / Value check => isBarrel? " << datum.isBarrel << " / isUpstream? " << datum.isUpstream << " / sector = " << datum.sector << std::endl;
       
-      siData->push_back(datum);
-      //}
-  }
+      /*
+	if(siMap.size() > 0) 
+	{
+	std::cout << std::endl << "------------ Event #" << Pars.CurEvNo << " -----------" << std::endl;
+	std::cout << "Checking the siMap keys :" << std::endl;
+	}
+      */
+      
+      //Now we loop over the siMap and dump them to a vector for storage.
+      for (auto itr = siMap.begin(); itr != siMap.end(); ++itr) 
+	{
+	  SiData datum = itr->second;
+	  //We only push back if there was an E1 value.
+	  //if (datum.E1) {
+	  //if(siMap.size() > 0) std::cout << "Found key: " << itr->first << " / Value check => isBarrel? " << datum.isBarrel << " / isUpstream? " << datum.isUpstream << " / sector = " << datum.sector << std::endl;
+	  
+	  //nc == 0 means that we are either running in noCalib mode 0 or 1, or we are filling the first tree in coCalib mode 2
+	  if(nc == 0) siData->push_back(datum);
+	  //nc == 1 is only possible if we are running in noCalib mode 2 and are filling the second tree
+	  if(nc == 1) siData_snc->push_back(datum);
+	  //}
+	}
+    }
 
   //if(siMap.size() > 0) std::cout << std::endl << "siData size :" << siData->size() << std::endl;
 
@@ -749,12 +797,10 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts, std::vector<DFMAEVEN
   //std::cout << ionData->size() << '\n';
   tree->Fill();
 
-  if(Pars.noMapping)
-    {
-      rawTree->Fill();
-    }
+  if(Pars.noCalib == 2) sortedTree->Fill();
 	
   gamData->clear();
   siData->clear();
+  if(Pars.noCalib == 2) siData_snc->clear();
   ionData->clear();
 }

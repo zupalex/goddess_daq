@@ -1,7 +1,8 @@
-#include "SiDetEnStripInfo.h"
-#include "TMath.h"
-#include "superX3.h"
 #include "TClass.h"
+#include "TMath.h"
+#include "orrubaDet.h"
+#include "superX3.h"
+#include "SiDetEnStripInfo.h"
 
 SiDetEnStripInfo::SiDetEnStripInfo(){}
 SiDetEnStripInfo::~SiDetEnStripInfo(){}
@@ -106,10 +107,9 @@ void SiDetEnStripInfo::GetEnSumAndStripMax(bool isNType)
     }
 }
 
-void SiDetEnStripInfo::AddStripEnergyPair(orrubaDet *det, int strip_, bool isNType, bool doCalib)
+void SiDetEnStripInfo::AddStripEnergyPair(siDet::ValueMap enMap, int strip_, bool isNType, std::string detType_, unsigned short depth_)
 {
-  std::string detType = det->IsA()->GetName();
-  bool isSuperX3 = (detType == "superX3");
+  bool isSuperX3 = (detType_ == "superX3");
 
   std::vector<int> *strips = isNType ? &strip.n : &strip.p;
 
@@ -118,10 +118,9 @@ void SiDetEnStripInfo::AddStripEnergyPair(orrubaDet *det, int strip_, bool isNTy
   float en_ = 0.0;
   int st_ = isSuperX3 ? superX3::GetStrip(strip_) : strip_;
 
-  if(!(isSuperX3 && det->GetDepth() == 1 && !isNType))
+  if(!(isSuperX3 && depth_ == 1 && !isNType))
     {
-      if(!doCalib) en_ = det->GetRawEn(isNType).find(st_)->second;
-      else en_ = det->GetCalEn(isNType).find(st_)->second;
+      en_ = enMap.find(st_)->second;
 
       if(en_ > 0.0)
 	{
@@ -138,17 +137,9 @@ void SiDetEnStripInfo::AddStripEnergyPair(orrubaDet *det, int strip_, bool isNTy
       
 	  float en_near = 0.0;
 	  float en_far = 0.0;
-      
-	  if(!doCalib)
-	    {
-	      en_near = det->GetRawEn(isNType).find(nearStrip)->second;
-	      en_far = det->GetRawEn(isNType).find(farStrip)->second;
-	    }
-	  else
-	    {
-	      en_near = det->GetCalEn(isNType).find(nearStrip)->second;
-	      en_far = det->GetCalEn(isNType).find(farStrip)->second;	  
-	    }
+	  
+	  en_near = enMap.find(nearStrip)->second;
+	  en_far = enMap.find(farStrip)->second;	  
       
 	  en_ = en_near + en_far;
 	  

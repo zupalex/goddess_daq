@@ -2,7 +2,7 @@
 #define SIDETENSTRIPINFO_H
 
 #include "PNPair.h"
-#include "orrubaDet.h"
+#include "siDet.h"
 
 ///Support Class to make the sorting easier when storing the data relative to the Silicon Detectors in the root tree
 class SiDetEnStripInfo
@@ -22,7 +22,7 @@ class SiDetEnStripInfo
   ///Retrieve the sum of the energies collected by all the strips which fired as well as the strip which collected the max energy for a specific detector. The front and back side and separated.
   void GetEnSumAndStripMax(bool isNType);
 
-  void AddStripEnergyPair(orrubaDet *det, int strip_, bool isNType, bool doCalib);
+  void AddStripEnergyPair(siDet::ValueMap enMap, int strip_, bool isNType, std::string detType_, unsigned short depth_);
 
   ///The energies collected by the different strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
   PNPair<float> e;

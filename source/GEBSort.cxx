@@ -790,7 +790,7 @@ GEBGetEv (GEB_EVENT * GEV_event)
       siz = buf_read (inData, (char *) GEV_event->ptgd[ii], sizeof (GEBDATA));
       if (siz != sizeof (GEBDATA))
         {
-          printf ("failed to read %u bytes for header, got %i\n", sizeof (GEBDATA), siz);
+          printf ("failed to read %lu bytes for header, got %i\n", sizeof (GEBDATA), siz);
           return (1);
         };
       nn2++;
@@ -948,8 +948,9 @@ main (int argc, char **argv)
 
   /* initialize */
 
-  Pars.noCalib = false;
+  Pars.noCalib = 0;
   Pars.noMapping = false;
+  Pars.noHists = false;
   Pars.InputSrc = NOTDEF;
   Pars.HaveRootFileName = 0;
   strcpy (Pars.ConfigFile, "Uninitialized");
@@ -1071,8 +1072,8 @@ main (int argc, char **argv)
         else if ((p = strstr (argv[j], "-nevent")) != NULL)
           {
             j++;
-            sscanf(argv[j++], "%ull", &Pars.nEvents);
-            printf ("Overriding the amount of events which will be treated: %d\n", Pars.nEvents);
+            sscanf(argv[j++], "%llu", &Pars.nEvents);
+            printf ("Overriding the amount of events which will be treated: %llu\n", Pars.nEvents);
           }
         else if ((p = strstr (argv[j], "-chat")) != NULL)
           {
@@ -1091,14 +1092,33 @@ main (int argc, char **argv)
 	else if ((p = strstr (argv[j], "-nocalib")) != NULL)
 	  {
             j++;
-	    printf ("/!\\ will process the run without applying the calibration parameters /!\\\n");
-            Pars.noCalib = true;
+            sscanf(argv[j++], "%hd", &Pars.noCalib);
+
+	    if (Pars.noCalib > 0) 
+	      {
+		string outMessage;
+
+		switch(Pars.noCalib)
+		  {
+		  case -1: outMessage = "no sorted tree will be written to the file"; break;
+		  case 1: outMessage = "an uncalibrated sorted tree will be added to the file"; break;
+		  case 2: outMessage = "will be added to the file"; break;
+		  }
+
+		printf ("/!\\ will process the run without applying the calibration parameters and %s /!\\\n", outMessage.c_str());
+	      }
 	  }
 	else if ((p = strstr (argv[j], "-nomapping")) != NULL)
 	  {
             j++;
 	    printf ("raw tree with the pairs <channel, value> will be added to the file\n");
-            Pars.noMapping = true;
+	    Pars.noMapping = true;
+	  }
+	else if ((p = strstr (argv[j], "-nohists")) != NULL)
+	  {
+            j++;
+	    printf ("No pre-made histograms will be generated and written to the file\n");
+	    Pars.noHists = true;
 	  }
         else if ((p = strstr (argv[j], "-rootfile")) != NULL)
           {

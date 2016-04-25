@@ -63,8 +63,9 @@ typedef struct GEB_event
 typedef struct PARS
 {
   char ConfigFile[STRLEN];
-  bool noCalib;
+  short noCalib;
   bool noMapping;
+  bool noHists;
   char ROOTFile[STRLEN];
   unsigned long long int nEvents;
   char ROOTFileOption[STRLEN];
