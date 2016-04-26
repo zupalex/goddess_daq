@@ -6,7 +6,7 @@ ReturnError()
     echo ""
     echo "-> Optional arguments can be put in any order"
     echo ""
-    echo "-> nevent=[XXXX] command will treat XXXX events without having to modify the chat file"
+    echo "-> nevents=[XXXX] command will treat XXXX events without having to modify the chat file"
     echo "-> config=[config_file_name] force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
     echo "-> nocalib=[mode] handles the calibration level."
     echo "           [mode]==1 will generate one tree sorted but not calibrated." 

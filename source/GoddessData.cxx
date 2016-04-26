@@ -1,6 +1,3 @@
-
-
-
 #include "GoddessData.h"
 
 //ROOT Headers
