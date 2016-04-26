@@ -23,14 +23,14 @@ target_link_libraries(ORRUBA ${ROOT_LIBRARIES})
 set (GSSUPPORT_SOURCES SiDetEnStripInfo.cxx GSSupportDictionnary.cxx)
 
 add_library(GSSupport_OBJECT OBJECT ${GSSUPPORT_SOURCES})
-add_library(GSSupport SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
-target_link_libraries(GSSupport ${ROOT_LIBRARIES} ${ORRUBA})
+add_library(GSSupport SHARED $<TARGET_OBJECTS:GSSupport_OBJECT>)
+target_link_libraries(GSSupport ${ROOT_LIBRARIES} ORRUBA)
 
 set (GODDESSSTRUCT_SOURCES GoddessStructDictionary.cxx)
 
 add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
 add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
-target_link_libraries(GoddessStruct ${ROOT_LIBRARIES})
+target_link_libraries(GoddessStruct ${ROOT_LIBRARIES} GSSupport)
 
 install(TARGETS ORRUBA GSSupport GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
 
