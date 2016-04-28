@@ -29,9 +29,8 @@ GoddessData::GoddessData(std::string configFilename)
 
   if(Pars.noMapping)
     {
-      rawChannels = new std::vector<unsigned short>;
-      rawValues = new std::vector<unsigned long int>;   
-      isDigital = new std::vector<bool>;
+      gsRaw = new std::vector<GSRawData>;
+      orrubaRaw = new std::vector<ORRUBARawData>; 
     }
 
   gDirectory->pwd();
@@ -67,9 +66,8 @@ GoddessData::GoddessData(std::string configFilename)
   if(Pars.noMapping)
     {
       rawTree = new TTree("raw","GODDESS Raw Tree");
-      rawTree->Branch("channel",&rawChannels);
-      rawTree->Branch("value",&rawValues);
-      rawTree->Branch("isDigital", &isDigital);
+      rawTree->Branch("si",&orrubaRaw);
+      rawTree->Branch("gam",&gsRaw);
     }
   
   // ORRUBA histograms
@@ -288,9 +286,8 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 
   if(Pars.noMapping)
     {
-      rawChannels->clear();
-      rawValues->clear();
-      isDigital->clear();
+      orrubaRaw->clear();
+      gsRaw->clear();
     }
 
   analogMult->Fill(agodEvts->size());
@@ -307,9 +304,12 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 
       if(Pars.noMapping)
 	{
-	  isDigital->push_back(false);
-	  rawChannels->push_back(channel);
-	  rawValues->push_back(value);
+	  ORRUBARawData datum;
+	  datum.isDigital = false;
+	  datum.channel = channel;
+	  datum.value = value;
+
+	  orrubaRaw->push_back(datum);
 	}
 
       //unsigned long long timestamp = agodEvt.timestamp;
@@ -366,10 +366,12 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 
       if(Pars.noMapping)
 	{
-	  isDigital->push_back(true);
-	
-	  rawChannels->push_back(channel);
-	  rawValues->push_back(value);
+	  ORRUBARawData datum;
+	  datum.isDigital = true;
+	  datum.channel = channel;
+	  datum.value = value;
+
+	  orrubaRaw->push_back(datum);
 	}
 
       std::pair<short,short> key=std::make_pair(GEB_TYPE_DFMA,channel);
@@ -382,7 +384,6 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 	suppressCh[key]=true;
 	continue;
       }
-      //siDetContactMult++;
 
       //Take whatever the timestamp is for this channel.
       //	This is not clear that it is the best method as one detecotr may have various 
@@ -415,13 +416,13 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
 
   //FillHists(dgsEvts);
   
+  if(Pars.noCalib != -1) FillTrees(dgsEvts/*,dgodEvts,agodEvts*/);
+
   if(Pars.noMapping)
     {
       rawTree->Fill();
     }
   
-  if(Pars.noCalib != -1) FillTrees(dgsEvts/*,dgodEvts,agodEvts*/);
-
   //We clear everything here since we know what was actually fired.
   for (auto itr = firedDets.begin(); itr != firedDets.end(); ++itr) {
     itr->second->Clear();
@@ -623,7 +624,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
   //                          0 writes just the sorted and calibrated tree.
   //                          1 writes just the sorted but non calibrated tree.
   //                          2 writes both the sorted calibrated and non calibrated trees.
-  //The following line declares and defines and int used to loop...
+  //The following line declares and defines an int used to loop...
   // ->twice if we need to fill 2 different trees (Pars.noCalib == 2) or 
   // ->just once if we just want to get one tree in the end (Pars.noCalib == 0 or 1)
   int noCalType = Pars.noCalib == 2 ? 2 : 1;
@@ -639,7 +640,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	{
 	  orrubaDet* det = detItr->second;
 	  //Skip detectors with no contacts above threshold.
-	  if (Pars.noCalib > 0 && det->GetContactMult() == 0) continue;
+	  if (Pars.noCalib == 0 && det->GetContactMult() == 0) continue;
 	  std::string detPosID = det->GetPosID();
 	  std::string detType = det->IsA()->GetName();
 	  
@@ -689,24 +690,15 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	  //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
 	  siDet::ValueMap enPMap, enNMap;
 	  
-	  switch(Pars.noCalib + nc)
+	  if((Pars.noCalib + nc)%2 == 0)
 	    {
-	    case 0: 
 	      enPMap = det->GetCalEn(false);
 	      enNMap = det->GetCalEn(true);
-	      break;
-	    case 1:
+	    }
+	  else
+	    {
 	      enPMap = det->GetRawEn(false);
 	      enNMap = det->GetRawEn(true);
-	      break;
-	    case 2:
-	      enPMap = det->GetCalEn(false);
-	      enNMap = det->GetCalEn(true);
-	      break;
-	    case 3:
-	      enPMap = det->GetRawEn(false);
-	      enNMap = det->GetRawEn(true);
-	      break;
 	    }
 	  
 	  if(enPMap.size() > 0)
@@ -760,21 +752,48 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	  //nc == 0 means that we are either running in noCalib mode 0 or 1, or we are filling the first tree in coCalib mode 2
 	  if(nc == 0) siData->push_back(datum);
 	  //nc == 1 is only possible if we are running in noCalib mode 2 and are filling the second tree
-	  if(nc == 1) siData_snc->push_back(datum);
+	  else if(nc == 1) siData_snc->push_back(datum);
 	  //}
 	}
-    }
 
-  //if(siMap.size() > 0) std::cout << std::endl << "siData size :" << siData->size() << std::endl;
+      //if(siMap.size() > 0) std::cout << std::endl << "siData size :" << siData->size() << std::endl;
+    }
 
   //Loop over the DGS events	
   for (unsigned int dgsEvtNum=0;dgsEvtNum<(dgsEvts->size());dgsEvtNum++) 
     {
       GamData datum;
-      datum.en = dgsEvts->at(dgsEvtNum).ehi;
+
       datum.type = dgsEvts->at(dgsEvtNum).tpe;
       datum.num = dgsEvts->at(dgsEvtNum).tid;
+	  
+      switch(Pars.noCalib)
+	{
+	case 0:
+	  datum.en = dgsEvts->at(dgsEvtNum).ehi;
+	  break;
+	case 1:
+	  datum.en = dgsEvts->at(dgsEvtNum).post_rise_energy - dgsEvts->at(dgsEvtNum).pre_rise_energy;
+	  break;
+	case 2:
+	  datum.en = dgsEvts->at(dgsEvtNum).post_rise_energy - dgsEvts->at(dgsEvtNum).pre_rise_energy;	
+	  gamData_snc->push_back(datum);
+
+	  datum.en = dgsEvts->at(dgsEvtNum).ehi;
+	}
+
       gamData->push_back(datum);
+
+      if(Pars.noMapping)
+	{
+	  GSRawData rawDatum;
+	  rawDatum.type = dgsEvts->at(dgsEvtNum).tpe;
+	  rawDatum.num = dgsEvts->at(dgsEvtNum).tid;
+	  rawDatum.post_rise_energy = dgsEvts->at(dgsEvtNum).post_rise_energy;
+	  rawDatum.pre_rise_energy = dgsEvts->at(dgsEvtNum).pre_rise_energy;
+
+	  gsRaw->push_back(rawDatum);
+	}
     }
 
   //Deal with the ion chamber
@@ -784,7 +803,11 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
       datum.dE = ionChamber->GetAnodeDE();
       datum.resE = ionChamber->GetAnodeResE();
       datum.E = ionChamber->GetAnodeE();
+      
       ionData->push_back(datum);
+
+      if(Pars.noCalib == 2)
+	ionData_snc->push_back(datum);
     }
 
   //Deal with the neutron detectors
@@ -802,6 +825,12 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	
   gamData->clear();
   siData->clear();
-  if(Pars.noCalib == 2) siData_snc->clear();
   ionData->clear();
+
+  if(Pars.noCalib == 2) 
+    {
+      gamData_snc->clear();
+      siData_snc->clear();
+      ionData_snc->clear();
+    }
 }

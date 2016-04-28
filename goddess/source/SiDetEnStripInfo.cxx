@@ -106,16 +106,17 @@ void SiDetEnStripInfo::GetEnSumAndStripMax(bool isNType)
 
 void SiDetEnStripInfo::AddStripEnergyPair(siDet::ValueMap enMap, int strip_, bool isNType, std::string detType_, unsigned short depth_)
 {
-  bool isSuperX3 = (detType_ == "superX3");
+  //boolean which returns true if we are dealing with the resistive layer of a superX3 detector
+  bool isSuperX3Res = (detType_ == "superX3" && depth_ == 1 && !isNType);
 
   std::vector<int> *strips = isNType ? &strip.n : &strip.p;
 
   std::vector<float> *energies = isNType ? &e.n : &e.p;
 
   float en_ = 0.0;
-  int st_ = isSuperX3 ? superX3::GetStrip(strip_) : strip_;
-
-  if(!(isSuperX3 && depth_ == 1 && !isNType))
+  int st_ = isSuperX3Res ? superX3::GetStrip(strip_) : strip_;
+  
+  if(!isSuperX3Res)
     {
       en_ = enMap.find(st_)->second;
 
@@ -127,38 +128,32 @@ void SiDetEnStripInfo::AddStripEnergyPair(siDet::ValueMap enMap, int strip_, boo
     }
   else
     {
-      if(std::find(strips->begin(), strips->end(), st_) == strips->end())
+      //Check if this strip has already been treated. This should not happen for anything other than the superX3 resistive layer since the input of 
+      //this function is the number of the resistive strip itself and not the near/far contact. If the strip has already been treated, we don't go further
+      //and stop the execution of this function here.
+      if(std::find(strips->begin(), strips->end(), st_) != strips->end())
 	{
-	  int nearStrip = superX3::GetNearContact(st_);
-	  int farStrip = superX3::GetFarContact(st_);
+	  return;
+	}
+
+      int nearStrip = superX3::GetNearContact(st_);
+      int farStrip = superX3::GetFarContact(st_);
       
-	  float en_near = 0.0;
-	  float en_far = 0.0;
+      float en_near = 0.0;
+      float en_far = 0.0;
 	  
-	  en_near = enMap.find(nearStrip)->second;
-	  en_far = enMap.find(farStrip)->second;	  
+      en_near = enMap.find(nearStrip)->second;
+      en_far = enMap.find(farStrip)->second;	  
       
-	  en_ = en_near + en_far;
+      en_ = en_near + en_far;
 	  
-	  if(en_near > 0.0 || en_far > 0.0)
-	    {
-	      strips->push_back(st_);
-	      energies->push_back(en_);
+      if(en_near > 0.0 || en_far > 0.0)
+	{
+	  strips->push_back(st_);
+	  energies->push_back(en_);
 	      
-	      eRes.p.push_back(en_near > 0.0 ? en_near : -10); //If no energy, we push it to -10 to not pollute the histogram when plotting from 0.
-	      eRes.n.push_back(en_far > 0.0 ? en_far : -10); //If no energy, we push it to -10 to not pollute the histogram when plotting from 0.      
-	    }
-
-	  /*
-	  if(en_near > 0.0 && en_far > 0.0)
-	    {
-	      strips->push_back(st_);
-	      energies->push_back(en_);
-
-	      eRes.p.push_back(en_near);
-	      eRes.n.push_back(en_far);
-	    }
-	  */
+	  eRes.p.push_back(en_near > 0.0 ? en_near : -10); //If no energy, we push it to -10 to not pollute the histogram when plotting from 0.
+	  eRes.n.push_back(en_far > 0.0 ? en_far : -10); //If no energy, we push it to -10 to not pollute the histogram when plotting from 0.      
 	}
     }
 }

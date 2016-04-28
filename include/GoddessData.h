@@ -52,12 +52,10 @@ class GoddessData {
 		///Pointer to the vector of ion chamber sorted but not calibrated information.
 		std::vector<IonData> *ionData_snc;
 
-		///The pointer to the vector containing channels number for the raw tree
-		std::vector<unsigned short> *rawChannels;
-		///The pointer to the vector containing raw values for the raw tree
-		std::vector<unsigned long int> *rawValues;
-		///The pointer to the vector containings the daq type identifier (digital==16 / analog==19)
-		std::vector<bool> *isDigital;
+		///The pointer to the vector containing channel/value pairs to store in the raw tree for the digital part of ORRUBA
+		std::vector<ORRUBARawData> *orrubaRaw;
+		///The pointer to the vector containing channel/value pairs to store in the raw tree for GAMMASPHERE (digital)
+		std::vector<GSRawData> *gsRaw;
 
 		void InitLiquidScintHists();
 		void InitSuperX3Hists();

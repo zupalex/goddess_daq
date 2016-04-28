@@ -20,6 +20,9 @@ class PNPair
   ///Clear the two vector members of the PNPair class
   void inline Clear();
 
+  std::vector<pairType> inline near();
+  std::vector<pairType> inline far();
+
   ///Vector containing the info concerning the front side. The energies and strip numbers are using this convention.
   std::vector<pairType> p;
 
@@ -40,6 +43,9 @@ template<class pairType> inline void PNPair<pairType>::Clear()
   p.clear();
   n.clear();
 }
+
+template<class pairType> inline std::vector<pairType> PNPair<pairType>::near() { return p; }
+template<class pairType> inline std::vector<pairType> PNPair<pairType>::far() { return n; }
 
 templateClassImp(PNPair)
 

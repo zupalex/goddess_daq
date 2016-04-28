@@ -6,15 +6,16 @@
 #include "SiDetEnStripInfo.h"
 
 ///Structure of gamma ray data from DGS
-struct GamData {
-	///The calibrated energy of the gamma.
-	float en;
-	///The type of gamma ray detector. GE=1, BGO=2
-	int type;
-	//The number of the gamma ray detector
-	int num;
-	///The time of the gamma relative to the beginning of the event.
-	unsigned int time;
+struct GamData 
+{
+  ///The calibrated energy of the gamma.
+  float en;
+  ///The type of gamma ray detector. GE=1, BGO=2
+  int type;
+  //The number of the gamma ray detector
+  int num;
+  ///The time of the gamma relative to the beginning of the event.
+  unsigned int time;
 };
 
 ///Structure of silicon data from ORRUBA
@@ -49,23 +50,36 @@ struct SiData
   unsigned int time;
 };
 
-
-
-
-
 ///Structure of the ion chamber data, including the scintillator.
-struct IonData {
-	///The energy deposited in the dE anodes.
-	float dE;
-	///The residaul energy in resE anodes.
-	float resE;
-	///The energy deposited in the E1 anodes.
-	float E;
-	///Energy deposited in the siPMTs.
-	float scintE[4];
-	///Timing of the siPMTs.
-	float scintT[4];
-	///The time of the ion relative to the beginning of the event.
-	unsigned int time;
+struct IonData 
+{
+  ///The energy deposited in the dE anodes.
+  float dE;
+  ///The residaul energy in resE anodes.
+  float resE;
+  ///The energy deposited in the E1 anodes.
+  float E;
+  ///Energy deposited in the siPMTs.
+  float scintE[4];
+  ///Timing of the siPMTs.
+  float scintT[4];
+  ///The time of the ion relative to the beginning of the event.
+  unsigned int time;
 };
+
+struct GSRawData
+{
+  int type;
+  int num;
+  unsigned long int pre_rise_energy;
+  unsigned long int post_rise_energy;
+};
+
+struct ORRUBARawData
+{
+  unsigned short channel;
+  unsigned long int value;
+  bool isDigital;
+};
+
 #endif
