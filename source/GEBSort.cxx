@@ -1107,8 +1107,8 @@ main (int argc, char **argv)
 		switch(Pars.noCalib)
 		  {
 		  case -1: outMessage = "no sorted tree will be written to the file"; break;
-		  case 1: outMessage = "an uncalibrated sorted tree will be added to the file"; break;
-		  case 2: outMessage = "will be added to the file"; break;
+		  case 1: outMessage = "only an uncalibrated sorted tree will be added to the file"; break;
+		  case 2: outMessage = "an uncalibrated sorted treewill be added to the file along with the calibrated one"; break;
 		  }
 
 		printf ("/!\\ will process the run without applying the calibration parameters and %s /!\\\n", outMessage.c_str());

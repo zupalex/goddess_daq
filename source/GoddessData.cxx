@@ -386,7 +386,7 @@ void GoddessData::Fill(GEB_EVENT *gebEvt, std::vector<DGSEVENT> *dgsEvts, std::v
       }
 
       //Take whatever the timestamp is for this channel.
-      //	This is not clear that it is the best method as one detecotr may have various 
+      //	This is not clear that it is the best method as one detector may have various 
       //	timestamps
       //det->SetTimestamp(timestamp);
 
@@ -690,6 +690,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	  //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
 	  siDet::ValueMap enPMap, enNMap;
 	  
+	  //Pars.noCalib + nc will range from 0 to 3 since nc can only be 0 if Pars.noCalib is 0 or 1, and can be 0 or 1 if Pars.noCalib is 2
 	  if((Pars.noCalib + nc)%2 == 0)
 	    {
 	      enPMap = det->GetCalEn(false);
@@ -733,30 +734,17 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	  //if(std::abs( det->GetEventPosition().Z() )>10 && detType=="superX3"  && det->GetPtypeEnergy().second != 0.0) std::cout << "Det: "<< sectorStr <<  "   En(p,n):" << det->GetPtypeEnergy().second << " " << det->GetNtypeEnergy().second << "  strip(p,n):"<< det->GetPtypeEnergy().first << " " << det->GetNtypeEnergy().first << "   XYZ:" << det->GetEventPosition().X() << " " << det->GetEventPosition().Y() << " " << det->GetEventPosition().Z() << std::endl; 
 	}
       
-      /*
-	if(siMap.size() > 0) 
-	{
-	std::cout << std::endl << "------------ Event #" << Pars.CurEvNo << " -----------" << std::endl;
-	std::cout << "Checking the siMap keys :" << std::endl;
-	}
-      */
-      
       //Now we loop over the siMap and dump them to a vector for storage.
       for (auto itr = siMap.begin(); itr != siMap.end(); ++itr) 
 	{
 	  SiData datum = itr->second;
-	  //We only push back if there was an E1 value.
-	  //if (datum.E1) {
-	  //if(siMap.size() > 0) std::cout << "Found key: " << itr->first << " / Value check => isBarrel? " << datum.isBarrel << " / isUpstream? " << datum.isUpstream << " / sector = " << datum.sector << std::endl;
-	  
+  
 	  //nc == 0 means that we are either running in noCalib mode 0 or 1, or we are filling the first tree in coCalib mode 2
 	  if(nc == 0) siData->push_back(datum);
 	  //nc == 1 is only possible if we are running in noCalib mode 2 and are filling the second tree
 	  else if(nc == 1) siData_snc->push_back(datum);
 	  //}
 	}
-
-      //if(siMap.size() > 0) std::cout << std::endl << "siData size :" << siData->size() << std::endl;
     }
 
   //Loop over the DGS events	

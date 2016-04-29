@@ -24,13 +24,13 @@ set (GSTRUCTSUPPORT_SOURCES SiDetEnStripInfo.cxx GStructSupportDictionnary.cxx)
 
 add_library(GStructSupport_OBJECT OBJECT ${GSTRUCTSUPPORT_SOURCES})
 add_library(GStructSupport SHARED $<TARGET_OBJECTS:GStructSupport_OBJECT>)
-target_link_libraries(GStructSupport ${ROOT_LIBRARIES})
+target_link_libraries(GStructSupport ${ROOT_LIBRARIES} ORRUBA)
 
 set (GODDESSSTRUCT_SOURCES GoddessStructDictionary.cxx)
 
 add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
 add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
-target_link_libraries(GoddessStruct ${ROOT_LIBRARIES})
+target_link_libraries(GoddessStruct ${ROOT_LIBRARIES} GStructSupport)
 
 install(TARGETS ORRUBA GStructSupport GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
 

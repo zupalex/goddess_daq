@@ -174,20 +174,32 @@ void superX3::UpdatePosition(int strip) {
 	//else  eventPos.SetXYZ(0,0,0);
 	    
 }
-/**The near contacts, even numbered, are closest to the cable header.
+/**The near contacts are the one closest to the cable header.
  *
  * \param[in] strip The strip number for which we should compute the contact number.
  * \return The number of the contact nearest the header for the specified strip.
+ 
+ * \The numbering of the contact is as followed
+ * \near contact #0 ------------resistive strip #0------------ far contact #1
+ * \near contact #2 ------------resistive strip #1------------ far contact #3
+ * \near contact #5 ------------resistive strip #2------------ far contact #4
+ * \near contact #7 ------------resistive strip #3------------ far contact #6
  */
 unsigned short superX3::GetNearContact(unsigned short strip) 
 {
   return strip > 1 ? 2 * strip + 1 : 2 * strip;
 }
 
-/**The far contacts, odd numbered, are farthest to the cable header.
+/**The far contacts are the one farthest to the cable header.
  *
  * \param[in] strip The strip number for which we should compute the contact number.
  * \return The number of the contact farthest form the header for the specified strip.
+ 
+ * \The numbering of the contact is as followed
+ * \near contact #0 ------------resistive strip #0------------ far contact #1
+ * \near contact #2 ------------resistive strip #1------------ far contact #3
+ * \near contact #5 ------------resistive strip #2------------ far contact #4
+ * \near contact #7 ------------resistive strip #3------------ far contact #6
  */
 unsigned short superX3::GetFarContact(unsigned short strip) 
 {

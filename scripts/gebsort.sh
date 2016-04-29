@@ -4,9 +4,11 @@ ReturnError()
 {
     echo "-> USAGE: gebsort.sh <merged_dir> <run> <output_dir> <nevent=[XXXX] (optional)> <config=[config_file_name] (optional)> <nocalib=[mode] (optional)> <nomapping (optional)>"
     echo ""
+    echo "You can specify either a single run number, or a list enclosed in \" \" (example: \"114 115 117 120\")"
+    echo ""
     echo "-> Optional arguments can be put in any order"
     echo ""
-    echo "-> nevents=[XXXX] command will treat XXXX events without having to modify the chat file"
+    echo "-> nevents=[XXXX] command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file"
     echo "-> config=[config_file_name] force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
     echo "-> nocalib=[mode] handles the calibration level."
     echo "           [mode]==1 will generate one tree sorted but not calibrated." 
@@ -21,7 +23,6 @@ then
     exit 1
 fi
 
-RUN=$2
 INPUT_DIR=$1
 OUTPUT_DIR=$3
 
@@ -76,14 +77,17 @@ COUNTER=$(($COUNTER + 1))
 
 	NEVENTS="${arg##nevents=}"
 
+	echo "Number of events to treat set to $NEVENTS"
+
 	if [ $NEVENTS -lt 1 ]; then
 	    echo "INVALID VALUE SPECIFIED FOR nevents ARGUMENT!!"
 	    ReturnError
 	    exit 1
+	elif [ "$NEVENTS" = "all" ]; then
+	    NEVENTS=99999999999999999999999999
 	fi
 
 	NEVENTSARG="-nevents $NEVENTS"
-	echo "Number of events to treat set to $NEVENTS"
 
     elif [ "$arg" != "${arg##config=}" ]; then
 
@@ -99,20 +103,32 @@ COUNTER=$(($COUNTER + 1))
     fi
 done
 
-if [ ! -e $INPUT_DIR/GEBMerged_run$RUN.gtd_000 ]; then
+echo "The following runs will be treated:"
+
+for run in `echo "$2"`
+do
+echo "run #$run"
+done
+
+for run in `echo "$2"`
+do
+    RUN=$run
+
+    if [ ! -e $INPUT_DIR/GEBMerged_run$RUN.gtd_000 ]; then
 	echo "ERROR: Merged file not found! => Requested $INPUT_DIR/GEBMerged_run$RUN.gtd_000"	
 	exit 1
-fi
-
-echo "GEBSort started sorting run $RUN at `date`"
-if [ ! -e "$OUTPUT_DIR/log" ]; then
+    fi
+    
+    echo "GEBSort started sorting run $RUN at `date`"
+    if [ ! -e "$OUTPUT_DIR/log" ]; then
 	mkdir log
-fi
-
-time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
-echo "GEBSort DONE at `date`"
-
-tail -n 5 log/GEBSort_run$RUN.log
+    fi
+    
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
+    echo "GEBSort DONE at `date`"
+    
+    tail -n 5 log/GEBSort_run$RUN.log
+done
 
 #exit
 
