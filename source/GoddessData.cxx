@@ -709,10 +709,9 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 		  bufferInfo->AddStripEnergyPair(enPMap, stripItr->first, false, detType, det->GetDepth()); //stripItr->first gives the strip#
 		}
 	      
-	      if(!Pars.noCalib)
-		{
-		  bufferInfo->GetEnSumAndStripMax(false);
-		}
+	      bufferInfo->GetEnSumAndStripMax(false);
+
+	      if(detType == "QQQ5") bufferInfo->ReviveDeadStrip();
 	    }
 	  
 	  if(enNMap.size() > 0)
@@ -723,10 +722,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 		  bufferInfo->AddStripEnergyPair(enNMap, stripItr->first, true, detType, det->GetDepth());
 		}
 	      
-	      if(!Pars.noCalib)
-		{
-		  bufferInfo->GetEnSumAndStripMax(true);
-		}
+	      bufferInfo->GetEnSumAndStripMax(true);
 	    }
 	  
 	  //Get the interaction position, for now we just use the E1 layer

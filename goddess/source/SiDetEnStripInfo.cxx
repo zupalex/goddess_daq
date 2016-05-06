@@ -158,4 +158,27 @@ void SiDetEnStripInfo::AddStripEnergyPair(siDet::ValueMap enMap, int strip_, boo
     }
 }
 
+void SiDetEnStripInfo::ReviveDeadStrip()
+{
+  if(strip.p.size() >= 3)
+    {
+      for(unsigned short st = 0; st < strip.p.size(); st++)
+	{
+	  auto stP2 = std::find(strip.p.begin()+st, strip.p.end(), strip.p[st]+2);
+	    if(stP2 != strip.p.end())
+	    {
+	      auto stP4 = std::find(strip.p.begin()+st, strip.p.end(), strip.p[st]+4);
+	      if(stP4 != strip.p.end())
+		{
+		  stripMax.p.clear();
+		  eSum.p.clear();
+
+		  eSum.p.push_back(e.p[st] + e.p[(int)(stP2 - strip.p.begin())] + e.p[(int)(stP4 - strip.p.begin())]);
+		  stripMax.p.push_back(strip.p[st]+1);
+		}
+	    }
+	}
+    }
+}
+
 ClassImp(SiDetEnStripInfo)

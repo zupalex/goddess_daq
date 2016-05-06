@@ -24,6 +24,8 @@ class SiDetEnStripInfo
 
   void AddStripEnergyPair(siDet::ValueMap enMap, int strip_, bool isNType, std::string detType_, unsigned short depth_);
 
+  void ReviveDeadStrip();
+
   ///The energies collected by the different strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
   PNPair<float> e;
 
