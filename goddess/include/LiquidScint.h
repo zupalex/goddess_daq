@@ -3,41 +3,48 @@
 
 #include "Detector.h"
 
-class LiquidScint : public Detector {
-	private:
-		std::string description;
-		
-		float enRaw;
-		float psdRaw;
-		float tacRaw;
-		
-	public:
-		LiquidScint();
-		LiquidScint(std::string desc);
-		virtual ~LiquidScint();
-		static const unsigned short numChannels = 3;
+class LiquidScint : public Detector
+{
+private:
+    std::string description;
 
-		///Return the number of channels of the type specified.
-		int GetNumChannels(bool secondary=false) {return numChannels;};
+    float enRaw;
+    float psdRaw;
+    float tacRaw;
 
-		///Set the raw energy of the channel.
-		virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue);
-		///Set the timestamp for the channel.
-		virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp);
+public:
+    LiquidScint();
+    LiquidScint(std::string desc);
+    virtual ~LiquidScint();
+    static const unsigned short numChannels = 3;
 
-		void SetDescription(std::string desc) {description = desc;}; 
-		std::string GetDescription() {return description;}; 
+    ///Return the number of channels of the type specified.
+    int GetNumChannels(bool secondary = false) {
+        return numChannels;
+    };
 
-		void Clear();
+    ///Set the raw energy of the channel.
+    virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignoreThresholds);
+    ///Set the timestamp for the channel.
+    virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp);
 
-		float GetRawEnergy();
-		float GetRawPSD();
-		float GetRawTAC();
+    void SetDescription(std::string desc) {
+        description = desc;
+    };
+    std::string GetDescription() {
+        return description;
+    };
+
+    void Clear();
+
+    float GetRawEnergy();
+    float GetRawPSD();
+    float GetRawTAC();
 
 
-	/// \cond This is just for ROOT and doesn't need to be documented
-	ClassDef(LiquidScint,1);
-	/// \endcond
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef(LiquidScint, 1);
+    /// \endcond
 };
 
 #endif

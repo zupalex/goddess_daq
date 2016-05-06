@@ -2,7 +2,7 @@
 
 ReturnError()
 {
-    echo "-> USAGE: gebsort.sh <merged_dir> <run> <output_dir> <nevent=[XXXX] (optional)> <config=[config_file_name] (optional)> <nocalib=[mode] (optional)> <nomapping (optional)>"
+    echo "-> USAGE: gebsort.sh <merged_dir> <run> <output_dir> <nevent=[XXXX] (optional)> <config=[config_file_name] (optional)> <nocalib=[mode] (optional)> <ignorethr=[mode] (optional)> <nomapping (optional)>"
     echo ""
     echo "You can specify either a single run number, or a list enclosed in \" \" (example: \"114 115 117 120\")"
     echo ""
@@ -14,6 +14,10 @@ ReturnError()
     echo "           [mode]==1 will generate one tree sorted but not calibrated." 
     echo "           [mode]==2 will generate two sorted trees, one calibrated, the other one not"
     echo "           [mode]==3 will not generate any sorted tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
+    echo "-> ignorethr=[mode] handles the thresholds ignore level."
+    echo "           [mode]==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
+    echo "           [mode]==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
+    echo "           [mode]==2 won't apply any threshold to any tree"
     echo "-> nomapping will create an additional tree containing the raw data in pairs <channel, value>"
 }
 
@@ -28,6 +32,7 @@ OUTPUT_DIR=$3
 
 NOCALIBFLAG=""
 NOMAPPINGFLAG=""
+IGNORETHRFLAG=""
 
 NEVENTSARG=""
 CONFIGFILEARG=""
@@ -55,6 +60,19 @@ COUNTER=$(($COUNTER + 1))
 	NOCALIBFLAG="-nocalib 1"
 	echo "/!\\ will process the run without applying the calibration parameters in mode 1/!\\"
 
+    elif [ "$arg" != "${arg##ignorethr=}" ]; then
+	
+	IGNTHRVAL="${arg##ignorethr=}"
+	
+	if [ $IGNTHRVAL -lt 0 -o $IGNTHRVAL -gt 2 ]; then
+	    echo "INVALID VALUE SPECIFIED FOR ignorethr ARGUMENT!!"
+	    ReturnError
+	    exit 1
+	fi
+	
+	IGNORETHRFLAG="-ignorethrs $IGNTHRVAL"
+	echo "/!\\ will process the run with ignore thresholds level set to $IGNTHRVAL!\\"
+	
     elif [ "$arg" != "${arg##nocalib=}" ]; then
 
 	NOCALVAL="${arg##nocalib=}"
@@ -120,11 +138,11 @@ do
     fi
     
     echo "GEBSort started sorting run $RUN at `date`"
-    if [ ! -e "$OUTPUT_DIR/log" ]; then
+    if [ ! -e log ]; then
 	mkdir log
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $IGNORETHRFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
     echo "GEBSort DONE at `date`"
     
     tail -n 5 log/GEBSort_run$RUN.log

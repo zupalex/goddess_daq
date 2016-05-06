@@ -7,43 +7,43 @@
 ///Support Class to make the sorting easier when storing the data relative to the Silicon Detectors in the root tree
 class SiDetEnStripInfo
 {
- private:
+private:
 
- public:
-  ///Default constructor.
-  SiDetEnStripInfo();
-  
-  ///Default destructor.
-  virtual ~SiDetEnStripInfo();
+public:
+    ///Default constructor.
+    SiDetEnStripInfo();
 
-  ///Clear the different class members of SiDetStripInfo
-  void Clear();
+    ///Default destructor.
+    virtual ~SiDetEnStripInfo();
 
-  ///Retrieve the sum of the energies collected by all the strips which fired as well as the strip which collected the max energy for a specific detector. The front and back side and separated.
-  void GetEnSumAndStripMax(bool isNType);
+    ///Clear the different class members of SiDetStripInfo
+    void Clear();
 
-  void AddStripEnergyPair(siDet::ValueMap enMap, int strip_, bool isNType, std::string detType_, unsigned short depth_);
+    ///Retrieve the sum of the energies collected by all the strips which fired as well as the strip which collected the max energy for a specific detector. The front and back side and separated.
+    void GetEnSumAndStripMax(bool isNType);
 
-  void ReviveDeadStrip();
+    void AddStripEnergyPair(siDet::ValueMap enMap, int strip_, bool isNType, std::string detType_, unsigned short depth_);
 
-  ///The energies collected by the different strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
-  PNPair<float> e;
+    void ReviveDeadStrip();
 
-  ///The sum of the energies collected by the different strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
-  PNPair<float> eSum;
-  
-  ///The energies collected by the resistive strips in case of a SX3 type detector. "Near" and "Far" contacts can be accessed using the "p" and "n" members respectively
-  PNPair<float> eRes;
-  
-  ///All the strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
-  PNPair<int> strip;
+    ///The energies collected by the different strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
+    PNPair<float> e;
 
-  ///The strip which collected the max energy. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
-  PNPair<int> stripMax; 
+    ///The sum of the energies collected by the different strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
+    PNPair<float> eSum;
 
-  /// \cond This is just for ROOT and doesn't need to be documented
-  ClassDef(SiDetEnStripInfo,1)
-  /// \endcond
+    ///The energies collected by the resistive strips in case of a SX3 type detector. "Near" and "Far" contacts can be accessed using the "p" and "n" members respectively
+    PNPair<float> eRes;
+
+    ///All the strips which fired. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
+    PNPair<int> strip;
+
+    ///The strip which collected the max energy. Front and Back sides are separated and can be accessed using the "p" and "n" members respectively
+    PNPair<int> stripMax;
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef(SiDetEnStripInfo, 1);
+    /// \endcond
 };
 
 #endif
