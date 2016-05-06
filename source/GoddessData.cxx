@@ -711,7 +711,7 @@ void GoddessData::FillTrees(std::vector<DGSEVENT> *dgsEvts/*, std::vector<DFMAEV
 	      
 	      bufferInfo->GetEnSumAndStripMax(false);
 
-	      if(detType == "QQQ5") bufferInfo->ReviveDeadStrip();
+	      //if(detType == "QQQ5") bufferInfo->ReviveDeadStrip();
 	    }
 	  
 	  if(enNMap.size() > 0)
