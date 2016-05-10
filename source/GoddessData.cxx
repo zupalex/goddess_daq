@@ -40,7 +40,9 @@ GoddessData::GoddessData ( std::string configFilename )
         std::cerr << "ERROR: Not in a ROOT File?\n";
         return;
     }
-    f->cd ( "/trees" );
+
+    if ( !Pars.noHists ) f->cd ( "/trees" );
+    else f->cd ();
 
     if ( Pars.noCalib >= 0 )
     {
@@ -71,45 +73,47 @@ GoddessData::GoddessData ( std::string configFilename )
         rawTree->Branch ( "gam", &gsRaw );
     }
 
-    // ORRUBA histograms
-    f->cd ( "/hists" );
-    TDirectory* dirOrruba = gDirectory->mkdir ( "orruba" );
-    dirOrruba->cd();
-    TDirectory* dirRaw = gDirectory->mkdir ( "raw" );
-    dirRaw->cd();
-    enRawA = new TH2F ( "enRawA", "Raw Analog Energies;Energy [Ch];Channel", 4196, 0, 4096, 400, 0, 400 );
-    enRawD = new TH2F ( "enRawD", "Raw Digital Energies;Energy [Ch];Channel", 4196, 0, 1E6, 400, 0, 400 );
-    enCalA = new TH2F ( "enCalA", "Calibrated Analog Energies;Energy [MeV];Channel", 4196, 0, 4096, 400, 0, 400 );
-    enCalD = new TH2F ( "enCalD", "Calibrated Digital Energies;Energy [MeV];Channel", 4196, 0, 4096, 400, 0, 400 );
-    analogMult = new TH1F ( "analogMult", "Number of triggers in the analog system;Multiplicty;Counts / Multiplicty", 5, 0, 5 );
-    analogADCMult = new TH1F ( "analogADCMult", "Number of ADCs readout per trigger;Multiplicty;Counts / Multiplicty", 400, 0, 400 );
-    digitalMult = new TH1F ( "digitalMult", "Number of triggers in the digital system;Multiplicty;Counts / Multiplicty", 400, 0, 400 );
-    hDetPosMult = new TH1F ( "detPosMult", "Number of sectors hit in an event;Sector Multiplicity;Counts / Multiplicity", 32, 0, 32 );
-    detMult = new TH1F ( "detMult", "Number of detectors hit in an event; Detector Multiplicity;Counts / Multiplicty", 48, 0, 48 );
+    if ( !Pars.noHists )
+    {
+        // ORRUBA histograms
+        f->cd ( "/hists" );
+        TDirectory* dirOrruba = gDirectory->mkdir ( "orruba" );
+        dirOrruba->cd();
+        TDirectory* dirRaw = gDirectory->mkdir ( "raw" );
+        dirRaw->cd();
+        enRawA = new TH2F ( "enRawA", "Raw Analog Energies;Energy [Ch];Channel", 4196, 0, 4096, 400, 0, 400 );
+        enRawD = new TH2F ( "enRawD", "Raw Digital Energies;Energy [Ch];Channel", 4196, 0, 1E6, 400, 0, 400 );
+        enCalA = new TH2F ( "enCalA", "Calibrated Analog Energies;Energy [MeV];Channel", 4196, 0, 4096, 400, 0, 400 );
+        enCalD = new TH2F ( "enCalD", "Calibrated Digital Energies;Energy [MeV];Channel", 4196, 0, 4096, 400, 0, 400 );
+        analogMult = new TH1F ( "analogMult", "Number of triggers in the analog system;Multiplicty;Counts / Multiplicty", 5, 0, 5 );
+        analogADCMult = new TH1F ( "analogADCMult", "Number of ADCs readout per trigger;Multiplicty;Counts / Multiplicty", 400, 0, 400 );
+        digitalMult = new TH1F ( "digitalMult", "Number of triggers in the digital system;Multiplicty;Counts / Multiplicty", 400, 0, 400 );
+        hDetPosMult = new TH1F ( "detPosMult", "Number of sectors hit in an event;Sector Multiplicity;Counts / Multiplicity", 32, 0, 32 );
+        detMult = new TH1F ( "detMult", "Number of detectors hit in an event; Detector Multiplicity;Counts / Multiplicty", 48, 0, 48 );
 
-    dirOrruba->cd();
-    endcapHitPatternUpstream = new TH2F ( "hitEndcapUp", "Upstream Endcap Hit Pattern", 16, 0, TMath::TwoPi(), 32, 0, 32 );
-    endcapHitPatternDownstream = new TH2F ( "hitEndcapDown", "Downstream Endcap Hit Pattern", 16, 0, TMath::TwoPi(), 32, 0, 32 );
-    sX3HitPattern = new TH2F ( "sX3HitPattern", "Cumulative SuperX3 Hit Pattern;Azimuthal Angle [deg];Z Position [mm]", 48, 0, 360, 8, -80, 80 );
+        dirOrruba->cd();
+        endcapHitPatternUpstream = new TH2F ( "hitEndcapUp", "Upstream Endcap Hit Pattern", 16, 0, TMath::TwoPi(), 32, 0, 32 );
+        endcapHitPatternDownstream = new TH2F ( "hitEndcapDown", "Downstream Endcap Hit Pattern", 16, 0, TMath::TwoPi(), 32, 0, 32 );
+        sX3HitPattern = new TH2F ( "sX3HitPattern", "Cumulative SuperX3 Hit Pattern;Azimuthal Angle [deg];Z Position [mm]", 48, 0, 360, 8, -80, 80 );
 
 
-    //dirOrruba->cd();
-    //InitSuperX3Hists();
+        //dirOrruba->cd();
+        //InitSuperX3Hists();
 
-    //dirOrruba->cd();
-    //InitQQQ5Hists();
+        //dirOrruba->cd();
+        //InitQQQ5Hists();
 
-    //dirOrruba->cd();
-    //InitBB10Hists();
+        //dirOrruba->cd();
+        //InitBB10Hists();
 
-    //dirOrruba->cd();
-    //InitGammaHists();
+        //dirOrruba->cd();
+        //InitGammaHists();
 
-    //gDirectory->cd("/hists");
-    //TDirectory *dirLiquidScint = gDirectory->mkdir("LiquidScint");
-    //dirLiquidScint->cd();
-    //InitLiquidScintHists();
-
+        //gDirectory->cd("/hists");
+        //TDirectory *dirLiquidScint = gDirectory->mkdir("LiquidScint");
+        //dirLiquidScint->cd();
+        //InitLiquidScintHists();
+    }
 }
 void GoddessData::InitBB10Hists()
 {
@@ -307,13 +311,15 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
         gsRaw->clear();
     }
 
-    analogMult->Fill ( agodEvts->size() );
+    if ( !Pars.noHists ) analogMult->Fill ( agodEvts->size() );
+
     // getting data from analog events
     for ( size_t i = 0; i < agodEvts->size(); i++ )
     {
         AGODEVENT agodEvt = agodEvts->at ( i );
 
-        analogADCMult->Fill ( agodEvt.values.size() );
+        if ( !Pars.noHists ) analogADCMult->Fill ( agodEvt.values.size() );
+
         for ( size_t j = 0; j < agodEvt.values.size(); j++ )
         {
             unsigned long int value = agodEvt.values[j];
@@ -333,7 +339,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
             //unsigned long long timestamp = agodEvt.timestamp;
 
-            enRawA->Fill ( value, channel );
+            if ( !Pars.noHists ) enRawA->Fill ( value, channel );
 
             std::pair<short, short> key = std::make_pair ( GEB_TYPE_AGOD, channel );
             if ( suppressCh.find ( key ) != suppressCh.end() )
@@ -378,7 +384,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
         }
     }
 
-    digitalMult->Fill ( dgodEvts->size() );
+    if ( !Pars.noHists ) digitalMult->Fill ( dgodEvts->size() );
     // getting data from digital events
     for ( size_t i = 0; i < dgodEvts->size(); i++ )
     {
@@ -389,7 +395,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
         DAQchannel = channel;
         //DAQCh_Energy[channel] = value; //filling this will overwrite the analog
-        enRawD->Fill ( value, channel );
+        if ( !Pars.noHists ) enRawD->Fill ( value, channel );
 
         if ( Pars.noMapping )
         {

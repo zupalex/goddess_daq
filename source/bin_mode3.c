@@ -233,7 +233,7 @@ bin_mode3(GEB_EVENT* GEB_event)
 
             /* bin some data */
 
-            if (Event.ehi > 10 && Event.ehi < LONGLEN) {
+            //if (!Pars.noHists && Event.ehi > 10 && Event.ehi < LONGLEN) {
 
                 //ehi_sum_mode3->Fill ((double) Event.ehi, 1);
 
@@ -242,7 +242,7 @@ bin_mode3(GEB_EVENT* GEB_event)
                 //if (Event.id > 0 && Event.id < MAXSEGNO)
                 //SegE->Fill ((double) Event.id, (double) Event.ehi);
 
-            }
+            //}
 
 
             /* extract LED external time, per documentation */
@@ -316,10 +316,10 @@ bin_mode3(GEB_EVENT* GEB_event)
         /* if just one segment fired, so the other segments  */
         /* effectively suppress. */
 
-        if (Event.ehi > 10 && Event.ehi < LONGLEN)
+        /*if (!Pars.noHists && Event.ehi > 10 && Event.ehi < LONGLEN)
             if (Event.id > 0 && Event.id < MAXSEGNO)
                 //SegE->Fill ((double) Event.id, (double) Event.ehi);
-            { };
+            { };*/
     }
 #endif
 

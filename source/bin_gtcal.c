@@ -45,27 +45,28 @@ int
 sup_gtcal()
 {
     /* declarations */
+    if ( !Pars.noHists )
+    {
+        TH1D* mkTH1D ( char*, char*, int, double, double );
+        TH2F* mkTH2F ( char*, char*, int, double, double, int, double, double );
 
-    TH1D* mkTH1D(char*, char*, int, double, double);
-    TH2F* mkTH2F(char*, char*, int, double, double, int, double, double);
-
-    /* initialize */
+        /* initialize */
 
 
-    /* define spectra */
+        /* define spectra */
 
 //  sprintf (str1, "ehi_sum_mode3");
 //  sprintf (str2, "ehi_sum_mode3");
 //  ehi_sum_mode3 = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
 //  ehi_sum_mode3->SetXTitle (str1);
-
-    return (0);
+    }
+    return ( 0 );
 }
 
 /* ----------------------------------------------------------------- */
 
 int
-bin_gtcal(GEB_EVENT* GEB_event)
+bin_gtcal ( GEB_EVENT* GEB_event )
 {
 
     /* declarations */
@@ -75,22 +76,26 @@ bin_gtcal(GEB_EVENT* GEB_event)
 
     /* prototypes */
 
-    int GebTypeStr(int type, char str[]);
+    int GebTypeStr ( int type, char str[] );
 
     /* prototypes */
 
-    if (Pars.CurEvNo <= Pars.NumToPrint) {
-        printf("entered bin_mode3:\n");
+    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    {
+        printf ( "entered bin_mode3:\n" );
     }
 
-    for (i = 0; i < GEB_event->mult; i++) {
+    for ( i = 0; i < GEB_event->mult; i++ )
+    {
 
-        if (GEB_event->ptgd[i]->type == GEB_TYPE_RAW) {
+        if ( GEB_event->ptgd[i]->type == GEB_TYPE_RAW )
+        {
 
-            if (Pars.CurEvNo <= Pars.NumToPrint) {
-                GebTypeStr(GEB_event->ptgd[i]->type, str);
-                printf("bin_gtcal, %2i> %2i, %s, TS=%lli, 0x%llx\n", i, GEB_event->ptgd[i]->type, str,
-                       GEB_event->ptgd[i]->timestamp, GEB_event->ptgd[i]->timestamp);
+            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            {
+                GebTypeStr ( GEB_event->ptgd[i]->type, str );
+                printf ( "bin_gtcal, %2i> %2i, %s, TS=%lli, 0x%llx\n", i, GEB_event->ptgd[i]->type, str,
+                         GEB_event->ptgd[i]->timestamp, GEB_event->ptgd[i]->timestamp );
             }
 
             /* Shaofei, put your code here */
@@ -101,10 +106,11 @@ bin_gtcal(GEB_EVENT* GEB_event)
 
     /* done */
 
-    if (Pars.CurEvNo <= Pars.NumToPrint) {
-        printf("exit bin_gtcal\n");
+    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    {
+        printf ( "exit bin_gtcal\n" );
     }
 
-    return (0);
+    return ( 0 );
 
 }

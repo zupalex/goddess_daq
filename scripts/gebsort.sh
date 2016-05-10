@@ -2,7 +2,7 @@
 
 ReturnError()
 {
-    echo "-> USAGE: gebsort.sh <merged_dir> <run> <output_dir> <nevent=[XXXX] (optional)> <config=[config_file_name] (optional)> <nocalib=[mode] (optional)> <ignorethr=[mode] (optional)> <nomapping (optional)>"
+    echo "-> USAGE: gebsort.sh <merged_dir> <run> <output_dir> <optional parameters (see list below)>"
     echo ""
     echo "You can specify either a single run number, or a list enclosed in \" \" (example: \"114 115 117 120\")"
     echo ""
@@ -15,10 +15,11 @@ ReturnError()
     echo "           [mode]==2 will generate two sorted trees, one calibrated, the other one not"
     echo "           [mode]==3 will not generate any sorted tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
     echo "-> ignorethr=[mode] handles the thresholds ignore level."
-    echo "           [mode]==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
-    echo "           [mode]==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
-    echo "           [mode]==2 won't apply any threshold to any tree"
+    echo "             [mode]==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
+    echo "             [mode]==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
+    echo "             [mode]==2 won't apply any threshold to any tree"
     echo "-> nomapping will create an additional tree containing the raw data in pairs <channel, value>"
+    echo "-> nohists will prevent histograms to be generated"
 }
 
 if [ $# -lt 3 ] 
@@ -32,6 +33,7 @@ OUTPUT_DIR=$3
 
 NOCALIBFLAG=""
 NOMAPPINGFLAG=""
+NOHISTSFLAG=""
 IGNORETHRFLAG=""
 
 NEVENTSARG=""
@@ -91,18 +93,27 @@ COUNTER=$(($COUNTER + 1))
 	NOMAPPINGFLAG="-nomapping"
 	echo "raw tree with the pairs <channel, value> will be added to the file"
 
+    elif [ "$arg" = "nohists" ]; then
+
+	NOHISTSFLAG="-nohists"
+	echo "no pre-made histograms will be written to the file..."
+
     elif [ "$arg" != "${arg##nevents=}" ]; then
 
 	NEVENTS="${arg##nevents=}"
 
 	echo "Number of events to treat set to $NEVENTS"
 
-	if [ $NEVENTS -lt 1 ]; then
+	if [ "$NEVENTS" = "all" ]; then
+	
+	    NEVENTS=99999999999999999999999999
+	    
+	elif [ $NEVENTS -lt 1 ]; then
+	
 	    echo "INVALID VALUE SPECIFIED FOR nevents ARGUMENT!!"
 	    ReturnError
 	    exit 1
-	elif [ "$NEVENTS" = "all" ]; then
-	    NEVENTS=99999999999999999999999999
+	    
 	fi
 
 	NEVENTSARG="-nevents $NEVENTS"
@@ -142,7 +153,7 @@ do
 	mkdir log
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $IGNORETHRFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
     echo "GEBSort DONE at `date`"
     
     tail -n 5 log/GEBSort_run$RUN.log
