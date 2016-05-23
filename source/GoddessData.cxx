@@ -51,8 +51,8 @@ GoddessData::GoddessData ( std::string configFilename )
         tree->Branch ( "timestamp", &firstTimestamp );
         tree->Branch ( "gam", &gamData );
 
-        if ( Pars.siDetailLvl == 1 ) tree->Branch ( "si", &siData, 32000, 0 );
-        else if ( Pars.siDetailLvl == 2 ) tree->Branch ( "si", &siDataD, 32000, 0 );
+        if ( Pars.siDetailLvl == 2 || Pars.noCalib == 1 ) tree->Branch ( "si", &siDataD, 32000, 0 );
+        else if ( Pars.siDetailLvl == 1 ) tree->Branch ( "si", &siData, 32000, 0 );
 
         tree->Branch ( "ic", &ionData );
     }
@@ -728,6 +728,13 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
 
         siMap.clear();
 
+        bool writeDetails = false;
+
+        if ( Pars.siDetailLvl == 2 || Pars.noCalib == 1  || ( Pars.noCalib == 2 && nc == 1 ) )
+        {
+            writeDetails = true;
+        }
+
         if ( Pars.siDetailLvl > 0 )
         {
             for ( auto detItr = siDets.begin(); detItr != siDets.end(); ++detItr )
@@ -754,19 +761,20 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 {
                     firstDet = true;
 
-                    if ( Pars.siDetailLvl == 1 )
+                    if ( writeDetails )
+                    {
+                        writeDetails = true;
+                        SiDataDetailed newSiData;
+                        siDataD->push_back ( newSiData );
+                        datum = & ( siDataD->at ( siDataD->size()-1 ) );
+                        siMap[sectorStr] = siDataD->size()-1;
+                    }
+                    else
                     {
                         SiDataBase newSiData;
                         siData->push_back ( newSiData );
                         datum = & ( siData->at ( siData->size()-1 ) );
                         siMap[sectorStr] = siData->size()-1;
-                    }
-                    else
-                    {
-                        SiDataDetailed newSiData;
-                        siDataD->push_back ( newSiData );
-                        datum = & ( siDataD->at ( siDataD->size()-1 ) );
-                        siMap[sectorStr] = siDataD->size()-1;
                     }
 
                     datum->Clear();
@@ -790,8 +798,8 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 }
                 else
                 {
-                    if ( Pars.siDetailLvl == 1 ) datum = & ( siData->at ( siMap[sectorStr] ) );
-                    else datum = & ( siDataD->at ( siMap[sectorStr] ) );
+                    if ( writeDetails ) datum = & ( siDataD->at ( siMap[sectorStr] ) );
+                    else datum = & ( siData->at ( siMap[sectorStr] ) );
                 }
 
                 std::vector<float> *eP = 0;
@@ -813,35 +821,29 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 stripMaxP = &smp;
                 stripMaxN = &smn;
 
-                switch ( det->GetDepth() )
+                if ( writeDetails )
                 {
-                case 0:
-                    if ( Pars.siDetailLvl > 1 )
+                    switch ( det->GetDepth() )
                     {
+                    case 0:
                         datum->SetMemberAddress ( "dE_e_p", &eP );
                         datum->SetMemberAddress ( "dE_e_n", &eN );
                         datum->SetMemberAddress ( "dE_strip_p", &stripP );
                         datum->SetMemberAddress ( "dE_strip_n", &stripN );
-                    }
-                    break;
-                case 1:
-                    if ( Pars.siDetailLvl > 1 )
-                    {
+                        break;
+                    case 1:
                         datum->SetMemberAddress ( "E1_e_p", &eP );
                         datum->SetMemberAddress ( "E1_strip_p", &stripP );
                         datum->SetMemberAddress ( "E1_e_n", &eN );
                         datum->SetMemberAddress ( "E1_strip_n", &stripN );
-                    }
-                    break;
-                case 2:
-                    if ( Pars.siDetailLvl > 1 )
-                    {
+                        break;
+                    case 2:
                         datum->SetMemberAddress ( "E2_e_p", &eP );
                         datum->SetMemberAddress ( "E2_strip_p", &stripP );
                         datum->SetMemberAddress ( "E2_e_n", &eN );
                         datum->SetMemberAddress ( "E2_strip_n", &stripN );
+                        break;
                     }
-                    break;
                 }
 
                 //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
@@ -869,7 +871,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                     {
                         if ( ! ( detType == "superX3" && det->GetDepth() == 1 ) )
                         {
-                            if ( Pars.siDetailLvl > 1 )
+                            if ( writeDetails )
                             {
                                 stripP->push_back ( stripItr->first );
                                 eP->push_back ( stripItr->second );
@@ -907,7 +909,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
 
                             if ( en_ > 0.0 )
                             {
-                                if ( Pars.siDetailLvl > 1 )
+                                if ( writeDetails )
                                 {
                                     eP->push_back ( en_near > 0.0 ? en_near : 0.0 );
                                     stripP->push_back ( st_ );
@@ -935,7 +937,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                     //Get the strips which fired and the energy deposites in each of them for the front side
                     for ( auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr )
                     {
-                        if ( Pars.siDetailLvl > 1 )
+                        if ( writeDetails )
                         {
                             stripN->push_back ( stripItr->first );
                             eN->push_back ( stripItr->second );
