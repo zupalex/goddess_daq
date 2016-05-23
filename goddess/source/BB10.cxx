@@ -96,9 +96,9 @@ void BB10::Clear()
  *  \param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
-void BB10::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignoreThresholds )
-{
-    siDet::SetRawValue ( contact, nType, rawValue, ignoreThresholds );
+void BB10::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr )
+{    
+    siDet::SetRawValue ( contact, nType, rawValue, ignThr );
 
     if ( !nType )
     {

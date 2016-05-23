@@ -274,7 +274,7 @@ bool superX3::ValidStrip ( int strip )
  *  \param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
-void superX3::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignoreThresholds )
+void superX3::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr )
 {
     if ( !ValidContact ( contact, nType ) )
     {
@@ -288,8 +288,13 @@ void superX3::SetRawValue ( unsigned int contact, bool nType, int rawValue, int 
     }
 
     //Call parent method to handle calibration.
-    siDet::SetRawValue ( contact, nType, rawValue, ignoreThresholds );
+//     if ( nType ) siDet::SetRawValue ( contact, nType, rawValue, ignThr );
+//     else siDet::SetRawValue ( contact, nType, rawValue, 2 );
+    siDet::SetRawValue ( contact, nType, rawValue, ignThr );
 
+    if ( !nType ) UpdatePosition ( GetStrip ( contact ) );
+
+    /*
     if ( nType )
     {
         //Set the energy value only if the multiplicity is 1.
@@ -312,6 +317,7 @@ void superX3::SetRawValue ( unsigned int contact, bool nType, int rawValue, int 
             enCal += GetCalEnergy ( contact, nType );
         }
     }
+    */
 }
 
 int superX3::GetStrip ( int contact )

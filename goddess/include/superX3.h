@@ -187,7 +187,7 @@ public:
     };
 
     ///Set the raw energy of the contact and compute the calibrated value.
-    virtual void SetRawValue(unsigned int contact, bool nType, int rawValue, int ignoreThresholds);
+    virtual void SetRawValue(unsigned int contact, bool nType, int rawValue, int ignThr);
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef(superX3, 1);

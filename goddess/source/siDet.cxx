@@ -62,15 +62,15 @@ bool siDet::ValidContact ( unsigned int contact, bool nType/*=false*/ )
  *  \param[in] channel The channel to be adjusted.
  *  \param[in] rawValue The raw contact value in channels.
  */
-void siDet::SetRawValue ( unsigned int channel, unsigned int rawValue, int ignoreThresholds )
+void siDet::SetRawValue ( unsigned int channel, unsigned int rawValue, int ignThr )
 {
     if ( channel < numPtype )
     {
-        SetRawValue ( channel, siDet::pType, rawValue, ignoreThresholds );
+        SetRawValue ( channel, siDet::pType, rawValue, ignThr );
     }
     else if ( channel < numPtype + numNtype )
     {
-        SetRawValue ( channel, siDet::nType, rawValue, ignoreThresholds );
+        SetRawValue ( channel, siDet::nType, rawValue, ignThr );
     }
     else
     {
@@ -84,7 +84,7 @@ void siDet::SetRawValue ( unsigned int channel, unsigned int rawValue, int ignor
  *  \param[in] rawValue The raw contact value in channels.
  *  \param[in] nType Whether the contact selected is n type.
  */
-void siDet::SetRawValue ( unsigned int contact, bool nType, unsigned int rawValue, int ignoreThresholds )
+void siDet::SetRawValue ( unsigned int contact, bool nType, unsigned int rawValue, int ignThr )
 {
     if ( !ValidContact ( contact, nType ) )
     {
@@ -102,12 +102,12 @@ void siDet::SetRawValue ( unsigned int contact, bool nType, unsigned int rawValu
             threshold = threshN.at ( contact );
         }
 
-        if ( ignoreThresholds != 0 || ( ignoreThresholds == 0 && rawValue > threshold ) )
+        if ( ignThr != 0 || ( ignThr == 0 && rawValue > threshold ) )
         {
             enRawN[contact] = rawValue;
         }
 
-        if ( ignoreThresholds == 2 || rawValue > threshold )
+        if ( ignThr == 2 || rawValue > threshold )
         {
             enCal = & ( enCalN[contact] );
         }
@@ -122,12 +122,12 @@ void siDet::SetRawValue ( unsigned int contact, bool nType, unsigned int rawValu
             threshold = threshP.at ( contact );
         }
 
-        if ( ignoreThresholds != 0 || ( ignoreThresholds == 0 && rawValue > threshold ) )
+        if ( ignThr != 0 || ( ignThr == 0 && rawValue > threshold ) )
         {
             enRawP[contact] = rawValue;
         }
         
-        if ( ignoreThresholds == 2 || rawValue > threshold )
+        if ( ignThr == 2 || rawValue > threshold )
         {
             enCal = & ( enCalP[contact] );
         }
@@ -216,11 +216,15 @@ bool siDet::SetEnergyCalib ( std::vector<float> par, int contact, bool nType/*=f
     return true;
 }
 
-bool siDet::SetThresholds ( std::vector<int> thresholds, bool contactType/*=siDet::pType*/ )
+bool siDet::SetThresholds ( std::vector<int> thresholds, bool contactType, int thrSize )
 {
-    if ( thresholds.size() != ( unsigned int ) GetNumChannels ( contactType ) )
+    if(thrSize == 0) thrSize = ( unsigned int ) GetNumChannels ( contactType );
+    
+    //if ( thresholds.size() != ( unsigned int ) GetNumChannels ( contactType ) )
+    if ( thresholds.size() != ( unsigned int ) thrSize )
     {
-        std::cerr << "ERROR: Vector specified for thresholds was not the equal to the number of contacts (" << thresholds.size() << ">" << GetNumChannels ( contactType ) << ")!\n";
+        //std::cerr << "ERROR: Vector specified for thresholds was not the equal to the number of contacts (" << thresholds.size() << ">" << GetNumChannels ( contactType ) << ")!\n";
+        std::cerr << "ERROR: Size of the vector specified for thresholds (" << thresholds.size() << ") was not the one expected (" << thrSize << ")!\n";
         return false;
     }
     if ( contactType == siDet::nType )

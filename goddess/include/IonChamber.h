@@ -54,7 +54,7 @@ public:
     void SetScintTimeCalPars(int ch, std::vector<float> pars);
 
     ///Set the raw energy of the contact and compute the calibrated value.
-    virtual void SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue, int ignoreThresholds);
+    virtual void SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue, int ignThr);
     ///Set the timestamp for the channel.
     virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp);
 

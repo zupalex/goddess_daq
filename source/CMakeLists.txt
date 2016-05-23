@@ -8,7 +8,7 @@ set (GEBMerge_SOURCES GEBMerge.c spe_fun.c get_a_seed.c time_stamp.c printEvent.
 set_source_files_properties(${GEBSort_SOURCES} ${GEBMerge_SOURCES} ag2mode2.c
 mkMap.c PROPERTIES LANGUAGE CXX)
 
-add_executable(GEBSort_nogeb ${GEBSort_SOURCES} $<TARGET_OBJECTS:ORRUBA_OBJECT> $<TARGET_OBJECTS:GStructSupport_OBJECT> $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
+add_executable(GEBSort_nogeb ${GEBSort_SOURCES} $<TARGET_OBJECTS:ORRUBA_OBJECT> $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
 target_link_libraries(GEBSort_nogeb ${ROOT_LIBRARIES})
 
 add_executable(mkMap mkMap.c)

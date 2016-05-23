@@ -61,9 +61,9 @@ public:
     bool ValidContact(unsigned int contact, bool nType);
 
     ///Set the raw energy of the channel.
-    virtual void SetRawValue(unsigned int channel, unsigned int rawValue, int ignoreThresholds);
+    virtual void SetRawValue(unsigned int channel, unsigned int rawValue, int ignThr);
     ///Set the raw energy of the contact and compute the calibrated value.
-    virtual void SetRawValue(unsigned int contact, bool nType, unsigned int rawValue, int ignoreThresholds);
+    virtual void SetRawValue(unsigned int contact, bool nType, unsigned int rawValue, int ignThr);
     ///Set the timestamp for the channel.
     virtual void SetTimeStamp(unsigned int contact, bool contactType, unsigned long long timestamp);
 
@@ -87,7 +87,7 @@ public:
     bool SetEnergyCalib(std::vector<float> par, int contact, bool contactType = siDet::pType);
 
     ///Specify the thresholds for each channel.
-    bool SetThresholds(std::vector<int> thresholds, bool contactType = siDet::pType);
+    bool SetThresholds(std::vector<int> thresholds, bool contactType = siDet::pType, int thrSize = 0);
 
     ///Get a map of the raw energies.
     ValueMap GetRawEn(bool nType);

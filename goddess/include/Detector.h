@@ -21,7 +21,7 @@ public:
     virtual int GetNumChannels ( bool secondaryType ) = 0;
 
     ///Set the raw energy of the channel.
-    virtual void SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignoreThresholds ) = 0;
+    virtual void SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignThr ) = 0;
 
     ///Set the timestamp for the channel.
     virtual void SetTimeStamp ( unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp ) = 0;

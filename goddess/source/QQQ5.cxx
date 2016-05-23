@@ -176,7 +176,7 @@ void QQQ5::SetPosID()
  *  \param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
-void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignoreThresholds )
+void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr )
 {
     if ( !ValidContact ( contact, nType ) )
     {
@@ -190,8 +190,9 @@ void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
     }
 
     //Call parent method to handle calibration.
-    siDet::SetRawValue ( contact, nType, rawValue, ignoreThresholds );
+    siDet::SetRawValue ( contact, nType, rawValue, ignThr );
 
+    /*
     if ( nType )
     {
         enNtype.first = contact;
@@ -204,6 +205,7 @@ void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
         enPtype.second += GetCalEnergy ( contact, nType );
         enCal += GetCalEnergy ( contact, nType );
     }
+    */
 }
 
 

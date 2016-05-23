@@ -17,7 +17,7 @@ LiquidScint::~LiquidScint()
 
 }
 
-void LiquidScint::SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignoreThresholds )
+void LiquidScint::SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignThr )
 {
 
     if ( secondaryType )

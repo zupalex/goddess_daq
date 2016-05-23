@@ -1021,6 +1021,7 @@ main ( int argc, char** argv )
 
     Pars.noCalib = 0;
     Pars.ignoreThresholds = 0;
+    Pars.siDetailLvl = 1;
     Pars.noMapping = false;
     Pars.noHists = false;
     Pars.InputSrc = NOTDEF;
@@ -1191,6 +1192,28 @@ main ( int argc, char** argv )
                     printf ( "/!\\ will process the run without applying the calibration parameters and %s /!\\\n", outMessage.c_str() );
                 }
             }
+            else if ( ( p = strstr ( argv[j], "-siDetailLvl" ) ) != NULL )
+            {
+                j++;
+                sscanf ( argv[j++], "%hu", &Pars.siDetailLvl );
+
+                string outMessage;
+
+                switch ( Pars.siDetailLvl )
+                {
+                case 0:
+                    outMessage = "The si branch won't be written to the rootfile!!!!!";
+                    break;
+                case 1:
+                    outMessage = "Si Detectors: Only the sum of the energies of each sectors will be written to the file";
+                    break;
+                case 2:
+                    outMessage = "Si Detectors: All the energies will be written to the file as well as their sum";
+                    break;
+                }
+
+                printf ( "%s \n", outMessage.c_str() );
+            }
             else if ( ( p = strstr ( argv[j], "-ignorethrs" ) ) != NULL )
             {
                 j++;
@@ -1310,25 +1333,31 @@ main ( int argc, char** argv )
 
         char backupConf[128];
 
+        if ( strcmp ( Pars.ConfigFile, "Uninitialized" ) == 0 ) std::cerr << "Starting auto config file picker..." << endl;
+
         for ( unsigned short fItr = 0; fItr < configFileList.size(); fItr++ )
         {
-            short noMatch = configFileList[fItr].npos;
+            std::size_t fstRunStartPos = configFileList[fItr].find ( "runs", 0 );
+            std::size_t separatorPos = configFileList[fItr].find ( "_to_", 0 );
+            std::size_t sdRunEndPos = configFileList[fItr].find ( ".config", 0 );
 
-            short fstRunStartPos = configFileList[fItr].find ( "runs", 0 ) + 4;
-            short separatorPos = configFileList[fItr].find ( "_to_", 0 );
-            short sdRunEndPos = configFileList[fItr].find ( ".config", 0 );
+            if ( fstRunStartPos == std::string::npos || separatorPos == std::string::npos || sdRunEndPos == std::string::npos ) continue;
 
-            if ( fstRunStartPos == noMatch || separatorPos == noMatch || sdRunEndPos == noMatch ) continue;
+            cerr << "Found config file: " << configFileList[fItr] << " ... ";
 
-            int lowBound = stoi ( configFileList[fItr].substr ( fstRunStartPos, separatorPos - fstRunStartPos ) );
+            int lowBound = stoi ( configFileList[fItr].substr ( fstRunStartPos + 4, separatorPos - fstRunStartPos + 4 ) );
             int upBound = stoi ( configFileList[fItr].substr ( separatorPos + 4, sdRunEndPos - separatorPos + 4 ) );
 
             if ( treatedRun >= lowBound && treatedRun <= upBound )
             {
                 strcpy ( Pars.ConfigFile, ( configFileList[fItr].substr ( 2, sdRunEndPos + 5 ) ).c_str() ); // the last character we want is at the position sdRunEndPos + 7 but we start from position 2...
 
+                cerr << "matching!" << endl;
+
                 break;
             }
+
+            cerr << "not matching... keep on looking..." << endl;
 
             if ( configFileList[fItr] == "goddess.config" ) strcpy ( backupConf, "goddess.config" );
         }
@@ -2331,38 +2360,38 @@ GEBacq ( char* ChatFileName )
         //dtbtev->SetXTitle (str1);
         //sprintf (str1, "type");
         //dtbtev->SetYTitle (str1);
-	
+
         Pars.histDir->cd();
     }
-        /* spectra for different types of data */
+    /* spectra for different types of data */
 
-        sup_mode2();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        sup_mode1();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        sup_mode3();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        sup_gtcal();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        sup_dgs();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        //sup_dfma ();
-        //Pars.histDir->cd();
-        sup_god();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        sup_dgod();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        sup_agod();
-        if ( !Pars.noHists )Pars.histDir->cd();
-        //sup_phoswich ();
-        sup_template();
+    sup_mode2();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    sup_mode1();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    sup_mode3();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    sup_gtcal();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    sup_dgs();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    //sup_dfma ();
+    //Pars.histDir->cd();
+    sup_god();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    sup_dgod();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    sup_agod();
+    if ( !Pars.noHists ) Pars.histDir->cd();
+    //sup_phoswich ();
+    sup_template();
 
-        if ( !Pars.noHists )Pars.f1->SetCompressionLevel ( 0 );
-        if ( !Pars.noHists )Pars.histDir->Write ( 0, TObject::kOverwrite );
-        //Pars.treeDir->Write(0,TObject::kWriteDelete);
-        if ( !Pars.noHists )Pars.f1->Flush();
+    if ( !Pars.noHists ) Pars.f1->SetCompressionLevel ( 0 );
+    if ( !Pars.noHists ) Pars.histDir->Write ( 0, TObject::kOverwrite );
+    //Pars.treeDir->Write(0,TObject::kWriteDelete);
+    if ( !Pars.noHists ) Pars.f1->Flush();
 
-        printf ( "we have define the following ROOT spectra:\n" );
+    printf ( "we have define the following ROOT spectra:\n" );
 
 
     Pars.wlist = gDirectory->GetList();
@@ -2995,3 +3024,7 @@ GEBacq ( char* ChatFileName )
 }
 
 /*----------------------------------------------------*/
+
+
+
+

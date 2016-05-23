@@ -65,6 +65,7 @@ typedef struct PARS {
     bool noMapping;
     bool noHists;
     unsigned short ignoreThresholds;
+    unsigned short siDetailLvl;
     char ROOTFile[STRLEN];
     unsigned long long int nEvents;
     char ROOTFileOption[STRLEN];
@@ -199,3 +200,5 @@ typedef struct TRACKED_GAMMA_HIT {
 //  TH1D *mkTH1D (char *, char *, int , double , double );
 
 #endif
+
+

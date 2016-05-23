@@ -390,7 +390,8 @@ void GoddessConfig::ReadConfig ( std::string filename )
 
                 if ( det )
                 {
-                    det->SetThresholds ( thresholds, secondaryType );
+                    if ( detType == "superX3" && !secondaryType ) det->SetThresholds ( thresholds, secondaryType );
+                    else det->SetThresholds ( thresholds, secondaryType );
                 }
                 else
                 {
@@ -626,7 +627,7 @@ bool GoddessConfig::IsInsertable ( short daqType, int daqCh, int numDetCh )
 /**
  *
  */
-Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigned int rawValue, int ignoreThresholds, unsigned long long timestamp /*=0*/ )
+Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigned int rawValue, int ignThr, unsigned long long timestamp /*=0*/ )
 {
     MapKey key = std::make_pair ( daqType, digitizerCh );
     auto mapItr = chMap.upper_bound ( key );
@@ -672,23 +673,23 @@ Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigne
 
     if ( detType == "superX3" )
     {
-        ( ( superX3 * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignoreThresholds );
+        ( ( superX3 * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignThr );
     }
     else if ( detType == "QQQ5" )
     {
-        ( ( QQQ5 * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignoreThresholds );
+        ( ( QQQ5 * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignThr );
     }
     else if ( detType == "BB10" )
     {
-        ( ( BB10 * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignoreThresholds );
+        ( ( BB10 * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignThr );
     }
     else if ( detType == "IonChamber" )
     {
-        ( ( IonChamber * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignoreThresholds );
+        ( ( IonChamber * ) det )->SetRawValue ( detCh, secondaryType, rawValue, ignThr );
     }
     else
     {
-        det->SetRawValue ( detCh, secondaryType, rawValue, ignoreThresholds );
+        det->SetRawValue ( detCh, secondaryType, rawValue, ignThr );
     }
 
     det->SetTimeStamp ( detCh, secondaryType, timestamp );

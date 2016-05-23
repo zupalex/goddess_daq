@@ -8,7 +8,8 @@ ReturnError()
     echo ""
     echo "-> Optional arguments can be put in any order"
     echo ""
-    echo "-> nevents=[XXXX] command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file"
+    echo "-> suffix=[output_file_suffix] will append the specified suffix at the end of the output rootfile name"
+    echo "-> nevents=[XXXX] command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file" 
     echo "-> config=[config_file_name] force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
     echo "-> nocalib=[mode] handles the calibration level."
     echo "           [mode]==1 will generate one tree sorted but not calibrated." 
@@ -18,6 +19,10 @@ ReturnError()
     echo "             [mode]==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
     echo "             [mode]==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
     echo "             [mode]==2 won't apply any threshold to any tree"
+    echo "-> sidetails=[mode] handles the detail level for the output Si Data."
+    echo "           [mode]==0 won't generate any output for the Si detectors." 
+    echo "           [mode]==1 will store only the sum of the energies per sector."
+    echo "           [mode]==2 will store all the energies collected by each strips individually as well as the sum per sector."
     echo "-> nomapping will create an additional tree containing the raw data in pairs <channel, value>"
     echo "-> nohists will prevent histograms to be generated"
 }
@@ -31,12 +36,17 @@ fi
 INPUT_DIR=$1
 OUTPUT_DIR=$3
 
+OUTPUTSUFIX=""
+
 NOCALIBFLAG=""
 NOMAPPINGFLAG=""
 NOHISTSFLAG=""
 IGNORETHRFLAG=""
+SIDETLVLFLAG=""
 
 NEVENTSARG=""
+FSTEVENTSARG=""
+SPLITEVTARG=""
 CONFIGFILEARG=""
 
 if [ "$1" = "default" ]; then
@@ -88,6 +98,19 @@ COUNTER=$(($COUNTER + 1))
 	NOCALIBFLAG="-nocalib $NOCALVAL"
 	echo "/!\\ will process the run without applying the calibration parameters in mode $NOCALVAL/!\\"
 
+    elif [ "$arg" != "${arg##sidetails=}" ]; then
+
+	SIDETLVLVAL="${arg##sidetails=}"
+
+	if [ SIDETLVLFLAG -lt 0 -o SIDETLVLFLAG -gt 2 ]; then
+	    echo "INVALID VALUE SPECIFIED FOR nocalib ARGUMENT!!"
+	    ReturnError
+	    exit 1
+	fi
+
+	SIDETLVLFLAG="-siDetailLvl $SIDETLVLVAL"
+	echo "/!\\ will process the run with the Si Detectors Output Details set to level $SIDETLVLVAL/!\\"
+	
     elif [ "$arg" = "nomapping" ]; then
 
 	NOMAPPINGFLAG="-nomapping"
@@ -117,11 +140,16 @@ COUNTER=$(($COUNTER + 1))
 	fi
 
 	NEVENTSARG="-nevents $NEVENTS"
-
+	
     elif [ "$arg" != "${arg##config=}" ]; then
 
 	CONFIGFILEARG="-config ${arg##config=}"
 	echo "Forced use of the following config file: ${arg##config=}"
+	
+    elif [ "$arg" != "${arg##suffix=}" ]; then
+    
+	OUTPUTSUFFIX="${arg##suffix=}"
+	echo "The following suffix will be append at the end of the output filename: $OUTPUTSUFFIX"    
 
     elif [ $COUNTER -gt 3 ]; then
 	
@@ -153,7 +181,7 @@ do
 	mkdir log
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
     echo "GEBSort DONE at `date`"
     
     tail -n 5 log/GEBSort_run$RUN.log

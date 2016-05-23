@@ -42,14 +42,15 @@ private:
     ///The pointer to the vector of gamma information.
     std::vector<GamData>* gamData;
     ///Pointer to the vector of silicon information.
-    std::vector<SiData>* siData;
+    std::vector<SiDataBase>* siData;
+    std::vector<SiDataDetailed>* siDataD;
     ///Pointer to the vector of ion chamber information.
     std::vector<IonData>* ionData;
 
     ///The pointer to the vector of gamma sorted but not calibrated information.
     std::vector<GamData>* gamData_snc;
     ///Pointer to the vector of silicon sorted but not calibrated information.
-    std::vector<SiData>* siData_snc;
+    std::vector<SiDataDetailed>* siData_snc;
     ///Pointer to the vector of ion chamber sorted but not calibrated information.
     std::vector<IonData>* ionData_snc;
 
