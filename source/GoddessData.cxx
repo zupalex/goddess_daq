@@ -73,6 +73,7 @@ GoddessData::GoddessData ( std::string configFilename )
     if ( Pars.noMapping )
     {
         rawTree = new TTree ( "raw", "GODDESS Raw Tree" );
+        rawTree->Branch ( "timestamp", &firstTimestamp );
         rawTree->Branch ( "si", &orrubaRaw );
         rawTree->Branch ( "gam", &gsRaw );
     }
