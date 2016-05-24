@@ -14,9 +14,21 @@ if [ $# -ne 3 ]
   exit 1
 fi
 
-RUN=$3
-MERGE_DIR=$2
-DATA_DIR=$1
+INPUT_DATA_DIR=$1
+INPUT_MERGE_DIR=$2
+
+echo "The following runs will be treated:"
+
+for run in `echo "$3"`
+do
+	echo "run #$run"
+done
+
+for run in `echo "$3"`
+do
+DATA_DIR=$INPUT_DATA_DIR
+MERGE_DIR=$INPUT_MERGE_DIR
+RUN=$run
 
 #Check for data folder
 if [ ! -e $DATA_DIR ]; then
@@ -70,12 +82,12 @@ if [ $? != 0 ]; then
 	printf "${YELLOW}WARNING:${RESET} No DGS files found!\n"
 fi
 
-echo "GEBMerge started at `date`"
+echo "GEBMerge started for run #$RUN at `date`"
 #Run the merge program
 ./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd \
 	$DFMA_FILES $DGS_FILES $ORNL_FILES \
 	 > log/GEBMerge_run$RUN.log
-
+	
 err=$?
 #Remove intermediate converted file
 rm -f .run$RUN.geb
@@ -86,6 +98,7 @@ else
 fi
 
 tail log/GEBMerge_run$RUN.log -n 3
+done
 
 exit
 
