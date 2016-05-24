@@ -56,26 +56,51 @@ std::vector<TEntryList*> entryLists;
 
 std::map<string, TEntryList*> rEL;
 
-TChain* InitiateTChain ( string treeName, string suffix, unsigned short nbrOfRuns, ... )
+TChain* myChain = new TChain();
+
+void InitiateTChain()
 {
-    TChain* newChain = new TChain ( treeName.c_str() );
+    std::cout << "To use InitiateTChain function, please provide the following arguments:" << std::endl;
+    std::cout << "1) The name of the tree." << std::endl;
+    std::cout << "2) The suffix (if any) contained in the run names you want to chain." << std::endl;
+    std::cout << "3) The list of runs you want to chain separated by comas" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Examples:" << std::endl;
+    std::cout << "InitiateTChain(\"god\", \"_XeRuns\", 52, 54, 55, 56, 58, 59)" << std::endl;
+    std::cout << "InitiateTChain(\"god\", \"\", 252, 253,254)" << std::endl;
+    std::cout << std::endl;
+    std::cout << "This will \"feed\" the TChain called \"myChain\" that you can then call to do whatever you want." << std::endl;
 
-    va_list args;
-    va_start ( args, nbrOfRuns );
+    return;
+}
 
-    for ( int i = 0; i < nbrOfRuns; i++ )
-    {
-        int runNbr;
-        runNbr = va_arg ( args, decltype ( runNbr ) );
+template<typename T> void InitiateTChain ( TChain* chain, string suffix, T runNbr )
+{
+    std::cout << "Adding " << Form ( "./run%d%s.root", ( int ) runNbr, suffix.c_str() ) << " to the TChain" << std::endl;
 
-        std::cout << "Adding " << Form ( "./run%d%s.root", runNbr, suffix.c_str() ) << " to the TChain" << std::endl;
+    chain->Add ( Form ( "./run%d%s.root", ( int ) runNbr, suffix.c_str() ) );
 
-        newChain->Add ( Form ( "./run%d%s.root", runNbr, suffix.c_str() ) );
-    }
+    return;
+}
 
-    va_end ( args );
+template<typename First, typename... Rest> void InitiateTChain ( TChain* chain, string suffix, First first, Rest... rest )
+{
+    std::cout << "Adding " << Form ( "./run%d%s.root", ( int ) first, suffix.c_str() ) << " to the TChain" << std::endl;
 
-    return newChain;
+    InitiateTChain ( chain, suffix, rest... );
+
+    chain->Add ( Form ( "./run%d%s.root", ( int ) first, suffix.c_str() ) );
+
+    return;
+}
+
+template<typename First, typename... Rest> void InitiateTChain ( string treeName, string suffix, First first, Rest... rest )
+{
+    myChain = new TChain ( treeName.c_str() );
+
+    InitiateTChain ( myChain, suffix, first, rest... );
+
+    return;
 }
 
 void OpenEntryListsFile ( string fileName = "MyEntryLists.root" )
