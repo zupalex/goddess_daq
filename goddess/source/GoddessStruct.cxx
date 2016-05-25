@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <sstream>
+
 #include "GoddessStruct.h"
 
 template<typename T> T* GetMemberFromName ( std::string name , SiDataBase* siDat )
@@ -133,20 +136,6 @@ void SiDataDetailed::Clear()
 {
     SiDataBase::Clear();
 
-//     dE_e_p.clear();
-//     dE_e_n.clear();
-//     E1_e_p.clear();
-//     E1_e_n.clear();
-//     E2_e_p.clear();
-//     E2_e_n.clear();
-//
-//     dE_strip_p.clear();
-//     dE_strip_n.clear();
-//     E1_strip_p.clear();
-//     E1_strip_n.clear();
-//     E2_strip_p.clear();
-//     E2_strip_n.clear();
-
     dE.Clear();
     E1.Clear();
     E2.Clear();
@@ -179,3 +168,27 @@ std::vector<int>* SiDataDetailed::SetMemberAddress ( std::string member, std::ve
 }
 
 ClassImp ( SiDataDetailed )
+
+
+
+ORRUBARawData::ORRUBARawData() {}
+ORRUBARawData::~ORRUBARawData() {}
+
+float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+{    
+    if(calibParams == NULL) return value;
+    
+    float calVal;
+
+    auto itr = calibParams->find ( channel );
+
+    if ( itr != calibParams->end() )
+        calVal = ( value - itr->second.first ) * itr->second.second;
+    else
+        calVal = value;
+
+    return calVal;
+}
+
+
+ClassImp ( ORRUBARawData )

@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <map>
+
 #include "TVector3.h"
 
 ///Structure of gamma ray data from DGS
@@ -184,34 +186,6 @@ public:
 
     void Clear();
 
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     std::vector<float> dE_e_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     std::vector<float> E1_e_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     std::vector<float> E2_e_p;
-// 
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     std::vector<float> dE_e_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     std::vector<float> E1_e_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     std::vector<float> E2_e_n;
-// 
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     std::vector<int> dE_strip_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     std::vector<int> E1_strip_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     std::vector<int> E2_strip_p;
-// 
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     std::vector<int> dE_strip_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     std::vector<int> E1_strip_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     std::vector<int> E2_strip_n;
-    
     SiDetEnStripInfo dE;
     SiDetEnStripInfo E1;
     SiDetEnStripInfo E2;
@@ -247,11 +221,23 @@ struct GSRawData
     unsigned long int post_rise_energy;
 };
 
-struct ORRUBARawData
+class ORRUBARawData
 {
+private:
+
+public:
+    ORRUBARawData();
+    virtual ~ORRUBARawData();
+
+    float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
+    
     unsigned short channel;
     unsigned long int value;
     bool isDigital;
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( ORRUBARawData, 1 )
+    /// \endcond
 };
 
 #endif
