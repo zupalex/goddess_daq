@@ -766,9 +766,19 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                     {
                         writeDetails = true;
                         SiDataDetailed newSiData;
-                        siDataD->push_back ( newSiData );
-                        datum = & ( siDataD->at ( siDataD->size()-1 ) );
-                        siMap[sectorStr] = siDataD->size()-1;
+
+                        if ( nc == 0 )
+                        {
+                            siDataD->push_back ( newSiData );
+                            datum = & ( siDataD->at ( siDataD->size()-1 ) );
+                            siMap[sectorStr] = siDataD->size()-1;
+                        }
+                        else
+                        {
+                            siData_snc->push_back ( newSiData );
+                            datum = & ( siData_snc->at ( siData_snc->size()-1 ) );
+                            siMap[sectorStr] = siData_snc->size()-1;
+                        }
                     }
                     else
                     {
@@ -799,7 +809,11 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 }
                 else
                 {
-                    if ( writeDetails ) datum = & ( siDataD->at ( siMap[sectorStr] ) );
+                    if ( writeDetails )
+                    {
+                        if ( nc == 0 ) datum = & ( siDataD->at ( siMap[sectorStr] ) );
+                        else datum = & ( siData_snc->at ( siMap[sectorStr] ) );
+                    }
                     else datum = & ( siData->at ( siMap[sectorStr] ) );
                 }
 
