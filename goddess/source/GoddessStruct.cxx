@@ -171,13 +171,13 @@ ClassImp ( SiDataDetailed )
 
 
 
-ORRUBARawData::ORRUBARawData() {}
-ORRUBARawData::~ORRUBARawData() {}
+ChValPair::ChValPair() {}
+ChValPair::~ChValPair() {}
 
-float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
-{    
-    if(calibParams == NULL) return value;
-    
+float ChValPair::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+{
+    if ( calibParams == NULL ) return value;
+
     float calVal;
 
     auto itr = calibParams->find ( channel );
@@ -188,6 +188,64 @@ float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, fl
         calVal = value;
 
     return calVal;
+}
+
+ClassImp ( ChValPair )
+
+ORRUBARawData::ORRUBARawData() {}
+ORRUBARawData::~ORRUBARawData() {}
+
+void ORRUBARawData::Clear()
+{
+    isDigital.clear();
+    data.clear();
+//     channel.clear();
+//     value.clear();
+}
+
+// float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+// {
+//     if ( calibParams == NULL ) return value;
+//
+//     float calVal;
+//
+//     auto itr = calibParams->find ( channel );
+//
+//     if ( itr != calibParams->end() )
+//         calVal = ( value - itr->second.first ) * itr->second.second;
+//     else
+//         calVal = value;
+//
+//     return calVal;
+// }
+
+// TArrayF ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+// {
+//     TArrayF* calVal = new TArrayF ( value.size() );;
+//
+//     for(unsigned short i = 0; i < value.size(); i++)
+//     {
+//         auto itr = calibParams->find ( channel[i] );
+//
+//         if ( calibParams == NULL != NULL && itr != calibParams->end() )
+//             calVal->SetAt(( value[i] - itr->second.first ) * itr->second.second, i);
+//         else
+//             calVal->SetAt(value[i], i);
+//     }
+//
+//     return *calVal;
+// }
+
+unsigned short ORRUBARawData::GetMultRange ( unsigned short beg, unsigned short end ) const
+{
+    unsigned short multi = 0;
+
+    for ( unsigned short i = 0; i < data.size(); i++ )
+    {
+        if ( (data.at(i)).channel >= beg && (data.at(i)).channel <= end ) multi++;
+    }
+
+    return multi;
 }
 
 

@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+#include "TArrayF.h"
+
 #include "TVector3.h"
 
 ///Structure of gamma ray data from DGS
@@ -221,6 +223,26 @@ struct GSRawData
     unsigned long int post_rise_energy;
 };
 
+class ChValPair
+{
+private:
+
+public:
+    ChValPair();
+    virtual ~ChValPair();
+
+    float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
+
+    unsigned short channel;
+    unsigned short value;
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( ChValPair,1 )
+    /// \endcond
+};
+
+
+
 class ORRUBARawData
 {
 private:
@@ -229,11 +251,13 @@ public:
     ORRUBARawData();
     virtual ~ORRUBARawData();
 
-    float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
-    
-    unsigned short channel;
-    unsigned long int value;
-    bool isDigital;
+    void Clear();
+
+//     float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
+    unsigned short GetMultRange ( unsigned short beg = 1, unsigned short end = 32 ) const;
+
+    std::vector<ChValPair> data;
+    std::vector<bool> isDigital;
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( ORRUBARawData, 1 )

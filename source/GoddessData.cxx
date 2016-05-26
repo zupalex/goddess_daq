@@ -31,7 +31,7 @@ GoddessData::GoddessData ( std::string configFilename )
     if ( Pars.noMapping )
     {
         gsRaw = new std::vector<GSRawData>;
-        orrubaRaw = new std::vector<ORRUBARawData>;
+        orrubaRaw = new ORRUBARawData();
     }
 
     gDirectory->pwd();
@@ -312,7 +312,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
     if ( Pars.noMapping )
     {
-        orrubaRaw->clear();
+        orrubaRaw->Clear();
         gsRaw->clear();
     }
 
@@ -334,12 +334,25 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
             if ( Pars.noMapping )
             {
-                ORRUBARawData datum;
-                datum.isDigital = false;
-                datum.channel = channel;
-                datum.value = value;
+//                 ORRUBARawData datum;
+//                 datum.isDigital = false;
+//                 datum.channel = channel;
+//                 datum.value = value;
 
-                orrubaRaw->push_back ( datum );
+//                 orrubaRaw->push_back ( datum );
+
+//                 orrubaRaw->isDigital.push_back ( false );
+//                 orrubaRaw->channel.push_back ( channel );
+//                 orrubaRaw->value.push_back ( value );
+
+                orrubaRaw->isDigital.push_back ( false );
+
+                ChValPair newChValPair;
+
+                newChValPair.channel = channel;
+                newChValPair.value = value;
+
+                orrubaRaw->data.push_back ( newChValPair );
             }
 
             //unsigned long long timestamp = agodEvt.timestamp;
@@ -405,12 +418,24 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
         if ( Pars.noMapping )
         {
-            ORRUBARawData datum;
-            datum.isDigital = true;
-            datum.channel = channel;
-            datum.value = value;
+//             ORRUBARawData datum;
+//             datum.isDigital = true;
+//             datum.channel = channel;
+//             datum.value = value;
+//
+//             orrubaRaw->push_back ( datum );
 
-            orrubaRaw->push_back ( datum );
+            orrubaRaw->isDigital.push_back ( true );
+
+            ChValPair newChValPair;
+
+            newChValPair.channel = channel;
+            newChValPair.value = value;
+
+            orrubaRaw->data.push_back ( newChValPair );
+
+//             orrubaRaw->channel.push_back ( channel );
+//             orrubaRaw->value.push_back ( value );
         }
 
         std::pair<short, short> key = std::make_pair ( GEB_TYPE_DFMA, channel );
