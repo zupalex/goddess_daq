@@ -501,6 +501,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
     {
         itr->second->Clear();
     }
+    
     firedDets.clear();
     siDets.clear();
     liquidScints.clear();

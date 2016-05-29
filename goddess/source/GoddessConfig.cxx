@@ -817,67 +817,78 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
     //Compute position for barrel detectors.
     if ( type == "superX3" || type == "BB10" )
     {
-        //The barrel is divided into twelve sectors with the zero sector in the
-        // positive vertical (y-axis) direction. Therefore the 0 sector is at 90
-        // degrees and we subtract for each additional sector and then offset by
-        // two pi if less than zero.
-        float azimuthal = TMath::PiOver2() - sector / 12. * TMath::TwoPi();
+//         //The barrel is divided into twelve sectors with the zero sector in the
+//         // positive vertical (y-axis) direction. Therefore the 0 sector is at 90
+//         // degrees and we subtract for each additional sector and then offset by
+//         // two pi if less than zero.
+//         float azimuthal = TMath::PiOver2() - sector / 12. * TMath::TwoPi();
+//
+//         if ( azimuthal < 0 )
+//         {
+//             azimuthal += TMath::TwoPi();
+//         }
+//
+//         std::cout << azimuthal;
+//         //The rotation angle is also dependent on the sector with a rotation of zero
+//         // in the zero sector.
+//         float rotZ = azimuthal + TMath::PiOver2();
+//
+//         if ( rotZ > TMath::TwoPi() )
+//         {
+//             rotZ -= TMath::TwoPi();
+//         }
+//
+//         //The z position is oriented along the beam line and depends only on if the
+//         // detector is upstream or downstream of the target.
+//         float z;
+//
+//         if ( upStream )
+//         {
+//             z = -halfBarrelLength / 2.0;
+//         }
+//         else
+//         {
+//             z = halfBarrelLength / 2.0;
+//         }
+//
+//         //Set the computed x,y,z positions.
+//         float rotphi;
+//
+//         if ( upStream )
+//         {
+//             rotphi = 0.0;
+//         }
+//         else
+//         {
+//             rotphi = TMath::Pi();
+//         }
+//
+//         pos.SetXYZ ( barrelRadius * cos ( azimuthal ), barrelRadius * sin ( azimuthal ), z );
+//         pos.SetRotationZ ( rotZ );
+//         pos.SetRotationPhi ( rotphi );
 
-        if ( azimuthal < 0 )
-        {
-            azimuthal += TMath::TwoPi();
-        }
+        TVector3 zAxis ( 0,0,1 );
+        TVector3 refSX3D_sect0 ( 0, barrelRadius, halfBarrelLength/2. );
 
-        std::cout << azimuthal;
-        //The rotation angle is also dependent on the sector with a rotation of zero
-        // in the zero sector.
-        float rotZ = azimuthal + TMath::PiOver2();
-
-        if ( rotZ > TMath::TwoPi() )
-        {
-            rotZ -= TMath::TwoPi();
-        }
-
-        //The z position is oriented along the beam line and depends only on if the
-        // detector is upstream or downstream of the target.
-        float z;
-
-        if ( upStream )
-        {
-            z = -halfBarrelLength / 2.0;
-        }
-        else
-        {
-            z = halfBarrelLength / 2.0;
-        }
-
-        //Set the computed x,y,z positions.
-        float rotphi;
-
-        if ( upStream )
-        {
-            rotphi = 0.0;
-        }
-        else
-        {
-            rotphi = TMath::Pi();
-        }
-
-        pos.SetXYZ ( barrelRadius * cos ( azimuthal ), barrelRadius * sin ( azimuthal ), z );
-        pos.SetRotationZ ( rotZ );
-        pos.SetRotationPhi ( rotphi );
+        pos.SetXYZ ( 0,0,1 );
+        pos.SetTheta ( upStream ? ( TMath::Pi() - refSX3D_sect0.Angle ( zAxis ) ) : refSX3D_sect0.Angle ( zAxis ) );
+        pos.SetPhi ( TMath::PiOver2() + sector / 12. * TMath::TwoPi() );
+        pos.SetMag ( refSX3D_sect0.Mag() );
+        pos.SetRotationZ ( sector / 12. * TMath::TwoPi() );
 
     }
     else if ( type == "QQQ5" )
     {
-        // Make the pos vector point to middle of QQQ5 with the 0 sector at rotZ=90deg then sector 1 moving clockwise at rotZ=0
-        float rotZ = ( TMath::PiOver2() ) - sector / 4. * TMath::TwoPi();
-        // need offset because detPos will not be exaclty pointing at origin
-        // number based on edge of the detectors separated by 6.35mm
-        float offset = 4.49;//mm
-        pos.SetXYZ ( offset * cos ( rotZ ) , offset * sin ( rotZ ) , halfBarrelLength );
-        pos.SetRotationZ ( rotZ );
-        // Still need to correct for depth in stack (i.e. dE, E1,E2)
+//         // Make the pos vector point to middle of QQQ5 with the 0 sector at rotZ=90deg then sector 1 moving clockwise at rotZ=0
+//         float rotZ = ( TMath::PiOver2() ) - sector / 4. * TMath::TwoPi();
+//         // need offset because detPos will not be exaclty pointing at origin
+//         // number based on edge of the detectors separated by 6.35mm
+//         float offset = 4.49;//mm
+//         pos.SetXYZ ( offset * cos ( rotZ ) , offset * sin ( rotZ ) , halfBarrelLength );
+//         pos.SetRotationZ ( rotZ );
+//         // Still need to correct for depth in stack (i.e. dE, E1,E2)
+
+
 
     }
 

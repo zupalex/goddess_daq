@@ -234,7 +234,7 @@ public:
     float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
 
     unsigned short channel;
-    unsigned short value;
+    unsigned long int value;
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( ChValPair,1 )
