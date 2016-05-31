@@ -101,7 +101,8 @@ void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short secto
     yIntersect = slopeTop * xIntersect + offTop;
 
     std::cout << "Intersection between top and bottom at ( " << xIntersect << " ; " << yIntersect << " )" << std::endl;
-    std::cout << "Slope of the \"Negative\" line = " << slopeNeg << std::endl;
+    std::cout << "Correction factor for the near strip = " << -1/slopeNeg << std::endl;
+    std::cout << "Slope for energy calibration = " << refEnergy1/ ( offNeg - yIntersect ) << std::endl;
 
     string calMapKey = detectorType;
     calMapKey += isUpstream ? " U" : " D";
@@ -112,8 +113,8 @@ void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short secto
     calRes[0] = 1;
     calRes[1] = xIntersect;
     calRes[2] = yIntersect;
-    calRes[3] = slopeNeg;
-    calRes[4] = refEnergy1/ (offNeg - yIntersect);
+    calRes[3] = -1/slopeNeg;
+    calRes[4] = refEnergy1/ ( offNeg - yIntersect );
 
     return;
 }
@@ -264,7 +265,7 @@ bool UpdateResParamsInConf ( string configFile, bool invertContactMidDet = true,
             std::getline ( readFile, dump );
             outStream << dump << "\n";
 
-            string detKey = "SuperX3 " + detID.substr ( 0,2 );
+            string detKey = "SuperX3 " + detID.substr ( 0,detID.find ( "-" ) );
 
             if ( resistiveStripsCalMap.find ( detKey ) != resistiveStripsCalMap.end() )
             {
@@ -275,9 +276,8 @@ bool UpdateResParamsInConf ( string configFile, bool invertContactMidDet = true,
                         std::cout << "Replacing the parameters for strip #" << i << " with the new values..." << std::endl;
 
                         std::getline ( readFile, dump );
-
-                        readLine.clear();
-                        readLine.str ( dump );
+                        std::getline ( readFile, dump );
+                        std::getline ( readFile, dump );
 
                         if ( i < 2 || !invertContactMidDet )
                         {
@@ -343,8 +343,8 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
 
     TGraph* newGraph = ( TGraph* ) gPad->GetPrimitive ( "Graph" );
 
-    if(newGraph == NULL) return 0;
-    
+    if ( newGraph == NULL ) return 0;
+
     string gName = Form ( "sector%d_strip%d", sector, strip );
 
     newGraph->SetName ( gName.c_str() );
@@ -379,8 +379,8 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
 
 TGraph* PlotSX3ResStripCalGraph ( TTree* tree, bool isUpstream, unsigned short sector, unsigned short strip )
 {
-    string upstreamCond = isUpstream ? "isUpstream" : "!isUpstream" ;
-    string cond = "si.isBarrel && si." + upstreamCond;
+    string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream" ;
+    string cond = "si.isBarrel && " + upstreamCond;
 
     return PlotSX3ResStripCalGraph ( tree, "si.E1.en.n:si.E1.en.p", sector, strip, cond );
 }
@@ -403,7 +403,7 @@ template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTre
 
         if ( sizeof... ( otherSectors ) > 0 )
         {
-            PlotSX3ResStripsCalGraphs<First, Rest...> ( tree, varToPlot, conditions, otherSectors... );
+            PlotSX3ResStripsCalGraphs ( tree, varToPlot, conditions, otherSectors... );
         }
     }
     else
@@ -416,8 +416,8 @@ template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTre
 
 template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTree* tree, bool isUpstream, First fstSector, Rest... otherSectors )
 {
-    string upstreamCond = isUpstream ? "isUpstream" : "!isUpstream" ;
-    string cond = "si.isBarrel && si." + upstreamCond;
+    string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream" ;
+    string cond = "si.isBarrel && " + upstreamCond;
 
     PlotSX3ResStripsCalGraphs<First, Rest...> ( tree, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
 
@@ -430,6 +430,24 @@ void PlotSX3ResStripsCalGraphs()
     std::cout << "PlotSX3ResStripsCalGraphs(TTree* tree, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << std::endl;
     std::cout << std::endl;
     std::cout << "You can also change what to plot and specify the conditions by hand by calling" << std::endl;
-    std::cout << "PlotSX3ResStripsCalGraphs(TTree* tree, string\"<what to plot\", string conditions, sector1, sector2, sector3, ....)" << std::endl;
+    std::cout << "PlotSX3ResStripsCalGraphs(TTree* tree, string \"what to plot\", string conditions, sector1, sector2, sector3, ....)" << std::endl;
 }
 
+void CalibHelp()
+{
+    std::cout << "To plot the strip X of sector Y, call" << std::endl;
+    std::cout << "PlotSX3ResStripCalGraph(TTree* tree, bool isUpstream, int sector1, int strip)" << std::endl;
+    std::cout << std::endl;
+    PlotSX3ResStripsCalGraphs();
+    std::cout << std::endl;
+    std::cout << "To write the results of the calibrations made during the last session, call" << std::endl;
+    std::cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << std::endl;
+    std::cout << std::endl;
+    std::cout << "To update a config file with the results of the calibrations made during the last session, call" << std::endl;
+    std::cout << "UpdateResParamsInConf(string \"config file name\", bool invertContactMidDet = true, string mode = \"protected\")" << std::endl;
+    std::cout << "* invertContactMidDet should be set to \"true\" for SuperX3 because of the way the contacts numbers are incremented" << std::endl;
+    std::cout << "* the \"protected\" mode will prevent you to overwrite your config file and generate a new config file from the input..." << std::endl;
+    std::cout << "  switch it to \"overwrite\" if you really know what you're doing" << std::endl;
+    std::cout << std::endl;
+
+}
