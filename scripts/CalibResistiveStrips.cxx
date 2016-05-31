@@ -385,7 +385,7 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, bool isUpstream, unsigned short s
     return PlotSX3ResStripCalGraph ( tree, "si.E1.en.n:si.E1.en.p", sector, strip, cond );
 }
 
-template<typename T> void PlotSX3ResStripsCalibGraphs ( TTree* tree, string varToPlot, string conditions, T sector )
+template<typename T> void PlotSX3ResStripsCalGraphs ( TTree* tree, string varToPlot, string conditions, T sector )
 {
     PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 0, conditions );
     PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 1, conditions );
@@ -395,15 +395,15 @@ template<typename T> void PlotSX3ResStripsCalibGraphs ( TTree* tree, string varT
     return;
 }
 
-template<typename First, typename... Rest> void PlotSX3ResStripsCalibGraphs ( TTree* tree, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
+template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTree* tree, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
 {
     if ( std::is_same<decltype ( fstSector ), int>::value  || ( unsigned short ) fstSector < 0 )
     {
-        PlotSX3ResStripsCalibGraphs ( tree, varToPlot, conditions, fstSector );
+        PlotSX3ResStripsCalGraphs<unsigned short> ( tree, varToPlot, conditions, fstSector );
 
         if ( sizeof... ( otherSectors ) > 0 )
         {
-            PlotSX3ResStripsCalibGraphs ( tree, varToPlot, conditions, otherSectors... );
+            PlotSX3ResStripsCalGraphs<First, Rest...> ( tree, varToPlot, conditions, otherSectors... );
         }
     }
     else
@@ -419,15 +419,17 @@ template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTre
     string upstreamCond = isUpstream ? "isUpstream" : "!isUpstream" ;
     string cond = "si.isBarrel && si." + upstreamCond;
 
-    PlotSX3ResStripsCalibGraphs ( tree, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
+    PlotSX3ResStripsCalGraphs<First, Rest...> ( tree, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
 
     return;
 }
 
 void PlotSX3ResStripsCalGraphs()
 {
-    std::cout << "To plot several sectors in a row, call PlotSX3ResStripsCalGraphs(TTree* tree, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << std::endl;
+    std::cout << "To plot several sectors in a row, call" << std::endl;
+    std::cout << "PlotSX3ResStripsCalGraphs(TTree* tree, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << std::endl;
     std::cout << std::endl;
-    std::cout << "You can also change what to plot and specify the conditions by hand by calling PlotSX3ResStripsCalibGraphs(TTree* tree, string\"<what to plot\", string conditions, sector1, sector2, sector3, ....)" << std::endl;
+    std::cout << "You can also change what to plot and specify the conditions by hand by calling" << std::endl;
+    std::cout << "PlotSX3ResStripsCalGraphs(TTree* tree, string\"<what to plot\", string conditions, sector1, sector2, sector3, ....)" << std::endl;
 }
 
