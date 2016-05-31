@@ -4,6 +4,8 @@
 #include "TROOT.h"
 #include "TSystem.h"
 
+string localPathToGoddessDaq = "";
+
 void LinuxLibrariesLoader ( string myPath )
 {
     gSystem->Load ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
@@ -18,12 +20,19 @@ void MacLibrariesLoader ( string myPath )
 
 void StartCalibGODDESSDets()
 {
-    gROOT->ProcessLine ( Form ( ".L %s/exec/calibstrips.cxx++", myPathToGoddessDaq.c_str() ) );
-    gROOT->ProcessLine ( Form ( ".L %s/exec/CalibResistiveStrips.cxx++", myPathToGoddessDaq.c_str() ) );
+    gROOT->ProcessLine ( Form ( ".L %s/exec/calibstrips.cxx++", localPathToGoddessDaq.c_str() ) );
+    gROOT->ProcessLine ( Form ( ".L %s/exec/CalibResistiveStrips.cxx++", localPathToGoddessDaq.c_str() ) );
+}
+
+void LoadMakeEventLists()
+{
+    gROOT->ProcessLine ( Form ( ".L %s/exec/MakeEventLists.cxx++", localPathToGoddessDaq.c_str() ) );
 }
 
 void goddess_analysis_macro ( string myPathToGoddessDaq )
 {
+    localPathToGoddessDaq = myPathToGoddessDaq;
+
 #if __APPLE__
     MacLibrariesLoader ( myPathToGoddessDaq );
 #elif __linux__
@@ -32,5 +41,6 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
     LinuxLibrariesLoader ( myPathToGoddessDaq );
 #endif
 
-    gROOT->ProcessLine ( Form ( ".L %s/exec/MakeEventLists.cxx++", myPathToGoddessDaq.c_str() ) );
+    std::cout << "To load the calibration macros, type \"StartCalibGODDESSDets()\"" << std::endl;
+    std::cout << "To load the TEbtryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;
 }
