@@ -42,32 +42,37 @@ protected:
 public:
     ///Default constructor.
     orrubaDet();
-    orrubaDet(std::string serialNum, unsigned short sector, unsigned short depth,
-              bool upStream, SolidVector position);
+    orrubaDet ( std::string serialNum, unsigned short sector, unsigned short depth,
+                bool upStream, SolidVector position );
     ///Default destructor.
     virtual ~orrubaDet();
 
     ///Get the detector's serial number.
-    std::string GetSerialNum() {
+    std::string GetSerialNum()
+    {
         return serialNum;
     }
 
     ///Return the position id string of the detector.
-    std::string GetPosID() {
+    std::string GetPosID()
+    {
         return posID;
     };
     ///Return the depth of the detector.
     /**Depth dE = 0, E1 =1, E2 = 2.
      */
-    unsigned short GetDepth() {
+    unsigned short GetDepth()
+    {
         return depth;
     }
     /// Returns whether detector is upstream or downstream
-    bool GetUpStream() {
+    bool GetUpStream()
+    {
         return upStream;
     }
     ///Returns the detctors sector.
-    unsigned short GetSector() {
+    unsigned short GetSector()
+    {
         return sector;
     }
 
@@ -78,20 +83,23 @@ public:
     virtual std::pair<int, float> GetPtypeEnergy() = 0;
     ///Abstract definition of a funtion to get the strip number and depositied energy of a back strip.
     virtual std::pair<int, float> GetNtypeEnergy() = 0;
+    ///Abstract definition of a funtion to get the vector containing resistive strip energy calibration polynomial parameters (implemented in SuperX3 class only).
+//     virtual std::vector<float>* GetResStripParCal() = 0;
 
     ///Abstract defintion of a function to get the position of an event on the detector.
     virtual TVector3 GetEventPosition() = 0;
 
-    void SetDetector(std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position);
+    void SetDetector ( std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position );
     virtual void ConstructBins() = 0;
 
-    void SetDAQType(unsigned short daqtype);
-    unsigned short GetDAQType() {
+    void SetDAQType ( unsigned short daqtype );
+    unsigned short GetDAQType()
+    {
         return daqtype;
     };
 
     /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef(orrubaDet, 1);
+    ClassDef ( orrubaDet, 1 );
     /// \endcond
 };
 

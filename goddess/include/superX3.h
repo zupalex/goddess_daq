@@ -159,6 +159,11 @@ public:
     TVector3 GetEventPosition() {
         return eventPos;
     };
+    ///Return the vector containing resistive strip energy calibration polynomial parameters.
+    std::vector<float>* GetResStripParCal()
+    {
+        return parStripEnCal;
+    }
     ///Return a pair (strip#,energy) from the n type side.
     std::pair<int, float> GetPtypeEnergy() {
         return enPtype;

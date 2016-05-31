@@ -501,7 +501,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
     {
         itr->second->Clear();
     }
-    
+
     firedDets.clear();
     siDets.clear();
     liquidScints.clear();
@@ -918,12 +918,15 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                                 eP->push_back ( stripItr->second );
                             }
 
-                            *eSumP += stripItr->second;
-
-                            if ( stripItr->second > enMax )
+                            if ( ( Pars.noCalib + nc ) % 2 == 0 )
                             {
-                                *stripMaxP = stripItr->first;
-                                enMax = stripItr->second;
+                                *eSumP += stripItr->second;
+
+                                if ( stripItr->second > enMax )
+                                {
+                                    *stripMaxP = stripItr->first;
+                                    enMax = stripItr->second;
+                                }
                             }
                         }
                         else
@@ -959,12 +962,17 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                                     stripN->push_back ( -1 );
                                 }
 
-                                *eSumP += en_;
-
-                                if ( en_ > enMax )
+                                if ( ( Pars.noCalib + nc ) % 2 == 0 )
                                 {
-                                    *stripMaxP = st_;
-                                    enMax = en_;
+                                    std::vector<float>* resStripParCal = ((superX3*) det)->GetResStripParCal();
+
+                                    *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+
+                                    if ( en_ > enMax )
+                                    {
+                                        *stripMaxP = st_;
+                                        enMax = en_;
+                                    }
                                 }
                             }
                         }
@@ -984,12 +992,15 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                             eN->push_back ( stripItr->second );
                         }
 
-                        *eSumN += stripItr->second;
-
-                        if ( stripItr->second > enMax )
+                        if ( ( Pars.noCalib + nc ) % 2 == 0 )
                         {
-                            *stripMaxN = stripItr->first;
-                            enMax = stripItr->second;
+                            *eSumN += stripItr->second;
+
+                            if ( stripItr->second > enMax )
+                            {
+                                *stripMaxN = stripItr->first;
+                                enMax = stripItr->second;
+                            }
                         }
                     }
                 }

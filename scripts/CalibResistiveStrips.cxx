@@ -4,15 +4,23 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <type_traits>
 
+#include "TROOT.h"
 #include "TObject.h"
 #include "TCanvas.h"
 #include "TList.h"
 #include "TLine.h"
+#include "TGraph.h"
+#include "TTree.h"
+#include "TH2F.h"
+#include "TFile.h"
 
 std::map<string, double[4][5]> resistiveStripsCalMap;
 
-void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, string detectorType = "SuperX3" )
+std::map<string, TGraph*> resStripsGraphsMap;
+
+void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, string detectorType = "SuperX3", float refEnergy1 = 5.813 )
 {
     TList* list = can->GetListOfPrimitives();
 
@@ -105,7 +113,7 @@ void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short secto
     calRes[1] = xIntersect;
     calRes[2] = yIntersect;
     calRes[3] = slopeNeg;
-    calRes[4] = offNeg - yIntersect;
+    calRes[4] = refEnergy1/ (offNeg - yIntersect);
 
     return;
 }
@@ -273,14 +281,14 @@ bool UpdateResParamsInConf ( string configFile, bool invertContactMidDet = true,
 
                         if ( i < 2 || !invertContactMidDet )
                         {
-                            outStream << "enCal p " << i*2 << " " << resistiveStripsCalMap[detKey][i][2] << " " << 1 << "\n";
-                            outStream << "enCal p " << i*2 + 1 << " " << resistiveStripsCalMap[detKey][i][1] << " " << resistiveStripsCalMap[detKey][i][3] << "\n";
+                            outStream << "enCal p " << i*2 << " " << resistiveStripsCalMap[detKey][i][1] << " " << resistiveStripsCalMap[detKey][i][3] << "\n";
+                            outStream << "enCal p " << i*2 + 1 << " " << resistiveStripsCalMap[detKey][i][2] << " " << 1 << "\n";
                             outStream << "enCal resStrip " << i << " 0 " << resistiveStripsCalMap[detKey][i][4] << "\n";
                         }
                         else
                         {
-                            outStream << "enCal p " << i*2 + 1 << " " << resistiveStripsCalMap[detKey][i][1] << " " << resistiveStripsCalMap[detKey][i][3] << "\n";
                             outStream << "enCal p " << i*2 << " " << resistiveStripsCalMap[detKey][i][2] << " " << 1 << "\n";
+                            outStream << "enCal p " << i*2 + 1 << " " << resistiveStripsCalMap[detKey][i][1] << " " << resistiveStripsCalMap[detKey][i][3] << "\n";
                             outStream << "enCal resStrip " << i << " 0 " << resistiveStripsCalMap[detKey][i][4] << "\n";
                         }
                     }
@@ -324,4 +332,102 @@ bool UpdateResParamsInConf ( string configFile, bool invertContactMidDet = true,
     return true;
 }
 
+
+TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
+{
+    std::cout << "Plotting sector #" << sector << " strip #" << strip << "..." << std::endl;
+
+    tree->Draw ( Form ( "%s", varToPlot.c_str() ), Form ( "%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip ) );
+
+//     std::cout << "Retrieving TGraph*..." << std::endl;
+
+    TGraph* newGraph = ( TGraph* ) gPad->GetPrimitive ( "Graph" );
+
+    if(newGraph == NULL) return 0;
+    
+    string gName = Form ( "sector%d_strip%d", sector, strip );
+
+    newGraph->SetName ( gName.c_str() );
+
+    string currPath = ( string ) gDirectory->GetPath();
+
+    TFile* f = new TFile ( "Resistive_Strips_Calib_Graphs.root", "update" );
+
+    if ( f->FindKey ( gName.c_str() ) != NULL || f->FindObject ( gName.c_str() ) != NULL )
+    {
+//         std::cout << "Deleting existing TGraph..." << std::endl;
+        string objToDelete = gName + ";*";
+        f->Delete ( objToDelete.c_str() );
+    }
+
+    f->cd();
+
+//     std::cout << "Writing new TGraph..." << std::endl;
+
+    newGraph->Write();
+
+    f->Close();
+
+    gDirectory->cd ( currPath.c_str() );
+
+//     std::cout << "Storing the new TGraph in the TGraph map..." << std::endl;
+
+    resStripsGraphsMap[Form ( "sector %d strip %d", sector, strip )] = newGraph;
+
+    return newGraph;
+}
+
+TGraph* PlotSX3ResStripCalGraph ( TTree* tree, bool isUpstream, unsigned short sector, unsigned short strip )
+{
+    string upstreamCond = isUpstream ? "isUpstream" : "!isUpstream" ;
+    string cond = "si.isBarrel && si." + upstreamCond;
+
+    return PlotSX3ResStripCalGraph ( tree, "si.E1.en.n:si.E1.en.p", sector, strip, cond );
+}
+
+template<typename T> void PlotSX3ResStripsCalibGraphs ( TTree* tree, string varToPlot, string conditions, T sector )
+{
+    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 0, conditions );
+    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 1, conditions );
+    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 2, conditions );
+    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 3, conditions );
+
+    return;
+}
+
+template<typename First, typename... Rest> void PlotSX3ResStripsCalibGraphs ( TTree* tree, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
+{
+    if ( std::is_same<decltype ( fstSector ), int>::value  || ( unsigned short ) fstSector < 0 )
+    {
+        PlotSX3ResStripsCalibGraphs ( tree, varToPlot, conditions, fstSector );
+
+        if ( sizeof... ( otherSectors ) > 0 )
+        {
+            PlotSX3ResStripsCalibGraphs ( tree, varToPlot, conditions, otherSectors... );
+        }
+    }
+    else
+    {
+        std::cerr << "One of the sector specified has an invalid type! (expecting positive integer)" << std::endl;
+    }
+
+    return;
+}
+
+template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTree* tree, bool isUpstream, First fstSector, Rest... otherSectors )
+{
+    string upstreamCond = isUpstream ? "isUpstream" : "!isUpstream" ;
+    string cond = "si.isBarrel && si." + upstreamCond;
+
+    PlotSX3ResStripsCalibGraphs ( tree, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
+
+    return;
+}
+
+void PlotSX3ResStripsCalGraphs()
+{
+    std::cout << "To plot several sectors in a row, call PlotSX3ResStripsCalGraphs(TTree* tree, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << std::endl;
+    std::cout << std::endl;
+    std::cout << "You can also change what to plot and specify the conditions by hand by calling PlotSX3ResStripsCalibGraphs(TTree* tree, string\"<what to plot\", string conditions, sector1, sector2, sector3, ....)" << std::endl;
+}
 
