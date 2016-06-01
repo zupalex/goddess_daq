@@ -126,6 +126,46 @@ int SiDataBase::stripMaxLayer ( short unsigned int layer, bool isNType ) const
     return -1;
 }
 
+float SiDataBase::posXLayer ( short unsigned int layer, bool isNType ) const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+                return pos[i].X();
+
+    return 0;
+}
+
+float SiDataBase::posYLayer ( short unsigned int layer, bool isNType ) const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+                return pos[i].Y();
+
+    return 0;
+}
+
+float SiDataBase::posZLayer ( short unsigned int layer, bool isNType ) const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+                return pos[i].Z();
+
+    return 0;
+}
+
+float SiDataBase::angle ( short unsigned int layer, bool isNType ) const
+{
+     if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+                return pos[i].Angle(TVector3(0, 0, 1)) * 180. / TMath::Pi();
+
+    return 0;   
+}
+
 ClassImp ( SiDataBase )
 
 
@@ -242,7 +282,7 @@ unsigned short ORRUBARawData::GetMultRange ( unsigned short beg, unsigned short 
 
     for ( unsigned short i = 0; i < data.size(); i++ )
     {
-        if ( (data.at(i)).channel >= beg && (data.at(i)).channel <= end ) multi++;
+        if ( ( data.at ( i ) ).channel >= beg && ( data.at ( i ) ).channel <= end ) multi++;
     }
 
     return multi;

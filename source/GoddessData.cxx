@@ -856,6 +856,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 int* stripMaxN = 0;
 
                 float esp = 0.0,esn = 0.0;
+                float enear_tot = 0.0, efar_tot = 0.0;
                 int smp = -1, smn = -1;
                 eSumP = &esp;
                 eSumN = &esn;
@@ -964,14 +965,20 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
 
                                 if ( ( Pars.noCalib + nc ) % 2 == 0 )
                                 {
-                                    std::vector<float>* resStripParCal = ((superX3*) det)->GetResStripParCal();
+                                    std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
 
-                                    *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+                                    enear_tot += ( en_near - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+                                    efar_tot += ( en_far - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
 
-                                    if ( en_ > enMax )
+                                    if ( resStripParCal[st_].at ( 1 ) != 1 )
                                     {
-                                        *stripMaxP = st_;
-                                        enMax = en_;
+                                        *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+
+                                        if ( en_ > enMax )
+                                        {
+                                            *stripMaxP = st_;
+                                            enMax = en_;
+                                        }
                                     }
                                 }
                             }
@@ -1009,6 +1016,8 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 {
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
+
+                    datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, *eSumP, enear_tot, efar_tot ) );
                 }
 
                 if ( *eSumN > 0.0 )

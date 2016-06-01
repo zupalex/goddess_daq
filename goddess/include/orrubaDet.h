@@ -87,7 +87,7 @@ public:
 //     virtual std::vector<float>* GetResStripParCal() = 0;
 
     ///Abstract defintion of a function to get the position of an event on the detector.
-    virtual TVector3 GetEventPosition() = 0;
+    virtual TVector3 GetEventPosition(unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar) = 0;
 
     void SetDetector ( std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position );
     virtual void ConstructBins() = 0;

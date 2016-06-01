@@ -102,7 +102,7 @@ COUNTER=$(($COUNTER + 1))
 
 	SIDETLVLVAL="${arg##sidetails=}"
 
-	if [ SIDETLVLFLAG -lt 0 -o SIDETLVLFLAG -gt 2 ]; then
+	if [ $SIDETLVLFLAG -lt 0 -o $SIDETLVLFLAG -gt 2 ]; then
 	    echo "INVALID VALUE SPECIFIED FOR nocalib ARGUMENT!!"
 	    ReturnError
 	    exit 1

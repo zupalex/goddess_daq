@@ -26,6 +26,9 @@ private:
     ///The bin centers along the phi axis in radians.
     Float_t binsAzimuthalCenter[8]; //!
 
+    TVector3 pStripCenterPos[4];
+    TVector3 nStripCenterPos[4];
+
     ///Pair strip# and energy of the p type side.
     std::pair<int, float> enPtype;
 
@@ -38,58 +41,74 @@ private:
 public:
     ///Default constructor.
     BB10();
-    BB10(std::string serialNum, unsigned short sector, unsigned short depth,
-         bool upStream, SolidVector detPos);
+    BB10 ( std::string serialNum, unsigned short sector, unsigned short depth,
+           bool upStream, SolidVector detPos );
     ///Default destructor.
     virtual ~BB10() {};
 
     ///Clear the stored values in this detector.
     void Clear();
 
+    TVector3* GetPStripCenterPos()
+    {
+        return pStripCenterPos;
+    }
+
+    TVector3* GetNStripCenterPos()
+    {
+        return nStripCenterPos;
+    }
+
     ///Return the number of bins.
-    int GetNumBins() {
+    int GetNumBins()
+    {
         return 8;
     }
     ///Return the bins boundaries of the dimension along the p type strips.
-    float* GetPtypeBins() {
+    float* GetPtypeBins()
+    {
         return binsP;
     };
     ///Return the bins along the azimuthal direction.
-    float* GetAzimuthalBins() {
+    float* GetAzimuthalBins()
+    {
         return binsAzimuthal;
     };
     ///Return the bins centers of the dimension along the p type strips.
-    float* GetPtypeBinCenters() {
+    float* GetPtypeBinCenters()
+    {
         return binsPCenter;
     };
     ///Return the bin centers along the azimuthal direction.
-    float* GetAzimuthalBinCenters() {
+    float* GetAzimuthalBinCenters()
+    {
         return binsAzimuthalCenter;
     };
 
     ///Return the computed event position.
-    TVector3 GetEventPosition() {
-        return eventPos;
-    };
+    TVector3 GetEventPosition(unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar);
     ///Return a pair of (strip#,energy) from the p type side.
-    std::pair<int, float> GetPtypeEnergy() {
+    std::pair<int, float> GetPtypeEnergy()
+    {
         return enPtype;
     };
     ///Returns 0, Needed to be added to be used globally in orrubaDet
-    std::pair<int, float> GetNtypeEnergy() {
-        return std::make_pair(0, 0.0);
+    std::pair<int, float> GetNtypeEnergy()
+    {
+        return std::make_pair ( 0, 0.0 );
     };
     ///Return the total energy deposited in the detector.
-    float GetEnergy() {
+    float GetEnergy()
+    {
         return enPtype.second;
     };
 
     ///Set the raw energy of the contact and compute the calibrated value.
-    virtual void SetRawValue(unsigned int contact, bool nType, int rawValue, int ignThr);
+    virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
 
 
     /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef(BB10, 1)
+    ClassDef ( BB10, 1 )
     /// \endcond
 };
 

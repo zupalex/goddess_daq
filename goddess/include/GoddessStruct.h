@@ -6,7 +6,7 @@
 #include <map>
 
 #include "TArrayF.h"
-
+#include "TMath.h"
 #include "TVector3.h"
 
 ///Structure of gamma ray data from DGS
@@ -44,6 +44,12 @@ public:
     virtual float eSumLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
     virtual int stripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
+
+    virtual float posXLayer ( unsigned short layer = 1, bool isNType = false ) const;
+    virtual float posYLayer ( unsigned short layer = 1, bool isNType = false ) const;
+    virtual float posZLayer ( unsigned short layer = 1, bool isNType = false ) const;
+
+    virtual float angle ( unsigned short layer = 1, bool isNType = false ) const;
 
 //     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
 //     float dE_eSum_p;

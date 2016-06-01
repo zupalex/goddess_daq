@@ -35,6 +35,9 @@ private:
     ///The bin center along the phi axis in degrees.
     Float_t binsPolarcenter[33]; //!
 
+    TVector3 pStripCenterPos[32];
+    TVector3 nStripCenterPos[4];
+
     ///Pair strip# and calibrated energy of the p type side.
     std::pair<int, float> enPtype;
     ///Pair strip# and calibrated energy of the n type side.
@@ -60,77 +63,98 @@ protected:
 public:
     ///Default constructor.
     QQQ5();
-    QQQ5(std::string serialNum, unsigned short sector, unsigned short depth,
-         bool upStream, SolidVector position);
+    QQQ5 ( std::string serialNum, unsigned short sector, unsigned short depth,
+           bool upStream, SolidVector position );
     ///Default destructor.
     virtual ~QQQ5();
 
     ///Clear the stored values in this detector.
     void Clear();
 
+    TVector3* GetPStripCenterPos()
+    {
+        return pStripCenterPos;
+    }
+
+    TVector3* GetNStripCenterPos()
+    {
+        return nStripCenterPos;
+    }
+
     ///Return the number of bins.
-    static int GetNumNtypeBins() {
+    static int GetNumNtypeBins()
+    {
         return 4;
     }
     ///Return the number of bins.
-    static int GetNumPtypeBins() {
+    static int GetNumPtypeBins()
+    {
         return 32;
     }
     ///Return the bins boundaries of the dimension along the p type strips in mm.
-    float* GetPtypeBins() {
+    float* GetPtypeBins()
+    {
         return binsP;
     };
     ///Return the bins center of the dimension along the p type strips in mm.
-    float* GetPtypeBinsCenter() {
+    float* GetPtypeBinsCenter()
+    {
         return binsPcenter;
     };
     ///Return the bins boundaries of the dimension along the n type strips in mm.
-    float* GetNtypeBins() {
+    float* GetNtypeBins()
+    {
         return binsN;
     };
     ///Return the bins center of the dimension along the n type strips in mm.
-    float* GetNtypeBinsCenter() {
+    float* GetNtypeBinsCenter()
+    {
         return binsNcenter;
     };
     ///Return the  in mm.
-    float* GetRhoBins() {
+    float* GetRhoBins()
+    {
         return binsRho;
     };
     ///Return the bins along the azimuthal direction in degrees.
-    float* GetAzimuthalBins() {
+    float* GetAzimuthalBins()
+    {
         return binsAzimuthal;
     };
     ///Return the bins along the polar direction in degrees.
-    float* GetPolarBins() {
+    float* GetPolarBins()
+    {
         return binsPolar;
     };
     ///Return the bins centers along the polar direction in degrees.
-    float* GetPolarBinsCenter() {
+    float* GetPolarBinsCenter()
+    {
         return binsPolarcenter;
     };
 
     ///Return the computed event position.
-    TVector3 GetEventPosition() {
-        return eventPos;
-    };
+    TVector3 GetEventPosition(unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar);
     ///Return a pair (strip#,energy)from the p type side.
-    std::pair<int, float> GetPtypeEnergy() {
+    std::pair<int, float> GetPtypeEnergy()
+    {
         return enPtype;
     };
     ///Return a pair (strip#,energy) from the n type side.
-    std::pair<int, float> GetNtypeEnergy() {
+    std::pair<int, float> GetNtypeEnergy()
+    {
         return enNtype;
     };
     ///Return the total energy deposited in the detector.
-    float GetEnergy() {
+    float GetEnergy()
+    {
         return enCal;
     };
 
     ///Set the raw energy of the contact and compute the calibrated value.
-    virtual void SetRawValue(unsigned int contact, bool nType, int rawValue, int ignThr);
+    virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
 
     /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef(QQQ5, 1);
+    ClassDef ( QQQ5, 1 );
     /// \endcond
 };
 

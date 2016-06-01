@@ -33,96 +33,119 @@ QQQ5::~QQQ5() {}
  */
 void QQQ5::ConstructBins()
 {
-    float pStripRad[33] =
+//     float pStripRad[33] =
+//     {
+//         25.2, 27.75, 30.25, 32.7, 35.1, 37.45, 39.75, 42.0,
+//         44.2, 46.35, 48.45, 50.5, 52.5, 54.45, 56.35, 58.2,
+//         60.0, 61.75, 63.45, 65.1, 66.7, 68.25, 69.75, 71.2,
+//         72.6, 73.95, 75.25, 76.5, 77.7, 78.85, 79.95, 81.0, 82.0
+//     }; //mm
+//
+//     //float nStripPitch = 90 / 4; //deg
+//     float nStripPitch = TMath::PiOver2() / 4;//rad
+//
+//     float nTypeRadius = pStripRad[32] / 2;
+//     for ( unsigned int strip = 0; strip <= 4; strip++ )
+//     {
+//         //compute the binning along the p and n type strip directions in mm.
+//         // strip 0 is furthest clockwise
+//         binsN[strip] = strip * nStripPitch; // recall actual channel numbers for backside strips go like 0,2,1,3
+//
+//         nStripEdgePos[strip].SetXYZ (
+//             // added the offset 2*nStripPitch to compensate for detPos pointing to the center of the detector
+//             detPos.X() + nTypeRadius * cos ( binsN[strip] + detPos.RotZ() - 2 * nStripPitch ),
+//             detPos.Y() + nTypeRadius * sin ( binsN[strip] + detPos.RotZ() - 2 * nStripPitch ),
+//             detPos.Z() );
+//
+//         //Azimuthal angle
+//         binsAzimuthal[strip] = nStripEdgePos[strip].Phi();
+//         while ( binsAzimuthal[strip] < 0 )
+//         {
+//             binsAzimuthal[strip] += TMath::TwoPi();
+//         }
+//         binsAzimuthal[strip] *= TMath::RadToDeg();
+//     }
+//
+//     //Compute the fraction of the radius in the x and y plane.
+//     float xFrac = cos ( detPos.RotZ() ); //points to center of detector
+//     float yFrac = sin ( detPos.RotZ() );
+//
+//     for ( unsigned int strip = 0; strip <= 32; strip++ )
+//     {
+//         binsP[strip] = pStripRad[strip];
+//
+//         //The strips have x and y computed from detector vector projected onto the
+//         //XY vector from the detector origin to the strip edge.
+//         pStripEdgePos[strip].SetXYZ (
+//             detPos.X() + pStripRad[strip] * xFrac,
+//             detPos.Y() + pStripRad[strip] * yFrac,
+//             detPos.Z() );
+//
+//         binsRho[strip] = pStripEdgePos[strip].XYvector().Mod();
+//         int polarStrip = strip;
+//         if ( detPos.Z() < 0 )
+//         {
+//             polarStrip = 32 - strip;
+//         }
+//         binsPolar[polarStrip] = TMath::RadToDeg() * pStripEdgePos[strip].Theta();
+//
+//
+//     }
+//
+//     for ( unsigned int strip = 0; strip < 4; strip++ )
+//     {
+//         binsNcenter[strip] = ( binsN[strip] + binsN[strip + 1] ) / 2;
+//     }
+//     for ( unsigned int strip = 0; strip < 32; strip++ )
+//     {
+//         binsPcenter[strip] = ( binsP[strip] + binsP[strip + 1] ) / 2;
+//         binsPolarcenter[strip] = ( binsPolar[strip] + binsPolar[strip + 1] ) / 2;
+//     }
+//
+// #ifdef VERBOSE
+//     std::cout << serialNum << "\tcenter:\t";
+//     detPos.Print();
+//     std::cout << "\tpStrip:\t";
+//     pStripEdgePos[0].Print();
+//     std::cout << "\t       \t";
+//     pStripEdgePos[31].Print();
+//     std::cout << "\t       \t";
+//     pStripEdgePos[32].Print();
+//     std::cout << "\tnStrip:\t";
+//     nStripEdgePos[0].Print();
+//     std::cout << "\t       \t";
+//     nStripEdgePos[1].Print();
+//     std::cout << "\t       \t";
+//     nStripEdgePos[2].Print();
+//     std::cout << "\t       \t";
+//     nStripEdgePos[3].Print();
+//     std::cout << "\t       \t";
+//     nStripEdgePos[4].Print();
+// #endif
+
+    float QQQ5_active_length = 56.8; // mm
+
+    float firstStripWidth = 2.55;
+
+    TVector3 firstStripOffset ( 0, 25.2 + firstStripWidth/2., 0 ); // everything in mm
+
+    TVector3 prevStripRefDetCenter = firstStripOffset;
+
+    for ( int i = 0; i < 32; i++ )
     {
-        25.2, 27.75, 30.25, 32.7, 35.1, 37.45, 39.75, 42.0,
-        44.2, 46.35, 48.45, 50.5, 52.5, 54.45, 56.35, 58.2,
-        60.0, 61.75, 63.45, 65.1, 66.7, 68.25, 69.75, 71.2,
-        72.6, 73.95, 75.25, 76.5, 77.7, 78.85, 79.95, 81.0, 82.0
-    }; //mm
+        TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, firstStripWidth - i * 0.05, 0 );
+        prevStripRefDetCenter = pStPosRefDetCenter;
 
-    //float nStripPitch = 90 / 4; //deg
-    float nStripPitch = TMath::PiOver2() / 4;//rad
-
-    float nTypeRadius = pStripRad[32] / 2;
-    for ( unsigned int strip = 0; strip <= 4; strip++ )
-    {
-        //compute the binning along the p and n type strip directions in mm.
-        // strip 0 is furthest clockwise
-        binsN[strip] = strip * nStripPitch; // recall actual channel numbers for backside strips go like 0,2,1,3
-
-        nStripEdgePos[strip].SetXYZ (
-            // added the offset 2*nStripPitch to compensate for detPos pointing to the center of the detector
-            detPos.X() + nTypeRadius * cos ( binsN[strip] + detPos.RotZ() - 2 * nStripPitch ),
-            detPos.Y() + nTypeRadius * sin ( binsN[strip] + detPos.RotZ() - 2 * nStripPitch ),
-            detPos.Z() );
-
-        //Azimuthal angle
-        binsAzimuthal[strip] = nStripEdgePos[strip].Phi();
-        while ( binsAzimuthal[strip] < 0 )
-        {
-            binsAzimuthal[strip] += TMath::TwoPi();
-        }
-        binsAzimuthal[strip] *= TMath::RadToDeg();
+        pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
     }
 
-    //Compute the fraction of the radius in the x and y plane.
-    float xFrac = cos ( detPos.RotZ() ); //points to center of detector
-    float yFrac = sin ( detPos.RotZ() );
-
-    for ( unsigned int strip = 0; strip <= 32; strip++ )
+    for ( int i = 0; i < 4; i++ )
     {
-        binsP[strip] = pStripRad[strip];
+        TVector3 nStPosRefDetCenter = firstStripOffset + TVector3 ( 0, QQQ5_active_length/2., 0 );
 
-        //The strips have x and y computed from detector vector projected onto the
-        //XY vector from the detector origin to the strip edge.
-        pStripEdgePos[strip].SetXYZ (
-            detPos.X() + pStripRad[strip] * xFrac,
-            detPos.Y() + pStripRad[strip] * yFrac,
-            detPos.Z() );
-
-        binsRho[strip] = pStripEdgePos[strip].XYvector().Mod();
-        int polarStrip = strip;
-        if ( detPos.Z() < 0 )
-        {
-            polarStrip = 32 - strip;
-        }
-        binsPolar[polarStrip] = TMath::RadToDeg() * pStripEdgePos[strip].Theta();
-
-
+        nStripCenterPos[i] = detPos.GetTVector3() + nStPosRefDetCenter;
+        nStripCenterPos[i].SetPhi ( nStripCenterPos[i].Phi() + ( 3 - 2*i ) /8. * TMath::PiOver4() );
     }
-
-    for ( unsigned int strip = 0; strip < 4; strip++ )
-    {
-        binsNcenter[strip] = ( binsN[strip] + binsN[strip + 1] ) / 2;
-    }
-    for ( unsigned int strip = 0; strip < 32; strip++ )
-    {
-        binsPcenter[strip] = ( binsP[strip] + binsP[strip + 1] ) / 2;
-        binsPolarcenter[strip] = ( binsPolar[strip] + binsPolar[strip + 1] ) / 2;
-    }
-
-#ifdef VERBOSE
-    std::cout << serialNum << "\tcenter:\t";
-    detPos.Print();
-    std::cout << "\tpStrip:\t";
-    pStripEdgePos[0].Print();
-    std::cout << "\t       \t";
-    pStripEdgePos[31].Print();
-    std::cout << "\t       \t";
-    pStripEdgePos[32].Print();
-    std::cout << "\tnStrip:\t";
-    nStripEdgePos[0].Print();
-    std::cout << "\t       \t";
-    nStripEdgePos[1].Print();
-    std::cout << "\t       \t";
-    nStripEdgePos[2].Print();
-    std::cout << "\t       \t";
-    nStripEdgePos[3].Print();
-    std::cout << "\t       \t";
-    nStripEdgePos[4].Print();
-#endif
-
 }
 
 void QQQ5::Clear()
@@ -206,6 +229,13 @@ void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
         enCal += GetCalEnergy ( contact, nType );
     }
     */
+}
+
+TVector3 QQQ5::GetEventPosition ( unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar )
+{
+    TVector3 interactionPos = pStripCenterPos[pStripHit];
+
+    return interactionPos;
 }
 
 

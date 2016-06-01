@@ -20,8 +20,14 @@ std::map<string, double[4][5]> resistiveStripsCalMap;
 
 std::map<string, TGraph*> resStripsGraphsMap;
 
-void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, string detectorType = "SuperX3", float refEnergy1 = 5.813 )
+void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, string detectorType = "SuperX3", double refEnergy1 = 5.813 )
 {
+    string calMapKey = detectorType;
+    calMapKey += isUpstream ? " U" : " D";
+    calMapKey += std::to_string ( sector );
+
+    auto calRes = resistiveStripsCalMap[calMapKey][strip];
+
     TList* list = can->GetListOfPrimitives();
 
     int listSize = list->GetSize();
@@ -80,52 +86,76 @@ void GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short secto
 
     // ---------------- Let's find the inteserction between top and bottom ---------------- //
 
-    double slopeTop, slopeBot, slopeNeg;
-    double offTop, offBot, offNeg;
+    double slopeTop = -100, slopeBot = -10, slopeNeg = -10;
+    double offTop = -100, offBot = -100, offNeg = -100;
 
-    slopeTop = ( topLine->GetY2() - topLine->GetY1() ) / ( topLine->GetX2() - topLine->GetX1() );
-    slopeBot = ( botLine->GetY2() - botLine->GetY1() ) / ( botLine->GetX2() - botLine->GetX1() );
-    slopeNeg = ( negLine->GetY2() - negLine->GetY1() ) / ( negLine->GetX2() - negLine->GetX1() );
+    if ( topLine != NULL )
+    {
+        slopeTop = ( topLine->GetY2() - topLine->GetY1() ) / ( topLine->GetX2() - topLine->GetX1() );
+        offTop = ( topLine->GetX1() * topLine->GetY2() - topLine->GetX2() * topLine->GetY1() ) / ( topLine->GetX1() - topLine->GetX2() );
+    }
 
-    offTop = ( topLine->GetX1() * topLine->GetY2() - topLine->GetX2() * topLine->GetY1() ) / ( topLine->GetX1() - topLine->GetX2() );
-    offBot = ( botLine->GetX1() * botLine->GetY2() - botLine->GetX2() * botLine->GetY1() ) / ( botLine->GetX1() - botLine->GetX2() );
-    offNeg = ( negLine->GetX1() * negLine->GetY2() - negLine->GetX2() * negLine->GetY1() ) / ( negLine->GetX1() - negLine->GetX2() );
+    if ( botLine != NULL )
+    {
+        slopeBot = ( botLine->GetY2() - botLine->GetY1() ) / ( botLine->GetX2() - botLine->GetX1() );
+        offBot = ( botLine->GetX1() * botLine->GetY2() - botLine->GetX2() * botLine->GetY1() ) / ( botLine->GetX1() - botLine->GetX2() );
+    }
 
-//     std::cout << "Neg Line : " << slopeNeg << " * x + " << offNeg << std::endl;
-//     std::cout << "Top Line : " << slopeTop << " * x + " << offTop << std::endl;
-//     std::cout << "Bottom Line : " << slopeBot << " * x + " << offBot << std::endl;
+    if ( negLine != NULL )
+    {
+        slopeNeg = ( negLine->GetY2() - negLine->GetY1() ) / ( negLine->GetX2() - negLine->GetX1() );
+        offNeg = ( negLine->GetX1() * negLine->GetY2() - negLine->GetX2() * negLine->GetY1() ) / ( negLine->GetX1() - negLine->GetX2() );
+    }
 
-    double xIntersect, yIntersect;
+    double xIntersect = -100, yIntersect = -100;
 
-    xIntersect = ( offTop - offBot ) / ( slopeBot - slopeTop );
-    yIntersect = slopeTop * xIntersect + offTop;
+    if ( topLine != NULL && botLine != NULL )
+    {
+        xIntersect = ( offTop - offBot ) / ( slopeBot - slopeTop );
+        yIntersect = slopeTop * xIntersect + offTop;
+    }
+
+    double nearCorrFactor = -100;
+    double energyCalCoeff = -100;
+
+    if ( negLine != NULL ) nearCorrFactor = -slopeNeg;
+
+    if ( calRes[0] == 0 )
+    {
+        calRes[0] = 1;
+        calRes[1] = xIntersect;
+        calRes[2] = yIntersect;
+        calRes[3] = nearCorrFactor;
+        calRes[4] = -100;
+    }
+    else
+    {
+        calRes[1] = xIntersect == -100 ? calRes[1] : xIntersect;
+        calRes[2] = yIntersect == -100 ? calRes[2] : yIntersect;
+        calRes[3] = nearCorrFactor == -100 ? calRes[3] : nearCorrFactor;
+    }
+
+    if ( negLine != NULL && calRes[0] == 1 && calRes[1] != -100 && calRes[2] != -100 )
+    {
+        energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes[1] ) * ( -slopeNeg ) + negLine->GetY1()  - calRes[2] );
+    }
 
     std::cout << "Intersection between top and bottom at ( " << xIntersect << " ; " << yIntersect << " )" << std::endl;
-    std::cout << "Correction factor for the near strip = " << -1/slopeNeg << std::endl;
-    std::cout << "Slope for energy calibration = " << refEnergy1/ ( offNeg - yIntersect ) << std::endl;
+    std::cout << "Correction factor for the near strip = " << nearCorrFactor << std::endl;
+    std::cout << "Slope for energy calibration = " << energyCalCoeff << std::endl;
 
-    string calMapKey = detectorType;
-    calMapKey += isUpstream ? " U" : " D";
-    calMapKey += std::to_string ( sector );
-
-    auto calRes = resistiveStripsCalMap[calMapKey][strip];
-
-    calRes[0] = 1;
-    calRes[1] = xIntersect;
-    calRes[2] = yIntersect;
-    calRes[3] = -1/slopeNeg;
-    calRes[4] = refEnergy1/ ( offNeg - yIntersect );
+    calRes[4] = energyCalCoeff == -100 ? calRes[4] : energyCalCoeff;
 
     return;
 }
 
-bool DumpFileToResCalMap ( string fileName )
+bool DumpFileToResCalMap ( string fileName = "Resistive_Strips_Calib_Params.txt" )
 {
     std::ifstream readFile ( fileName.c_str() );
 
     if ( !readFile.is_open() )
     {
-        std::cerr << "Failed to open file " << fileName << std::endl;
+        std::cerr << "Failed to open file " << fileName << " for previous calibration reading (if it did not exist before, the file has now been created)" << std::endl;
         return false;
     }
 
@@ -161,30 +191,35 @@ bool DumpFileToResCalMap ( string fileName )
         }
 
 
+        auto itr = resistiveStripsCalMap.find ( detID );
+
         if ( lineID == "Res." )
         {
             readLine >> dummy >> stripID;
 
             unsigned short stripNbr = std::stoul ( stripID.substr ( 1 ) );
 
-            float xinter, yinter, slope_gm, slope_encal;
+            if ( ( itr != resistiveStripsCalMap.end() && itr->second[stripNbr][0] == 0 ) || ! ( itr != resistiveStripsCalMap.end() ) )
+            {
+                float xinter, yinter, slope_gm, slope_encal;
 
-            readLine >> xinter >> yinter >> slope_gm >> slope_encal;
+                readLine >> xinter >> yinter >> slope_gm >> slope_encal;
 
-            auto readCal = resistiveStripsCalMap[detID][stripNbr];
+                auto readCal = resistiveStripsCalMap[detID][stripNbr];
 
-            readCal[0] = 1;
-            readCal[1] = xinter;
-            readCal[2] = yinter;
-            readCal[3] = slope_gm;
-            readCal[4] = slope_encal;
+                readCal[0] = 1;
+                readCal[1] = xinter == -100 ? readCal[1] : xinter;
+                readCal[2] = yinter == -100 ? readCal[2] : yinter;
+                readCal[3] = slope_gm == -100 ? readCal[3] : slope_gm;
+                readCal[4] = slope_encal == -100 ? readCal[4] : slope_encal;
+            }
         }
     }
 
     return true;
 }
 
-void WriteResCalResults ( string fileName, string mode = "recreate" )
+void WriteResCalResults ( string fileName = "Resistive_Strips_Calib_Params.txt", string mode = "update" )
 {
     if ( mode == "update" )
     {
@@ -348,6 +383,7 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
     string gName = Form ( "sector%d_strip%d", sector, strip );
 
     newGraph->SetName ( gName.c_str() );
+    newGraph->SetTitle ( gName.c_str() );
 
     string currPath = ( string ) gDirectory->GetPath();
 
@@ -448,6 +484,9 @@ void CalibHelp()
     std::cout << "* invertContactMidDet should be set to \"true\" for SuperX3 because of the way the contacts numbers are incremented" << std::endl;
     std::cout << "* the \"protected\" mode will prevent you to overwrite your config file and generate a new config file from the input..." << std::endl;
     std::cout << "  switch it to \"overwrite\" if you really know what you're doing" << std::endl;
+    std::cout << std::endl;
+    std::cout << "To read a file containing previous calibration and update it, call" << std::endl;
+    std::cout << "DumpFileToResCalMap(string \"previous calib file name\")" << std::endl;
     std::cout << std::endl;
 
 }
