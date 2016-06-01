@@ -387,7 +387,17 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
 
     string currPath = ( string ) gDirectory->GetPath();
 
-    TFile* f = new TFile ( "Resistive_Strips_Calib_Graphs.root", "update" );
+    string rootFileName = "Resistive_Strips_Calib_Graphs_";
+    
+    string treeFName = tree->GetCurrentFile()->GetName();
+    
+    std::size_t begRunName = treeFName.find("run");
+    std::size_t endRunName = treeFName.find("_", begRunName);
+    
+    if(begRunName != std::string::npos && endRunName != std::string::npos) rootFileName += treeFName.substr(begRunName, endRunName) + ".root";
+    else rootFileName += treeFName;
+    
+    TFile* f = new TFile ( rootFileName.c_str(), "update" );
 
     if ( f->FindKey ( gName.c_str() ) != NULL || f->FindObject ( gName.c_str() ) != NULL )
     {
