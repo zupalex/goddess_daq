@@ -13,8 +13,11 @@
 #include "TLine.h"
 #include "TGraph.h"
 #include "TTree.h"
+#include "TBranch.h"
 #include "TH2F.h"
 #include "TFile.h"
+
+#include "../goddess/include/GoddessStruct.h"
 
 std::map<string, double[4][5]> resistiveStripsCalMap;
 
@@ -387,15 +390,15 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
     string currPath = ( string ) gDirectory->GetPath();
 
     string rootFileName = "Resistive_Strips_Calib_Graphs_";
-    
+
     string treeFName = tree->GetCurrentFile()->GetName();
-    
-    std::size_t begRunName = treeFName.find("run");
-    std::size_t endRunName = treeFName.find("_", begRunName);
-    
-    if(begRunName != std::string::npos && endRunName != std::string::npos) rootFileName += treeFName.substr(begRunName, endRunName) + ".root";
+
+    std::size_t begRunName = treeFName.find ( "run" );
+    std::size_t endRunName = treeFName.find ( "_", begRunName );
+
+    if ( begRunName != std::string::npos && endRunName != std::string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
     else rootFileName += treeFName;
-    
+
     TFile* f = new TFile ( rootFileName.c_str(), "update" );
 
     if ( f->FindKey ( gName.c_str() ) != NULL || f->FindObject ( gName.c_str() ) != NULL )
@@ -467,6 +470,140 @@ template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTre
     PlotSX3ResStripsCalGraphs<First, Rest...> ( tree, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
 
     return;
+}
+
+template<typename T> void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, T sector )
+{
+    std::cout << "adding " << sector << " to the list of sectors to treat..." << std::endl;
+
+    sectorsList->push_back ( sector );
+}
+
+template<typename First, typename... Rest> void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors )
+{
+    GetListOfSectorsToTreat<unsigned short> ( sectorsList, fstSector );
+
+    GetListOfSectorsToTreat ( sectorsList, otherSectors... );
+}
+
+template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
+{
+    std::vector<unsigned short> sectorsList;
+
+    GetListOfSectorsToTreat<FirstSector, VarArgs...> ( &sectorsList, fstSector, sectors... );
+
+    std::cout << sectorsList.size() << " sectors will be treated..." << std::endl;
+
+    int sizeOfSectors = sectorsList.size();
+
+    int numberOfGraphs = sizeOfSectors*4;
+
+    for ( int i =0; i < sizeOfSectors; i++ )
+    {
+        for ( int j =0; j < 4; j++ )
+        {
+            string grID = Form ( "sector%d_strip%d", i, j );
+
+            std::cout << "Creating graph " << grID << std::endl;
+
+            TGraph* newGraph = new TGraph();
+
+            newGraph->SetName ( grID.c_str() );
+            newGraph->SetTitle ( grID.c_str() );
+
+            resStripsGraphsMap[Form ( "sector %d strip %d", i, j )] = newGraph;
+
+            std::cout << "Stored graph in the TGraph map..." << std::endl;
+        }
+    }
+
+    if ( nentries == 0 || nentries > tree->GetEntries() ) nentries = tree->GetEntries();
+
+    std::cout << nentries << " entries will be treated" <<std::endl;
+
+    std::vector<SiDataDetailed>* siInfo = new std::vector<SiDataDetailed>();
+    siInfo->clear();
+
+    std::cout << "Preparing the readout of the tree..." << std::endl;
+
+    tree->SetBranchAddress ( "si", &siInfo );
+
+    std::cout << "Linked the \"si\" branch to a SiDataDetailed object..." << std::endl;
+
+    for ( int i = 0; i < nentries; i++ )
+    {
+        tree->GetEntry ( i );
+
+        if ( i%10000 == 0 ) std::cout << "Treated " << i << " / " << nentries << " entries ( " << ((float) i)/((float) nentries) * 100. << "% )\r" << std::flush;
+
+        if ( siInfo->size() == 0 ) continue;
+
+        for ( unsigned short j = 0; j < siInfo->size(); j++ )
+        {
+            int sectorNbr = -1;
+
+            for ( int k = 0; k < sizeOfSectors; k++ )
+            {
+                if ( siInfo->at ( j ).sector == sectorsList[k] )
+                {
+                    sectorNbr = siInfo->at ( j ).sector;
+                    break;
+                }
+            }
+
+            if ( sectorNbr == -1 ) continue;
+
+            if ( siInfo->at ( j ).isBarrel && siInfo->at ( j ).isUpstream == isUpstream_ && siInfo->at ( j ).E1.en.p.size() > 0 )
+            {
+                for ( unsigned short st = 0; st < siInfo->at ( j ).E1.en.p.size(); st++ )
+                {
+                    string grID = Form ( "sector %d strip %d", sectorNbr, siInfo->at ( j ).E1.strip.p[st] );
+
+                    TGraph* gr = resStripsGraphsMap[grID];
+
+                    gr->SetPoint ( gr->GetN(), siInfo->at ( j ).E1.en.p[st], siInfo->at ( j ).E1.en.n[st] );
+                }
+            }
+        }
+    }
+    
+    std::cout << std::endl;
+
+    string currPath = ( string ) gDirectory->GetPath();
+
+    string rootFileName = "Resistive_Strips_Calib_Graphs_";
+
+    string treeFName = tree->GetCurrentFile()->GetName();
+
+    std::size_t begRunName = treeFName.find ( "run" );
+    std::size_t endRunName = treeFName.find ( "_", begRunName );
+
+    if ( begRunName != std::string::npos && endRunName != std::string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
+    else rootFileName += treeFName;
+
+    TFile* f = new TFile ( rootFileName.c_str(), "update" );
+
+    f->cd();
+
+    for ( auto itr = resStripsGraphsMap.begin(); itr != resStripsGraphsMap.end(); itr++ )
+    {
+        TGraph* gr = itr->second;
+
+        if ( f->FindKey ( gr->GetName() ) != NULL || f->FindObject ( gr->GetName() ) != NULL )
+        {
+            string objToDelete = gr->GetName();
+            objToDelete += ";*";
+            f->Delete ( objToDelete.c_str() );
+        }
+
+        std::cout << "Writing " << gr->GetName() << " to file..." << std::endl;
+        
+        gr->Write();
+    }
+
+    f->Close();
+
+    gDirectory->cd ( currPath.c_str() );
 }
 
 void PlotSX3ResStripsCalGraphs()
