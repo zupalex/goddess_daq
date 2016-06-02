@@ -127,7 +127,7 @@ void QQQ5::ConstructBins()
 
     float firstStripWidth = 2.55;
 
-    TVector3 firstStripOffset ( 0, 25.2 + firstStripWidth/2., 0 ); // everything in mm
+    TVector3 firstStripOffset ( 0, 25.2 - firstStripWidth/2., 0 ); // everything in mm
 
     TVector3 prevStripRefDetCenter = firstStripOffset;
 
@@ -136,16 +136,18 @@ void QQQ5::ConstructBins()
         TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, firstStripWidth - i * 0.05, 0 );
         prevStripRefDetCenter = pStPosRefDetCenter;
 
+        pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
+
         pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
     }
 
-    for ( int i = 0; i < 4; i++ )
-    {
-        TVector3 nStPosRefDetCenter = firstStripOffset + TVector3 ( 0, QQQ5_active_length/2., 0 );
-
-        nStripCenterPos[i] = detPos.GetTVector3() + nStPosRefDetCenter;
-        nStripCenterPos[i].SetPhi ( nStripCenterPos[i].Phi() + ( 3 - 2*i ) /8. * TMath::PiOver4() );
-    }
+//     for ( int i = 0; i < 4; i++ )
+//     {
+//         TVector3 nStPosRefDetCenter = firstStripOffset + TVector3 ( 0, QQQ5_active_length/2., 0 );
+//
+//         nStripCenterPos[i] = detPos.GetTVector3() + nStPosRefDetCenter;
+//         nStripCenterPos[i].SetPhi ( nStripCenterPos[i].Phi() + ( 3 - 2*i ) /8. * TMath::PiOver4() );
+//     }
 }
 
 void QQQ5::Clear()
@@ -231,9 +233,11 @@ void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
     */
 }
 
-TVector3 QQQ5::GetEventPosition ( unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar )
+TVector3 QQQ5::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
     TVector3 interactionPos = pStripCenterPos[pStripHit];
+
+    if(nStripHit >= 0) interactionPos.SetPhi ( interactionPos.Phi() - 3./16. * TMath::Pi() + nStripHit/8. * TMath::Pi() );
 
     return interactionPos;
 }

@@ -342,11 +342,11 @@ int superX3::GetStrip ( int contact )
     return strip;
 }
 
-TVector3 superX3::GetEventPosition ( unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar )
+TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
     float SX3_length = 75.; // mm
 
-    TVector3 zResPos ( 0, 0, ( ( eNear - eFar ) / eRes ) * ( SX3_length/2. ) );
+    TVector3 zResPos ( 0, 0, ( ( eNear - eFar ) / (eNear + eFar) ) * ( SX3_length/2. ) );
 
     TVector3 interactionPos = pStripCenterPos[pStripHit] + zResPos;
 

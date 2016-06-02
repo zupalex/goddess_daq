@@ -367,7 +367,6 @@ bool UpdateResParamsInConf ( string configFile, bool invertContactMidDet = true,
     return true;
 }
 
-
 TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
 {
     std::cout << "Plotting sector #" << sector << " strip #" << strip << "..." << std::endl;

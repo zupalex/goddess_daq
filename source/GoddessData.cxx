@@ -1016,8 +1016,6 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 {
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
-
-                    datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, *eSumP, enear_tot, efar_tot ) );
                 }
 
                 if ( *eSumN > 0.0 )
@@ -1026,9 +1024,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
                 }
 
-                //Get the interaction position, for now we just use the E1 layer
-                //if (det->GetDepth() == 1 && detType=="superX3" && det->GetPtypeEnergy().second > 0.0) datum->pos = det->GetEventPosition();
-                //if(std::abs( det->GetEventPosition().Z() )>10 && detType=="superX3"  && det->GetPtypeEnergy().second != 0.0) std::cout << "Det: "<< sectorStr <<  "   En(p,n):" << det->GetPtypeEnergy().second << " " << det->GetNtypeEnergy().second << "  strip(p,n):"<< det->GetPtypeEnergy().first << " " << det->GetNtypeEnergy().first << "   XYZ:" << det->GetEventPosition().X() << " " << det->GetEventPosition().Y() << " " << det->GetEventPosition().Z() << std::endl;
+                if ( *stripMaxP >= 0 ) datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
             }
         }
     }

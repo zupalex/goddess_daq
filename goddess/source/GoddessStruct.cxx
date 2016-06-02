@@ -126,44 +126,44 @@ int SiDataBase::stripMaxLayer ( short unsigned int layer, bool isNType ) const
     return -1;
 }
 
-float SiDataBase::posXLayer ( short unsigned int layer, bool isNType ) const
+TVector3 SiDataBase::posdE() const
 {
     if ( pos.size() > 0 )
         for ( unsigned short i = 0; i < pos.size(); i++ )
-            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
-                return pos[i].X();
+            if ( stripMax[i] >= 0  && stripMax[i] < 100 )
+                return pos[i];
 
-    return 0;
+    return TVector3 ( 0, 0, 0 );
 }
 
-float SiDataBase::posYLayer ( short unsigned int layer, bool isNType ) const
+TVector3 SiDataBase::posE1() const
 {
     if ( pos.size() > 0 )
         for ( unsigned short i = 0; i < pos.size(); i++ )
-            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
-                return pos[i].Y();
+            if ( stripMax[i] >= 100  && stripMax[i] < 200 )
+                return pos[i];
 
-    return 0;
+    return TVector3 ( 0, 0, 0 );
 }
 
-float SiDataBase::posZLayer ( short unsigned int layer, bool isNType ) const
+TVector3 SiDataBase::posE2() const
 {
     if ( pos.size() > 0 )
         for ( unsigned short i = 0; i < pos.size(); i++ )
-            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
-                return pos[i].Z();
+            if ( stripMax[i] >= 200  && stripMax[i] < 300 )
+                return pos[i];
 
-    return 0;
+    return TVector3 ( 0, 0, 0 );
 }
 
-float SiDataBase::angle ( short unsigned int layer, bool isNType ) const
+float SiDataBase::angle ( short unsigned int layer ) const
 {
-     if ( pos.size() > 0 )
+    if ( pos.size() > 0 )
         for ( unsigned short i = 0; i < pos.size(); i++ )
-            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
-                return pos[i].Angle(TVector3(0, 0, 1)) * 180. / TMath::Pi();
+            if ( stripMax[i] >= ( layer*100 )  && stripMax[i] < ( layer*100 ) + 100 )
+                return pos[i].Angle ( TVector3 ( 0, 0, 1 ) ) * 180. / TMath::Pi();
 
-    return 0;   
+    return 0;
 }
 
 ClassImp ( SiDataBase )

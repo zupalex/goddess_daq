@@ -183,7 +183,7 @@ public:
         return stripPosCal;
     };
     ///Return the computed event position.
-    TVector3 GetEventPosition(unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar);
+    TVector3 GetEventPosition(int pStripHit, int nStripHit, float eNear, float eFar);
     ///Return the vector containing resistive strip energy calibration polynomial parameters.
     std::vector<float>* GetResStripParCal()
     {

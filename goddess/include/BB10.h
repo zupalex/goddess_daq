@@ -26,8 +26,7 @@ private:
     ///The bin centers along the phi axis in radians.
     Float_t binsAzimuthalCenter[8]; //!
 
-    TVector3 pStripCenterPos[4];
-    TVector3 nStripCenterPos[4];
+    TVector3 pStripCenterPos[8];
 
     ///Pair strip# and energy of the p type side.
     std::pair<int, float> enPtype;
@@ -52,11 +51,6 @@ public:
     TVector3* GetPStripCenterPos()
     {
         return pStripCenterPos;
-    }
-
-    TVector3* GetNStripCenterPos()
-    {
-        return nStripCenterPos;
     }
 
     ///Return the number of bins.
@@ -86,7 +80,7 @@ public:
     };
 
     ///Return the computed event position.
-    TVector3 GetEventPosition(unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar);
+    TVector3 GetEventPosition(int pStripHit, int nStripHit, float eNear, float eFar);
     ///Return a pair of (strip#,energy) from the p type side.
     std::pair<int, float> GetPtypeEnergy()
     {

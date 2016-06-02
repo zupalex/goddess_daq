@@ -45,11 +45,11 @@ public:
 
     virtual int stripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
-    virtual float posXLayer ( unsigned short layer = 1, bool isNType = false ) const;
-    virtual float posYLayer ( unsigned short layer = 1, bool isNType = false ) const;
-    virtual float posZLayer ( unsigned short layer = 1, bool isNType = false ) const;
+    virtual TVector3 posdE() const;
+    virtual TVector3 posE1() const;
+    virtual TVector3 posE2() const;
 
-    virtual float angle ( unsigned short layer = 1, bool isNType = false ) const;
+    virtual float angle ( unsigned short layer = 1 ) const;
 
 //     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
 //     float dE_eSum_p;

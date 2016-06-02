@@ -870,10 +870,10 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 //         pos.SetRotationPhi ( rotphi );
 
         float barrelDet_spacing = 0.0;
-        
-        TVector3 barrelDet_offset(0.0, 0.0 + depth * barrelDet_spacing, 0.0);
-        
-        TVector3 refSX3D_sect0 ( 0, barrelRadius, halfBarrelLength/2. );
+
+        TVector3 barrelDet_offset ( 0.0, 0.0 + ( depth-1 ) * barrelDet_spacing, 0.0 );
+
+        TVector3 refSX3D_sect0 ( 0 + barrelDet_offset.X(), barrelRadius + barrelDet_offset.Y(), halfBarrelLength/2. + barrelDet_offset.Z() );
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refSX3D_sect0.Angle ( zAxis ) ) : refSX3D_sect0.Angle ( zAxis ) );
@@ -894,16 +894,16 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 //         // Still need to correct for depth in stack (i.e. dE, E1,E2)
 
         float QQQ5_spacing = 0.0;
-        
-        TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + depth * QQQ5_spacing ); // everything in mm
 
-        TVector3 refQQQ5D_sectA ( 0 + QQQ5DA_orig_offset.X(), 0 + QQQ5DA_orig_offset.Y(), halfBarrelLength + QQQ5DA_orig_offset.Z() );
+        TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
+
+        TVector3 refQQQ5D_sectA = TVector3(0, 0, halfBarrelLength) + QQQ5DA_orig_offset;
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refQQQ5D_sectA.Angle ( zAxis ) ) : refQQQ5D_sectA.Angle ( zAxis ) );
-        pos.SetPhi ( - sector * TMath::PiOver2() );
+        pos.SetPhi ( TMath::PiOver2() + sector * TMath::PiOver2() );
         pos.SetMag ( refQQQ5D_sectA.Mag() );
-        pos.SetRotationZ ( - sector * TMath::PiOver2() );
+        pos.SetRotationZ ( sector * TMath::PiOver2() );
     }
 
     return pos;

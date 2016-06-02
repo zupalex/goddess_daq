@@ -79,9 +79,9 @@ void BB10::ConstructBins()
     float BB10_width = 40.3; //mm
     float BB10_length = 75.; //mm
 
-    for ( int i = 0; i < 4; i++ )
+    for ( int i = 0; i < 8; i++ )
     {
-        TVector3 pStPosRefDetCenter ( ( ( 3./8. ) * BB10_width ) - ( i * BB10_width/4. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
+        TVector3 pStPosRefDetCenter ( ( ( 7./16. ) * BB10_width ) - ( i * BB10_width/8. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
 
         pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
 
@@ -117,7 +117,7 @@ void BB10::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
     }
 }
 
-TVector3 BB10::GetEventPosition(unsigned short pStripHit, unsigned short nStripHit, float eRes, float eNear, float eFar)
+TVector3 BB10::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
     TVector3 interactionPos = pStripCenterPos[pStripHit];
 
