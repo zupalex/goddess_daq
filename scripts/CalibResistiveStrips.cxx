@@ -513,7 +513,7 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
 
             resStripsGraphsMap[Form ( "sector %d strip %d", i, j )] = newGraph;
 
-            std::cout << "Stored graph in the TGraph map..." << std::endl;
+//             std::cout << "Stored graph in the TGraph map..." << std::endl;
         }
     }
 
@@ -528,13 +528,13 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
 
     tree->SetBranchAddress ( "si", &siInfo );
 
-    std::cout << "Linked the \"si\" branch to a SiDataDetailed object..." << std::endl;
+//     std::cout << "Linked the \"si\" branch to a SiDataDetailed object..." << std::endl;
 
     for ( int i = 0; i < nentries; i++ )
     {
         tree->GetEntry ( i );
 
-        if ( i%10000 == 0 ) std::cout << "Treated " << i << " / " << nentries << " entries ( " << ((float) i)/((float) nentries) * 100. << "% )\r" << std::flush;
+        if ( i%10000 == 0 ) std::cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << "% )\r" << std::flush;
 
         if ( siInfo->size() == 0 ) continue;
 
@@ -566,7 +566,7 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
             }
         }
     }
-    
+
     std::cout << std::endl;
 
     string currPath = ( string ) gDirectory->GetPath();
@@ -597,13 +597,20 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
         }
 
         std::cout << "Writing " << gr->GetName() << " to file..." << std::endl;
-        
+
         gr->Write();
     }
 
     f->Close();
 
     gDirectory->cd ( currPath.c_str() );
+}
+
+void PlotSX3ResStripsCalGraphsFromTree()
+{
+    std::cout << "To generate the graphs for several sectors without drawing them (MUCH faster), call" << std::endl;
+    std::cout << "PlotSX3ResStripsCalGraphsFromTree(TTree* tree, bool isUpstream, int nentries, int sector1, int sector2, int sector3, int ....)" << std::endl;
+    std::cout << "where \"nenteries\" controls the number of entries to treat (0 == all the entries)" << std::endl;
 }
 
 void PlotSX3ResStripsCalGraphs()
@@ -622,6 +629,8 @@ void CalibHelp()
     std::cout << std::endl;
     PlotSX3ResStripsCalGraphs();
     std::cout << std::endl;
+    PlotSX3ResStripsCalGraphsFromTree();
+    std::cout << std::endl;    
     std::cout << "To write the results of the calibrations made during the last session, call" << std::endl;
     std::cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << std::endl;
     std::cout << std::endl;
