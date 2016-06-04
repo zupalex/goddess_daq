@@ -10,18 +10,19 @@ void LinuxLibrariesLoader ( string myPath )
 {
     gSystem->Load ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
+    gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
 }
 
 void MacLibrariesLoader ( string myPath )
 {
     gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
+    gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
 }
 
 void StartCalibGODDESSDets()
 {
     gROOT->ProcessLine ( Form ( ".L %s/exec/calibstrips.cxx++", localPathToGoddessDaq.c_str() ) );
-    gROOT->ProcessLine ( Form ( ".L %s/exec/CalibResistiveStrips.cxx++", localPathToGoddessDaq.c_str() ) );
 }
 
 void LoadMakeEventLists()
@@ -41,7 +42,10 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
     LinuxLibrariesLoader ( myPathToGoddessDaq );
 #endif
 
-    std::cout << "To load the calibration macros, type \"StartCalibGODDESSDets()\"" << std::endl;
+    std::cout << std::endl;
     std::cout << "To load the TEbtryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;
-    std::cout << "To get the list of the functions you can use, type CalibHelp() or EntryListsHelp()" << std::endl;
+    std::cout << "To get the list of the functions you can use, type EntryListsHelp() " << std::endl;
+    std::cout << std::endl;
+    std::cout << "To use the calibration macros, create an object of type GoddessCalib (e.g. \"GoddessCalib *gCal = new GoddessCalib()\")" << std::endl;
+    std::cout << "To get the list of the functions you can use, call \"gCal->CalibHelp()\" (assuming you called your GoddessCalib object gCal)" << std::endl;
 }
