@@ -950,16 +950,18 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                             en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
                             en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
 
-                            float en_ = ( en_near > 0.0 ? en_near : 0.0 ) + ( en_far > 0.0 ? en_far : 0.0 );
+			    float en_ = 0.0;
+			    
+                            if(en_near > 0.0 && en_far > 0.0) en_ = en_near + en_far;
 
                             if ( en_ > 0.0 )
                             {
                                 if ( writeDetails )
                                 {
-                                    eP->push_back ( en_near > 0.0 ? en_near : 0.0 );
+                                    eP->push_back ( en_near );
                                     stripP->push_back ( st_ );
 
-                                    eN->push_back ( en_far > 0.0 ? en_far : 0.0 );
+                                    eN->push_back ( en_far );
                                     stripN->push_back ( -1 );
                                 }
 
@@ -967,18 +969,16 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                                 {
                                     std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
 
-                                    enear_tot += ( en_near - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
-                                    efar_tot += ( en_far - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+                                    enear_tot += en_near;
+                                    efar_tot += en_far;
 
-                                    if ( resStripParCal[st_].at ( 1 ) != 1 )
+				    if(resStripParCal[st_].at ( 1 ) == 1) *eSumP = -10;
+                                    else *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+
+                                    if ( en_ > enMax )
                                     {
-                                        *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
-
-                                        if ( en_ > enMax )
-                                        {
-                                            *stripMaxP = st_;
-                                            enMax = en_;
-                                        }
+                                        *stripMaxP = st_;
+                                        enMax = en_;
                                     }
                                 }
                             }
@@ -1012,13 +1012,13 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                     }
                 }
 
-                if ( *eSumP > 0.0 )
+                if ( *eSumP != 0.0 )
                 {
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
                 }
 
-                if ( *eSumN > 0.0 )
+                if ( *eSumN != 0.0 )
                 {
                     datum->eSum.push_back ( *eSumN );
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
@@ -1111,6 +1111,10 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
         ionData_snc->clear();
     }
 }
+
+
+
+
 
 
 

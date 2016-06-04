@@ -1,23 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <map>
-#include <type_traits>
-
-#include "TROOT.h"
-#include "TObject.h"
-#include "TCanvas.h"
-#include "TList.h"
-#include "TLine.h"
-#include "TGraph.h"
-#include "TTree.h"
-#include "TBranch.h"
-#include "TH2F.h"
-#include "TFile.h"
-
-#include "../goddess/include/GoddessStruct.h"
+#include "goddess_analysis_macros.h"
 
 std::map<string, double[4][5]> resistiveStripsCalMap;
 
@@ -372,6 +353,18 @@ bool UpdateResParamsInConf ( string configFile, bool invertContactMidDet = true,
 
 TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
 {
+    std::size_t upStreamCondPos = conditions.find ( "si.isUpstream" );
+    
+    string upStreamCond = "U";
+    
+    if(upStreamCondPos == std::string::npos) 
+    {
+      std::cerr << "isUpstream condition missing..." << std::endl;
+      return 0;
+    }
+
+    if(conditions[upStreamCondPos-1] == '!') upStreamCond = "D";
+    
     std::cout << "Plotting sector #" << sector << " strip #" << strip << "..." << std::endl;
 
     tree->Draw ( Form ( "%s", varToPlot.c_str() ), Form ( "%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip ) );
@@ -382,7 +375,7 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
 
     if ( newGraph == NULL ) return 0;
 
-    string gName = Form ( "sector%d_strip%d", sector, strip );
+    string gName = Form ( "sector%s%d_strip%d", upStreamCond.c_str(), sector, strip );
 
     newGraph->SetName ( gName.c_str() );
     newGraph->SetTitle ( gName.c_str() );
@@ -420,7 +413,7 @@ TGraph* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short 
 
 //     std::cout << "Storing the new TGraph in the TGraph map..." << std::endl;
 
-    resStripsGraphsMap[Form ( "sector %d strip %d", sector, strip )] = newGraph;
+    resStripsGraphsMap[Form ( "sector %s%d strip %d", upStreamCond.c_str(), sector, strip )] = newGraph;
 
     return newGraph;
 }
@@ -472,20 +465,6 @@ template<typename First, typename... Rest> void PlotSX3ResStripsCalGraphs ( TTre
     return;
 }
 
-template<typename T> void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, T sector )
-{
-    std::cout << "adding " << sector << " to the list of sectors to treat..." << std::endl;
-
-    sectorsList->push_back ( sector );
-}
-
-template<typename First, typename... Rest> void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors )
-{
-    GetListOfSectorsToTreat<unsigned short> ( sectorsList, fstSector );
-
-    GetListOfSectorsToTreat ( sectorsList, otherSectors... );
-}
-
 template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
 {
     std::vector<unsigned short> sectorsList;
@@ -502,7 +481,7 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
     {
         for ( int j =0; j < 4; j++ )
         {
-            string grID = Form ( "sector%d_strip%d", i, j );
+            string grID = Form ( "sector%s%d_strip%d", isUpstream_ ? "U" : "D", i, j );
 
             std::cout << "Creating graph " << grID << std::endl;
 
@@ -511,7 +490,7 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
             newGraph->SetName ( grID.c_str() );
             newGraph->SetTitle ( grID.c_str() );
 
-            resStripsGraphsMap[Form ( "sector %d strip %d", i, j )] = newGraph;
+            resStripsGraphsMap[Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", i, j )] = newGraph;
 
 //             std::cout << "Stored graph in the TGraph map..." << std::endl;
         }
@@ -557,7 +536,7 @@ template<typename FirstSector, typename... VarArgs> void PlotSX3ResStripsCalGrap
             {
                 for ( unsigned short st = 0; st < siInfo->at ( j ).E1.en.p.size(); st++ )
                 {
-                    string grID = Form ( "sector %d strip %d", sectorNbr, siInfo->at ( j ).E1.strip.p[st] );
+                    string grID = Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorNbr, siInfo->at ( j ).E1.strip.p[st] );
 
                     TGraph* gr = resStripsGraphsMap[grID];
 
@@ -630,7 +609,7 @@ void CalibHelp()
     PlotSX3ResStripsCalGraphs();
     std::cout << std::endl;
     PlotSX3ResStripsCalGraphsFromTree();
-    std::cout << std::endl;    
+    std::cout << std::endl;
     std::cout << "To write the results of the calibrations made during the last session, call" << std::endl;
     std::cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << std::endl;
     std::cout << std::endl;

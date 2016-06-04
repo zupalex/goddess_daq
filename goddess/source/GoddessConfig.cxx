@@ -869,7 +869,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 //         pos.SetRotationZ ( rotZ );
 //         pos.SetRotationPhi ( rotphi );
 
-        float barrelDet_spacing = 0.0;
+        float barrelDet_spacing = 4.8;
 
         TVector3 barrelDet_offset ( 0.0, 0.0 + ( depth-1 ) * barrelDet_spacing, 0.0 );
 
@@ -893,7 +893,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 //         pos.SetRotationZ ( rotZ );
 //         // Still need to correct for depth in stack (i.e. dE, E1,E2)
 
-        float QQQ5_spacing = 0.0;
+        float QQQ5_spacing = 4.0;
 
         TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
 
