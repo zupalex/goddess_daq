@@ -129,22 +129,22 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
 
     InitializeCalMapKey ( calMapKey, strip );
 
-    auto calRes = resStripsCalMap[calMapKey][strip];
+    std::vector<double>* calRes = &resStripsCalMap[calMapKey][strip];
 
-    calRes[0] = xIntersect == -100 ? calRes[1] : xIntersect;
-    calRes[1] = yIntersect == -100 ? calRes[2] : yIntersect;
-    calRes[2] = nearCorrFactor == -100 ? calRes[3] : nearCorrFactor;
+    calRes->at(0) = xIntersect == -100 ? calRes->at(0) : xIntersect;
+    calRes->at(1) = yIntersect == -100 ? calRes->at(1) : yIntersect;
+    calRes->at(2) = nearCorrFactor == -100 ? calRes->at(2) : nearCorrFactor;
 
-    if ( negLine != NULL && calRes[0] != -100 && calRes[1] != -100 )
+    if ( negLine != NULL && calRes->at(0) != -100 && calRes->at(1) != -100 )
     {
-        energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes[1] ) * ( -slopeNeg ) + negLine->GetY1()  - calRes[2] );
+        energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes->at(1) ) * ( -slopeNeg ) + negLine->GetY1()  - calRes->at(2) );
     }
 
     std::cout << "Intersection between top and bottom at ( " << xIntersect << " ; " << yIntersect << " )" << std::endl;
     std::cout << "Correction factor for the near strip = " << nearCorrFactor << std::endl;
     std::cout << "Slope for energy calibration = " << energyCalCoeff << std::endl;
 
-    calRes[3] = energyCalCoeff == -100 ? calRes[3] : energyCalCoeff;
+    calRes->at(3) = energyCalCoeff == -100 ? calRes->at(3) : energyCalCoeff;
 
     return;
 }
@@ -209,14 +209,16 @@ bool GoddessCalib::DumpFileToResCalMap ( std::string fileName )
 
             std::cout << "Setting the following values: " << xinter << " / " <<  yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge << " / " << pos_right_edge << std::endl;
 
-            auto readCal = resStripsCalMap[detID][stripNbr];
+             std::vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
 
-            readCal[0] = xinter == -100 ? readCal[0] : xinter;
-            readCal[1] = yinter == -100 ? readCal[1] : yinter;
-            readCal[2] = slope_gm == -100 ? readCal[2] : slope_gm;
-            readCal[3] = slope_encal == -100 ? readCal[3] : slope_encal;
-            readCal[4] = pos_left_edge == -100 ? readCal[4] : pos_left_edge;
-            readCal[5] = pos_right_edge == -100 ? readCal[5] : pos_right_edge;
+            readCal->at(0) = xinter == -100 ? readCal->at(0) : xinter;
+            readCal->at(1) = yinter == -100 ? readCal->at(1) : yinter;
+            readCal->at(2) = slope_gm == -100 ? readCal->at(2) : slope_gm;
+            readCal->at(3) = slope_encal == -100 ? readCal->at(3) : slope_encal;
+            readCal->at(4) = pos_left_edge == -100 ? readCal->at(4) : pos_left_edge;
+            readCal->at(5) = pos_right_edge == -100 ? readCal->at(5) : pos_right_edge;
+	    
+	    std::cout << "New values: " << readCal->at(0) << " / " <<  readCal->at(1) << " / " << readCal->at(2) << " / " << readCal->at(3) << " / " << readCal->at(4) << " / " << readCal->at(5) << std::endl;
         }
     }
 
