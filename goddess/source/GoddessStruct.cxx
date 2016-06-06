@@ -166,6 +166,27 @@ float SiDataBase::angle ( short unsigned int layer ) const
     return 0;
 }
 
+float SiDataBase::QValue() const
+{
+    double Qval = 0;
+
+//     double amu =931.5;//MeV
+//     double md = 1875.6;//2*amu;//MeV
+//     double mbeam = 80006.8;//86*amu
+//     double mp = 938.3;
+//     double mreact = 80940.87;
+// 
+//     double beamEn = 33.1;//MeV/u
+// 
+//     double Tbeam = 86*beamEn;
+//     double Ekr = Tbeam + mbeam;
+//     double Pkr = sqrt ( Tbeam*Tbeam + 2*Tbeam*mbeam );
+// 
+//     Qval = mbeam + md - mp - sqrt ( mbeam*mbeam + md*md + mp*mp + 2*md*Ekr - 2* ( energy+mp ) * ( Ekr+md ) + 2*Pkr*sqrt ( ( energy*energy ) + 2*energy*mp ) *cos ( Labangle*pi/180.0 ) );
+
+    return Qval;
+}
+
 ClassImp ( SiDataBase )
 
 

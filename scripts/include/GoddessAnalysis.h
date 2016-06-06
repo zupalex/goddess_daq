@@ -11,6 +11,9 @@ public:
     GoddessAnalysis() {}
     virtual ~GoddessAnalysis() {}
 
+    template<typename T> inline static void DisplayMapKeys ( std::map<std::string, T> map_ );
+    inline static void DisplayMapKeys ( std::map<std::string, float> map_ );
+
     inline static int DecodeStripNumber ( int st_ );
 
     template<typename T> inline static void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, T sector );
@@ -22,10 +25,30 @@ public:
             std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts, bool isUpstream_, std::string strips,
             First fstSector, Rest... otherSectors );
 
+    TH2F* DrawEnergyVsAngleSX3 ( TChain* chain, int nentries,
+                                 std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts, bool isUpstream_, std::string strips,
+                                 unsigned short sector );
+
     std::vector<unsigned short> GetStripsListToTreat ( std::string strips );
-    
-    ClassDef(GoddessAnalysis, 1)
+
+    ClassDef ( GoddessAnalysis, 1 )
 };
+
+template<typename T> inline void GoddessAnalysis::DisplayMapKeys ( std::map<std::string, T> map_ )
+{
+    for ( auto itr = map_.begin(); itr != map_.end(); itr++ )
+    {
+        std::cout << itr->first << std::endl;
+    }
+}
+
+inline void GoddessAnalysis::DisplayMapKeys ( std::map<std::string, float> map_ )
+{
+    for ( auto itr = map_.begin(); itr != map_.end(); itr++ )
+    {
+        std::cout << itr->first << std::endl;
+    }
+}
 
 inline int GoddessAnalysis::DecodeStripNumber ( int st_ )
 {

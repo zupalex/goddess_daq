@@ -950,9 +950,9 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                             en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
                             en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
 
-			    float en_ = 0.0;
-			    
-                            if(en_near > 0.0 && en_far > 0.0) en_ = en_near + en_far;
+                            float en_ = 0.0;
+
+                            if ( en_near > 0.0 && en_far > 0.0 ) en_ = en_near + en_far;
 
                             if ( en_ > 0.0 )
                             {
@@ -972,7 +972,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                                     enear_tot += en_near;
                                     efar_tot += en_far;
 
-				    if(resStripParCal[st_].at ( 1 ) == 1) *eSumP = -10;
+                                    if ( resStripParCal[st_].at ( 1 ) == 1 ) *eSumP = -10;
                                     else *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
 
                                     if ( en_ > enMax )

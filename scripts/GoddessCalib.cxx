@@ -1,12 +1,43 @@
 #include "GoddessCalib.h"
 
+void GoddessCalib::InitializeCalMapKey ( std::string mapKey, unsigned short strip )
+{
+    auto itr = resStripsCalMap.find ( mapKey );
+
+    if ( itr == resStripsCalMap.end() )
+    {
+        std::cout << "No entry found for " << mapKey << " strip #" << strip << ". Initializing it with -100" << std::endl;
+
+        resStripsCalMap[mapKey][strip][0] = -100;
+        resStripsCalMap[mapKey][strip][1] = -100;
+        resStripsCalMap[mapKey][strip][2] = -100;
+        resStripsCalMap[mapKey][strip][3] = -100;
+        resStripsCalMap[mapKey][strip][4] = -100;
+        resStripsCalMap[mapKey][strip][5] = -100;
+    }
+    else
+    {
+        auto itrStr = resStripsCalMap[mapKey].find ( strip );
+
+        if ( itrStr == resStripsCalMap[mapKey].end() )
+        {
+            std::cout << "No entry found for " << mapKey << " strip #" << strip << ". Initializing it with -100" << std::endl;
+
+            resStripsCalMap[mapKey][strip][0] = -100;
+            resStripsCalMap[mapKey][strip][1] = -100;
+            resStripsCalMap[mapKey][strip][2] = -100;
+            resStripsCalMap[mapKey][strip][3] = -100;
+            resStripsCalMap[mapKey][strip][4] = -100;
+            resStripsCalMap[mapKey][strip][5] = -100;
+        }
+    }
+}
+
 void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, std::string detectorType, double refEnergy1 )
 {
     std::string calMapKey = detectorType;
     calMapKey += isUpstream ? " U" : " D";
     calMapKey += std::to_string ( sector );
-
-    auto calRes = resStripsCalMap[calMapKey][strip];
 
     TList* list = can->GetListOfPrimitives();
 
@@ -100,22 +131,15 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
 
     if ( negLine != NULL ) nearCorrFactor = -slopeNeg;
 
-    if ( calRes[0] == 0 )
-    {
-        calRes[0] = 1;
-        calRes[1] = xIntersect;
-        calRes[2] = yIntersect;
-        calRes[3] = nearCorrFactor;
-        calRes[4] = -100;
-    }
-    else
-    {
-        calRes[1] = xIntersect == -100 ? calRes[1] : xIntersect;
-        calRes[2] = yIntersect == -100 ? calRes[2] : yIntersect;
-        calRes[3] = nearCorrFactor == -100 ? calRes[3] : nearCorrFactor;
-    }
+    InitializeCalMapKey ( calMapKey, strip );
 
-    if ( negLine != NULL && calRes[0] == 1 && calRes[1] != -100 && calRes[2] != -100 )
+    auto calRes = resStripsCalMap[calMapKey][strip];
+
+    calRes[0] = xIntersect == -100 ? calRes[1] : xIntersect;
+    calRes[1] = yIntersect == -100 ? calRes[2] : yIntersect;
+    calRes[2] = nearCorrFactor == -100 ? calRes[3] : nearCorrFactor;
+
+    if ( negLine != NULL && calRes[0] != -100 && calRes[1] != -100 )
     {
         energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes[1] ) * ( -slopeNeg ) + negLine->GetY1()  - calRes[2] );
     }
@@ -124,7 +148,7 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
     std::cout << "Correction factor for the near strip = " << nearCorrFactor << std::endl;
     std::cout << "Slope for energy calibration = " << energyCalCoeff << std::endl;
 
-    calRes[4] = energyCalCoeff == -100 ? calRes[4] : energyCalCoeff;
+    calRes[3] = energyCalCoeff == -100 ? calRes[3] : energyCalCoeff;
 
     return;
 }
@@ -147,6 +171,8 @@ bool GoddessCalib::DumpFileToResCalMap ( std::string fileName )
 
     while ( std::getline ( readFile, dump ) )
     {
+        if ( dump.empty() ) continue;
+
         std::istringstream readLine;
         readLine.str ( dump );
 
@@ -179,19 +205,22 @@ bool GoddessCalib::DumpFileToResCalMap ( std::string fileName )
 
             unsigned short stripNbr = std::stoul ( stripID.substr ( 1 ) );
 
-            if ( ( itr != resStripsCalMap.end() && itr->second.find ( stripNbr ) == itr->second.end() ) || ! ( itr != resStripsCalMap.end() ) )
-            {
-                float xinter, yinter, slope_gm, slope_encal;
+            double xinter, yinter, slope_gm, slope_encal, pos_left_edge, pos_right_edge;
 
-                readLine >> xinter >> yinter >> slope_gm >> slope_encal;
+            readLine >> xinter >> yinter >> slope_gm >> slope_encal >> pos_left_edge >> pos_right_edge;
 
-                auto readCal = resStripsCalMap[detID][stripNbr];
+            InitializeCalMapKey ( detID, stripNbr );
 
-                readCal[0] = xinter == -100 ? readCal[0] : xinter;
-                readCal[1] = yinter == -100 ? readCal[1] : yinter;
-                readCal[2] = slope_gm == -100 ? readCal[2] : slope_gm;
-                readCal[3] = slope_encal == -100 ? readCal[3] : slope_encal;
-            }
+            std::cout << "Setting the following values: " << xinter << " / " <<  yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge << " / " << pos_right_edge << std::endl;
+
+            auto readCal = resStripsCalMap[detID][stripNbr];
+
+            readCal[0] = xinter == -100 ? readCal[0] : xinter;
+            readCal[1] = yinter == -100 ? readCal[1] : yinter;
+            readCal[2] = slope_gm == -100 ? readCal[2] : slope_gm;
+            readCal[3] = slope_encal == -100 ? readCal[3] : slope_encal;
+            readCal[4] = pos_left_edge == -100 ? readCal[4] : pos_left_edge;
+            readCal[5] = pos_right_edge == -100 ? readCal[5] : pos_right_edge;
         }
     }
 
@@ -207,7 +236,7 @@ void GoddessCalib::WriteResCalResults ( std::string fileName, std::string mode )
 
     std::ofstream outStream ( fileName.c_str() );
 
-    outStream << "Columns are: \"Strip #\"      \"Offset X\"      \"Offset Y\"      \"Slope (gain match)\"     \"Slope (energy calibration)\"\n";
+    outStream << "Columns are: \"Strip #\"     \"Offset X\"     \"Offset Y\"     \"Slope (gain match)\"    \"Slope (energy calibration)\"     \"Left Edge Relative Pos.\"     \"Right edge Relative Pos.\"\n";
 
     for ( auto itr = resStripsCalMap.begin(); itr != resStripsCalMap.end(); itr++ )
     {
@@ -217,7 +246,8 @@ void GoddessCalib::WriteResCalResults ( std::string fileName, std::string mode )
         {
             if ( itr->second.find ( i ) != itr->second.end() )
             {
-                outStream << "Res. Strip #" << i << "   " << itr->second[i][1] << "   " << itr->second[i][2] << "   " << itr->second[i][3] << "   " << itr->second[i][4] << "\n";
+                outStream << "Res. Strip #" << i << "   " << itr->second[i][0] << "   " << itr->second[i][1] << "   " << itr->second[i][2] << "   " << itr->second[i][3];
+                outStream << "   " << itr->second[i][4] << "   " << itr->second[i][5] << "\n";
             }
         }
     }
@@ -285,30 +315,64 @@ bool GoddessCalib::UpdateResParamsInConf ( std::string configFile, bool invertCo
             {
                 for ( int i =0; i < 4; i++ )
                 {
-                    if ( resStripsCalMap[detKey].find ( i ) == resStripsCalMap[detKey].end() )
+                    if ( resStripsCalMap[detKey].find ( i ) != resStripsCalMap[detKey].end() )
                     {
                         std::cout << "Replacing the parameters for strip #" << i << " with the new values..." << std::endl;
 
+                        float offNear, offFar, slopeNear, slopeFar, offEnCal, slopeEnCal, pos_left_edge, pos_right_edge;
+
                         std::getline ( readFile, dump );
+                        readLine.clear();
+                        readLine.str ( dump );
+
+                        readLine >> dummy >> dummy>> dummy >> offNear >> slopeNear;
+
+                        offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
+                        slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
+
                         std::getline ( readFile, dump );
-                        std::getline ( readFile, dump );
+                        readLine.clear();
+                        readLine.str ( dump );
+
+                        readLine >> dummy >> dummy>> dummy >> offFar >> slopeFar;
+
+                        offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
 
                         if ( i < 2 || !invertContactMidDet )
                         {
-                            outStream << "enCal p " << i*2 << " " << resStripsCalMap[detKey][i][0] << " " << resStripsCalMap[detKey][i][2] << "\n";
-                            outStream << "enCal p " << i*2 + 1 << " " << resStripsCalMap[detKey][i][1] << " " << 1 << "\n";
-                            outStream << "enCal resStrip " << i << " 0 " << resStripsCalMap[detKey][i][3] << "\n";
+                            outStream << "enCal p " << i*2 << " " << offNear << " " << slopeNear << "\n";
+                            outStream << "enCal p " << i*2 + 1 << " " << offFar << " " << slopeFar << "\n";
                         }
                         else
                         {
-                            outStream << "enCal p " << i*2 << " " << resStripsCalMap[detKey][i][1] << " " << 1 << "\n";
-                            outStream << "enCal p " << i*2 + 1 << " " << resStripsCalMap[detKey][i][0] << " " << resStripsCalMap[detKey][i][2] << "\n";
-                            outStream << "enCal resStrip " << i << " 0 " << resStripsCalMap[detKey][i][3] << "\n";
+                            outStream << "enCal p " << i*2 << " " << offFar << " " << slopeFar << "\n";
+                            outStream << "enCal p " << i*2 + 1 << " " << offNear << " " << slopeNear << "\n";
                         }
+
+                        std::getline ( readFile, dump );
+                        readLine.clear();
+                        readLine.str ( dump );
+
+                        readLine >> dummy >> dummy>> dummy >> offEnCal >> slopeEnCal;
+
+                        slopeEnCal = resStripsCalMap[detKey][i][3] != -100 ? resStripsCalMap[detKey][i][3] : slopeEnCal;
+
+                        outStream << "enCal resStrip " << i << " " << offEnCal << " " << slopeEnCal << "\n";
+
+                        std::getline ( readFile, dump );
+                        readLine.clear();
+                        readLine.str ( dump );
+
+                        readLine >> dummy >> dummy>> dummy >> pos_left_edge >> pos_right_edge;
+
+                        pos_left_edge = resStripsCalMap[detKey][i][4] != -100 ? resStripsCalMap[detKey][i][4] : pos_left_edge;
+                        pos_right_edge = resStripsCalMap[detKey][i][5] != -100 ? resStripsCalMap[detKey][i][5] : pos_right_edge;
+
+                        outStream << "posCal resStrip " << i << " " << pos_left_edge << " " << pos_right_edge << "\n";
                     }
                     else
                     {
-                        for ( int j =0; j < 3; j++ )
+                        for ( int j =0; j < 4; j++ )
                         {
                             std::getline ( readFile, dump );
                             outStream << dump << "\n";
@@ -318,7 +382,7 @@ bool GoddessCalib::UpdateResParamsInConf ( std::string configFile, bool invertCo
             }
             else
             {
-                for ( int i = 0; i < 12; i++ )
+                for ( int i = 0; i < 16; i++ )
                 {
                     std::getline ( readFile, dump );
                     outStream << dump << "\n";
@@ -364,8 +428,6 @@ TGraph* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, std::string varToPl
 
     tree->Draw ( Form ( "%s", varToPlot.c_str() ), Form ( "%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip ) );
 
-//     std::cout << "Retrieving TGraph*..." << std::endl;
-
     TGraph* newGraph = ( TGraph* ) gPad->GetPrimitive ( "Graph" );
 
     if ( newGraph == NULL ) return 0;
@@ -391,22 +453,17 @@ TGraph* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, std::string varToPl
 
     if ( f->FindKey ( gName.c_str() ) != NULL || f->FindObject ( gName.c_str() ) != NULL )
     {
-//         std::cout << "Deleting existing TGraph..." << std::endl;
         std::string objToDelete = gName + ";*";
         f->Delete ( objToDelete.c_str() );
     }
 
     f->cd();
 
-//     std::cout << "Writing new TGraph..." << std::endl;
-
     newGraph->Write();
 
     f->Close();
 
     gDirectory->cd ( currPath.c_str() );
-
-//     std::cout << "Storing the new TGraph in the TGraph map..." << std::endl;
 
     resStripsEnCalGraphsMap[Form ( "sector %s%d strip %d", upStreamCond.c_str(), sector, strip )] = newGraph;
 
@@ -472,6 +529,41 @@ void GoddessCalib::DrawSX3PosCalHist ( bool isUpstream, short unsigned int secto
     }
     else
         std::cerr << "This graph has not been generated yet!" << std::endl;
+}
+
+void GoddessCalib::WritePosCalHistsToFile ( TTree* tree, std::string fileName )
+{
+    std::string currPath = ( std::string ) gDirectory->GetPath();
+
+    std::string rootFileName = fileName + "_";
+
+    std::string treeFName = tree->GetCurrentFile()->GetName();
+
+    std::size_t begRunName = treeFName.find ( "run" );
+    std::size_t endRunName = treeFName.find ( "_", begRunName );
+
+    if ( begRunName != std::string::npos && endRunName != std::string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
+    else rootFileName += treeFName;
+
+    TFile* f = new TFile ( rootFileName.c_str(), "update" );
+
+    for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
+    {
+        if ( f->FindKey ( itr->second->GetName() ) != NULL || f->FindObject ( itr->second->GetName() ) != NULL )
+        {
+            std::string objToDelete = itr->second->GetName();
+            objToDelete += ";*";
+            f->Delete ( objToDelete.c_str() );
+        }
+
+        f->cd();
+
+        itr->second->Write();
+    }
+
+    f->Close();
+
+    gDirectory->cd ( currPath.c_str() );
 }
 
 TGraph* GoddessCalib::GetSX3EnCalGraph ( bool isUpstream, short unsigned int sector, short unsigned int strip )
@@ -547,7 +639,7 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth )
     bool fellBelow20Perc = false;
     int binShoulder = -1;
 
-    int counterMax = projX->GetNbinsX() / 25;
+    int counterMax = projX->GetNbinsX() / 30;
 
     while ( startBin > projX->GetXaxis()->GetFirst() && binShoulder == -1 )
     {
@@ -575,6 +667,8 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth )
                 else break;
             }
 
+//             if ( nextBinContent > startBinContent ) break;
+
             prevBin = nextBin;
             prevBinContent = nextBinContent;
 
@@ -592,16 +686,27 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth )
 
     TF1* fitfunc = new TF1 ( Form ( "myfit_%s",input->GetName() ), "[0]*exp(-0.5*((x-[1])/[2])**2)", projX->GetBinCenter ( binShoulder - counterMax ), projX->GetBinCenter ( binShoulder ) );
 
-    fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
-    fitfunc->SetParameter ( 1, projX->GetBinCenter ( binShoulder ) );
-    fitfunc->SetParameter ( 2, projX->GetBinCenter ( binShoulder ) - projX->GetBinCenter ( binShoulder - 1 ) );
+    if ( binShoulder != -1 )
+    {
+        fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
+        fitfunc->FixParameter ( 1, projX->GetBinCenter ( binShoulder ) );
+        fitfunc->SetParameter ( 2, projX->GetBinCenter ( binShoulder ) - projX->GetBinCenter ( binShoulder - 1 ) );
 
-    projX->Fit ( fitfunc, "QRMN" );
+        projX->Fit ( fitfunc, "QRMN" );
 
-    float leftEdge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+        float leftEdge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
 
-    std::cout << "Found the left strip edge at " << leftEdge << std::endl;
+        std::cout << "Found the left strip edge at " << leftEdge << std::endl;
 
+        std::string hname = input->GetName();
+        std::string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
+
+        int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
+
+        InitializeCalMapKey ( calMapKey, stripNbr );
+
+        resStripsCalMap[calMapKey][stripNbr][4] = leftEdge;
+    }
     return fitfunc;
 }
 
@@ -666,22 +771,33 @@ TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth )
 
     TF1* fitfunc = new TF1 ( Form ( "myfit_%s",input->GetName() ), "[0]*exp(-0.5*((x-[1])/[2])**2)", projX->GetBinCenter ( binShoulder ), projX->GetBinCenter ( binShoulder + counterMax ) );
 
-    fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
+    if ( binShoulder != -1 )
+    {
+        fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
 
-    fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
-    fitfunc->SetParameter ( 1, projX->GetBinCenter ( binShoulder ) );
-    fitfunc->SetParameter ( 2, projX->GetBinCenter ( binShoulder ) - projX->GetBinCenter ( binShoulder - 1 ) );
+        fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
+        fitfunc->FixParameter ( 1, projX->GetBinCenter ( binShoulder ) );
+        fitfunc->SetParameter ( 2, projX->GetBinCenter ( binShoulder ) - projX->GetBinCenter ( binShoulder - 1 ) );
 
-    projX->Fit ( fitfunc, "QRMN" );
+        projX->Fit ( fitfunc, "QRMN" );
 
-    float rightEdge = fitfunc->GetParameter ( 1 ) + TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+        float rightEdge = fitfunc->GetParameter ( 1 ) + TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
 
-    std::cout << "Found the right strip edge at " << rightEdge << std::endl;
+        std::cout << "Found the right strip edge at " << rightEdge << std::endl;
 
+        std::string hname = input->GetName();
+        std::string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
+
+        int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
+
+        InitializeCalMapKey ( calMapKey, stripNbr );
+
+        resStripsCalMap[calMapKey][stripNbr][5] = rightEdge;
+    }
     return fitfunc;
 }
 
-void GoddessCalib::FitStripsEdges ( int projWidth, bool drawResults )
+void GoddessCalib::GetStripsEdges ( int projWidth, bool drawResults )
 {
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
@@ -699,6 +815,64 @@ void GoddessCalib::FitStripsEdges ( int projWidth, bool drawResults )
             GetPosCalProjX ( itr->second, GetPosCalEnBinMax ( itr->second ), projWidth )->Draw();
             lfit->Draw ( "same" );
             rfit->Draw ( "same" );
+        }
+    }
+
+    return;
+}
+
+void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, bool drawResults )
+{
+    std::string hname = input->GetName();
+
+    std::cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) ) << " ..." << std::endl;
+
+    TF1* lfit = FitLeftEdge ( input, projWidth );
+    TF1* rfit = FitRightEdge ( input, projWidth );
+
+    if ( drawResults )
+    {
+        TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", hname.c_str() ) );
+
+        newCanvas->cd();
+
+        GetPosCalProjX ( input, GetPosCalEnBinMax ( input ), projWidth )->Draw();
+        lfit->Draw ( "same" );
+        rfit->Draw ( "same" );
+    }
+
+    return;
+}
+
+void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, bool drawResults )
+{
+    auto lOK = input->GetListOfKeys();
+
+    for ( int i = 0; i < lOK->GetSize(); i++ )
+    {
+        TH2F* hist = dynamic_cast<TH2F*> ( input->Get ( lOK->At ( i )->GetName() ) );
+
+        if ( hist != NULL )
+        {
+            std::string hname = hist->GetName();
+
+            if ( ! ( hname[0] == 'U' || hname[0] == 'D' ) && ! ( hname.find ( "_" ) == 2 || hname.find ( "_" ) == 3 ) ) continue;
+
+            std::cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) ) << " ..." << std::endl;
+
+            TF1* lfit = FitLeftEdge ( hist, projWidth );
+            TF1* rfit = FitRightEdge ( hist, projWidth );
+
+            if ( drawResults )
+            {
+                TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", hname.c_str() ) );
+
+                newCanvas->cd();
+
+                GetPosCalProjX ( hist, GetPosCalEnBinMax ( hist ), projWidth )->Draw();
+                lfit->Draw ( "same" );
+                rfit->Draw ( "same" );
+            }
         }
     }
 
@@ -754,3 +928,4 @@ void GoddessCalib::CalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+

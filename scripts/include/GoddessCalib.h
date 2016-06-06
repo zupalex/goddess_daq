@@ -11,10 +11,12 @@ public:
     GoddessCalib() {}
     virtual ~GoddessCalib() {}
 
-    std::map<std::string, std::map<unsigned short, double[4]>> resStripsCalMap;
+    std::map<std::string, std::map<unsigned short, double[6]>> resStripsCalMap;
 
     std::map<std::string, TGraph*> resStripsEnCalGraphsMap;
     std::map<std::string, TH2F*> resStripsPosCalGraphsMap;
+
+    void InitializeCalMapKey ( std::string mapKey, unsigned short strip );
 
     void PlotSX3ResStripsCalGraphsFromTree();
     void PlotSX3ResStripsCalGraphs();
@@ -67,7 +69,11 @@ public:
 
     TF1* FitLeftEdge ( TH2F* input, int projWidth = 200 );
     TF1* FitRightEdge ( TH2F* input, int projWidth = 200 );
-    void FitStripsEdges ( int projWidth = 200, bool drawResults = true );
+    void GetStripsEdges ( int projWidth = 200, bool drawResults = true );
+    void GetStripsEdges ( TH2F* input, int projWidth = 200, bool drawResults = true );
+    void GetStripsEdges ( TFile* input, int projWidth = 200, bool drawResults = true );
+
+    void WritePosCalHistsToFile ( TTree* tree, std::string fileName );
 
     ClassDef ( GoddessCalib, 1 )
 };
@@ -332,7 +338,8 @@ template<typename First, typename... Rest> std::map<std::string, TH2F*> GoddessC
 
                 for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
                 {
-                    resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )]->Fill ( ( siData.E1.en.n[k] - siData.E1.en.p[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
+                    TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )];
+                    hh->Fill ( ( siData.E1.en.p[k] - siData.E1.en.n[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
                     break;
                 }
             }
@@ -340,6 +347,8 @@ template<typename First, typename... Rest> std::map<std::string, TH2F*> GoddessC
     }
 
     std::cout << std::endl;
+
+    WritePosCalHistsToFile ( tree, "resistive_Strips_PosCal_hists" );
 
     return resStripsPosCalGraphsMap;
 }

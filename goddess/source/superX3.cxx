@@ -253,6 +253,11 @@ void superX3::SetStripPosCalibPars ( int strip, std::vector<float> pars )
         return;
     }
 
+    if ( pars.size() != 2 )
+    {
+        std::cerr << "ERROR: Number of calibration parameters specified for SX3 Position calibration incorrect (Expected 2, got " << pars.size() << ")" << std::endl;
+    }
+
     parPosCal[strip] = pars;
 }
 
@@ -346,7 +351,15 @@ TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, 
 {
     float SX3_length = 75.; // mm
 
-    TVector3 zResPos ( 0, 0, ( ( eNear - eFar ) / (eNear + eFar) ) * ( SX3_length/2. ) );
+    float recenter = parPosCal[pStripHit].at ( 1 ) - abs(parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 )) / 2.;
+    
+    float normalize = parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 );
+    
+    normalize = normalize == 0 ? 1 : normalize;
+    
+    float zRes = ( ( ( eNear - eFar ) / ( eNear + eFar ) )  - recenter ) / normalize;
+
+    TVector3 zResPos ( 0, 0, zRes * SX3_length );
 
     TVector3 interactionPos = pStripCenterPos[pStripHit] + zResPos;
 
