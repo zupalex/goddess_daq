@@ -19,13 +19,9 @@ std::vector<unsigned short> GoddessAnalysis::GetStripsListToTreat ( std::string 
         unsigned short st_;
         bool read = false;
 
-        read = ( stripsss >> st_ );
-
-        while ( read )
+        while ( stripsss >> st_ )
         {
             stripsList.push_back ( st_ );
-
-            read = ( stripsss >> st_ );
         }
     }
 

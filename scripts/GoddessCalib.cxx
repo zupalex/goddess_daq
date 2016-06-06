@@ -8,12 +8,10 @@ void GoddessCalib::InitializeCalMapKey ( std::string mapKey, unsigned short stri
     {
         std::cout << "No entry found for " << mapKey << " strip #" << strip << ". Initializing it with -100" << std::endl;
 
-        resStripsCalMap[mapKey][strip][0] = -100;
-        resStripsCalMap[mapKey][strip][1] = -100;
-        resStripsCalMap[mapKey][strip][2] = -100;
-        resStripsCalMap[mapKey][strip][3] = -100;
-        resStripsCalMap[mapKey][strip][4] = -100;
-        resStripsCalMap[mapKey][strip][5] = -100;
+        for ( int i = 0; i < 6; i++ )
+        {
+            resStripsCalMap[mapKey][strip].push_back ( -100 );
+        }
     }
     else
     {
@@ -23,12 +21,10 @@ void GoddessCalib::InitializeCalMapKey ( std::string mapKey, unsigned short stri
         {
             std::cout << "No entry found for " << mapKey << " strip #" << strip << ". Initializing it with -100" << std::endl;
 
-            resStripsCalMap[mapKey][strip][0] = -100;
-            resStripsCalMap[mapKey][strip][1] = -100;
-            resStripsCalMap[mapKey][strip][2] = -100;
-            resStripsCalMap[mapKey][strip][3] = -100;
-            resStripsCalMap[mapKey][strip][4] = -100;
-            resStripsCalMap[mapKey][strip][5] = -100;
+            for ( int i = 0; i < 6; i++ )
+            {
+                resStripsCalMap[mapKey][strip].push_back ( -100 );
+            }
         }
     }
 }

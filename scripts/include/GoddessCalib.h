@@ -11,7 +11,7 @@ public:
     GoddessCalib() {}
     virtual ~GoddessCalib() {}
 
-    std::map<std::string, std::map<unsigned short, double[6]>> resStripsCalMap;
+    std::map<std::string, std::map<unsigned short, std::vector<double>>> resStripsCalMap;
 
     std::map<std::string, TGraph*> resStripsEnCalGraphsMap;
     std::map<std::string, TH2F*> resStripsPosCalGraphsMap;
