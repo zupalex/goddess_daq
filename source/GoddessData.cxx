@@ -31,7 +31,7 @@ GoddessData::GoddessData ( std::string configFilename )
     if ( Pars.noMapping )
     {
         gsRaw = new std::vector<GSRawData>;
-        orrubaRaw = new std::vector<ORRUBARawData>;
+        orrubaRaw = new ORRUBARawData();
     }
 
     gDirectory->pwd();
@@ -312,7 +312,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
     if ( Pars.noMapping )
     {
-        orrubaRaw->clear();
+        orrubaRaw->Clear();
         gsRaw->clear();
     }
 
@@ -334,12 +334,25 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
             if ( Pars.noMapping )
             {
-                ORRUBARawData datum;
-                datum.isDigital = false;
-                datum.channel = channel;
-                datum.value = value;
+//                 ORRUBARawData datum;
+//                 datum.isDigital = false;
+//                 datum.channel = channel;
+//                 datum.value = value;
 
-                orrubaRaw->push_back ( datum );
+//                 orrubaRaw->push_back ( datum );
+
+//                 orrubaRaw->isDigital.push_back ( false );
+//                 orrubaRaw->channel.push_back ( channel );
+//                 orrubaRaw->value.push_back ( value );
+
+                orrubaRaw->isDigital.push_back ( false );
+
+                ChValPair newChValPair;
+
+                newChValPair.channel = channel;
+                newChValPair.value = value;
+
+                orrubaRaw->data.push_back ( newChValPair );
             }
 
             //unsigned long long timestamp = agodEvt.timestamp;
@@ -405,12 +418,24 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
         if ( Pars.noMapping )
         {
-            ORRUBARawData datum;
-            datum.isDigital = true;
-            datum.channel = channel;
-            datum.value = value;
+//             ORRUBARawData datum;
+//             datum.isDigital = true;
+//             datum.channel = channel;
+//             datum.value = value;
+//
+//             orrubaRaw->push_back ( datum );
 
-            orrubaRaw->push_back ( datum );
+            orrubaRaw->isDigital.push_back ( true );
+
+            ChValPair newChValPair;
+
+            newChValPair.channel = channel;
+            newChValPair.value = value;
+
+            orrubaRaw->data.push_back ( newChValPair );
+
+//             orrubaRaw->channel.push_back ( channel );
+//             orrubaRaw->value.push_back ( value );
         }
 
         std::pair<short, short> key = std::make_pair ( GEB_TYPE_DFMA, channel );
@@ -476,6 +501,7 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
     {
         itr->second->Clear();
     }
+
     firedDets.clear();
     siDets.clear();
     liquidScints.clear();
@@ -830,6 +856,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 int* stripMaxN = 0;
 
                 float esp = 0.0,esn = 0.0;
+                float enear_tot = 0.0, efar_tot = 0.0;
                 int smp = -1, smn = -1;
                 eSumP = &esp;
                 eSumN = &esn;
@@ -892,12 +919,15 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                                 eP->push_back ( stripItr->second );
                             }
 
-                            *eSumP += stripItr->second;
-
-                            if ( stripItr->second > enMax )
+                            if ( ( Pars.noCalib + nc ) % 2 == 0 )
                             {
-                                *stripMaxP = stripItr->first;
-                                enMax = stripItr->second;
+                                *eSumP += stripItr->second;
+
+                                if ( stripItr->second > enMax )
+                                {
+                                    *stripMaxP = stripItr->first;
+                                    enMax = stripItr->second;
+                                }
                             }
                         }
                         else
@@ -920,25 +950,36 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                             en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
                             en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
 
-                            float en_ = ( en_near > 0.0 ? en_near : 0.0 ) + ( en_far > 0.0 ? en_far : 0.0 );
+                            float en_ = 0.0;
+
+                            if ( en_near > 0.0 && en_far > 0.0 ) en_ = en_near + en_far;
 
                             if ( en_ > 0.0 )
                             {
                                 if ( writeDetails )
                                 {
-                                    eP->push_back ( en_near > 0.0 ? en_near : 0.0 );
+                                    eP->push_back ( en_near );
                                     stripP->push_back ( st_ );
 
-                                    eN->push_back ( en_far > 0.0 ? en_far : 0.0 );
+                                    eN->push_back ( en_far );
                                     stripN->push_back ( -1 );
                                 }
 
-                                *eSumP += en_;
-
-                                if ( en_ > enMax )
+                                if ( ( Pars.noCalib + nc ) % 2 == 0 )
                                 {
-                                    *stripMaxP = st_;
-                                    enMax = en_;
+                                    std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
+
+                                    enear_tot += en_near;
+                                    efar_tot += en_far;
+
+                                    if ( resStripParCal[st_].at ( 1 ) == 1 ) *eSumP = -10;
+                                    else *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+
+                                    if ( en_ > enMax )
+                                    {
+                                        *stripMaxP = st_;
+                                        enMax = en_;
+                                    }
                                 }
                             }
                         }
@@ -958,31 +999,32 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                             eN->push_back ( stripItr->second );
                         }
 
-                        *eSumN += stripItr->second;
-
-                        if ( stripItr->second > enMax )
+                        if ( ( Pars.noCalib + nc ) % 2 == 0 )
                         {
-                            *stripMaxN = stripItr->first;
-                            enMax = stripItr->second;
+                            *eSumN += stripItr->second;
+
+                            if ( stripItr->second > enMax )
+                            {
+                                *stripMaxN = stripItr->first;
+                                enMax = stripItr->second;
+                            }
                         }
                     }
                 }
 
-                if ( *eSumP > 0.0 )
+                if ( *eSumP != 0.0 )
                 {
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
                 }
 
-                if ( *eSumN > 0.0 )
+                if ( *eSumN != 0.0 )
                 {
                     datum->eSum.push_back ( *eSumN );
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
                 }
 
-                //Get the interaction position, for now we just use the E1 layer
-                //if (det->GetDepth() == 1 && detType=="superX3" && det->GetPtypeEnergy().second > 0.0) datum->pos = det->GetEventPosition();
-                //if(std::abs( det->GetEventPosition().Z() )>10 && detType=="superX3"  && det->GetPtypeEnergy().second != 0.0) std::cout << "Det: "<< sectorStr <<  "   En(p,n):" << det->GetPtypeEnergy().second << " " << det->GetNtypeEnergy().second << "  strip(p,n):"<< det->GetPtypeEnergy().first << " " << det->GetNtypeEnergy().first << "   XYZ:" << det->GetEventPosition().X() << " " << det->GetEventPosition().Y() << " " << det->GetEventPosition().Z() << std::endl;
+                if ( *stripMaxP >= 0 ) datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
             }
         }
     }
@@ -1069,6 +1111,10 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
         ionData_snc->clear();
     }
 }
+
+
+
+
 
 
 

@@ -126,6 +126,69 @@ int SiDataBase::stripMaxLayer ( short unsigned int layer, bool isNType ) const
     return -1;
 }
 
+TVector3 SiDataBase::posdE() const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= 0  && stripMax[i] < 100 )
+                return pos[i];
+
+    return TVector3 ( 0, 0, 0 );
+}
+
+TVector3 SiDataBase::posE1() const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= 100  && stripMax[i] < 200 )
+                return pos[i];
+
+    return TVector3 ( 0, 0, 0 );
+}
+
+TVector3 SiDataBase::posE2() const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= 200  && stripMax[i] < 300 )
+                return pos[i];
+
+    return TVector3 ( 0, 0, 0 );
+}
+
+float SiDataBase::angle ( short unsigned int layer ) const
+{
+    if ( pos.size() > 0 )
+        for ( unsigned short i = 0; i < pos.size(); i++ )
+            if ( stripMax[i] >= ( layer*100 )  && stripMax[i] < ( layer*100 ) + 100 )
+                return pos[i].Angle ( TVector3 ( 0, 0, 1 ) ) * 180. / TMath::Pi();
+
+    return 0;
+}
+
+float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const
+{
+    float energy = eSumLayer ( 1, false );  // MeV
+
+    float Qval = -100;
+
+    if ( energy > 0.0 )
+    {
+        float amu = 931.5; // MeV
+
+        float labAngle = angle ( 1 );  // degree
+        
+        float mbeam = massBeam * amu;  // MeV
+        float mreac = (massBeam + massTarget - massEjec) * amu; // MeV
+        
+        float mejec = massEjec * amu;
+        
+        Qval = (1+mejec/mreac) * (energy) - (1 - mbeam/mreac) * (kBeam) - 2 * TMath::Sqrt(mbeam*mejec*(energy)*(kBeam)) / mreac * TMath::Cos(labAngle * TMath::Pi() / 180.);
+    }
+
+    return Qval;
+}
+
 ClassImp ( SiDataBase )
 
 
@@ -171,13 +234,13 @@ ClassImp ( SiDataDetailed )
 
 
 
-ORRUBARawData::ORRUBARawData() {}
-ORRUBARawData::~ORRUBARawData() {}
+ChValPair::ChValPair() {}
+ChValPair::~ChValPair() {}
 
-float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
-{    
-    if(calibParams == NULL) return value;
-    
+float ChValPair::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+{
+    if ( calibParams == NULL ) return value;
+
     float calVal;
 
     auto itr = calibParams->find ( channel );
@@ -188,6 +251,64 @@ float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, fl
         calVal = value;
 
     return calVal;
+}
+
+ClassImp ( ChValPair )
+
+ORRUBARawData::ORRUBARawData() {}
+ORRUBARawData::~ORRUBARawData() {}
+
+void ORRUBARawData::Clear()
+{
+    isDigital.clear();
+    data.clear();
+//     channel.clear();
+//     value.clear();
+}
+
+// float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+// {
+//     if ( calibParams == NULL ) return value;
+//
+//     float calVal;
+//
+//     auto itr = calibParams->find ( channel );
+//
+//     if ( itr != calibParams->end() )
+//         calVal = ( value - itr->second.first ) * itr->second.second;
+//     else
+//         calVal = value;
+//
+//     return calVal;
+// }
+
+// TArrayF ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
+// {
+//     TArrayF* calVal = new TArrayF ( value.size() );;
+//
+//     for(unsigned short i = 0; i < value.size(); i++)
+//     {
+//         auto itr = calibParams->find ( channel[i] );
+//
+//         if ( calibParams == NULL != NULL && itr != calibParams->end() )
+//             calVal->SetAt(( value[i] - itr->second.first ) * itr->second.second, i);
+//         else
+//             calVal->SetAt(value[i], i);
+//     }
+//
+//     return *calVal;
+// }
+
+unsigned short ORRUBARawData::GetMultRange ( unsigned short beg, unsigned short end ) const
+{
+    unsigned short multi = 0;
+
+    for ( unsigned short i = 0; i < data.size(); i++ )
+    {
+        if ( ( data.at ( i ) ).channel >= beg && ( data.at ( i ) ).channel <= end ) multi++;
+    }
+
+    return multi;
 }
 
 

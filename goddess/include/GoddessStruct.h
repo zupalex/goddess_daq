@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+#include "TArrayF.h"
+#include "TMath.h"
 #include "TVector3.h"
 
 ///Structure of gamma ray data from DGS
@@ -42,6 +44,14 @@ public:
     virtual float eSumLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
     virtual int stripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
+
+    virtual TVector3 posdE() const;
+    virtual TVector3 posE1() const;
+    virtual TVector3 posE2() const;
+
+    virtual float QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const;
+
+    virtual float angle ( unsigned short layer = 1 ) const;
 
 //     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
 //     float dE_eSum_p;
@@ -221,6 +231,26 @@ struct GSRawData
     unsigned long int post_rise_energy;
 };
 
+class ChValPair
+{
+private:
+
+public:
+    ChValPair();
+    virtual ~ChValPair();
+
+    float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
+
+    unsigned short channel;
+    unsigned long int value;
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( ChValPair,1 )
+    /// \endcond
+};
+
+
+
 class ORRUBARawData
 {
 private:
@@ -229,11 +259,13 @@ public:
     ORRUBARawData();
     virtual ~ORRUBARawData();
 
-    float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
-    
-    unsigned short channel;
-    unsigned long int value;
-    bool isDigital;
+    void Clear();
+
+//     float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
+    unsigned short GetMultRange ( unsigned short beg = 1, unsigned short end = 32 ) const;
+
+    std::vector<ChValPair> data;
+    std::vector<bool> isDigital;
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( ORRUBARawData, 1 )

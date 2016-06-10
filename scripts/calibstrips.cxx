@@ -1,25 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <streambuf>
-#include <string>
-#include <vector>
-#include <map>
-#include <random>
-#include <cxxabi.h>
-
-#include "TCanvas.h"
-#include "TTree.h"
-#include "TH1F.h"
-#include "TH1D.h"
-#include "TH2F.h"
-#include "TMath.h"
-#include "TF1.h"
-
-#include "TROOT.h"
-#include "TFile.h"
-#include "TDirectoryFile.h"
-#include "TFitResult.h"
-#include "TFitResultPtr.h"
+#include "goddess_analysis_macros.h"
 
 TH2F *histToTreat = 0;
 std::map<Int_t, std::pair<TH1D*, TF1*>> myFitsResults;

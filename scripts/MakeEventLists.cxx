@@ -24,14 +24,14 @@
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
 
-bool AskForYesOrNO(string messageToDisplay)
+bool AskForYesOrNO ( string messageToDisplay )
 {
     char userInput[256];
 
     bool inputIsValid = false;
-    
+
     bool aYes, aNo;
-    
+
     while ( !inputIsValid )
     {
         inputIsValid = true;
@@ -42,13 +42,13 @@ bool AskForYesOrNO(string messageToDisplay)
         aYes = ( strcmp ( userInput, "y" ) == 0 || strcmp ( userInput, "yes" ) == 0 );
         aNo = ( strcmp ( userInput, "n" ) == 0 || strcmp ( userInput, "no" ) == 0 );
 
-        if(!(aYes || aNo))
+        if ( ! ( aYes || aNo ) )
         {
             inputIsValid = false;
             std::cerr << "\nInvalid input. Answer [yes/y] or [no/n]\n" << std::endl;
         }
     }
-    
+
     return aYes ? true : false;
 }
 
@@ -335,4 +335,8 @@ void WriteAllEntryListToFile ( string fileName = "MyEntryLists.root", string mod
             WriteEntryListToFile ( entryLists[i], fileName, mode );
 }
 
+void EntryListsHelp()
+{
+    std::cout << "Help not written yet... Come back later..." << std::endl;
+}
 

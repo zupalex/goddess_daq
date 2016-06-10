@@ -55,7 +55,7 @@ private:
     std::vector<IonData>* ionData_snc;
 
     ///The pointer to the vector containing channel/value pairs to store in the raw tree for the digital part of ORRUBA
-    std::vector<ORRUBARawData>* orrubaRaw;
+    ORRUBARawData* orrubaRaw;
     ///The pointer to the vector containing channel/value pairs to store in the raw tree for GAMMASPHERE (digital)
     std::vector<GSRawData>* gsRaw;
 

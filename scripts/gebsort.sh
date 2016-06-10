@@ -14,7 +14,7 @@ ReturnError()
     echo "-> nocalib=[mode] handles the calibration level."
     echo "           [mode]==1 will generate one tree sorted but not calibrated." 
     echo "           [mode]==2 will generate two sorted trees, one calibrated, the other one not"
-    echo "           [mode]==3 will not generate any sorted tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
+    echo "           [mode]==-1 will not generate any sorted tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
     echo "-> ignorethr=[mode] handles the thresholds ignore level."
     echo "             [mode]==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
     echo "             [mode]==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
@@ -102,7 +102,7 @@ COUNTER=$(($COUNTER + 1))
 
 	SIDETLVLVAL="${arg##sidetails=}"
 
-	if [ SIDETLVLFLAG -lt 0 -o SIDETLVLFLAG -gt 2 ]; then
+	if [ $SIDETLVLFLAG -lt 0 -o $SIDETLVLFLAG -gt 2 ]; then
 	    echo "INVALID VALUE SPECIFIED FOR nocalib ARGUMENT!!"
 	    ReturnError
 	    exit 1

@@ -126,7 +126,7 @@ void siDet::SetRawValue ( unsigned int contact, bool nType, unsigned int rawValu
         {
             enRawP[contact] = rawValue;
         }
-        
+
         if ( ignThr == 2 || rawValue > threshold )
         {
             enCal = & ( enCalP[contact] );
@@ -141,7 +141,8 @@ void siDet::SetRawValue ( unsigned int contact, bool nType, unsigned int rawValu
         //*enCal = 0;
         //for (size_t power = 0; power < parEnCal->size(); power++)
         //*enCal += parEnCal->at(power) * pow(rawValue,power);
-        *enCal = ( rawValue - parEnCal->at ( 0 ) ) * parEnCal->at ( 1 );
+//         *enCal = ( rawValue - parEnCal->at ( 0 ) ) * parEnCal->at ( 1 );
+        *enCal =  rawValue * parEnCal->at ( 1 ) - parEnCal->at ( 0 ) ;
     }
 }
 
@@ -218,8 +219,8 @@ bool siDet::SetEnergyCalib ( std::vector<float> par, int contact, bool nType/*=f
 
 bool siDet::SetThresholds ( std::vector<int> thresholds, bool contactType, int thrSize )
 {
-    if(thrSize == 0) thrSize = ( unsigned int ) GetNumChannels ( contactType );
-    
+    if ( thrSize == 0 ) thrSize = ( unsigned int ) GetNumChannels ( contactType );
+
     //if ( thresholds.size() != ( unsigned int ) GetNumChannels ( contactType ) )
     if ( thresholds.size() != ( unsigned int ) thrSize )
     {

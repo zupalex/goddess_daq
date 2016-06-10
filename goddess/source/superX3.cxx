@@ -32,80 +32,96 @@ superX3::~superX3() {}
  */
 void superX3::ConstructBins()
 {
-    float pStripPitch = 40.3 / 4; //mm
-    float nStripPitch = 75 / 4; //mm
+//     float pStripPitch = 40.3 / 4; //mm
+//     float nStripPitch = 75 / 4; //mm
+//
+//     //float detRotation = TMath::PiOver2() + detPos.Theta();
+//     float computedRotZ = detPos.Phi() + TMath::PiOver2();
+//     if ( computedRotZ < 0 )
+//     {
+//         computedRotZ += TMath::TwoPi();
+//     }
+//     float angleDiff = detPos.RotZ() - computedRotZ;
+//     if ( fabs ( angleDiff ) > 0.001 )
+//     {
+//         std::cerr << "WARNING: Detector " << serialNum << " is not normal to the XY radial direction! " << detPos.RotZ() << " != " << TMath::PiOver2() + detPos.Phi() << "\n";
+//     }
+//
+//     SolidVector cornerPos ( detPos.X() - 2 * pStripPitch * cos ( detPos.RotZ() ) * cos ( detPos.RotPhi() ),
+//                             detPos.Y() - 2 * pStripPitch * sin ( detPos.RotZ() ) * cos ( detPos.RotPhi() ),
+//                             detPos.Z() - 2 * nStripPitch * cos ( detPos.RotPhi() ),
+//                             detPos.RotZ(),
+//                             detPos.RotPhi() );
+//
+//     for ( unsigned int strip = 0; strip <= 4; strip++ )
+//     {
+//         //compute the binning along the p and n type strip directions in mm.
+//         binsP[strip] = strip * pStripPitch;
+//         binsN[strip] = strip * nStripPitch;
+//
+//         nStripEdgePos[strip].SetXYZ (
+//             cornerPos.X() + 2 * pStripPitch * cos ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
+//             cornerPos.Y() + 2 * pStripPitch * sin ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
+//             cornerPos.Z() + binsN[strip] * cos ( detPos.RotPhi() ) );
+//         //The strips have x and y computed from detector vector projected onto the
+//         //XY vector from the detector origin to the strip edge.
+//         pStripEdgePos[strip].SetXYZ ( cornerPos.X() + binsP[strip] * cos ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
+//                                       cornerPos.Y() + binsP[strip] * sin ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
+//                                       cornerPos.Z() + 2 * nStripPitch * cos ( detPos.RotPhi() ) );
+//
+//         //Z Position of each nStrip edge
+//         binsZ[strip] = nStripEdgePos[strip].Z();
+//         //Azimuthal angle
+//         binsAzimuthal[strip] = pStripEdgePos[strip].Phi();
+//         if ( binsAzimuthal[strip] < 0 )
+//         {
+//             binsAzimuthal[strip] += TMath::TwoPi();
+//         }
+//         binsAzimuthal[strip] *= TMath::RadToDeg();
+//         //Polar angle is computed in reverse as the higher strips are at smaller
+//         //  angles and the list must be in ascending order.
+//         binsPolar[4 - strip] = TMath::RadToDeg() * nStripEdgePos[strip].Theta();
+//     }
+//
+//     for ( unsigned int strip = 0; strip < 4; strip++ )
+//     {
+//         binsPCenter[strip] = ( binsP[strip] + binsP[strip + 1] ) / 2.;
+//         binsNCenter[strip] = ( binsN[strip] + binsN[strip + 1] ) / 2.;
+//         binsZCenter[strip] = ( binsZ[strip] + binsZ[strip + 1] ) / 2.;
+//         binsAzimuthalCenter[strip] = ( binsAzimuthal[strip] + binsAzimuthal[strip + 1] ) / 2.;
+//     }
 
-    //float detRotation = TMath::PiOver2() + detPos.Theta();
-    float computedRotZ = detPos.Phi() + TMath::PiOver2();
-    if ( computedRotZ < 0 )
+    /*
+    #ifdef VERBOSE
+        std::cout << serialNum << "\tcenter:\t";
+        detPos.Print();
+        std::cout << "\tcorner:\t";
+        cornerPos.Print();
+        std::cout << "\tpStrip:\t";
+        pStripEdgePos[0].Print();
+        std::cout << "\t       \t";
+        pStripEdgePos[4].Print();
+        std::cout << "\tnStrip:\t";
+        nStripEdgePos[0].Print();
+        std::cout << "\t       \t";
+        nStripEdgePos[4].Print();
+    #endif*/
+
+    float SX3_width = 40.3; //mm
+    float SX3_length = 75.; //mm
+
+    for ( int i = 0; i < 4; i++ )
     {
-        computedRotZ += TMath::TwoPi();
+        TVector3 pStPosRefDetCenter ( ( ( 3./8. ) * SX3_width ) - ( i * SX3_width/4. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
+
+        pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
+
+        pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
+
+        TVector3 nStPosRefDetCenter ( 0, 0, ( ( 3./8. ) * SX3_length ) - ( i * SX3_length/4. ) ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive Z direction
+
+        nStripCenterPos[i] = detPos.GetTVector3() + nStPosRefDetCenter;
     }
-    float angleDiff = detPos.RotZ() - computedRotZ;
-    if ( fabs ( angleDiff ) > 0.001 )
-    {
-        std::cerr << "WARNING: Detector " << serialNum << " is not normal to the XY radial direction! " << detPos.RotZ() << " != " << TMath::PiOver2() + detPos.Phi() << "\n";
-    }
-
-    SolidVector cornerPos ( detPos.X() - 2 * pStripPitch * cos ( detPos.RotZ() ) * cos ( detPos.RotPhi() ),
-                            detPos.Y() - 2 * pStripPitch * sin ( detPos.RotZ() ) * cos ( detPos.RotPhi() ),
-                            detPos.Z() - 2 * nStripPitch * cos ( detPos.RotPhi() ),
-                            detPos.RotZ(),
-                            detPos.RotPhi() );
-
-    for ( unsigned int strip = 0; strip <= 4; strip++ )
-    {
-        //compute the binning along the p and n type strip directions in mm.
-        binsP[strip] = strip * pStripPitch;
-        binsN[strip] = strip * nStripPitch;
-
-        nStripEdgePos[strip].SetXYZ (
-            cornerPos.X() + 2 * pStripPitch * cos ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
-            cornerPos.Y() + 2 * pStripPitch * sin ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
-            cornerPos.Z() + binsN[strip] * cos ( detPos.RotPhi() ) );
-        //The strips have x and y computed from detector vector projected onto the
-        //XY vector from the detector origin to the strip edge.
-        pStripEdgePos[strip].SetXYZ ( cornerPos.X() + binsP[strip] * cos ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
-                                      cornerPos.Y() + binsP[strip] * sin ( cornerPos.RotZ() ) * cos ( detPos.RotPhi() ),
-                                      cornerPos.Z() + 2 * nStripPitch * cos ( detPos.RotPhi() ) );
-
-        //Z Position of each nStrip edge
-        binsZ[strip] = nStripEdgePos[strip].Z();
-        //Azimuthal angle
-        binsAzimuthal[strip] = pStripEdgePos[strip].Phi();
-        if ( binsAzimuthal[strip] < 0 )
-        {
-            binsAzimuthal[strip] += TMath::TwoPi();
-        }
-        binsAzimuthal[strip] *= TMath::RadToDeg();
-        //Polar angle is computed in reverse as the higher strips are at smaller
-        //  angles and the list must be in ascending order.
-        binsPolar[4 - strip] = TMath::RadToDeg() * nStripEdgePos[strip].Theta();
-    }
-
-    for ( unsigned int strip = 0; strip < 4; strip++ )
-    {
-        binsPCenter[strip] = ( binsP[strip] + binsP[strip + 1] ) / 2.;
-        binsNCenter[strip] = ( binsN[strip] + binsN[strip + 1] ) / 2.;
-        binsZCenter[strip] = ( binsZ[strip] + binsZ[strip + 1] ) / 2.;
-        binsAzimuthalCenter[strip] = ( binsAzimuthal[strip] + binsAzimuthal[strip + 1] ) / 2.;
-    }
-
-#ifdef VERBOSE
-    std::cout << serialNum << "\tcenter:\t";
-    detPos.Print();
-    std::cout << "\tcorner:\t";
-    cornerPos.Print();
-    std::cout << "\tpStrip:\t";
-    pStripEdgePos[0].Print();
-    std::cout << "\t       \t";
-    pStripEdgePos[4].Print();
-    std::cout << "\tnStrip:\t";
-    nStripEdgePos[0].Print();
-    std::cout << "\t       \t";
-    nStripEdgePos[4].Print();
-#endif
-
 }
 
 void superX3::Clear()
@@ -237,6 +253,11 @@ void superX3::SetStripPosCalibPars ( int strip, std::vector<float> pars )
         return;
     }
 
+    if ( pars.size() != 2 )
+    {
+        std::cerr << "ERROR: Number of calibration parameters specified for SX3 Position calibration incorrect (Expected 2, got " << pars.size() << ")" << std::endl;
+    }
+
     parPosCal[strip] = pars;
 }
 
@@ -292,7 +313,7 @@ void superX3::SetRawValue ( unsigned int contact, bool nType, int rawValue, int 
 //     else siDet::SetRawValue ( contact, nType, rawValue, 2 );
     siDet::SetRawValue ( contact, nType, rawValue, ignThr );
 
-    if ( !nType ) UpdatePosition ( GetStrip ( contact ) );
+//     if ( !nType ) UpdatePosition ( GetStrip ( contact ) );
 
     /*
     if ( nType )
@@ -325,6 +346,26 @@ int superX3::GetStrip ( int contact )
     int strip = contact / 2;
     return strip;
 }
+
+TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
+{
+    float SX3_length = 75.; // mm
+
+    float recenter = parPosCal[pStripHit].at ( 1 ) - abs(parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 )) / 2.;
+    
+    float normalize = parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 );
+    
+    normalize = normalize == 0 ? 1 : normalize;
+    
+    float zRes = ( ( ( eNear - eFar ) / ( eNear + eFar ) )  - recenter ) / normalize;
+
+    TVector3 zResPos ( 0, 0, zRes * SX3_length );
+
+    TVector3 interactionPos = pStripCenterPos[pStripHit] + zResPos;
+
+    return interactionPos;
+}
+
 
 ClassImp ( superX3 )
 

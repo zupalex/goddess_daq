@@ -48,6 +48,7 @@ add_subdirectory(hribf)
 #Include our headers and continue in the source directory
 include_directories(include)
 include_directories(goddess/include)
+include_directories(scripts/include)
 add_subdirectory(goddess/source)
 add_subdirectory(source)
 add_subdirectory(scripts)
