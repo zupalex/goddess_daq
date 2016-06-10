@@ -48,8 +48,8 @@ public:
     virtual TVector3 posdE() const;
     virtual TVector3 posE1() const;
     virtual TVector3 posE2() const;
-    
-    virtual float QValue() const;
+
+    virtual float QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const;
 
     virtual float angle ( unsigned short layer = 1 ) const;
 

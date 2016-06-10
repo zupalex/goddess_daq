@@ -166,23 +166,25 @@ float SiDataBase::angle ( short unsigned int layer ) const
     return 0;
 }
 
-float SiDataBase::QValue() const
+float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const
 {
-    double Qval = 0;
+    float energy = eSumLayer ( 1, false );  // MeV
 
-//     double amu =931.5;//MeV
-//     double md = 1875.6;//2*amu;//MeV
-//     double mbeam = 80006.8;//86*amu
-//     double mp = 938.3;
-//     double mreact = 80940.87;
-// 
-//     double beamEn = 33.1;//MeV/u
-// 
-//     double Tbeam = 86*beamEn;
-//     double Ekr = Tbeam + mbeam;
-//     double Pkr = sqrt ( Tbeam*Tbeam + 2*Tbeam*mbeam );
-// 
-//     Qval = mbeam + md - mp - sqrt ( mbeam*mbeam + md*md + mp*mp + 2*md*Ekr - 2* ( energy+mp ) * ( Ekr+md ) + 2*Pkr*sqrt ( ( energy*energy ) + 2*energy*mp ) *cos ( Labangle*pi/180.0 ) );
+    float Qval = -100;
+
+    if ( energy > 0.0 )
+    {
+        float amu = 931.5; // MeV
+
+        float labAngle = angle ( 1 );  // degree
+        
+        float mbeam = massBeam * amu;  // MeV
+        float mreac = (massBeam + massTarget - massEjec) * amu; // MeV
+        
+        float mejec = massEjec * amu;
+        
+        Qval = (1+mejec/mreac) * (energy) - (1 - mbeam/mreac) * (kBeam) - 2 * TMath::Sqrt(mbeam*mejec*(energy)*(kBeam)) / mreac * TMath::Cos(labAngle * TMath::Pi() / 180.);
+    }
 
     return Qval;
 }

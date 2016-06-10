@@ -102,6 +102,8 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
         for ( unsigned short j = 0; j < siDataVect->size(); j++ )
         {
             SiDataBase siData = siDataVect->at ( j );
+	    
+	    if(siData.pos.size() == 0) continue;
 
             if ( siData.isUpstream == isUpstream_ )
             {
@@ -116,16 +118,19 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
 
                 int stPos = -1;
 
-                for ( unsigned short k = 0; k < stripsList.size(); k++ )
+                for ( unsigned short st = 0; st < siData.stripMax.size(); st++ )
                 {
-                    if ( DecodeStripNumber ( siData.stripMax[k] ) == stripsList[k] ) stPos = k;
+                    for ( unsigned short k = 0; k < stripsList.size(); k++ )
+                    {
+                        if ( DecodeStripNumber ( siData.stripMax[st] ) == stripsList[k] ) stPos = st;
+                    }
                 }
 
                 if ( stPos == -1 ) continue;
 
-                if ( siData.pos[stPos].Mag() > 0.0 && !siData.isBarrel )
+                if ( siData.pos[stPos].Mag() > 0.0 && siData.isBarrel )
                 {
-                    hist->Fill ( siData.pos[stPos].Angle ( TVector3 ( 0, 0, 1 ) ) *180/TMath::Pi(), siData.eSum[stPos] );
+                    hist->Fill ( -siData.pos[stPos].Angle ( TVector3 ( 0, 0, 1 ) ) *180/TMath::Pi(), siData.eSum[stPos] );
                 }
             }
         }
