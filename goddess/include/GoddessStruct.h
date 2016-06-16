@@ -22,7 +22,7 @@ struct GamData
     unsigned int time;
 };
 
-///Structure of silicon data from ORRUBA
+///Structure of silicon data from ORRUBA. This one is used when running geb_sort in default mode
 class SiDataBase
 {
 private:
@@ -36,52 +36,49 @@ public:
 
     virtual void Clear();
 
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataBase class by name.
     virtual float* SetMemberAddress ( std::string member, float** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataBase class by name.
     virtual int* SetMemberAddress ( std::string member, int** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataBase class by name.
     virtual std::vector<float>* SetMemberAddress ( std::string member, std::vector<float>** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataBase class by name.
     virtual std::vector<int>* SetMemberAddress ( std::string member, std::vector<int>** address );
 
+    ///Method which can be used within the root Draw command to plot the sum of the energies collected in a specific layer and a specific side.
     virtual float eSumLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
+    ///Method which can be used within the root Draw command to plot the strip number which collected the max energy in a specific layer and specific side.
     virtual int stripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
+    ///Method which can be used within the root Draw command to plot the position of a hit in the dE layer
     virtual TVector3 posdE() const;
+    ///Method which can be used within the root Draw command to plot the position of a hit in the E1 layer
     virtual TVector3 posE1() const;
+    ///Method which can be used within the root Draw command to plot the position of a hit in the E2 layer
     virtual TVector3 posE2() const;
 
+    ///Method which can be used within the root Draw command to reconstruct the Q value.
+    /**massBeam is the mass of the beam in a.m.u.
+     * kBeam is the energy of the beam in MeV
+     * massTarget is the mass of the target in a.m.u.
+     * massEjec is the mass of the emitted light particle in a.m.u.
+     */
     virtual float QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const;
 
+    ///Method which can be used within the root Draw command to plot the angular distribution of the particles detected in a specific layer
     virtual float angle ( unsigned short layer = 1 ) const;
 
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     float dE_eSum_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     float E1_eSum_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     float E2_eSum_p;
-//
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     float dE_eSum_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     float E1_eSum_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     float E2_eSum_n;
-//
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     int dE_stripMax_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     int E1_stripMax_p;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     int E2_stripMax_p;
-//
-//     ///The info about all the strips which fired and the energies collected by each of them for the dE layer.
-//     int dE_stripMax_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E1 layer.
-//     int E1_stripMax_n;
-//     ///The info about all the strips which fired and the energies collected by each of them for the E2 layer.
-//     int E2_stripMax_n;
-
+    /// Vector containing the sum of the energies gathered in the different layers.
+    /**They are not sorted so do not use with thr Draw command in root.
+     * Use eSumLayer() method instead.
+     */
     std::vector<float> eSum;
+
+    /// Vector containing the number of the strips which gathered the max energy in the different layers.
+    /**They are not sorted so do not use with thr Draw command in root.
+     * Use eSumLayer() method instead.
+     */
     std::vector<int> stripMax;
 
     ///The unique ID of the telescope to allow an easier selection of a specific portion of the detection system.
@@ -105,7 +102,6 @@ public:
     ///The time of the particle relative to the beginning of the event.
     unsigned int time;
 
-
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( SiDataBase, 1 );
     /// \endcond
@@ -123,9 +119,6 @@ public:
 
     ///Default destructor.
     virtual ~PNPair() {}
-
-//     inline TArrayF* near() const;
-//     inline TArrayF* far() const;
 
     ///Vector containing the info concerning the front side. The energies and strip numbers are using this convention.
     std::vector<pairType> p;
@@ -178,6 +171,7 @@ public:
 
 ClassImp ( SiDetEnStripInfo )
 
+///Structure of silicon data from ORRUBA. This one is used when running geb_sort in high details level.
 class SiDataDetailed : public SiDataBase
 {
 private:
@@ -189,15 +183,23 @@ public:
     ///Default destructor.
     virtual ~SiDataDetailed();
 
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
     float* SetMemberAddress ( std::string member, float** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
     int* SetMemberAddress ( std::string member, int** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
     std::vector<float>* SetMemberAddress ( std::string member, std::vector<float>** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
     std::vector<int>* SetMemberAddress ( std::string member, std::vector<int>** address );
 
+    ///Clear the different class members of SiDataDetailed
     void Clear();
 
+    ///Object containing the info on the dE layer
     SiDetEnStripInfo dE;
+    ///Object containing the info on the E1 layer
     SiDetEnStripInfo E1;
+    ///Object containing the info on the E2 layer
     SiDetEnStripInfo E2;
 
     /// \cond This is just for ROOT and doesn't need to be documented
@@ -223,22 +225,31 @@ struct IonData
     unsigned int time;
 };
 
+///Structure of the GammaSphere data for the raw tree
 struct GSRawData
 {
+    ///GammaSphere detector type
     int type;
+    ///GammaSphere detector number
     int num;
+    ///The uncalibrated gamma energy can be obtained by doing post_rise_energy - pre_rise_energy
     unsigned long int pre_rise_energy;
+    ///The uncalibrated gamma energy can be obtained by doing post_rise_energy - pre_rise_energy
     unsigned long int post_rise_energy;
 };
 
+///Support class for the ORRUBARawData structure
 class ChValPair
 {
 private:
 
 public:
+    ///Default constructor.
     ChValPair();
+    ///Default destructor.
     virtual ~ChValPair();
 
+    ///Method which can be used within the root Draw command to plot the calibrated values from the raw tree
     float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
 
     unsigned short channel;
@@ -249,22 +260,25 @@ public:
     /// \endcond
 };
 
-
-
+///Structure of the ORRUBA data for the raw tree
 class ORRUBARawData
 {
 private:
 
 public:
+    ///Default constructor.
     ORRUBARawData();
+    ///Default destructor.
     virtual ~ORRUBARawData();
 
     void Clear();
 
-//     float GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams = 0 ) const;
+    ///Method which can be used within the root Draw command to plot the multiplicity for a range of ADC channels
     unsigned short GetMultRange ( unsigned short beg = 1, unsigned short end = 32 ) const;
 
+    ///Vector containing the (channel, value) pairs
     std::vector<ChValPair> data;
+    ///Vector of boolean giving the DAQ type
     std::vector<bool> isDigital;
 
     /// \cond This is just for ROOT and doesn't need to be documented

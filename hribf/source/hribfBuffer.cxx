@@ -1,135 +1,147 @@
 #include "hribfBuffer.h"
 
-#include <sstream> 
+#include <sstream>
 
-hribfBuffer::hribfBuffer(int bufferSize,int headerSize, int wordSize) :
-		mainBuffer(bufferSize,headerSize,wordSize)
+hribfBuffer::hribfBuffer ( int bufferSize,int headerSize, int wordSize ) :
+    mainBuffer ( bufferSize,headerSize,wordSize )
 {
 }
-hribfBuffer::hribfBuffer(const char *filename, int bufferSize, 
-	int headerSize, int wordSize) :
-		mainBuffer(headerSize,bufferSize,wordSize)
+hribfBuffer::hribfBuffer ( const char *filename, int bufferSize,
+                           int headerSize, int wordSize ) :
+    mainBuffer ( headerSize,bufferSize,wordSize )
 {
-	OpenFile(filename);
+    OpenFile ( filename );
 }
 /**
  * \param[in] verbose Verbosity flag.
  * \return The number of words left in the buffer.
  */
-int hribfBuffer::ReadEvent(bool verbose) {
-	unsigned int eventStartPos = GetBufferPosition();
-	if (eventStartPos >= GetNumOfWords()) {
-		fflush(stdout);
-		fprintf(stderr,"WARNING: Attempted to read event after reaching end of buffer!\n");
-		return -1;
-	}
-
-	if (verbose) {
-		printf ("\nData Event %llu:\n",fEventNumber);
-	}
-
-	ClearEvent();
-	std::vector<UShort_t> multParameterChannels;
-
-	while (GetBufferPositionBytes() < GetNumOfBytes()) {
-		UInt_t datum = GetWord();
-
-		//break if we find the trailer word.
-		if (datum == (UInt_t) -1) {
-			if (verbose) printf("\t%#06X Trailer\n",datum);
-			if (!multParameterChannels.empty()) {
-				fprintf(stderr,"ERROR: Multiple values set for buffer %d, event %d, parameter: (Only last values are stored!)\n",GetBufferNumber(),GetEventNumber());
-				for (auto itr = multParameterChannels.begin(); itr != multParameterChannels.end(); ++itr) {
-					if (itr != multParameterChannels.begin()) fprintf(stderr,", ");
-					fprintf(stderr,"%3d",*itr);
-				}
-				fprintf(stderr,"!\n");
-			}
-
-			break;
-		}
-		UShort_t channel = datum & 0x7FFF;
-		UShort_t value = datum >> 16;
-
-		if (verbose) {
-			printf("\t%#010X Channel: %d Value: %d\n",datum,channel,value);
-		}
-
-		//if (values.size() <= channel) values.resize(channel+1);
-		values[channel]=value;
-		paramMults[channel]++;
-		if (paramMults[channel] == 2) multParameterChannels.push_back(channel);
-	}
-
-	//Increment the number of Events read.
-	fEventNumber++;
-
-	//There is no indication of the number of events so we peak at the next
-	// word to see if it is a trailer.
-	if (GetBufferPositionBytes() < GetNumOfBytes()) {
-		if (GetCurrentWord() != 0xFFFFFFFF) fNumOfEvents++;
-	}
-
-	return GetBufferPosition() - eventStartPos;
-
-}
-
-int hribfBuffer::ReadNextBuffer() 
+int hribfBuffer::ReadEvent ( bool verbose )
 {
-	this->Clear();
+    unsigned int eventStartPos = GetBufferPosition();
+    if ( eventStartPos >= GetNumOfWords() )
+    {
+        fflush ( stdout );
+        fprintf ( stderr,"WARNING: Attempted to read event after reaching end of buffer!\n" );
+        return -1;
+    }
 
-	if (!mainBuffer::ReadNextBuffer()) return 0;
+    if ( verbose )
+    {
+        printf ( "\nData Event %llu:\n",fEventNumber );
+    }
 
-	fBufferType = GetWord();
-	if (fBufferType == BUFFER_TYPE_EOF) SetNumOfWords(GetHeaderSize());
-	else SetNumOfWords(GetWord() + GetHeaderSize());
-	fBufferNumber++;
-	//No information about number of events in header we assume there is
-	// at least one.
-	fNumOfEvents = 1;
-	fEventNumber = 0;
+    ClearEvent();
+    std::vector<UShort_t> multParameterChannels;
 
-	return GetNumOfWords();
+    while ( GetBufferPositionBytes() < GetNumOfBytes() )
+    {
+        UInt_t datum = GetWord();
+
+        //break if we find the trailer word.
+        if ( datum == ( UInt_t ) -1 )
+        {
+            if ( verbose ) printf ( "\t%#06X Trailer\n",datum );
+            if ( !multParameterChannels.empty() )
+            {
+                fprintf ( stderr,"ERROR: Multiple values set for buffer %d, event %d, parameter: (Only last values are stored!)\n",GetBufferNumber(),GetEventNumber() );
+                for ( auto itr = multParameterChannels.begin(); itr != multParameterChannels.end(); ++itr )
+                {
+                    if ( itr != multParameterChannels.begin() ) fprintf ( stderr,", " );
+                    fprintf ( stderr,"%3d",*itr );
+                }
+                fprintf ( stderr,"!\n" );
+            }
+
+            break;
+        }
+        UShort_t channel = datum & 0x7FFF;
+        UShort_t value = datum >> 16;
+
+        if ( verbose )
+        {
+            printf ( "\t%#010X Channel: %d Value: %d\n",datum,channel,value );
+        }
+
+        //if (values.size() <= channel) values.resize(channel+1);
+        values[channel]=value;
+        paramMults[channel]++;
+        if ( paramMults[channel] == 2 ) multParameterChannels.push_back ( channel );
+    }
+
+    //Increment the number of Events read.
+    fEventNumber++;
+
+    //There is no indication of the number of events so we peak at the next
+    // word to see if it is a trailer.
+    if ( GetBufferPositionBytes() < GetNumOfBytes() )
+    {
+        if ( GetCurrentWord() != 0xFFFFFFFF ) fNumOfEvents++;
+    }
+
+    return GetBufferPosition() - eventStartPos;
+
 }
-/**Unpacks the current buffer based on the type. This needs to be called multiple 
+
+int hribfBuffer::ReadNextBuffer()
+{
+    this->Clear();
+
+    if ( !mainBuffer::ReadNextBuffer() ) return 0;
+
+    fBufferType = GetWord();
+    if ( fBufferType == BUFFER_TYPE_EOF ) SetNumOfWords ( GetHeaderSize() );
+    else SetNumOfWords ( GetWord() + GetHeaderSize() );
+    fBufferNumber++;
+    //No information about number of events in header we assume there is
+    // at least one.
+    fNumOfEvents = 1;
+    fEventNumber = 0;
+
+    return GetNumOfWords();
+}
+/**Unpacks the current buffer based on the type. This needs to be called multiple
  * time to completely unpack a physics event buffer.
  *
  * \param[in] verbose Verbosity flag.
  * \return True if the buffer has more content to unpack.
  */
-void hribfBuffer::UnpackBuffer(bool verbose) {
-	switch(fBufferType) {
-		case BUFFER_TYPE_DATA:
-			while (GetEventsRemaining())
-				//We read an event and there are no more words left.
-				if (!ReadEvent(verbose)) break;
-			break;
-		case BUFFER_TYPE_SCALERS: 
-			ReadScalers(verbose);
-			break;
-		case BUFFER_TYPE_RUNBEGIN: 
-			ReadRunBegin(verbose);
-			break;
-		case BUFFER_TYPE_DIR:
-			ReadDir(verbose);
-			break;
-		case BUFFER_TYPE_DEAD:
-			ReadDead(verbose);
-			break;
-		case BUFFER_TYPE_EOF: 
-			break;
-		case BUFFER_TYPE_PAC:
-			ReadPAC(verbose);
-			break;
-		default: 
-			fflush(stdout);
-			fprintf(stderr,"WARNING: Unknown buffer type: %#010X '%s'.\n",(UInt_t)fBufferType,ConvertToString(fBufferType).c_str());
-	}
+void hribfBuffer::UnpackBuffer ( bool verbose )
+{
+    switch ( fBufferType )
+    {
+    case BUFFER_TYPE_DATA:
+        while ( GetEventsRemaining() )
+            //We read an event and there are no more words left.
+            if ( !ReadEvent ( verbose ) ) break;
+        break;
+    case BUFFER_TYPE_SCALERS:
+        ReadScalers ( verbose );
+        break;
+    case BUFFER_TYPE_RUNBEGIN:
+        ReadRunBegin ( verbose );
+        break;
+    case BUFFER_TYPE_DIR:
+        ReadDir ( verbose );
+        break;
+    case BUFFER_TYPE_DEAD:
+        ReadDead ( verbose );
+        break;
+    case BUFFER_TYPE_EOF:
+        break;
+    case BUFFER_TYPE_PAC:
+        ReadPAC ( verbose );
+        break;
+    default:
+        fflush ( stdout );
+        fprintf ( stderr,"WARNING: Unknown buffer type: %#010X '%s'.\n", ( UInt_t ) fBufferType,ConvertToString ( fBufferType ).c_str() );
+    }
 }
-void hribfBuffer::ReadPAC(bool verbose) {
-	std::string PACStr = ReadString(GetNumOfWords() - GetHeaderSize(),verbose);
+void hribfBuffer::ReadPAC ( bool verbose )
+{
+    std::string PACStr = ReadString ( GetNumOfWords() - GetHeaderSize(),verbose );
 
-	if (verbose) printf("\t%s\n",PACStr.c_str());
+    if ( verbose ) printf ( "\t%s\n",PACStr.c_str() );
 }
 
 
@@ -137,10 +149,11 @@ void hribfBuffer::ReadPAC(bool verbose) {
  *
  * \param[in] verbose Verbosity flag.
  */
-void hribfBuffer::ReadDead(bool verbose) {
-	std::string deadTimeStr = ReadString(GetNumOfWords() - GetHeaderSize(),verbose);
+void hribfBuffer::ReadDead ( bool verbose )
+{
+    std::string deadTimeStr = ReadString ( GetNumOfWords() - GetHeaderSize(),verbose );
 
-	if (verbose) printf("\t%s\n",deadTimeStr.c_str());
+    if ( verbose ) printf ( "\t%s\n",deadTimeStr.c_str() );
 }
 
 /**DIR buffer is usually found at the beginning of a file (run) and contains the following:
@@ -151,65 +164,69 @@ void hribfBuffer::ReadDead(bool verbose) {
  * 	5. An unknown value
  * 	6. An unknown value
  *
- * 	\bug The buffer length is hard coded to 8194 and the value from this buffer is ignored. 
+ * 	\bug The buffer length is hard coded to 8194 and the value from this buffer is ignored.
  *
  * \param[in] verbose Verbosity flag.
  */
-void hribfBuffer::ReadDir(bool verbose) {
-	unsigned int bufferLength = GetWord();
-	unsigned int numberOfBuffers = GetWord();
-	unsigned int word1 = GetWord();
-	unsigned int word2 = GetWord();
-	fRunNum = GetWord();
-	unsigned int word3 = GetWord();
+void hribfBuffer::ReadDir ( bool verbose )
+{
+    unsigned int bufferLength = GetWord();
+    unsigned int numberOfBuffers = GetWord();
+    unsigned int word1 = GetWord();
+    unsigned int word2 = GetWord();
+    fRunNum = GetWord();
+    unsigned int word3 = GetWord();
 
-	if (verbose) {
-		printf("\t%#010X Buffer Length: %u\n",bufferLength,bufferLength);
-		printf("\t%#010X Number of Buffers: %u\n",numberOfBuffers,numberOfBuffers);
-		printf("\t%#010X Unknown Word: %u\n",word1,word1);
-		printf("\t%#010llX Run Number: %llu\n",fRunNum,fRunNum);
-		printf("\t%#010X Unknown Word: %u\n",word2,word2);
-		printf("\t%#010X Unknown Word: %u\n",word3,word3);
-	}
+    if ( verbose )
+    {
+        printf ( "\t%#010X Buffer Length: %u\n",bufferLength,bufferLength );
+        printf ( "\t%#010X Number of Buffers: %u\n",numberOfBuffers,numberOfBuffers );
+        printf ( "\t%#010X Unknown Word: %u\n",word1,word1 );
+        printf ( "\t%#010llX Run Number: %llu\n",fRunNum,fRunNum );
+        printf ( "\t%#010X Unknown Word: %u\n",word2,word2 );
+        printf ( "\t%#010X Unknown Word: %u\n",word3,word3 );
+    }
 }
 
-void hribfBuffer::PrintBufferHeader() 
+void hribfBuffer::PrintBufferHeader()
 {
-	printf("\nBuffer Header Summary:\n");
-	std::string type = ConvertToString(fBufferType);
+    printf ( "\nBuffer Header Summary:\n" );
+    std::string type = ConvertToString ( fBufferType );
 
-	printf("\t%#010llX Buffer type: %s\n",fBufferType,type.c_str());
-	printf("\t%#010llX Number of Words: %llu\n",GetNumOfWords(),GetNumOfWords());
-	printf("\t%10c Buffer number: %llu\n",' ',fBufferNumber);
+    printf ( "\t%#010llX Buffer type: %s\n",fBufferType,type.c_str() );
+    printf ( "\t%#010llX Number of Words: %llu\n",GetNumOfWords(),GetNumOfWords() );
+    printf ( "\t%10c Buffer number: %llu\n",' ',fBufferNumber );
 }
 
-void hribfBuffer::ReadRunBegin(bool verbose)
+void hribfBuffer::ReadRunBegin ( bool verbose )
 {
-	if (GetBufferType() != BUFFER_TYPE_RUNBEGIN) {
-		fflush(stdout);
-		fprintf(stderr,"ERROR: Not a run begin buffer!\n");
-		return;
-	}
+    if ( GetBufferType() != BUFFER_TYPE_RUNBEGIN )
+    {
+        fflush ( stdout );
+        fprintf ( stderr,"ERROR: Not a run begin buffer!\n" );
+        return;
+    }
 
-	std::string facility = ReadString(2,verbose);
-	if (verbose) printf("\t Facility: %s",facility.data());
-	fFormat = ReadString(2,verbose);
-	if (verbose) printf("\t Format: %s",fFormat.data());
-	std::string type = ReadString(4,verbose);
-	if (verbose) printf("\t Type: %s",type.data());
-	std::string date = ReadString(4,verbose);
-	if (verbose) printf("\t Date: %s",date.data());
+    std::string facility = ReadString ( 2,verbose );
+    if ( verbose ) printf ( "\t Facility: %s",facility.data() );
+    fFormat = ReadString ( 2,verbose );
+    if ( verbose ) printf ( "\t Format: %s",fFormat.data() );
+    std::string type = ReadString ( 4,verbose );
+    if ( verbose ) printf ( "\t Type: %s",type.data() );
+    std::string date = ReadString ( 4,verbose );
+    if ( verbose ) printf ( "\t Date: %s",date.data() );
 
-	fRunTitle = ReadString(20,verbose);
-	if (verbose) printf("\t Title: %s\n",fRunTitle.c_str());
+    fRunTitle = ReadString ( 20,verbose );
+    if ( verbose ) printf ( "\t Title: %s\n",fRunTitle.c_str() );
 
-	fRunNum = GetWord();	
-	if (verbose) printf("\t%#010llX Run Number: %llu\n",fRunNum,fRunNum);
+    fRunNum = GetWord();
+    if ( verbose ) printf ( "\t%#010llX Run Number: %llu\n",fRunNum,fRunNum );
 
-	if (type.find("LIST DATA") == std::string::npos) {
-		fflush(stdout);
-		fprintf(stderr,"ERROR: Unknown type: %s\n",type.c_str());
-	}
+    if ( type.find ( "LIST DATA" ) == std::string::npos )
+    {
+        fflush ( stdout );
+        fprintf ( stderr,"ERROR: Unknown type: %s\n",type.c_str() );
+    }
 }
 
 /**Scalers are saved as an ASCII string with a double space "  " separating
@@ -227,51 +244,54 @@ void hribfBuffer::ReadRunBegin(bool verbose)
  *
  * \param[in] verbose Verbosity flag.
  */
-void hribfBuffer::ReadScalers(bool verbose) {
-	int maxLength = 24;
-	if (verbose) printf("\n");
+void hribfBuffer::ReadScalers ( bool verbose )
+{
+    int maxLength = 24;
+    if ( verbose ) printf ( "\n" );
 
-	std::string leader = ReadStringBytes(13,verbose);
-	if (verbose) printf("\t%-*s| Leader\n\n",maxLength,leader.c_str());
-	
-	//Build a timestamp from the date and time entries.
-	std::string date = ReadStringBytes(22,verbose);
-	struct tm tm;
-	strptime(date.c_str(), "%d-%b-%y  %H:%M:%S", &tm);
-	time_t t = mktime(&tm);
-	if (verbose) printf("\t%-*s| Date: %s\n",maxLength,date.c_str(),ctime(&t));
+    std::string leader = ReadStringBytes ( 13,verbose );
+    if ( verbose ) printf ( "\t%-*s| Leader\n\n",maxLength,leader.c_str() );
 
-	//Get time elapsed since last scaler dump.
-	std::string duration = ReadStringBytes(11,verbose);
-	UInt_t timeElapsed = std::stoi(duration.substr(duration.find("=")+1));
-	if (verbose) printf("\t%-*s| Time Elapsed: %u s\n\n",maxLength,duration.c_str(),timeElapsed);
+    //Build a timestamp from the date and time entries.
+    std::string date = ReadStringBytes ( 22,verbose );
+    struct tm tm;
+    strptime ( date.c_str(), "%d-%b-%y  %H:%M:%S", &tm );
+    time_t t = mktime ( &tm );
+    if ( verbose ) printf ( "\t%-*s| Date: %s\n",maxLength,date.c_str(),ctime ( &t ) );
 
-	//Get the incremental flag
-	std::string clearCode = ReadStringBytes(11,verbose);
-	bool incremental = false;
-	if (clearCode.find_first_of("yY") != std::string::npos) 
-		incremental = true;
-	if (verbose) printf("\t%-*s| Incremental: %u\n\n",maxLength,clearCode.c_str(),incremental);
+    //Get time elapsed since last scaler dump.
+    std::string duration = ReadStringBytes ( 11,verbose );
+    UInt_t timeElapsed = std::stoi ( duration.substr ( duration.find ( "=" ) +1 ) );
+    if ( verbose ) printf ( "\t%-*s| Time Elapsed: %u s\n\n",maxLength,duration.c_str(),timeElapsed );
 
-	ReadStringBytes(23,verbose);
+    //Get the incremental flag
+    std::string clearCode = ReadStringBytes ( 11,verbose );
+    bool incremental = false;
+    if ( clearCode.find_first_of ( "yY" ) != std::string::npos )
+        incremental = true;
+    if ( verbose ) printf ( "\t%-*s| Incremental: %u\n\n",maxLength,clearCode.c_str(),incremental );
 
-	//Loop over the scalers and get the name and values.
-	std::vector< std::pair< UInt_t, Float_t > > scalerValues;
-	std::vector< std::string > scalerNames;
-	std::string scalerName;
-	while((scalerName = ReadStringBytes(15,verbose)).find_first_not_of(" ") != std::string::npos) {
-		scalerNames.push_back(scalerName.substr(0,scalerName.find_first_of(" ")));
+    ReadStringBytes ( 23,verbose );
 
-		std::string scalerVal1 = ReadStringBytes(9,verbose);
-		std::string scalerVal2 = ReadStringBytes(12,verbose);
-		scalerValues.push_back(std::make_pair(std::stoi(scalerVal1),std::stof(scalerVal2)));
+    //Loop over the scalers and get the name and values.
+    std::vector< std::pair< UInt_t, Float_t > > scalerValues;
+    std::vector< std::string > scalerNames;
+    std::string scalerName;
+    while ( ( scalerName = ReadStringBytes ( 15,verbose ) ).find_first_not_of ( " " ) != std::string::npos )
+    {
+        scalerNames.push_back ( scalerName.substr ( 0,scalerName.find_first_of ( " " ) ) );
 
-		ReadStringBytes(4,verbose);
+        std::string scalerVal1 = ReadStringBytes ( 9,verbose );
+        std::string scalerVal2 = ReadStringBytes ( 12,verbose );
+        scalerValues.push_back ( std::make_pair ( std::stoi ( scalerVal1 ),std::stof ( scalerVal2 ) ) );
 
-		if (verbose) {
-			printf("\tScaler '%s' %d %.3e\n\n",scalerNames.back().c_str(),scalerValues.back().first,scalerValues.back().second);
-		}
-	}
+        ReadStringBytes ( 4,verbose );
+
+        if ( verbose )
+        {
+            printf ( "\tScaler '%s' %d %.3e\n\n",scalerNames.back().c_str(),scalerValues.back().first,scalerValues.back().second );
+        }
+    }
 
 }
 
@@ -282,28 +302,34 @@ void hribfBuffer::ReadScalers(bool verbose) {
  *
  * \return The length of the event in words.
  */
-UInt_t hribfBuffer::GetEventLength() {
-	UInt_t eventLength = 1;
-	while (GetWord() != 0xFFFFFFFF) {
-		eventLength++;
-	}
-	Seek(-eventLength);
-	return ValidatedEventLength(eventLength);
+UInt_t hribfBuffer::GetEventLength()
+{
+    UInt_t eventLength = 1;
+    while ( GetWord() != 0xFFFFFFFF )
+    {
+        eventLength++;
+    }
+    Seek ( -eventLength );
+    return ValidatedEventLength ( eventLength );
 }
 
-bool hribfBuffer::IsDataType() {
-	if (fBufferType == BUFFER_TYPE_DATA) return true;
-	return false;
+bool hribfBuffer::IsDataType()
+{
+    if ( fBufferType == BUFFER_TYPE_DATA ) return true;
+    return false;
 }
-bool hribfBuffer::IsScalerType() {
-	if (fBufferType == BUFFER_TYPE_SCALERS) return true;
-	return false;
+bool hribfBuffer::IsScalerType()
+{
+    if ( fBufferType == BUFFER_TYPE_SCALERS ) return true;
+    return false;
 }
-bool hribfBuffer::IsRunBegin() {
-	if (fBufferType == BUFFER_TYPE_RUNBEGIN) return true;
-	return false;
+bool hribfBuffer::IsRunBegin()
+{
+    if ( fBufferType == BUFFER_TYPE_RUNBEGIN ) return true;
+    return false;
 }
-bool hribfBuffer::IsRunEnd() {
-	if (fBufferType == BUFFER_TYPE_EOF) return true;
-	return false;
+bool hribfBuffer::IsRunEnd()
+{
+    if ( fBufferType == BUFFER_TYPE_EOF ) return true;
+    return false;
 }

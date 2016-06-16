@@ -29,53 +29,6 @@ BB10::BB10 ( std::string serial_Num, unsigned short sector_, unsigned short dept
  */
 void BB10::ConstructBins()
 {
-
-//     float pStripPitch = 40.3 / 8; //mm
-//     float halfLength = 75.0 / 2; //mm
-//
-//     //added in cornerPos vector which is located on the bottom (cable) left corner of silicon looking at the front face of detector
-//     // the cos(detPos.RotPhi()) will be +1 or -1 depending on if it is upstream or downstream respectively. Detectors are head to head in barrel
-//     SolidVector cornerPos ( detPos.X() - 4 * pStripPitch * cos ( detPos.RotZ() ) * cos ( detPos.RotPhi() ),
-//                             detPos.Y() - 4 * pStripPitch * sin ( detPos.RotZ() ) * cos ( detPos.RotPhi() ),
-//                             detPos.Z() - halfLength * cos ( detPos.RotPhi() ),
-//                             detPos.RotZ(),
-//                             detPos.RotPhi() );
-//
-//     for ( unsigned int strip = 0; strip <= 8; strip++ )
-//     {
-//         //compute the binning along the p and n type strip directions in mm.
-//         //strip 0 is furthest right strip, same side as corner position
-//         binsP[strip] = strip * pStripPitch;
-//
-//         //The strips have x and y computed from detector vector projected onto the
-//         //XY vector from the detector origin to the strip edge.
-//         // this vector needed the same treatment of cos(detPos.RotPhi()) to calculate the correct strip location upstream or downstream
-//         pStripEdgePos[strip].SetXYZ ( cornerPos.X() + binsP[strip] * cos ( cornerPos.RotZ() ) *cos ( detPos.RotPhi() ),
-//                                       cornerPos.Y() + binsP[strip] * sin ( cornerPos.RotZ() ) *cos ( detPos.RotPhi() ),
-//                                       cornerPos.Z() + halfLength * cos ( detPos.RotPhi() ) );
-//
-//         //Azimuthal angle
-//         binsAzimuthal[strip] = TMath::RadToDeg() * pStripEdgePos[strip].Phi();
-//     }
-//
-//     for ( unsigned int strip = 0; strip < 8; strip++ )
-//     {
-//         binsPCenter[strip] = ( binsP[strip] + binsP[strip + 1] ) / 2;
-//         binsAzimuthalCenter[strip] = ( binsAzimuthal[strip] + binsAzimuthal[strip + 1] ) / 2;
-//     }
-//
-// #ifdef VERBOSE
-//     std::cout << serialNum << "\tcenter:\t";
-//     detPos.Print();
-//     std::cout << "\tcorner:\t";
-//     cornerPos.Print();
-//     std::cout << "\tpStrip:\t";
-//     pStripEdgePos[0].Print();
-//     std::cout << "\t       \t";
-//     pStripEdgePos[7].Print();
-//     std::cout << "\tnStrip:\t";
-// #endif
-
     float BB10_width = 40.3; //mm
     float BB10_length = 75.; //mm
 

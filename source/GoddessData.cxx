@@ -950,21 +950,21 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                             en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
                             en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
 
+                            if ( writeDetails )
+                            {
+                                eP->push_back ( en_near );
+                                stripP->push_back ( st_ );
+
+                                eN->push_back ( en_far );
+                                stripN->push_back ( -1 );
+                            }
+
                             float en_ = 0.0;
 
                             if ( en_near > 0.0 && en_far > 0.0 ) en_ = en_near + en_far;
 
                             if ( en_ > 0.0 )
                             {
-                                if ( writeDetails )
-                                {
-                                    eP->push_back ( en_near );
-                                    stripP->push_back ( st_ );
-
-                                    eN->push_back ( en_far );
-                                    stripN->push_back ( -1 );
-                                }
-
                                 if ( ( Pars.noCalib + nc ) % 2 == 0 )
                                 {
                                     std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();

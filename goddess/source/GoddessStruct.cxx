@@ -7,40 +7,17 @@
 #include "GoddessStruct.h"
 
 template<typename T> T* GetMemberFromName ( std::string name , SiDataBase* siDat )
-{
-//     if ( name == "dE_eSum_p" ) return ( T* ) &siDat->dE_eSum_p;
-//     else if ( name == "dE_eSum_n" ) return ( T* ) &siDat->dE_eSum_n;
-//     else if ( name == "E1_eSum_p" ) return ( T* ) &siDat->E1_eSum_p;
-//     else if ( name == "E1_eSum_n" ) return ( T* ) &siDat->E1_eSum_n;
-//     else if ( name == "E2_eSum_p" ) return ( T* ) &siDat->E2_eSum_p;
-//     else if ( name == "E2_eSum_n" ) return ( T* ) &siDat->E2_eSum_n;
-//     else if ( name == "dE_stripMax_p" ) return ( T* ) &siDat->dE_stripMax_p;
-//     else if ( name == "dE_stripMax_n" ) return ( T* ) &siDat->dE_stripMax_n;
-//     else if ( name == "E1_stripMax_p" ) return ( T* ) &siDat->E1_stripMax_p;
-//     else if ( name == "E1_stripMax_n" ) return ( T* ) &siDat->E1_stripMax_n;
-//     else if ( name == "E2_stripMax_p" ) return ( T* ) &siDat->E2_stripMax_p;
-//     else if ( name == "E2_stripMax_n" ) return ( T* ) &siDat->E2_stripMax_n;
-//     else return 0;
-
-    return 0;
+{  
+    //Useless but this prevent warning that the variable is not used. I just don't know if I keep this function yet.
+    if(name.length() > 0 && siDat)    
+        return 0;
+    
+    else
+        return 0;
 }
 
 template<typename T> T* GetMemberFromName ( std::string name , SiDataDetailed* siDat )
 {
-//     if ( name == "dE_e_p" ) return ( T* ) &siDat->dE_e_p;
-//     else if ( name == "dE_e_n" ) return ( T* ) &siDat->dE_e_n;
-//     else if ( name == "E1_e_p" ) return ( T* ) &siDat->E1_e_p;
-//     else if ( name == "E1_e_n" ) return ( T* ) &siDat->E1_e_n;
-//     else if ( name == "E2_e_p" ) return ( T* ) &siDat->E2_e_p;
-//     else if ( name == "E2_e_n" ) return ( T* ) &siDat->E2_e_n;
-//     else if ( name == "dE_strip_p" ) return ( T* ) &siDat->dE_strip_p;
-//     else if ( name == "dE_strip_n" ) return ( T* ) &siDat->dE_strip_n;
-//     else if ( name == "E1_strip_p" ) return ( T* ) &siDat->E1_strip_p;
-//     else if ( name == "E1_strip_n" ) return ( T* ) &siDat->E1_strip_n;
-//     else if ( name == "E2_strip_p" ) return ( T* ) &siDat->E2_strip_p;
-//     else if ( name == "E2_strip_n" ) return ( T* ) &siDat->E2_strip_n;
-//     else return GetMemberFromName<T> ( name , dynamic_cast<SiDataBase*> ( siDat ) );
-
     if ( name == "dE_e_p" ) return ( T* ) &siDat->dE.en.p;
     else if ( name == "dE_e_n" ) return ( T* ) &siDat->dE.en.n;
     else if ( name == "E1_e_p" ) return ( T* ) &siDat->E1.en.p;
@@ -53,9 +30,8 @@ template<typename T> T* GetMemberFromName ( std::string name , SiDataDetailed* s
     else if ( name == "E1_strip_n" ) return ( T* ) &siDat->E1.strip.n;
     else if ( name == "E2_strip_p" ) return ( T* ) &siDat->E2.strip.p;
     else if ( name == "E2_strip_n" ) return ( T* ) &siDat->E2.strip.n;
-    else return GetMemberFromName<T> ( name , dynamic_cast<SiDataBase*> ( siDat ) );
-
-//     return GetMemberFromName<T> ( name , dynamic_cast<SiDataBase*> ( siDat ) );
+    
+    return GetMemberFromName<T> ( name , dynamic_cast<SiDataBase*> ( siDat ) );
 }
 
 SiDataBase::SiDataBase() {}
@@ -64,20 +40,6 @@ SiDataBase::~SiDataBase() {}
 
 void SiDataBase::Clear()
 {
-//     dE_eSum_p = 0.0;
-//     dE_eSum_n = 0.0;
-//     E1_eSum_p = 0.0;
-//     E1_stripMax_n = 0.0;
-//     E2_eSum_p = 0.0;
-//     E2_eSum_n = 0.0;
-//
-//     dE_stripMax_p = -1;
-//     dE_stripMax_n = -1;
-//     E1_stripMax_p = -1;
-//     E1_stripMax_n = -1;
-//     E2_stripMax_p = -1;
-//     E2_stripMax_n = -1;
-
     eSum.clear();
     stripMax.clear();
 }
@@ -262,42 +224,7 @@ void ORRUBARawData::Clear()
 {
     isDigital.clear();
     data.clear();
-//     channel.clear();
-//     value.clear();
 }
-
-// float ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
-// {
-//     if ( calibParams == NULL ) return value;
-//
-//     float calVal;
-//
-//     auto itr = calibParams->find ( channel );
-//
-//     if ( itr != calibParams->end() )
-//         calVal = ( value - itr->second.first ) * itr->second.second;
-//     else
-//         calVal = value;
-//
-//     return calVal;
-// }
-
-// TArrayF ORRUBARawData::GetFastCalEn ( std::map<unsigned short, std::pair<float, float>>* calibParams ) const
-// {
-//     TArrayF* calVal = new TArrayF ( value.size() );;
-//
-//     for(unsigned short i = 0; i < value.size(); i++)
-//     {
-//         auto itr = calibParams->find ( channel[i] );
-//
-//         if ( calibParams == NULL != NULL && itr != calibParams->end() )
-//             calVal->SetAt(( value[i] - itr->second.first ) * itr->second.second, i);
-//         else
-//             calVal->SetAt(value[i], i);
-//     }
-//
-//     return *calVal;
-// }
 
 unsigned short ORRUBARawData::GetMultRange ( unsigned short beg, unsigned short end ) const
 {
