@@ -3,13 +3,22 @@
 
 #include "goddess_analysis_macros.h"
 
-class GoddessAnalysis : public TObject
+class GoddessAnalysis : public TObject, public TQObject
 {
 private:
 
+    std::string currentTreeName1;
+
+    std::string currentTreeName2;
+
+    std::string currentfilename;
+
 public:
-    GoddessAnalysis() {}
-    virtual ~GoddessAnalysis() {}
+    GoddessAnalysis();
+    GoddessAnalysis ( std::string filename );
+    GoddessAnalysis ( std::string filename, std::string treename, std::string treename2 );
+
+    virtual ~GoddessAnalysis();
 
     template<typename T> inline static void DisplayMapKeys ( std::map<std::string, T> map_ );
     inline static void DisplayMapKeys ( std::map<std::string, float> map_ );
@@ -17,7 +26,6 @@ public:
     inline static int DecodeStripNumber ( int st_ );
 
     template<typename T> inline static void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, T sector );
-
 
     template<typename First, typename... Rest> inline static void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors );
 
@@ -30,6 +38,10 @@ public:
                                  unsigned short sector );
 
     std::vector<unsigned short> GetStripsListToTreat ( std::string strips );
+
+    void CheckMapping ( std::string filename, std::string treename, std::string treename2, unsigned short channel1, unsigned short channel2, bool Digital, std::string DetectorID );
+
+    void CheckMapping ( unsigned short channel1, unsigned short channel2, bool Digital, std::string DetectorID );
 
     ClassDef ( GoddessAnalysis, 1 )
 };
@@ -102,8 +114,8 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
         for ( unsigned short j = 0; j < siDataVect->size(); j++ )
         {
             SiDataBase siData = siDataVect->at ( j );
-	    
-	    if(siData.pos.size() == 0) continue;
+
+            if ( siData.pos.size() == 0 ) continue;
 
             if ( siData.isUpstream == isUpstream_ )
             {
@@ -143,4 +155,7 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
     return hist;
 }
 
+
+
 #endif
+
