@@ -1,5 +1,191 @@
 #include "GoddessCalib.h"
 
+GoddessCalib* GoddessCalib::s_instance = 0;
+
+void GoddessCalib::DeleteSInstance()
+{
+    delete s_instance;
+    s_instance = nullptr;
+}
+
+void ResetCurrentCanvas()
+{
+    GoddessCalib::sinstance()->currentCanvas = nullptr;
+}
+
+GoddessCalib::GoddessCalib() : GoddessAnalysis()
+{
+    controlCanvas = new TCanvas ( "calibControlInterface", "Calib Control Interface", 300, 600 );
+    controlCanvas->Connect ( "Destroyed()", "GoddessCalib", GoddessCalib::sinstance(), "DeleteSInstance()" );
+
+    currentCanvas = nullptr;
+    GetCornerButton = nullptr;
+
+    currDetType = "";
+    currRefEn1 = 0.0;
+}
+
+GoddessCalib::~GoddessCalib()
+{
+
+}
+
+GoddessCalib* GoddessCalib::StartCalib()
+{
+    if ( s_instance == nullptr )
+        s_instance = new GoddessCalib();
+
+    return s_instance;
+}
+
+void GoddessCalib::UpdateButtonListener ( TButton* gCB, short* isUpstream, short* sector, short* strip )
+{
+//     std::cout << "Updating Button" << std::endl;
+
+    if ( gCB != nullptr )
+        gCB->Delete();
+
+    if ( gPad != nullptr && isUpstream != nullptr && sector != nullptr && strip != nullptr )
+    {
+        auto canPrimList = gPad->GetCanvas()->GetListOfPrimitives();
+
+        TGraph* gr;
+
+        std::string grName_ = "";
+
+        for ( int i = 0; i < canPrimList->GetSize(); i++ )
+        {
+            gr = dynamic_cast<TGraph*> ( canPrimList->At ( i ) );
+
+            if ( gr != nullptr )
+            {
+                grName_ = gr->GetTitle();
+                break;
+            }
+        }
+
+        if ( gr != nullptr )
+        {
+            std::size_t sectPos = grName_.find ( "sector" );
+            std::size_t stripPos = grName_.find ( "strip" );
+            std::size_t separatorPos = grName_.find ( "_" );
+
+            if ( sectPos != std::string::npos && stripPos != std::string::npos && separatorPos != std::string::npos )
+            {
+                if ( grName_[sectPos+6] == 'U' ) *isUpstream = 1;
+                else if ( grName_[sectPos+6] == 'D' ) *isUpstream = 0;
+
+                *sector = std::stoi ( grName_.substr ( sectPos+7, separatorPos ) );
+                *strip = std::stoi ( grName_.substr ( stripPos+5 ) );
+            }
+        }
+    }
+
+    if ( currentCanvas != NULL )
+    {
+        gCB = new TButton ( "Save TLines Info", "GoddessCalib::sinstance()->UpdateButAndGetCorners()", 0.7, 0.94, 0.9, 0.99 );
+        gCB->Draw();
+        currentCanvas->Update();
+    }
+
+    return;
+}
+
+void GoddessCalib::UpdateButAndGetCorners ()
+{
+    short isUS_ = -1, sect_ = -1, strip_ = -1;
+
+    currentCanvas = gPad->GetCanvas();
+
+    if ( currentCanvas == nullptr ) return;
+
+    UpdateButtonListener ( GetCornerButton, &isUS_, &sect_, &strip_ );
+
+    if ( isUS_ == -1 || sect_ == -1 || strip_ == -1 ) return;
+
+    GetCornersCoordinates ( currentCanvas, ( bool ) isUS_, ( short unsigned int ) sect_, ( short unsigned int ) strip_, currDetType, currRefEn1 );
+
+    std::cout << std::endl;
+
+    return;
+}
+
+void* OnCanvasUpdate_GC ( void* dummy )
+{
+    TGraph* grAddress = nullptr;
+
+    while ( GoddessCalib::sinstance() != nullptr )
+    {
+//         std::cout << "Checking status of the active canvas... active? " << (bool)( GoddessCalib::sinstance()->currentCanvas != nullptr ) << std::endl;
+
+        if ( GoddessCalib::sinstance()->currentCanvas != nullptr )
+        {
+            TCanvas* cc = GoddessCalib::sinstance()->currentCanvas;
+
+            auto cLOP = cc->GetListOfPrimitives();
+
+            for ( int i = 0; i < cLOP->GetSize(); i++ )
+            {
+                TGraph* ccgr = dynamic_cast<TGraph*> ( cLOP->At ( i ) );
+
+                if ( ccgr != nullptr )
+                {
+                    if ( grAddress != ccgr )
+                    {
+                        grAddress = ccgr;
+
+                        GoddessCalib::sinstance()->UpdateButtonListener ( GoddessCalib::sinstance()->GetCornerButton, nullptr, nullptr, nullptr );
+                    }
+
+                    break;
+                }
+            }
+        }
+        else
+        {
+            grAddress = nullptr;
+
+            GoddessCalib::sinstance()->GetCornerButton = nullptr;
+        }
+
+        sleep ( 1 );
+    }
+
+    pthread_exit ( nullptr );
+
+    return dummy;
+}
+
+void GoddessCalib::StartSX3EnCalib ( TCanvas* c, std::string detectorType, double refEnergy1 )
+{
+    if ( s_instance == NULL ) return;
+
+    s_instance->currentCanvas = c;
+
+    if ( s_instance->currentCanvas == nullptr && gPad != nullptr && gPad != s_instance->controlCanvas )
+        s_instance->currentCanvas = gPad->GetCanvas();
+
+    if ( s_instance->currentCanvas == nullptr )
+    {
+        std::cerr << "No Canvas Available!" << std::endl;
+        return;
+    }
+
+    s_instance->currDetType = detectorType;
+    s_instance->currRefEn1 = refEnergy1;
+
+    gStyle->SetLineWidth ( 2 );
+    gStyle->SetLineColor ( 2 );
+
+    gStyle->SetMarkerColor ( 4 );
+    gStyle->SetMarkerSize ( 2 );
+    gStyle->SetMarkerStyle ( 3 );
+
+    s_instance->currentCanvas->Connect ( "Destroyed()", "GoddessCalib", GoddessCalib::sinstance(), "ResetCurrentCanvas()" );
+
+    pthread_create ( & ( s_instance->checkThread ), nullptr, OnCanvasUpdate_GC, nullptr );
+}
+
 void GoddessCalib::InitializeCalMapKey ( std::string mapKey, unsigned short strip )
 {
     auto itr = resStripsCalMap.find ( mapKey );
@@ -52,7 +238,7 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
 
         TLine* line = dynamic_cast<TLine*> ( child );
 
-        if ( line == NULL ) continue;
+        if ( line == nullptr ) continue;
 
         double x1 = line->GetX1();
         double y1 = line->GetY1();
@@ -70,7 +256,7 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
         if ( slope < 0 ) negLine = line;
         else
         {
-            if ( tempLine == NULL )
+            if ( tempLine == nullptr )
             {
                 tempSlope = slope;
                 tempLine = line;
@@ -96,19 +282,19 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
     double slopeTop = -100, slopeBot = -10, slopeNeg = -10;
     double offTop = -100, offBot = -100, offNeg = -100;
 
-    if ( topLine != NULL )
+    if ( topLine != nullptr )
     {
         slopeTop = ( topLine->GetY2() - topLine->GetY1() ) / ( topLine->GetX2() - topLine->GetX1() );
         offTop = ( topLine->GetX1() * topLine->GetY2() - topLine->GetX2() * topLine->GetY1() ) / ( topLine->GetX1() - topLine->GetX2() );
     }
 
-    if ( botLine != NULL )
+    if ( botLine != nullptr )
     {
         slopeBot = ( botLine->GetY2() - botLine->GetY1() ) / ( botLine->GetX2() - botLine->GetX1() );
         offBot = ( botLine->GetX1() * botLine->GetY2() - botLine->GetX2() * botLine->GetY1() ) / ( botLine->GetX1() - botLine->GetX2() );
     }
 
-    if ( negLine != NULL )
+    if ( negLine != nullptr )
     {
         slopeNeg = ( negLine->GetY2() - negLine->GetY1() ) / ( negLine->GetX2() - negLine->GetX1() );
         offNeg = ( negLine->GetX1() * negLine->GetY2() - negLine->GetX2() * negLine->GetY1() ) / ( negLine->GetX1() - negLine->GetX2() );
@@ -116,7 +302,7 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
 
     double xIntersect = -100, yIntersect = -100;
 
-    if ( topLine != NULL && botLine != NULL )
+    if ( topLine != nullptr && botLine != nullptr )
     {
         xIntersect = ( offTop - offBot ) / ( slopeBot - slopeTop );
         yIntersect = slopeTop * xIntersect + offTop;
@@ -125,26 +311,26 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
     double nearCorrFactor = -100;
     double energyCalCoeff = -100;
 
-    if ( negLine != NULL ) nearCorrFactor = -slopeNeg;
+    if ( negLine != nullptr ) nearCorrFactor = -slopeNeg;
 
     InitializeCalMapKey ( calMapKey, strip );
 
     std::vector<double>* calRes = &resStripsCalMap[calMapKey][strip];
 
-    calRes->at(0) = xIntersect == -100 ? calRes->at(0) : xIntersect;
-    calRes->at(1) = yIntersect == -100 ? calRes->at(1) : yIntersect;
-    calRes->at(2) = nearCorrFactor == -100 ? calRes->at(2) : nearCorrFactor;
+    calRes->at ( 0 ) = xIntersect == -100 ? calRes->at ( 0 ) : xIntersect;
+    calRes->at ( 1 ) = yIntersect == -100 ? calRes->at ( 1 ) : yIntersect;
+    calRes->at ( 2 ) = nearCorrFactor == -100 ? calRes->at ( 2 ) : nearCorrFactor;
 
-    if ( negLine != NULL && calRes->at(0) != -100 && calRes->at(1) != -100 )
+    if ( negLine != nullptr && calRes->at ( 0 ) != -100 && calRes->at ( 1 ) != -100 )
     {
-        energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes->at(1) ) * ( -slopeNeg ) + negLine->GetY1()  - calRes->at(2) );
+        energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes->at ( 1 ) ) * ( -slopeNeg ) + negLine->GetY1()  - calRes->at ( 2 ) );
     }
 
     std::cout << "Intersection between top and bottom at ( " << xIntersect << " ; " << yIntersect << " )" << std::endl;
     std::cout << "Correction factor for the near strip = " << nearCorrFactor << std::endl;
     std::cout << "Slope for energy calibration = " << energyCalCoeff << std::endl;
 
-    calRes->at(3) = energyCalCoeff == -100 ? calRes->at(3) : energyCalCoeff;
+    calRes->at ( 3 ) = energyCalCoeff == -100 ? calRes->at ( 3 ) : energyCalCoeff;
 
     return;
 }
@@ -209,16 +395,16 @@ bool GoddessCalib::DumpFileToResCalMap ( std::string fileName )
 
             std::cout << "Setting the following values: " << xinter << " / " <<  yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge << " / " << pos_right_edge << std::endl;
 
-             std::vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
+            std::vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
 
-            readCal->at(0) = xinter == -100 ? readCal->at(0) : xinter;
-            readCal->at(1) = yinter == -100 ? readCal->at(1) : yinter;
-            readCal->at(2) = slope_gm == -100 ? readCal->at(2) : slope_gm;
-            readCal->at(3) = slope_encal == -100 ? readCal->at(3) : slope_encal;
-            readCal->at(4) = pos_left_edge == -100 ? readCal->at(4) : pos_left_edge;
-            readCal->at(5) = pos_right_edge == -100 ? readCal->at(5) : pos_right_edge;
-	    
-	    std::cout << "New values: " << readCal->at(0) << " / " <<  readCal->at(1) << " / " << readCal->at(2) << " / " << readCal->at(3) << " / " << readCal->at(4) << " / " << readCal->at(5) << std::endl;
+            readCal->at ( 0 ) = xinter == -100 ? readCal->at ( 0 ) : xinter;
+            readCal->at ( 1 ) = yinter == -100 ? readCal->at ( 1 ) : yinter;
+            readCal->at ( 2 ) = slope_gm == -100 ? readCal->at ( 2 ) : slope_gm;
+            readCal->at ( 3 ) = slope_encal == -100 ? readCal->at ( 3 ) : slope_encal;
+            readCal->at ( 4 ) = pos_left_edge == -100 ? readCal->at ( 4 ) : pos_left_edge;
+            readCal->at ( 5 ) = pos_right_edge == -100 ? readCal->at ( 5 ) : pos_right_edge;
+
+            std::cout << "New values: " << readCal->at ( 0 ) << " / " <<  readCal->at ( 1 ) << " / " << readCal->at ( 2 ) << " / " << readCal->at ( 3 ) << " / " << readCal->at ( 4 ) << " / " << readCal->at ( 5 ) << std::endl;
         }
     }
 
@@ -297,7 +483,7 @@ bool GoddessCalib::UpdateResParamsInConf ( std::string configFile, bool invertCo
 
             readLine >> dummy >> detID;
 
-            int posInFile = readFile.tellg();
+//             int posInFile = readFile.tellg();
 
             std::cout << "Found a superX3 entry: " << detID << std::endl;
 
@@ -428,7 +614,7 @@ TGraph* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, std::string varToPl
 
     TGraph* newGraph = ( TGraph* ) gPad->GetPrimitive ( "Graph" );
 
-    if ( newGraph == NULL ) return 0;
+    if ( newGraph == nullptr ) return 0;
 
     std::string gName = Form ( "sector%s%d_strip%d", upStreamCond.c_str(), sector, strip );
 
@@ -449,7 +635,7 @@ TGraph* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, std::string varToPl
 
     TFile* f = new TFile ( rootFileName.c_str(), "update" );
 
-    if ( f->FindKey ( gName.c_str() ) != NULL || f->FindObject ( gName.c_str() ) != NULL )
+    if ( f->FindKey ( gName.c_str() ) != nullptr || f->FindObject ( gName.c_str() ) != nullptr )
     {
         std::string objToDelete = gName + ";*";
         f->Delete ( objToDelete.c_str() );
@@ -547,7 +733,7 @@ void GoddessCalib::WritePosCalHistsToFile ( TTree* tree, std::string fileName )
 
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
-        if ( f->FindKey ( itr->second->GetName() ) != NULL || f->FindObject ( itr->second->GetName() ) != NULL )
+        if ( f->FindKey ( itr->second->GetName() ) != nullptr || f->FindObject ( itr->second->GetName() ) != nullptr )
         {
             std::string objToDelete = itr->second->GetName();
             objToDelete += ";*";
@@ -850,7 +1036,7 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, bool drawResult
     {
         TH2F* hist = dynamic_cast<TH2F*> ( input->Get ( lOK->At ( i )->GetName() ) );
 
-        if ( hist != NULL )
+        if ( hist != nullptr )
         {
             std::string hname = hist->GetName();
 
@@ -901,15 +1087,35 @@ void GoddessCalib::PlotSX3ResStripsCalGraphs()
     std::cout << "PlotSX3ResStripsCalGraphs(TTree* tree, string \"what to plot\", string conditions, sector1, sector2, sector3, ....)" << std::endl;
 }
 
-void GoddessCalib::CalibHelp()
+void GoddessCalib::Help()
 {
-    std::cout << "To plot the strip X of sector Y, call" << std::endl;
+    std::cout << "To plot the Enear vs Efar graph for strip X of sector Y, call" << std::endl;
     std::cout << "PlotSX3ResStripCalGraph(TTree* tree, bool isUpstream, int sector1, int strip)" << std::endl;
     std::cout << std::endl;
     PlotSX3ResStripsCalGraphs();
     std::cout << std::endl;
     PlotSX3ResStripsCalGraphsFromTree();
     std::cout << std::endl;
+    std::cout << "To get help with the energy calibration procedure, call gCal->EnCalibHelp()" << std::endl;
+    std::cout << std::endl;
+    std::cout << "To get help with the position calibration procedure, call gCal->PosCalibHelp()" << std::endl;
+    std::cout << std::endl;
+    std::cout << "To reload a file containing previous calibration and update it, call" << std::endl;
+    std::cout << "DumpFileToResCalMap(string \"previous calib file name\")" << std::endl;
+    std::cout << std::endl;
+}
+
+void GoddessCalib::EnCalibHelp()
+{
+    std::cout << "To start the SX3 energy calibration porecedure, type \"GoddessData::StartSX3EnCalib()\" after opening a TBrowser or TCanvas." << std::endl;
+    std::cout << std::endl;
+    std::cout << "The energy calibration for the resistive strips needs several items:" << std::endl;
+    std::cout << "2 TLines following the edges of the strip in the Enear vs. Efar graph" << std::endl;
+    std::cout << "One TLine following the alpha line from a run with source in the Enear vs. Efar graph" << std::endl;
+    std::cout << "NOTE: You can draw the TLine following the alpha peak separately but the 2 TLine for the edges has to be done from the same graph." << std::endl;
+    std::cout << "To save the info about the TLine which have been drawn, click on the \"Save TLines Info\" button (top right of the canvas)" << std::endl;
+    std::cout << std::endl;
+    std::cout << "The info about the TLines drawn are stored in a map that can be saved at any time."<< std::endl;
     std::cout << "To write the results of the calibrations made during the last session, call" << std::endl;
     std::cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << std::endl;
     std::cout << std::endl;
@@ -919,11 +1125,17 @@ void GoddessCalib::CalibHelp()
     std::cout << "* the \"protected\" mode will prevent you to overwrite your config file and generate a new config file from the input..." << std::endl;
     std::cout << "  switch it to \"overwrite\" if you really know what you're doing" << std::endl;
     std::cout << std::endl;
-    std::cout << "To read a file containing previous calibration and update it, call" << std::endl;
-    std::cout << "DumpFileToResCalMap(string \"previous calib file name\")" << std::endl;
-    std::cout << std::endl;
 
 }
 
+void GoddessCalib::PosCalibHelp()
+{
+    std::cout << "Not written yet... Come back later!" << std::endl;
+    std::cout << std::endl;
+}
+
 ClassImp ( GoddessCalib )
+
+
+
 

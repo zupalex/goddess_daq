@@ -47,7 +47,16 @@ GoddessData::GoddessData ( std::string configFilename )
 
     if ( Pars.noCalib >= 0 )
     {
-        tree = new TTree ( "god", "GODDESS Tree" );
+        std::string treeName = "god";
+        std::string treeTitle = "GODDESS Tree";
+
+        if ( Pars.noCalib == 1 )
+        {
+            treeName = "sorted";
+            treeTitle = "GODDESS Sorted not Calibrated Tree";
+        }
+
+        tree = new TTree ( treeName.c_str(), treeTitle.c_str() );
         tree->Branch ( "timestamp", &firstTimestamp );
         tree->Branch ( "gam", &gamData );
 
@@ -334,17 +343,6 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
             if ( Pars.noMapping )
             {
-//                 ORRUBARawData datum;
-//                 datum.isDigital = false;
-//                 datum.channel = channel;
-//                 datum.value = value;
-
-//                 orrubaRaw->push_back ( datum );
-
-//                 orrubaRaw->isDigital.push_back ( false );
-//                 orrubaRaw->channel.push_back ( channel );
-//                 orrubaRaw->value.push_back ( value );
-
                 orrubaRaw->isDigital.push_back ( false );
 
                 ChValPair newChValPair;
@@ -418,13 +416,6 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
         if ( Pars.noMapping )
         {
-//             ORRUBARawData datum;
-//             datum.isDigital = true;
-//             datum.channel = channel;
-//             datum.value = value;
-//
-//             orrubaRaw->push_back ( datum );
-
             orrubaRaw->isDigital.push_back ( true );
 
             ChValPair newChValPair;
@@ -433,9 +424,6 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
             newChValPair.value = value;
 
             orrubaRaw->data.push_back ( newChValPair );
-
-//             orrubaRaw->channel.push_back ( channel );
-//             orrubaRaw->value.push_back ( value );
         }
 
         std::pair<short, short> key = std::make_pair ( GEB_TYPE_DFMA, channel );

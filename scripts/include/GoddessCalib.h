@@ -6,10 +6,33 @@
 class GoddessCalib : public GoddessAnalysis
 {
 private:
+    GoddessCalib();
+
+    static GoddessCalib* s_instance;
+    pthread_t checkThread;
 
 public:
-    GoddessCalib() {}
-    virtual ~GoddessCalib() {}
+    virtual ~GoddessCalib();
+    
+    void ResetCurrentCanvas();
+
+    static GoddessCalib* StartCalib();
+
+    static GoddessCalib* sinstance()
+    {
+        return s_instance;
+    }
+
+    static void DeleteSInstance();
+    
+    TCanvas* controlCanvas;
+    TCanvas* currentCanvas;
+    TButton* GetCornerButton;
+    std::string currDetType;
+    double currRefEn1;
+
+    void UpdateButtonListener ( TButton* gCB, short* isUpstream, short* sector, short* strip );
+    void UpdateButAndGetCorners ( );
 
     std::map<std::string, std::map<unsigned short, std::vector<double>>> resStripsCalMap;
 
@@ -18,9 +41,11 @@ public:
 
     void InitializeCalMapKey ( std::string mapKey, unsigned short strip );
 
-    void PlotSX3ResStripsCalGraphsFromTree();
-    void PlotSX3ResStripsCalGraphs();
-    void CalibHelp();
+    static void PlotSX3ResStripsCalGraphsFromTree();
+    static void PlotSX3ResStripsCalGraphs();
+    static void Help();
+    static void EnCalibHelp();
+    static void PosCalibHelp();
 
     void DrawSX3EnCalGraph ( bool isUpstream, unsigned short sector, unsigned short strip );
     void DrawSX3PosCalHist ( bool isUpstream, unsigned short sector, unsigned short strip, std::string drawOpts );
@@ -74,6 +99,8 @@ public:
     void GetStripsEdges ( TFile* input, int projWidth = 200, bool drawResults = true );
 
     void WritePosCalHistsToFile ( TTree* tree, std::string fileName );
+
+    static void StartSX3EnCalib ( TCanvas* c = NULL, std::string detectorType = "SuperX3", double refEnergy1 = 5.813 );
 
     ClassDef ( GoddessCalib, 1 )
 };

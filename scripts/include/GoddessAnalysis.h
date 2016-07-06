@@ -6,12 +6,9 @@
 class GoddessAnalysis : public TObject, public TQObject
 {
 private:
-
-    std::string currentTreeName1;
-
-    std::string currentTreeName2;
-
-    std::string currentfilename;
+    std::string defaultTreeName1;
+    std::string defaultTreeName2;
+    std::string defaultFileName;
 
 public:
     GoddessAnalysis();
@@ -19,6 +16,8 @@ public:
     GoddessAnalysis ( std::string filename, std::string treename, std::string treename2 );
 
     virtual ~GoddessAnalysis();
+    
+    void SetDefaultFileAndTrees(std::string fileName, std::string treeName1, std::string treeName2);
 
     template<typename T> inline static void DisplayMapKeys ( std::map<std::string, T> map_ );
     inline static void DisplayMapKeys ( std::map<std::string, float> map_ );

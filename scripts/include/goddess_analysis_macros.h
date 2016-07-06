@@ -11,10 +11,13 @@
 #include <random>
 #include <type_traits>
 #include <cxxabi.h>
+#include <pthread.h>
 
 #include "TROOT.h"
+#include <TQObject.h>
 #include "TObject.h"
 #include "TCanvas.h"
+#include "TFrame.h"
 #include "TList.h"
 #include "TLine.h"
 #include "TGraph.h"
@@ -30,6 +33,8 @@
 #include "TDirectoryFile.h"
 #include "TFitResult.h"
 #include "TFitResultPtr.h"
+#include "TButton.h"
+#include "TStyle.h"
 
 #include "GoddessStruct.h"
 

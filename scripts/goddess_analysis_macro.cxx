@@ -43,9 +43,10 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
 #endif
 
     std::cout << std::endl;
-    std::cout << "To load the TEbtryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;
-    std::cout << "To get the list of the functions you can use, type EntryListsHelp() " << std::endl;
+    std::cout << "To load the TEntryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;
+    std::cout << "To get the list of the functions you can use, type \"EntryListsHelp()\"" << std::endl;
     std::cout << std::endl;
-    std::cout << "To use the calibration macros, create an object of type GoddessCalib (e.g. \"GoddessCalib *gCal = new GoddessCalib()\")" << std::endl;
-    std::cout << "To get the list of the functions you can use, call \"gCal->CalibHelp()\" (assuming you called your GoddessCalib object gCal)" << std::endl;
+    std::cout << "To use the calibration macros, type \"GoddessCalib::StartCalib()\"" << std::endl;
+    std::cout << "To get the list of the functions you can use, call \"GoddessCalib::Help()\"" << std::endl;
+    std::cout << std::endl;
 }
