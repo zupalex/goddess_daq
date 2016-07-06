@@ -1096,9 +1096,9 @@ void GoddessCalib::Help()
     std::cout << std::endl;
     PlotSX3ResStripsCalGraphsFromTree();
     std::cout << std::endl;
-    std::cout << "To get help with the energy calibration procedure, call gCal->EnCalibHelp()" << std::endl;
+    std::cout << "To get help with the energy calibration procedure, call \"GoddessCalib::EnCalibHelp()\"" << std::endl;
     std::cout << std::endl;
-    std::cout << "To get help with the position calibration procedure, call gCal->PosCalibHelp()" << std::endl;
+    std::cout << "To get help with the position calibration procedure, call \"GoddessCalib::PosCalibHelp()\"" << std::endl;
     std::cout << std::endl;
     std::cout << "To reload a file containing previous calibration and update it, call" << std::endl;
     std::cout << "DumpFileToResCalMap(string \"previous calib file name\")" << std::endl;
@@ -1107,7 +1107,7 @@ void GoddessCalib::Help()
 
 void GoddessCalib::EnCalibHelp()
 {
-    std::cout << "To start the SX3 energy calibration porecedure, type \"GoddessData::StartSX3EnCalib()\" after opening a TBrowser or TCanvas." << std::endl;
+    std::cout << "To start the SX3 energy calibration porecedure, type \"GoddessCalib::StartSX3EnCalib()\" after opening a TBrowser or TCanvas." << std::endl;
     std::cout << std::endl;
     std::cout << "The energy calibration for the resistive strips needs several items:" << std::endl;
     std::cout << "2 TLines following the edges of the strip in the Enear vs. Efar graph" << std::endl;
