@@ -9,14 +9,11 @@ private:
     GoddessCalib();
 
     static GoddessCalib* s_instance;
+    TGMainFrame* controlFrame;
     pthread_t checkThread;
 
 public:
     virtual ~GoddessCalib();
-    
-    void ResetCurrentCanvas();
-
-    static GoddessCalib* StartCalib();
 
     static GoddessCalib* sinstance()
     {
@@ -24,15 +21,14 @@ public:
     }
 
     static void DeleteSInstance();
-    
-    TCanvas* controlCanvas;
-    TCanvas* currentCanvas;
-    TButton* GetCornerButton;
+
+    static GoddessCalib* StartCalib();
+    static void StartSX3EnCalib ( std::string detectorType = "SuperX3", double refEnergy1 = 5.813 );
+
     std::string currDetType;
     double currRefEn1;
 
-    void UpdateButtonListener ( TButton* gCB, short* isUpstream, short* sector, short* strip );
-    void UpdateButAndGetCorners ( );
+    static void OnClickGetLinesInfo ( );
 
     std::map<std::string, std::map<unsigned short, std::vector<double>>> resStripsCalMap;
 
@@ -99,8 +95,6 @@ public:
     void GetStripsEdges ( TFile* input, int projWidth = 200, bool drawResults = true );
 
     void WritePosCalHistsToFile ( TTree* tree, std::string fileName );
-
-    static void StartSX3EnCalib ( TCanvas* c = NULL, std::string detectorType = "SuperX3", double refEnergy1 = 5.813 );
 
     ClassDef ( GoddessCalib, 1 )
 };

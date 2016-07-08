@@ -16,7 +16,9 @@
 #include "TROOT.h"
 #include <TQObject.h>
 #include "TObject.h"
+#include "TBrowser.h"
 #include "TCanvas.h"
+#include "TDialogCanvas.h"
 #include "TFrame.h"
 #include "TList.h"
 #include "TLine.h"
@@ -35,6 +37,17 @@
 #include "TFitResultPtr.h"
 #include "TButton.h"
 #include "TStyle.h"
+
+#include <TGClient.h>
+#include <TCanvas.h>
+#include <TF1.h>
+#include <TRandom.h>
+#include <TGButton.h>
+#include <TGFrame.h>
+#include <TGLayout.h>
+#include <TGText.h>
+#include <TRootEmbeddedCanvas.h>
+#include <RQ_OBJECT.h>
 
 #include "GoddessStruct.h"
 
