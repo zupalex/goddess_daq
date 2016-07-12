@@ -39,13 +39,18 @@
 #include "TStyle.h"
 
 #include <TGClient.h>
+#include <THashList.h>
 #include <TCanvas.h>
 #include <TF1.h>
 #include <TRandom.h>
+#include <TGWindow.h>
 #include <TGButton.h>
 #include <TGFrame.h>
+#include <TGLabel.h>
 #include <TGLayout.h>
 #include <TGText.h>
+#include <TGTextEntry.h>
+#include <TGNumberEntry.h>
 #include <TRootEmbeddedCanvas.h>
 #include <RQ_OBJECT.h>
 

@@ -29,6 +29,29 @@ public:
     double currRefEn1;
 
     static void OnClickGetLinesInfo ( );
+    static void OnClickUpdateConf();
+
+    static void OnClickPlotEnCalGraphs();
+    static void ValidatePlotEnCalGraphs();
+
+    static void OnClickPlotPosCalGraphs();
+    static void ValidatePlotPosCalGraphs();
+
+    TGMainFrame* GetControlFrame()
+    {
+        return controlFrame;
+    }
+
+    static TGWindow* FindWindowByName ( std::string winName );
+    static TGFrame* FindFrameByName ( TGCompositeFrame* pFrame, std::string frameName );
+
+    template<typename T> static TGFrame* FindFrameByName ( T* pFrame, std::string frameName )
+    {
+        TGCompositeFrame* tryCast = dynamic_cast<TGCompositeFrame*> ( pFrame );
+
+        if ( tryCast != NULL ) return FindFrameByName ( tryCast, frameName );
+        else return nullptr;
+    }
 
     std::map<std::string, std::map<unsigned short, std::vector<double>>> resStripsCalMap;
 
@@ -56,6 +79,7 @@ public:
     void WriteResCalResults ( std::string fileName = "Resistive_Strips_Calib_Params.txt", std::string mode = "update" );
 
     bool UpdateResParamsInConf ( std::string configFile, bool invertContactMidDet = true, std::string mode = "protected" );
+    static void PopupInputfield ( TGWindow* pWin, short textSize, std::string label, TGLayoutHints* layHints, bool isEditable );
 
     TGraph* PlotSX3ResStripCalGraph ( TTree* tree, std::string varToPlot, unsigned short sector, unsigned short strip, std::string conditions );
 
@@ -67,6 +91,7 @@ public:
 
     template<typename First, typename... Rest> inline void PlotSX3ResStripsCalGraphs ( TTree* tree, bool isUpstream, First fstSector, Rest... otherSectors );
 
+    void PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nentries, bool isUpstream_, std::vector<unsigned short> sectorsList );
     template<typename FirstSector, typename... VarArgs> inline void PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors );
 
     TGraph* DrawPosCalGraph ( TTree* tree, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ );
@@ -80,6 +105,10 @@ public:
     std::map<std::string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts, unsigned short sector_ );
 
+    std::map<std::string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,
+            std::vector<unsigned short> sectorsList);
+    
     template<typename First, typename... Rest> inline std::map<std::string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,
             First fstSector, Rest... otherSectors );
@@ -143,119 +172,8 @@ template<typename FirstSector, typename... VarArgs> inline void GoddessCalib::Pl
     std::vector<unsigned short> sectorsList;
 
     GetListOfSectorsToTreat<FirstSector, VarArgs...> ( &sectorsList, fstSector, sectors... );
-
-    std::cout << sectorsList.size() << " sectors will be treated..." << std::endl;
-
-    int sizeOfSectors = sectorsList.size();
-
-    int numberOfGraphs = sizeOfSectors*4;
-
-    for ( int i =0; i < sizeOfSectors; i++ )
-    {
-        for ( int j =0; j < 4; j++ )
-        {
-            std::string grID = Form ( "sector%s%d_strip%d", isUpstream_ ? "U" : "D", i, j );
-
-            std::cout << "Creating graph " << grID << std::endl;
-
-            TGraph* newGraph = new TGraph();
-
-            newGraph->SetName ( grID.c_str() );
-            newGraph->SetTitle ( grID.c_str() );
-
-            resStripsEnCalGraphsMap[Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", i, j )] = newGraph;
-
-//             std::cout << "Stored graph in the TGraph map..." << std::endl;
-        }
-    }
-
-    if ( nentries == 0 || nentries > tree->GetEntries() ) nentries = tree->GetEntries();
-
-    std::cout << nentries << " entries will be treated" <<std::endl;
-
-    std::vector<SiDataDetailed>* siInfo = new std::vector<SiDataDetailed>();
-    siInfo->clear();
-
-    std::cout << "Preparing the readout of the tree..." << std::endl;
-
-    tree->SetBranchAddress ( "si", &siInfo );
-
-//     std::cout << "Linked the \"si\" branch to a SiDataDetailed object..." << std::endl;
-
-    for ( int i = 0; i < nentries; i++ )
-    {
-        tree->GetEntry ( i );
-
-        if ( i%10000 == 0 ) std::cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << "% )\r" << std::flush;
-
-        if ( siInfo->size() == 0 ) continue;
-
-        for ( unsigned short j = 0; j < siInfo->size(); j++ )
-        {
-            int sectorNbr = -1;
-
-            for ( int k = 0; k < sizeOfSectors; k++ )
-            {
-                if ( siInfo->at ( j ).sector == sectorsList[k] )
-                {
-                    sectorNbr = siInfo->at ( j ).sector;
-                    break;
-                }
-            }
-
-            if ( sectorNbr == -1 ) continue;
-
-            if ( siInfo->at ( j ).isBarrel && siInfo->at ( j ).isUpstream == isUpstream_ && siInfo->at ( j ).E1.en.p.size() > 0 )
-            {
-                for ( unsigned short st = 0; st < siInfo->at ( j ).E1.en.p.size(); st++ )
-                {
-                    std::string grID = Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorNbr, siInfo->at ( j ).E1.strip.p[st] );
-
-                    TGraph* gr = resStripsEnCalGraphsMap[grID];
-
-                    gr->SetPoint ( gr->GetN(), siInfo->at ( j ).E1.en.p[st], siInfo->at ( j ).E1.en.n[st] );
-                }
-            }
-        }
-    }
-
-    std::cout << std::endl;
-
-    std::string currPath = ( std::string ) gDirectory->GetPath();
-
-    std::string rootFileName = "Resistive_Strips_Calib_Graphs_";
-
-    std::string treeFName = tree->GetCurrentFile()->GetName();
-
-    std::size_t begRunName = treeFName.find ( "run" );
-    std::size_t endRunName = treeFName.find ( "_", begRunName );
-
-    if ( begRunName != std::string::npos && endRunName != std::string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
-    else rootFileName += treeFName;
-
-    TFile* f = new TFile ( rootFileName.c_str(), "update" );
-
-    f->cd();
-
-    for ( auto itr = resStripsEnCalGraphsMap.begin(); itr != resStripsEnCalGraphsMap.end(); itr++ )
-    {
-        TGraph* gr = itr->second;
-
-        if ( f->FindKey ( gr->GetName() ) != NULL || f->FindObject ( gr->GetName() ) != NULL )
-        {
-            std::string objToDelete = gr->GetName();
-            objToDelete += ";*";
-            f->Delete ( objToDelete.c_str() );
-        }
-
-        std::cout << "Writing " << gr->GetName() << " to file..." << std::endl;
-
-        gr->Write();
-    }
-
-    f->Close();
-
-    gDirectory->cd ( currPath.c_str() );
+    
+    PlotSX3ResStripsCalGraphsFromTree(tree, nentries, isUpstream_, sectorsList);
 }
 
 template<typename T> void GoddessCalib::DrawPosCal ( TTree* tree, bool isUpstream_, unsigned short sector_, unsigned short strip_, int nentries, T* drawResult )
@@ -313,65 +231,7 @@ template<typename First, typename... Rest> std::map<std::string, TH2F*> GoddessC
 
     GetListOfSectorsToTreat<First, Rest...> ( &sectorsList, fstSector, otherSectors... );
 
-    std::string isUpstreamID = isUpstream_ ? "U" : "D";
-
-    for ( unsigned short i = 0; i < sectorsList.size(); i++ )
-    {
-        for ( int j = 0; j < 4; j++ )
-        {
-            std::string hname = Form ( "%s%d_%d", isUpstreamID.c_str(), sectorsList[i], j );
-
-            std::cout << "Initializing graph for sector " << isUpstreamID << sectorsList[i] << " strip " << j << " and storing it in the map at key \"" << hname << "\"" << std::endl;
-
-            resStripsPosCalGraphsMap[hname.c_str()] = new TH2F ( hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY );
-        }
-    }
-
-    std::vector<SiDataDetailed>* siDataVect = new std::vector<SiDataDetailed>();
-    siDataVect->clear();
-
-    tree->SetBranchAddress ( "si", &siDataVect );
-
-    if ( nentries > tree->GetEntries() || nentries == 0 ) nentries = tree->GetEntries();
-
-    for ( int i = 0; i < nentries; i++ )
-    {
-        tree->GetEntry ( i );
-
-        if ( i%10000 == 0 ) std::cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << " % )\r" << std::flush;
-
-        if ( siDataVect->size() == 0 ) continue;
-
-        for ( unsigned short j = 0; j < siDataVect->size(); j++ )
-        {
-            SiDataDetailed siData = siDataVect->at ( j );
-
-            if ( siData.isBarrel && siData.isUpstream == isUpstream_ && siData.E1.en.p.size() > 0 && siData.E1.en.n.size() > 0 )
-            {
-                int sect = -1;
-
-                for ( unsigned short sec = 0; sec < sectorsList.size(); sec++ )
-                {
-                    if ( siData.sector == sectorsList[sec] ) sect = siData.sector;
-                }
-
-                if ( sect == -1 ) continue;
-
-                for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
-                {
-                    TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )];
-                    hh->Fill ( ( siData.E1.en.p[k] - siData.E1.en.n[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
-                    break;
-                }
-            }
-        }
-    }
-
-    std::cout << std::endl;
-
-    WritePosCalHistsToFile ( tree, "resistive_Strips_PosCal_hists" );
-
-    return resStripsPosCalGraphsMap;
+    return DrawPosCalHistBatch(tree, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList);
 }
 
 #endif
