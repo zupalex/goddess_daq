@@ -71,10 +71,52 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
 
     // ------ Adding the button to retreive the info from the TLines ------ //
 
-    TGTextButton* gCB = new TGTextButton ( vertFrame, "Save TLines Info", "GoddessCalib::OnClickGetLinesInfo()" );
-    gCB->SetName ( "Save TLines Info" );
+    TGHorizontalFrame* subHorzFrame3 = new TGHorizontalFrame ( vertFrame, 200, 400 );
+    subHorzFrame3->SetName ( "SubHorizontalFrame3" );
+    subHorzFrame3->SetBackgroundColor ( 0x4d004d );
 
-    vertFrame->AddFrame ( gCB, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 100, 100, 60, 150 ) );
+    TGTextButton* gCornerB = new TGTextButton ( subHorzFrame3, "Save TLines Info", "GoddessCalib::OnClickGetLinesInfo()" );
+    gCornerB->SetName ( "Save TLines Info" );
+
+    TGLabel* eAlphaLabel = new TGLabel ( subHorzFrame3, "Alpha Energy:" );
+    eAlphaLabel->SetBackgroundColor ( 0x4d004d );
+    eAlphaLabel->SetTextColor ( 0xffffff );
+
+    TGNumberEntryField* alphaEn1IF = new TGNumberEntryField ( subHorzFrame3, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAPositive );
+    alphaEn1IF->SetName ( "alphaEn1IF" );
+    alphaEn1IF->Resize ( 90, 22 );
+
+    subHorzFrame3->AddFrame ( eAlphaLabel, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
+    subHorzFrame3->AddFrame ( alphaEn1IF, new TGLayoutHints ( kLHintsCenterX , 10, 30, 5, 5 ) );
+
+    subHorzFrame3->AddFrame ( gCornerB, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
+
+    vertFrame->AddFrame ( subHorzFrame3, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 40, 20 ) );
+
+    // ------ Adding the button to perform the Position Calibration ------ //
+
+    TGHorizontalFrame* subHorzFrame4 = new TGHorizontalFrame ( vertFrame, 200, 400 );
+    subHorzFrame4->SetName ( "SubHorizontalFrame4" );
+    subHorzFrame4->SetBackgroundColor ( 0x4d004d );
+
+    TGTextButton* gEdgeB = new TGTextButton ( subHorzFrame4, "Get Strips Edges", "GoddessCalib::OnClickGetStripsEdges()" );
+    gEdgeB->SetName ( "Save TLines Info" );
+
+    TGLabel* fNameLabel = new TGLabel ( subHorzFrame4, "File:" );
+    fNameLabel->SetBackgroundColor ( 0x4d004d );
+    fNameLabel->SetTextColor ( 0xffffff );
+
+    TGTextEntry* fNameIF = new TGTextEntry ( subHorzFrame4 );
+    fNameIF->SetName ( "fNameIF" );
+    fNameIF->Resize ( 130, 22 );
+    fNameIF->SetText ( "Currently Opened File" );
+
+    subHorzFrame4->AddFrame ( fNameLabel, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
+    subHorzFrame4->AddFrame ( fNameIF, new TGLayoutHints ( kLHintsCenterX , 10, 35, 5, 5 ) );
+
+    subHorzFrame4->AddFrame ( gEdgeB, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
+
+    vertFrame->AddFrame ( subHorzFrame4, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 0, 70 ) );
 
     // ------ Wraping everything in the main frame ------ //
 
@@ -423,8 +465,8 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         cB = dynamic_cast<TGCheckButton*> ( FindFrameByName ( mf, "Is Upstream CB" ) );
         isUS = cB->GetState();
 
-	DecodeSectorsString ( sectorsStr );
-	
+        DecodeSectorsString ( sectorsStr );
+
         TTree* tree = ( TTree* ) gDirectory->Get ( treeName.c_str() );
 
         if ( tree == NULL ) return;
@@ -631,11 +673,103 @@ void GoddessCalib::OnClickGetLinesInfo ()
         return;
     }
 
+    TGNumberEntryField* alphaEnIF = ( TGNumberEntryField* ) FindWindowByName ( "alphaEn1IF" );
+
+    float alphaEn1 = std::stof ( alphaEnIF->GetText() );
+
+    GoddessCalib::sinstance()->currRefEn1 = alphaEn1;
+
     GoddessCalib::sinstance()->GetCornersCoordinates ( gPad->GetCanvas(), ( bool ) isUS_, ( short unsigned int ) sect_, ( short unsigned int ) strip_, GoddessCalib::sinstance()->currDetType, GoddessCalib::sinstance()->currRefEn1 );
 
     std::cout << std::endl;
 
     return;
+}
+
+void GoddessCalib::ValidateGetStripsEdges()
+{
+    if ( GoddessCalib::sinstance() == NULL ) return;
+
+    TGTextEntry* fileNameIF = ( TGTextEntry* ) FindFrameByName ( GoddessCalib::sinstance()->s_instance->GetControlFrame(), "fNameIF" );
+
+    std::string fileName = fileNameIF->GetText();
+
+    TFile *input;
+
+    if ( fileName.length() > 0 || fileName == "Currently Opened File" )
+    {
+        input = gDirectory->GetFile();
+    }
+    else
+    {
+        input = new TFile ( fileName.c_str(), "read" );
+    }
+
+    if ( input == NULL || !input->IsOpen() )
+    {
+        std::cerr << "Invalid input file name..." << std::endl;
+        return;
+    }
+
+    std::cout << "Opened file: " << input->GetName() << "\n";
+
+    TGWindow* prompt = FindWindowByName ( "Get Strips Edges" );
+
+    TGCheckButton* drawResCB = ( TGCheckButton* ) FindFrameByName ( prompt, "Draw Results CB" );
+    TGNumberEntryField* projWidthIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Width IF" );
+
+    int projWidth_ = std::stoi ( projWidthIF->GetText() );
+    bool doDraw = drawResCB->GetState();
+
+    GoddessCalib::sinstance()->GetStripsEdges ( input, projWidth_, doDraw );
+
+    return;
+}
+
+void GoddessCalib::OnClickGetStripsEdges()
+{
+    TGWindow* getStripsEdgesWin = FindWindowByName ( "Get Strips Edges" );
+
+    if ( getStripsEdgesWin == NULL )
+    {
+        TGMainFrame* getStripsEdgesMF = new TGMainFrame ( gClient->GetRoot(),100, 100 );
+        getStripsEdgesMF->SetName ( "Get Strips Edges" );
+        getStripsEdgesMF->SetWindowName ( "Get Strips Edges" );
+
+        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 3, 2, 5, 5 ) );
+
+        TGLabel* projWidthLabel = new TGLabel ( getStripsEdgesMF, "Proj. Width (bins):" );
+        TGTextEntry* projWidthIF = new TGTextEntry ( getStripsEdgesMF );
+        projWidthIF->SetName ( "Proj Width IF" );
+        projWidthIF->SetAlignment ( kTextRight );
+        projWidthIF->SetText ( "200" );
+
+        getStripsEdgesMF->AddFrame ( projWidthLabel );
+        getStripsEdgesMF->AddFrame ( projWidthIF );
+
+        TGLabel* drawResultsLabel = new TGLabel ( getStripsEdgesMF, "Draw Results?" );
+        TGCheckButton* drawResultsCB = new TGCheckButton ( getStripsEdgesMF );
+        drawResultsCB->SetName ( "Draw Results CB" );
+        drawResultsCB->SetState ( kButtonDown );
+
+        getStripsEdgesMF->AddFrame ( drawResultsLabel );
+        getStripsEdgesMF->AddFrame ( drawResultsCB );
+
+        TGTextButton* processButton = new TGTextButton ( getStripsEdgesMF, "Process", "GoddessCalib::ValidateGetStripsEdges(); GoddessCalib::FindWindowByName(\"Get Strips Edges\")->UnmapWindow();" );
+        TGTextButton* cancelButton = new TGTextButton ( getStripsEdgesMF, "Cancel", "GoddessCalib::FindWindowByName(\"Get Strips Edges\")->UnmapWindow();" );
+
+        getStripsEdgesMF->AddFrame ( processButton );
+        getStripsEdgesMF->AddFrame ( cancelButton );
+
+        getStripsEdgesMF->MapSubwindows();
+        getStripsEdgesMF->Resize ( getStripsEdgesMF->GetDefaultSize() );
+        getStripsEdgesMF->MapWindow();
+    }
+    else if ( !getStripsEdgesWin->IsMapped() )
+    {
+        getStripsEdgesWin->MapSubwindows();
+        getStripsEdgesWin->MapWindow();
+    }
 }
 
 void GoddessCalib::StartSX3EnCalib ( std::string detectorType, double refEnergy1 )
@@ -653,6 +787,10 @@ void GoddessCalib::StartSX3EnCalib ( std::string detectorType, double refEnergy1
     gStyle->SetMarkerColor ( 4 );
     gStyle->SetMarkerSize ( 2 );
     gStyle->SetMarkerStyle ( 3 );
+
+    TGNumberEntryField* alphaEnIF = ( TGNumberEntryField* ) FindWindowByName ( "alphaEn1IF" );
+
+    alphaEnIF->SetText ( Form ( "%.3f", refEnergy1 ) );
 }
 
 void GoddessCalib::InitializeCalMapKey ( std::string mapKey, unsigned short strip )
@@ -1797,6 +1935,12 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+
+
+
+
+
+
 
 
 

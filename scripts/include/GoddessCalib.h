@@ -28,7 +28,6 @@ public:
     std::string currDetType;
     double currRefEn1;
 
-    static void OnClickGetLinesInfo ( );
     static void OnClickUpdateConf();
 
     static void OnClickPlotEnCalGraphs();
@@ -36,6 +35,10 @@ public:
 
     static void OnClickPlotPosCalGraphs();
     static void ValidatePlotPosCalGraphs();
+
+    static void OnClickGetLinesInfo ( );
+    static void OnClickGetStripsEdges();
+    static void ValidateGetStripsEdges();
 
     TGMainFrame* GetControlFrame()
     {
@@ -107,8 +110,8 @@ public:
 
     std::map<std::string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,
-            std::vector<unsigned short> sectorsList);
-    
+            std::vector<unsigned short> sectorsList );
+
     template<typename First, typename... Rest> inline std::map<std::string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,
             First fstSector, Rest... otherSectors );
@@ -172,8 +175,8 @@ template<typename FirstSector, typename... VarArgs> inline void GoddessCalib::Pl
     std::vector<unsigned short> sectorsList;
 
     GetListOfSectorsToTreat<FirstSector, VarArgs...> ( &sectorsList, fstSector, sectors... );
-    
-    PlotSX3ResStripsCalGraphsFromTree(tree, nentries, isUpstream_, sectorsList);
+
+    PlotSX3ResStripsCalGraphsFromTree ( tree, nentries, isUpstream_, sectorsList );
 }
 
 template<typename T> void GoddessCalib::DrawPosCal ( TTree* tree, bool isUpstream_, unsigned short sector_, unsigned short strip_, int nentries, T* drawResult )
@@ -231,7 +234,7 @@ template<typename First, typename... Rest> std::map<std::string, TH2F*> GoddessC
 
     GetListOfSectorsToTreat<First, Rest...> ( &sectorsList, fstSector, otherSectors... );
 
-    return DrawPosCalHistBatch(tree, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList);
+    return DrawPosCalHistBatch ( tree, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList );
 }
 
 #endif

@@ -38,6 +38,8 @@
 #include "TButton.h"
 #include "TStyle.h"
 
+#include <TApplication.h>
+#include <TVirtualX.h>
 #include <TGClient.h>
 #include <THashList.h>
 #include <TCanvas.h>
