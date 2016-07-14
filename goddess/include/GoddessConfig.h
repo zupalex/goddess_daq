@@ -36,7 +36,7 @@ private:
     std::vector<LiquidScint *> liquidScints;
 
     ///Check if this type of detector is insertable in the channel map at the specified postion.
-    bool IsInsertable ( short daqType, int daqCh, int numDetCh );
+    bool IsInsertable ( short daqType, int daqCh, Detector* det_, int numDetCh );
 
 public:
     ///Default constructor.

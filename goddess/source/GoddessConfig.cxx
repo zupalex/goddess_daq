@@ -152,7 +152,7 @@ void GoddessConfig::ReadConfig ( std::string filename )
 
             liquidScints.push_back ( new LiquidScint ( desc ) );
 
-            if ( IsInsertable ( daqType, daqCh, liquidScints.back()->GetNumChannels ( Detector::Primary ) ) )
+            if ( IsInsertable ( daqType, daqCh, liquidScints.back(), liquidScints.back()->GetNumChannels ( Detector::Primary ) ) )
             {
                 chMap[std::make_pair ( daqType, daqCh )] = std::make_pair ( liquidScints.back(), false );
             }
@@ -232,7 +232,7 @@ void GoddessConfig::ReadConfig ( std::string filename )
 
             det->SetDetector ( serialNum, sector, depth, upStream, pos_ );
 
-            if ( IsInsertable ( pTypeDaqType, pTypeDaqCh, det->GetNumChannels ( siDet::pType ) ) )
+            if ( IsInsertable ( pTypeDaqType, pTypeDaqCh, det, det->GetNumChannels ( siDet::pType ) ) )
             {
                 chMap[std::make_pair ( pTypeDaqType, pTypeDaqCh )] = std::make_pair ( det, false );
                 det->SetDAQType ( pTypeDaqType );
@@ -244,7 +244,7 @@ void GoddessConfig::ReadConfig ( std::string filename )
 
             if ( det->GetNumChannels ( siDet::nType ) )
             {
-                if ( IsInsertable ( nTypeDaqType, nTypeDaqCh, det->GetNumChannels ( siDet::nType ) ) )
+                if ( IsInsertable ( nTypeDaqType, nTypeDaqCh, det, det->GetNumChannels ( siDet::nType ) ) )
                 {
                     chMap[std::make_pair ( nTypeDaqType, nTypeDaqCh )] = std::make_pair ( det, true );
                     det->SetDAQType ( nTypeDaqType );
@@ -521,7 +521,7 @@ IonChamber *GoddessConfig::ReadIonChamberConfig ( std::istringstream &lineStream
 
     IonChamber *ionChamber_ = new IonChamber ( numAnode, numScint, numDE, numEres );
 
-    if ( IsInsertable ( anodeDaqType, anodeDaqCh, ionChamber_->GetNumChannels ( Detector::Primary ) ) )
+    if ( IsInsertable ( anodeDaqType, anodeDaqCh, ionChamber_, ionChamber_->GetNumChannels ( Detector::Primary ) ) )
     {
         chMap[std::make_pair ( anodeDaqType, anodeDaqCh )] = std::make_pair ( ionChamber_, false );
     }
@@ -530,7 +530,7 @@ IonChamber *GoddessConfig::ReadIonChamberConfig ( std::istringstream &lineStream
         std::cerr << "ERROR: Ion chamber anodes will not be unpacked!\n";
     }
 
-    if ( IsInsertable ( scintDaqType, scintDaqCh, ionChamber_->GetNumChannels ( Detector::Secondary ) ) )
+    if ( IsInsertable ( scintDaqType, scintDaqCh, ionChamber_, ionChamber_->GetNumChannels ( Detector::Secondary ) ) )
     {
         chMap[std::make_pair ( scintDaqType, scintDaqCh )] = std::make_pair ( ionChamber_, true );
     }
@@ -557,7 +557,7 @@ void GoddessConfig::ReadPosition ( std::string filename )
  * \param[in] type The type of detector to insert into the map.
  * \return True if there is no overlapping channels already loaded in the map.
  */
-bool GoddessConfig::IsInsertable ( short daqType, int daqCh, int numDetCh )
+bool GoddessConfig::IsInsertable ( short daqType, int daqCh, Detector* det_, int numDetCh )
 {
     bool insertable = true;
     std::pair<short, short> key = std::make_pair ( daqType, daqCh );
@@ -575,17 +575,30 @@ bool GoddessConfig::IsInsertable ( short daqType, int daqCh, int numDetCh )
                 if ( daqCh + numDetCh > mapItr->first.second )
                 {
                     orrubaDet *siDet = dynamic_cast<orrubaDet *> ( mapItr->second.first );
+                    orrubaDet *conflictingDet = dynamic_cast<orrubaDet *> ( det_ );
 
-                    if ( siDet )
+                    if ( siDet != conflictingDet )
                     {
-                        std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " conflicts with detector " << siDet->GetSerialNum() << "\n";
-                    }
-                    else
-                    {
-                        std::cerr << "ERROR: Specified starting DAQ channel conflicts with ion chamber.\n";
-                    }
+                        if ( conflictingDet )
+                        {
+                            std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " of detector " << conflictingDet->GetSerialNum();
+                        }
+                        else
+                        {
+                            std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " of ion chamber";
+                        }
 
-                    insertable = false;
+                        if ( siDet )
+                        {
+                            std::cerr << " conflicts with detector " << siDet->GetSerialNum() << "\n";
+                        }
+                        else
+                        {
+                            std::cerr << " conflicts with ion chamber.\n";
+                        }
+
+                        insertable = false;
+                    }
                 }
             }
         }
@@ -604,17 +617,30 @@ bool GoddessConfig::IsInsertable ( short daqType, int daqCh, int numDetCh )
                 if ( mapItr->first.second + numCh > daqCh )
                 {
                     orrubaDet *siDet = dynamic_cast<orrubaDet *> ( mapItr->second.first );
+                    orrubaDet *conflictingDet = dynamic_cast<orrubaDet *> ( det_ );
 
-                    if ( siDet )
+                    if ( siDet != conflictingDet )
                     {
-                        std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " conflicts with detector " << siDet->GetSerialNum() << "\n";
-                    }
-                    else
-                    {
-                        std::cerr << "ERROR: Specified starting DAQ channel conflict with ion chamber.\n";
-                    }
+                        if ( conflictingDet )
+                        {
+                            std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " of detector " << conflictingDet->GetSerialNum();
+                        }
+                        else
+                        {
+                            std::cerr << "ERROR: Specified starting DAQ channel " << daqType << ":" << daqCh << " of ion chamber";
+                        }
 
-                    insertable = false;
+                        if ( siDet )
+                        {
+                            std::cerr << " conflicts with detector " << siDet->GetSerialNum() << "\n";
+                        }
+                        else
+                        {
+                            std::cerr << " conflicts with ion chamber.\n";
+                        }
+
+                        insertable = false;
+                    }
                 }
             }
         }
@@ -832,7 +858,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 
         TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
 
-        TVector3 refQQQ5D_sectA = TVector3(0, 0, halfBarrelLength) + QQQ5DA_orig_offset;
+        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, halfBarrelLength ) + QQQ5DA_orig_offset;
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refQQQ5D_sectA.Angle ( zAxis ) ) : refQQQ5D_sectA.Angle ( zAxis ) );
