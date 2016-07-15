@@ -28,6 +28,9 @@ public:
     std::string currDetType;
     double currRefEn1;
 
+    static void OnClickParamsButtons ( std::string mode );
+    static void ValidateParamsButtons ( std::string mode );
+
     static void OnClickUpdateConf();
 
     static void OnClickPlotEnCalGraphs();

@@ -50,6 +50,7 @@
 #include <TGFrame.h>
 #include <TGLabel.h>
 #include <TGLayout.h>
+#include <TGDimension.h>
 #include <TGText.h>
 #include <TGTextEntry.h>
 #include <TGNumberEntry.h>

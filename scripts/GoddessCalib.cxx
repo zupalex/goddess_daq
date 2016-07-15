@@ -43,7 +43,7 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
 
     // ------ Adding the button to read existing calib parameters from file ------ //
 
-    TGTextButton* dCPB = new TGTextButton ( vertFrame, "Reload Prev. Cal. Params", "GoddessCalib::sinstance()->DumpFileToResCalMap()" );
+    TGTextButton* dCPB = new TGTextButton ( vertFrame, "Reload Prev. Cal. Params", "GoddessCalib::OnClickParamsButtons(\"Reload\")" );
     dCPB->SetName ( "Reload Prev. Cal. Params" );
 
     vertFrame->AddFrame ( dCPB, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 100, 100, 10, 20 ) );
@@ -54,7 +54,7 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
     subHorzFrame2->SetName ( "SubHorizontalFrame2" );
     subHorzFrame2->SetBackgroundColor ( 0x4d004d );
 
-    TGTextButton* wCPB = new TGTextButton ( subHorzFrame2, "Write New Cal. Params", "GoddessCalib::sinstance()->WriteResCalResults()" );
+    TGTextButton* wCPB = new TGTextButton ( subHorzFrame2, "Write New Cal. Params", "GoddessCalib::OnClickParamsButtons(\"Write\")" );
     wCPB->SetName ( "Write New Cal. Params" );
 
     TGTextButton* uCFB = new TGTextButton ( subHorzFrame2, "Update Goddess Config File", "GoddessCalib::OnClickUpdateConf()" );
@@ -320,6 +320,86 @@ std::vector<unsigned short> DecodeSectorsString ( std::string sectorsString, boo
     return sectorsNum;
 }
 
+void GoddessCalib::ValidateParamsButtons ( std::string mode )
+{
+    TGWindow* paramsWin = FindWindowByName ( Form ( "%s Parameters", mode.c_str() ) );
+
+    if ( paramsWin != NULL )
+    {
+        TGMainFrame* mf = ( TGMainFrame* ) paramsWin->GetMainFrame();
+
+        TGTextEntry* tE;
+        TGCheckButton* cB;
+
+        std::string fileName;
+
+        tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "File name IF" ) );
+        fileName = tE->GetText();
+
+        if ( fileName.empty() ) fileName = "Resistive_Strips_Calib_Params.txt";
+
+        if ( mode == "Reload" ) GoddessCalib::sinstance()->DumpFileToResCalMap ( fileName );
+	else if( mode == "Write") GoddessCalib::sinstance()->WriteResCalResults ( fileName );
+
+        GoddessCalib::FindWindowByName ( Form ( "%s Parameters", mode.c_str() ) )->UnmapWindow();
+    }
+}
+
+void GoddessCalib::OnClickParamsButtons ( std::string mode )
+{
+    TGWindow* paramsWin = FindWindowByName ( Form ( "%s Parameters", mode.c_str() ) );
+
+    if ( paramsWin == NULL )
+    {
+        TGMainFrame* reloadParamsMF = new TGMainFrame ( gClient->GetRoot(), 200, 200 );
+        reloadParamsMF->SetName ( Form ( "%s Parameters", mode.c_str() ) );
+        reloadParamsMF->SetWindowName ( Form ( "%s Parameters", mode.c_str() ) );
+
+        TGCompositeFrame* mainVertFrame = new TGCompositeFrame ( reloadParamsMF, 200, 200 );
+        mainVertFrame->SetLayoutManager ( new TGColumnLayout ( mainVertFrame, 20 ) );
+
+        TGCompositeFrame* firstFrame = new TGCompositeFrame ( mainVertFrame, 200, 200 );
+        firstFrame->SetLayoutManager ( new TGRowLayout ( firstFrame, 10 ) );
+
+        TGLabel* inputFileLabel = new TGLabel ( firstFrame, "File name:" );
+        TGTextEntry* inputFileIF = new TGTextEntry ( firstFrame, "Resistive_Strips_Calib_Params.txt" );
+        inputFileIF->SetName ( "File name IF" );
+        inputFileIF->SetAlignment ( kTextRight );
+
+        firstFrame->AddFrame ( inputFileLabel );
+        firstFrame->AddFrame ( inputFileIF );
+
+        mainVertFrame->AddFrame ( firstFrame );
+
+        TGCompositeFrame* secondFrame = new TGCompositeFrame ( mainVertFrame, 200, 200 );
+        secondFrame->SetLayoutManager ( new TGRowLayout ( secondFrame, 10 ) );
+
+        std::string processCmd = Form ( "GoddessCalib::ValidateParamsButtons(\"%s\")", mode.c_str() );
+        std::string cancelCmd = Form ( "GoddessCalib::FindWindowByName(\"%s Parameters\")->UnmapWindow();", mode.c_str() );
+
+        TGTextButton* processButton = new TGTextButton ( secondFrame, "Process", processCmd.c_str() );
+        TGTextButton* cancelButton = new TGTextButton ( secondFrame, "Cancel", cancelCmd.c_str() );
+
+        secondFrame->AddFrame ( processButton );
+        secondFrame->AddFrame ( cancelButton );
+
+        mainVertFrame->AddFrame ( secondFrame );
+
+        reloadParamsMF->AddFrame ( mainVertFrame, new TGLayoutHints ( kLHintsCenterX| kLHintsCenterY, 20, 20, 20, 20 ) );
+
+        reloadParamsMF->MapSubwindows();
+        reloadParamsMF->Resize ( reloadParamsMF->GetDefaultSize() );
+        firstFrame->Resize ( reloadParamsMF->GetDefaultSize() );
+        secondFrame->Resize ( reloadParamsMF->GetDefaultSize() );
+        reloadParamsMF->MapWindow();
+    }
+    else if ( !paramsWin->IsMapped() )
+    {
+        paramsWin->MapSubwindows();
+        paramsWin->MapWindow();
+    }
+}
+
 void GoddessCalib::ValidatePlotEnCalGraphs()
 {
     TGWindow* plotEnCalWin = FindWindowByName ( "Plot Energy Calibration Graphs" );
@@ -396,6 +476,7 @@ void GoddessCalib::OnClickPlotEnCalGraphs()
         TGLabel* sectorsLabel = new TGLabel ( plotEnCalMF, "Sectors to treat \ne.g. : \"1, 4-8, 10\"" );
         TGTextEntry* sectorsIF = new TGTextEntry ( plotEnCalMF );
         sectorsIF->SetName ( "Sectors IF" );
+        sectorsIF->SetAlignment ( kTextRight );
 
         plotEnCalMF->AddFrame ( sectorsLabel );
         plotEnCalMF->AddFrame ( sectorsIF );
@@ -483,17 +564,22 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
 
     if ( plotPosCalWin == NULL )
     {
+        Pixel_t bcol = 0xb3d1ff;
+
         TGMainFrame* plotPosCalMF = new TGMainFrame ( gClient->GetRoot(),100, 200 );
         plotPosCalMF->SetName ( "Plot Position Calibration Graphs" );
         plotPosCalMF->SetWindowName ( "Plot Position Calibration Graphs" );
+        plotPosCalMF->SetBackgroundColor ( bcol );
 
 //         TGMatrixLayout* mLay = new TGMatrixLayout ( plotPosCalMF, 7, 2, 10, 10 );
 //         plotPosCalMF->SetLayoutManager ( new TGColumnLayout ( plotPosCalMF ) );
 
         TGCompositeFrame* firstFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
         firstFrame->SetLayoutManager ( new TGMatrixLayout ( firstFrame, 3, 2, 5, 5 ) );
+        firstFrame->SetBackgroundColor ( bcol );
 
         TGLabel* treeNameLabel = new TGLabel ( firstFrame, "Tree Name:" );
+        treeNameLabel->SetBackgroundColor ( bcol );
         TGTextEntry* treeNameIF = new TGTextEntry ( firstFrame );
         treeNameIF->SetName ( "Tree Name IF" );
         treeNameIF->SetAlignment ( kTextRight );
@@ -502,6 +588,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         firstFrame->AddFrame ( treeNameIF );
 
         TGLabel* nEntriesLabel = new TGLabel ( firstFrame, "Entries to treat (0 == all):" );
+        nEntriesLabel->SetBackgroundColor ( bcol );
         TGNumberEntryField* nEntriesIF = new TGNumberEntryField ( firstFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
         nEntriesIF->SetName ( "Entries IF" );
 
@@ -509,8 +596,10 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         firstFrame->AddFrame ( nEntriesIF );
 
         TGLabel* isUpstreamLabel = new TGLabel ( firstFrame, "Upstream?" );
+        isUpstreamLabel->SetBackgroundColor ( bcol );
         TGCheckButton* isUpstreamCheckB = new TGCheckButton ( firstFrame );
         isUpstreamCheckB->SetName ( "Is Upstream CB" );
+        isUpstreamCheckB->SetBackgroundColor ( bcol );
 
         firstFrame->AddFrame ( isUpstreamLabel );
         firstFrame->AddFrame ( isUpstreamCheckB );
@@ -519,8 +608,10 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
 
         TGCompositeFrame* secondFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
         secondFrame->SetLayoutManager ( new TGMatrixLayout ( secondFrame, 2, 4, 5, 0 ) );
+        secondFrame->SetBackgroundColor ( bcol );
 
         TGLabel* xAxisBinsLabel = new TGLabel ( secondFrame, "X Axis Binning (nbins, min, max)" );
+        xAxisBinsLabel->SetBackgroundColor ( bcol );
 
         TGNumberEntryField* nbinsXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
         TGDimension defDim = nbinsXIF->GetDefaultSize();
@@ -540,6 +631,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         secondFrame->AddFrame ( binMaxXIF );
 
         TGLabel* yAxisBinsLabel = new TGLabel ( secondFrame, "Y Axis Binning (nbins, min, max)" );
+        yAxisBinsLabel->SetBackgroundColor ( bcol );
 
         TGNumberEntryField* nbinsYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
         nbinsYIF->SetName ( "NBinsY IF" );
@@ -561,16 +653,21 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
 
         TGCompositeFrame* thirdFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
         thirdFrame->SetLayoutManager ( new TGMatrixLayout ( thirdFrame, 2, 2, 5, 5 ) );
+        thirdFrame->SetBackgroundColor ( bcol );
 
         TGLabel* sectorsLabel = new TGLabel ( thirdFrame, "Sectors to treat \ne.g. : \"1, 4-8, 10\"" );
+        sectorsLabel->SetBackgroundColor ( bcol );
         TGTextEntry* sectorsIF = new TGTextEntry ( thirdFrame );
         sectorsIF->SetName ( "Sectors IF" );
+        sectorsIF->SetAlignment ( kTextRight );
 
         thirdFrame->AddFrame ( sectorsLabel );
         thirdFrame->AddFrame ( sectorsIF );
 
         TGTextButton* processButton = new TGTextButton ( thirdFrame, "Process", "GoddessCalib::ValidatePlotPosCalGraphs()" );
+        processButton->SetBackgroundColor ( bcol );
         TGTextButton* cancelButton = new TGTextButton ( thirdFrame, "Cancel", "GoddessCalib::FindWindowByName(\"Plot Position Calibration Graphs\")->UnmapWindow();" );
+        cancelButton->SetBackgroundColor ( bcol );
 
         thirdFrame->AddFrame ( processButton );
         thirdFrame->AddFrame ( cancelButton );
@@ -1935,6 +2032,7 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+
 
 
 
