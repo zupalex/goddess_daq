@@ -1573,7 +1573,11 @@ std::map<std::string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bo
 
                 for ( unsigned short sec = 0; sec < sectorsList.size(); sec++ )
                 {
-                    if ( siData.sector == sectorsList[sec] ) sect = siData.sector;
+                    if ( siData.sector == sectorsList[sec] )
+                    {
+                        sect = siData.sector;
+                        break;
+                    }
                 }
 
                 if ( sect == -1 ) continue;
@@ -1582,7 +1586,6 @@ std::map<std::string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bo
                 {
                     TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )];
                     hh->Fill ( ( siData.E1.en.p[k] - siData.E1.en.n[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
-                    break;
                 }
             }
         }
