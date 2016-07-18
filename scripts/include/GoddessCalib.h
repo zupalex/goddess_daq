@@ -119,15 +119,15 @@ public:
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,
             First fstSector, Rest... otherSectors );
 
-    int GetPosCalEnBinMax ( TH2F* input );
+    int GetPosCalEnBinMax ( TH2F* input, double threshold );
 
     TH1D* GetPosCalProjX ( TH2F* input, int projCenter, int projWidth );
 
-    TF1* FitLeftEdge ( TH2F* input, int projWidth = 200 );
-    TF1* FitRightEdge ( TH2F* input, int projWidth = 200 );
-    void GetStripsEdges ( int projWidth = 200, bool drawResults = true );
-    void GetStripsEdges ( TH2F* input, int projWidth = 200, bool drawResults = true );
-    void GetStripsEdges ( TFile* input, int projWidth = 200, bool drawResults = true );
+    TF1* FitLeftEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
+    TF1* FitRightEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
+    void GetStripsEdges ( int projWidth = 200, double threshold = 250, bool drawResults = true );
+    void GetStripsEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
+    void GetStripsEdges ( TFile* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
 
     void WritePosCalHistsToFile ( TTree* tree, std::string fileName );
 

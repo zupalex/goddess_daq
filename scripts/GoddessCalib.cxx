@@ -814,11 +814,14 @@ void GoddessCalib::ValidateGetStripsEdges()
 
     TGCheckButton* drawResCB = ( TGCheckButton* ) FindFrameByName ( prompt, "Draw Results CB" );
     TGNumberEntryField* projWidthIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Width IF" );
+    TGNumberEntryField* projThrIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Threshold IF" );
 
-    int projWidth_ = std::stoi ( projWidthIF->GetText() );
+
+    int projWidth_ = projWidthIF->GetNumber();
+    double thr_ = projThrIF->GetNumber();
     bool doDraw = drawResCB->GetState();
 
-    GoddessCalib::sinstance()->GetStripsEdges ( input, projWidth_, doDraw );
+    GoddessCalib::sinstance()->GetStripsEdges ( input, projWidth_, thr_, doDraw );
 
     return;
 }
@@ -833,16 +836,23 @@ void GoddessCalib::OnClickGetStripsEdges()
         getStripsEdgesMF->SetName ( "Get Strips Edges" );
         getStripsEdgesMF->SetWindowName ( "Get Strips Edges" );
 
-        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 3, 2, 5, 5 ) );
+        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 4, 2, 5, 5 ) );
 
         TGLabel* projWidthLabel = new TGLabel ( getStripsEdgesMF, "Proj. Width (bins):" );
-        TGTextEntry* projWidthIF = new TGTextEntry ( getStripsEdgesMF );
+        TGNumberEntryField* projWidthIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
         projWidthIF->SetName ( "Proj Width IF" );
-        projWidthIF->SetAlignment ( kTextRight );
-        projWidthIF->SetText ( "200" );
+        projWidthIF->SetNumber ( 200 );
 
         getStripsEdgesMF->AddFrame ( projWidthLabel );
         getStripsEdgesMF->AddFrame ( projWidthIF );
+
+        TGLabel* projThrLabel = new TGLabel ( getStripsEdgesMF, "Max Detection Threshold:" );
+        TGNumberEntryField* projThrIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
+        projThrIF->SetName ( "Proj Threshold IF" );
+        projThrIF->SetNumber ( 300 );
+
+        getStripsEdgesMF->AddFrame ( projThrLabel );
+        getStripsEdgesMF->AddFrame ( projThrIF );
 
         TGLabel* drawResultsLabel = new TGLabel ( getStripsEdgesMF, "Draw Results?" );
         TGCheckButton* drawResultsCB = new TGCheckButton ( getStripsEdgesMF );
@@ -1699,7 +1709,7 @@ TH2F* GoddessCalib::GetSX3PosCalHist ( bool isUpstream, short unsigned int secto
     }
 }
 
-int GoddessCalib::GetPosCalEnBinMax ( TH2F* input )
+int GoddessCalib::GetPosCalEnBinMax ( TH2F* input, double threshold )
 {
     int fstBin = input->GetXaxis()->GetFirst();
     int lstBin = input->GetXaxis()->GetLast();
@@ -1708,7 +1718,12 @@ int GoddessCalib::GetPosCalEnBinMax ( TH2F* input )
 
     TH1D* proj = input->ProjectionY ( ( ( std::string ) "projY_" + input->GetName() ).c_str(), fstBin, lstBin );
 
+    proj->GetXaxis()->SetRange ( (int) (threshold / proj->GetXaxis()->GetBinWidth(0)), proj->GetXaxis()->GetLast() );
+
     binMax = proj->GetMaximumBin();
+
+    std::cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
+    std::cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
 
     return binMax;
 }
@@ -1720,9 +1735,9 @@ TH1D* GoddessCalib::GetPosCalProjX ( TH2F* input, int projCenter, int projWidth 
     return proj;
 }
 
-TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth )
+TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth, double threshold )
 {
-    int binMaxY = GetPosCalEnBinMax ( input );
+    int binMaxY = GetPosCalEnBinMax ( input, threshold );
 
     TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
 
@@ -1807,9 +1822,9 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth )
     return fitfunc;
 }
 
-TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth )
+TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth, double threshold )
 {
-    int binMaxY = GetPosCalEnBinMax ( input );
+    int binMaxY = GetPosCalEnBinMax ( input, threshold );
 
     TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
 
@@ -1894,14 +1909,14 @@ TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth )
     return fitfunc;
 }
 
-void GoddessCalib::GetStripsEdges ( int projWidth, bool drawResults )
+void GoddessCalib::GetStripsEdges ( int projWidth, double threshold, bool drawResults )
 {
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
         std::cout << "Retreiving the edges of sector " << itr->first.substr ( 0, itr->first.find ( "_" ) ) << " strip #" << itr->first.substr ( itr->first.find ( "_" ) ) << " ..." << std::endl;
 
-        TF1* lfit = FitLeftEdge ( itr->second, projWidth );
-        TF1* rfit = FitRightEdge ( itr->second, projWidth );
+        TF1* lfit = FitLeftEdge ( itr->second, projWidth, threshold );
+        TF1* rfit = FitRightEdge ( itr->second, projWidth, threshold );
 
         if ( drawResults )
         {
@@ -1909,7 +1924,7 @@ void GoddessCalib::GetStripsEdges ( int projWidth, bool drawResults )
 
             newCanvas->cd();
 
-            GetPosCalProjX ( itr->second, GetPosCalEnBinMax ( itr->second ), projWidth )->Draw();
+            GetPosCalProjX ( itr->second, GetPosCalEnBinMax ( itr->second, threshold ), projWidth )->Draw();
             lfit->Draw ( "same" );
             rfit->Draw ( "same" );
         }
@@ -1918,14 +1933,14 @@ void GoddessCalib::GetStripsEdges ( int projWidth, bool drawResults )
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, double threshold, bool drawResults )
 {
     std::string hname = input->GetName();
 
     std::cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) ) << " ..." << std::endl;
 
-    TF1* lfit = FitLeftEdge ( input, projWidth );
-    TF1* rfit = FitRightEdge ( input, projWidth );
+    TF1* lfit = FitLeftEdge ( input, projWidth, threshold );
+    TF1* rfit = FitRightEdge ( input, projWidth, threshold );
 
     if ( drawResults )
     {
@@ -1933,7 +1948,7 @@ void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, bool drawResults
 
         newCanvas->cd();
 
-        GetPosCalProjX ( input, GetPosCalEnBinMax ( input ), projWidth )->Draw();
+        GetPosCalProjX ( input, GetPosCalEnBinMax ( input, threshold ), projWidth )->Draw();
         lfit->Draw ( "same" );
         rfit->Draw ( "same" );
     }
@@ -1941,7 +1956,7 @@ void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, bool drawResults
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshold, bool drawResults )
 {
     auto lOK = input->GetListOfKeys();
 
@@ -1957,8 +1972,8 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, bool drawResult
 
             std::cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) ) << " ..." << std::endl;
 
-            TF1* lfit = FitLeftEdge ( hist, projWidth );
-            TF1* rfit = FitRightEdge ( hist, projWidth );
+            TF1* lfit = FitLeftEdge ( hist, projWidth, threshold );
+            TF1* rfit = FitRightEdge ( hist, projWidth, threshold );
 
             if ( drawResults )
             {
@@ -1966,7 +1981,7 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, bool drawResult
 
                 newCanvas->cd();
 
-                GetPosCalProjX ( hist, GetPosCalEnBinMax ( hist ), projWidth )->Draw();
+                GetPosCalProjX ( hist, GetPosCalEnBinMax ( hist, threshold ), projWidth )->Draw();
                 lfit->Draw ( "same" );
                 rfit->Draw ( "same" );
             }
