@@ -339,7 +339,7 @@ void GoddessCalib::ValidateParamsButtons ( std::string mode )
         if ( fileName.empty() ) fileName = "Resistive_Strips_Calib_Params.txt";
 
         if ( mode == "Reload" ) GoddessCalib::sinstance()->DumpFileToResCalMap ( fileName );
-	else if( mode == "Write") GoddessCalib::sinstance()->WriteResCalResults ( fileName );
+        else if ( mode == "Write" ) GoddessCalib::sinstance()->WriteResCalResults ( fileName );
 
         GoddessCalib::FindWindowByName ( Form ( "%s Parameters", mode.c_str() ) )->UnmapWindow();
     }
@@ -1225,26 +1225,39 @@ bool GoddessCalib::UpdateResParamsInConf ( std::string configFile, bool invertCo
                         readLine.clear();
                         readLine.str ( dump );
 
-                        readLine >> dummy >> dummy>> dummy >> offNear >> slopeNear;
-
-                        offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
-                        slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
-
-                        std::getline ( readFile, dump );
-                        readLine.clear();
-                        readLine.str ( dump );
-
-                        readLine >> dummy >> dummy>> dummy >> offFar >> slopeFar;
-
-                        offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
-
                         if ( i < 2 || !invertContactMidDet )
                         {
+                            readLine >> dummy >> dummy>> dummy >> offNear >> slopeNear;
+
+                            offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
+                            slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
+
+                            std::getline ( readFile, dump );
+                            readLine.clear();
+                            readLine.str ( dump );
+
+                            readLine >> dummy >> dummy>> dummy >> offFar >> slopeFar;
+
+                            offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
+
                             outStream << "enCal p " << i*2 << " " << offNear << " " << slopeNear << "\n";
                             outStream << "enCal p " << i*2 + 1 << " " << offFar << " " << slopeFar << "\n";
                         }
                         else
                         {
+                            readLine >> dummy >> dummy>> dummy >> offFar >> slopeFar;
+
+                            offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
+
+                            std::getline ( readFile, dump );
+                            readLine.clear();
+                            readLine.str ( dump );
+
+                            readLine >> dummy >> dummy>> dummy >> offNear >> slopeNear;
+
+                            offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
+                            slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
+
                             outStream << "enCal p " << i*2 << " " << offFar << " " << slopeFar << "\n";
                             outStream << "enCal p " << i*2 + 1 << " " << offNear << " " << slopeNear << "\n";
                         }
