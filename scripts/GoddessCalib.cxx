@@ -86,12 +86,12 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
     alphaEn1IF->SetName ( "alphaEn1IF" );
     alphaEn1IF->Resize ( 90, 22 );
 
-    subHorzFrame3->AddFrame ( eAlphaLabel, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
-    subHorzFrame3->AddFrame ( alphaEn1IF, new TGLayoutHints ( kLHintsCenterX , 10, 30, 5, 5 ) );
+    subHorzFrame3->AddFrame ( eAlphaLabel, new TGLayoutHints ( kLHintsLeft, 10, 10, 5, 5 ) );
+    subHorzFrame3->AddFrame ( alphaEn1IF, new TGLayoutHints ( kLHintsLeft, 10, 30, 5, 5 ) );
 
-    subHorzFrame3->AddFrame ( gCornerB, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
+    subHorzFrame3->AddFrame ( gCornerB, new TGLayoutHints ( kLHintsRight, 10, 10, 5, 5 ) );
 
-    vertFrame->AddFrame ( subHorzFrame3, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 40, 20 ) );
+    vertFrame->AddFrame ( subHorzFrame3, new TGLayoutHints ( kLHintsCenterX, 0, 0, 40, 20 ) );
 
     // ------ Adding the button to perform the Position Calibration ------ //
 
@@ -111,12 +111,12 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
     fNameIF->Resize ( 130, 22 );
     fNameIF->SetText ( "Currently Opened File" );
 
-    subHorzFrame4->AddFrame ( fNameLabel, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
-    subHorzFrame4->AddFrame ( fNameIF, new TGLayoutHints ( kLHintsCenterX , 10, 35, 5, 5 ) );
+    subHorzFrame4->AddFrame ( fNameLabel, new TGLayoutHints ( kLHintsLeft , 10, 10, 5, 5 ) );
+    subHorzFrame4->AddFrame ( fNameIF, new TGLayoutHints ( kLHintsLeft , 10, 35, 5, 5 ) );
 
-    subHorzFrame4->AddFrame ( gEdgeB, new TGLayoutHints ( kLHintsCenterX , 10, 10, 5, 5 ) );
+    subHorzFrame4->AddFrame ( gEdgeB, new TGLayoutHints ( kLHintsRight , 10, 10, 5, 5 ) );
 
-    vertFrame->AddFrame ( subHorzFrame4, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 0, 70 ) );
+    vertFrame->AddFrame ( subHorzFrame4, new TGLayoutHints ( kLHintsCenterX, 0, 0, 0, 70 ) );
 
     // ------ Wraping everything in the main frame ------ //
 
@@ -1362,7 +1362,7 @@ TGraph* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, std::string varToPl
 
     std::string currPath = ( std::string ) gDirectory->GetPath();
 
-    std::string rootFileName = "Resistive_Strips_Calib_Graphs_";
+    std::string rootFileName = "Resistive_Strips_EnCal_Graphs_";
 
     std::string treeFName = tree->GetCurrentFile()->GetName();
 
@@ -1474,7 +1474,7 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
 
     std::string currPath = ( std::string ) gDirectory->GetPath();
 
-    std::string rootFileName = "Resistive_Strips_Calib_Graphs_";
+    std::string rootFileName = "Resistive_Strips_EnCal_Graphs_";
 
     std::string treeFName = tree->GetCurrentFile()->GetName();
 
@@ -1603,7 +1603,7 @@ std::map<std::string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bo
 
     std::cout << std::endl;
 
-    WritePosCalHistsToFile ( tree, "resistive_Strips_PosCal_hists" );
+    WritePosCalHistsToFile ( tree, "Resistive_Strips_PosCal_Hists" );
 
     return resStripsPosCalGraphsMap;
 }
@@ -1722,8 +1722,8 @@ int GoddessCalib::GetPosCalEnBinMax ( TH2F* input, double threshold )
 
     binMax = proj->GetMaximumBin();
 
-    std::cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
-    std::cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
+//     std::cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
+//     std::cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
 
     return binMax;
 }

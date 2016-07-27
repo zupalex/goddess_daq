@@ -727,6 +727,8 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 
 void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts*/ )
 {
+    bool writeEvent = false;
+
     //Reminder: Pars.noCalib == ...
     //                          0 writes just the sorted and calibrated tree.
     //                          1 writes just the sorted but non calibrated tree.
@@ -1000,19 +1002,28 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                     }
                 }
 
-                if ( *eSumP != 0.0 )
+//                 if ( *eSumP != 0.0 )
+                if ( *eSumP > 800.0 )
                 {
+                    writeEvent = true;
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
                 }
 
-                if ( *eSumN != 0.0 )
+//                 if ( *eSumN != 0.0 )
+                if ( *eSumN > 800.0 )
                 {
+                    writeEvent = true;
                     datum->eSum.push_back ( *eSumN );
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
                 }
 
-                if ( *stripMaxP >= 0 ) datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
+//                 if ( *stripMaxP >= 0 )
+                if ( *stripMaxP >= 0 && enear_tot+efar_tot > 800.0 )
+                {
+                    if ( nc == 1 ) writeEvent = true;
+                    datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
+                }
             }
         }
     }
@@ -1020,6 +1031,9 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
     //Loop over the DGS events
     for ( unsigned int dgsEvtNum = 0; dgsEvtNum < ( dgsEvts->size() ); dgsEvtNum++ )
     {
+        // For the moment I do not want to fill the tree with gamma if there was nothing in ORRUBA
+//         writeEvent = true;
+
         GamData datum;
 
         datum.type = dgsEvts->at ( dgsEvtNum ).tpe;
@@ -1058,6 +1072,8 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
     //Deal with the ion chamber
     if ( firedDets.find ( "ion" ) != firedDets.end() )
     {
+        writeEvent = true;
+
         IonData datum;
         datum.dE = ionChamber->GetAnodeDE();
         datum.resE = ionChamber->GetAnodeResE();
@@ -1080,7 +1096,9 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
 
     //if (!gamData->empty() && !siData->empty()) tree->Fill();
     //std::cout << ionData->size() << '\n';
-    tree->Fill();
+
+    if ( writeEvent )
+        tree->Fill();
 
     if ( Pars.noCalib == 2 )
     {

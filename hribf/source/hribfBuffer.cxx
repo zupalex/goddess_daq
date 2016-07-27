@@ -42,16 +42,16 @@ int hribfBuffer::ReadEvent ( bool verbose )
         if ( datum == ( UInt_t ) -1 )
         {
             if ( verbose ) printf ( "\t%#06X Trailer\n",datum );
-            if ( !multParameterChannels.empty() )
-            {
-                fprintf ( stderr,"ERROR: Multiple values set for buffer %d, event %d, parameter: (Only last values are stored!)\n",GetBufferNumber(),GetEventNumber() );
-                for ( auto itr = multParameterChannels.begin(); itr != multParameterChannels.end(); ++itr )
-                {
-                    if ( itr != multParameterChannels.begin() ) fprintf ( stderr,", " );
-                    fprintf ( stderr,"%3d",*itr );
-                }
-                fprintf ( stderr,"!\n" );
-            }
+//             if ( !multParameterChannels.empty() )
+//             {
+//                 fprintf ( stderr,"ERROR: Multiple values set for buffer %d, event %d, parameter: (Only last values are stored!)\n",GetBufferNumber(),GetEventNumber() );
+//                 for ( auto itr = multParameterChannels.begin(); itr != multParameterChannels.end(); ++itr )
+//                 {
+//                     if ( itr != multParameterChannels.begin() ) fprintf ( stderr,", " );
+//                     fprintf ( stderr,"%3d",*itr );
+//                 }
+//                 fprintf ( stderr,"!\n" );
+//             }
 
             break;
         }
@@ -64,7 +64,10 @@ int hribfBuffer::ReadEvent ( bool verbose )
         }
 
         //if (values.size() <= channel) values.resize(channel+1);
-        values[channel]=value;
+//         values[channel]=value;
+
+        if ( value > values[channel] ) values[channel]=value;
+
         paramMults[channel]++;
         if ( paramMults[channel] == 2 ) multParameterChannels.push_back ( channel );
     }
