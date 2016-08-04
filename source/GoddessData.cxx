@@ -1003,7 +1003,7 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 }
 
 //                 if ( *eSumP != 0.0 )
-                if ( *eSumP > 800.0 )
+                if ( *eSumP > 0.8 )
                 {
                     writeEvent = true;
                     datum->eSum.push_back ( *eSumP );
@@ -1011,15 +1011,14 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 }
 
 //                 if ( *eSumN != 0.0 )
-                if ( *eSumN > 800.0 )
+                if ( *eSumN > 0.8 )
                 {
                     writeEvent = true;
                     datum->eSum.push_back ( *eSumN );
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
                 }
 
-//                 if ( *stripMaxP >= 0 )
-                if ( *stripMaxP >= 0 && enear_tot+efar_tot > 800.0 )
+                if ( *stripMaxP >= 0 )
                 {
                     if ( nc == 1 ) writeEvent = true;
                     datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
