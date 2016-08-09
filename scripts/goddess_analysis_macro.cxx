@@ -8,24 +8,42 @@ string localPathToGoddessDaq = "";
 
 void LinuxLibrariesLoader ( string myPath )
 {
+//     gSystem->AddIncludePath ( Form ( "%s/exec/", myPath.c_str() ) );
+//     gSystem->AddLinkedLibs ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
+//     gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
+//     gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
+
 //     gSystem->Load ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
 //     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
 //     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
-    gSystem->AddIncludePath ( Form ( "%s/exec/", myPath.c_str() ) );
-    gSystem->AddLinkedLibs ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
-    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
-    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
+
+    gROOT->ProcessLine ( Form ( ".include %s/exec/", myPath.c_str() ) );
+
+    gROOT->ProcessLine ( Form ( ".L %s/exec/libORRUBA.so", myPath.c_str() ) );
+    gROOT->ProcessLine ( Form ( ".L %s/exec/libGoddessStruct.so", myPath.c_str() ) );
+    gROOT->ProcessLine ( Form ( ".L %s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
+
+//     gROOT->ProcessLine ( ".L libORRUBA.so" );
+//     gROOT->ProcessLine ( ".L libGoddessStruct.so" );
+//     gROOT->ProcessLine ( ".L libGoddessAnalysis.so" );
 }
 
 void MacLibrariesLoader ( string myPath )
 {
+//     gSystem->AddIncludePath ( Form ( "%s/exec/", myPath.c_str() ) );
+//     gSystem->AddLinkedLibs ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
+//     gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
+//     gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
+
 //     gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
 //     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
 //     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
-    gSystem->AddIncludePath ( Form ( "%s/exec/", myPath.c_str() ) );
-    gSystem->AddLinkedLibs ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
-    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
-    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
+
+    gROOT->ProcessLine ( Form ( ".include %s/exec/", myPath.c_str() ) );
+
+    gROOT->ProcessLine ( Form ( ".L %s/exec/libORRUBA.dylib", myPath.c_str() ) );
+    gROOT->ProcessLine ( Form ( ".L %s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
+    gROOT->ProcessLine ( Form ( ".L %s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
 }
 
 void StartCalibGODDESSDets()
