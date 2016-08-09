@@ -8,16 +8,24 @@ string localPathToGoddessDaq = "";
 
 void LinuxLibrariesLoader ( string myPath )
 {
-    gSystem->Load ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
-    gSystem->Load ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
-    gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
+//     gSystem->Load ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
+//     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
+//     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
+    gSystem->AddIncludePath ( Form ( "%s/exec/", myPath.c_str() ) );
+    gSystem->AddLinkedLibs ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
+    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
+    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
 }
 
 void MacLibrariesLoader ( string myPath )
 {
-    gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
-    gSystem->Load ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
-    gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
+//     gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
+//     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
+//     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
+    gSystem->AddIncludePath ( Form ( "%s/exec/", myPath.c_str() ) );
+    gSystem->AddLinkedLibs ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
+    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
+    gSystem->AddLinkedLibs ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
 }
 
 void StartCalibGODDESSDets()
