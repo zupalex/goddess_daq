@@ -1,4 +1,4 @@
-#Ignore tmeporary files
+#Ignore temporary files
 *.swp
 *.swo
 *~
@@ -7,3 +7,11 @@
 build/
 exec/
 doc/
+
+#ignore non relevant files
+*.kdev4
+OpenScriptsMacro.sh
+*.d
+*.so
+*.pcm
+.kdev4/
