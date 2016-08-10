@@ -65,7 +65,7 @@ private:
     void InitBB10Hists();
     void InitGammaHists();
 
-    void FillTrees(std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt*/);
+    int FillTrees(std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt*/);
     void FillHists(std::vector<DGSEVENT>* dgsEvts);
 
     ///Map of all fired detectors in an event keyed by position ID.

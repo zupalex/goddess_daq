@@ -5,6 +5,7 @@
 #include "gdecomp.h"
 #include "veto_pos.h"
 #include <string>
+#include <fstream>
 
 
 #define TAPE 0
@@ -66,6 +67,8 @@ typedef struct PARS {
     bool noHists;
     unsigned short ignoreThresholds;
     unsigned short siDetailLvl;
+    std::string userFilter;
+    std::ofstream cleanedMerged;
     char ROOTFile[STRLEN];
     unsigned long long int nEvents;
     char ROOTFileOption[STRLEN];

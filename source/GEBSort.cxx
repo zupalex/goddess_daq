@@ -1024,6 +1024,7 @@ main ( int argc, char** argv )
     Pars.siDetailLvl = 1;
     Pars.noMapping = false;
     Pars.noHists = false;
+    Pars.userFilter = "";
     Pars.InputSrc = NOTDEF;
     Pars.HaveRootFileName = 0;
     strcpy ( Pars.ConfigFile, "Uninitialized" );
@@ -1247,6 +1248,16 @@ main ( int argc, char** argv )
                 j++;
                 printf ( "No pre-made histograms will be generated and written to the file\n" );
                 Pars.noHists = true;
+            }
+            else if ( ( p = strstr ( argv[j], "-userfilter" ) ) != NULL )
+            {
+                j++;
+		char filteredName[500];
+		strcpy ( filteredName, argv[j++] );
+		
+		Pars.userFilter = filteredName;
+		
+                printf ( "An additional binary file will be generated using the user filters\n" );
             }
             else if ( ( p = strstr ( argv[j], "-rootfile" ) ) != NULL )
             {
@@ -2964,6 +2975,8 @@ GEBacq ( char* ChatFileName )
         Pars.treeDir = 0;
         printf ( "done saving rootfile \"%s\n\n", Pars.ROOTFile );
         fflush ( stdout );
+	
+	if(Pars.cleanedMerged.is_open()) Pars.cleanedMerged.close();
     }
     printf ( "\n" );
 

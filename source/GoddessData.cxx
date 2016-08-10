@@ -16,6 +16,7 @@
 #include "LiquidScint.h"
 
 #include <iostream>
+#include <fstream>
 
 extern PARS Pars;
 
@@ -127,6 +128,11 @@ GoddessData::GoddessData ( std::string configFilename )
         //TDirectory *dirLiquidScint = gDirectory->mkdir("LiquidScint");
         //dirLiquidScint->cd();
         //InitLiquidScintHists();
+    }
+
+    if ( !Pars.userFilter.empty() )
+    {
+        Pars.cleanedMerged.open ( Pars.userFilter.c_str(), std::ios::out | std::ios::trunc | std::ios::binary );
     }
 }
 void GoddessData::InitBB10Hists()
@@ -474,14 +480,25 @@ void GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std:
 
     //FillHists(dgsEvts);
 
+    int userFilterFlag = 0;
+
     if ( Pars.noCalib != -1 )
     {
-        FillTrees ( dgsEvts/*,dgodEvts,agodEvts*/ );
+        userFilterFlag = FillTrees ( dgsEvts/*,dgodEvts,agodEvts*/ );
     }
 
     if ( Pars.noMapping )
     {
         rawTree->Fill();
+    }
+
+    if ( userFilterFlag && Pars.cleanedMerged.is_open() )
+    {
+        for ( int i = 0; i < gebEvt->mult; i++ )
+        {
+            Pars.cleanedMerged.write ( ( char* ) gebEvt->ptgd[i], sizeof ( gebData ) );
+            Pars.cleanedMerged.write ( ( char* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length );
+        }
     }
 
     //We clear everything here since we know what was actually fired.
@@ -725,10 +742,8 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
     hDetPosMult->Fill ( numSectorHits.size() );
 }
 
-void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts*/ )
+int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts*/ )
 {
-    bool writeEvent = false;
-
     //Reminder: Pars.noCalib == ...
     //                          0 writes just the sorted and calibrated tree.
     //                          1 writes just the sorted but non calibrated tree.
@@ -1003,24 +1018,21 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
                 }
 
 //                 if ( *eSumP != 0.0 )
-                if ( *eSumP > 0.8 )
+                if ( *eSumP > 0 )
                 {
-                    writeEvent = true;
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
                 }
 
 //                 if ( *eSumN != 0.0 )
-                if ( *eSumN > 0.8 )
+                if ( *eSumN > 0 )
                 {
-                    writeEvent = true;
                     datum->eSum.push_back ( *eSumN );
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
                 }
 
                 if ( *stripMaxP >= 0 )
                 {
-                    if ( nc == 1 ) writeEvent = true;
                     datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
                 }
             }
@@ -1031,7 +1043,6 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
     for ( unsigned int dgsEvtNum = 0; dgsEvtNum < ( dgsEvts->size() ); dgsEvtNum++ )
     {
         // For the moment I do not want to fill the tree with gamma if there was nothing in ORRUBA
-//         writeEvent = true;
 
         GamData datum;
 
@@ -1071,8 +1082,6 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
     //Deal with the ion chamber
     if ( firedDets.find ( "ion" ) != firedDets.end() )
     {
-        writeEvent = true;
-
         IonData datum;
         datum.dE = ionChamber->GetAnodeDE();
         datum.resE = ionChamber->GetAnodeResE();
@@ -1096,12 +1105,20 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
     //if (!gamData->empty() && !siData->empty()) tree->Fill();
     //std::cout << ionData->size() << '\n';
 
-    if ( writeEvent )
-        tree->Fill();
+    tree->Fill();
 
     if ( Pars.noCalib == 2 )
     {
         sortedTree->Fill();
+    }
+
+    int userFilterFlag = 0;
+
+    if ( !Pars.userFilter.empty())
+    {
+        SortManager* sManager = new SortManager ( gamData, siData, ionData );
+
+        userFilterFlag = sManager->GetWriteEventFlag();
     }
 
     gamData->clear();
@@ -1115,6 +1132,8 @@ void GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMA
         siData_snc->clear();
         ionData_snc->clear();
     }
+
+    return userFilterFlag;
 }
 
 

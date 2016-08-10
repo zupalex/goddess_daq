@@ -25,6 +25,7 @@ ReturnError()
     echo "           [mode]==2 will store all the energies collected by each strips individually as well as the sum per sector."
     echo "-> nomapping will create an additional tree containing the raw data in pairs <channel, value>"
     echo "-> nohists will prevent histograms to be generated"
+    echo "-> userfilter=[folder name] will create a \"cleaned\" merged file in the specified folder using the filters defined in scripts/UserEventFilter.cxx"
 }
 
 if [ $# -lt 3 ] 
@@ -48,6 +49,9 @@ NEVENTSARG=""
 FSTEVENTSARG=""
 SPLITEVTARG=""
 CONFIGFILEARG=""
+
+USERFILTERDIR=""
+USERFILTERARG=""
 
 if [ "$1" = "default" ]; then
     INPUT_DIR="/mnt/hgfs/GODDESS_MERGED/merged"
@@ -149,7 +153,19 @@ COUNTER=$(($COUNTER + 1))
     elif [ "$arg" != "${arg##suffix=}" ]; then
     
 	OUTPUTSUFFIX="${arg##suffix=}"
-	echo "The following suffix will be append at the end of the output filename: $OUTPUTSUFFIX"    
+	echo "The following suffix will be append at the end of the output filename: $OUTPUTSUFFIX"
+	
+    elif [ "$arg" != "${arg##userfilter=}" ]; then
+
+        USERFILTERDIR=${arg##userfilter=}
+    
+        if [ ! -e "$USERFILTERDIR" ]; then
+	   echo "FOLDER SPECIFIED FOR THE CLEANED MERGED FILE DOES NOT EXIST."
+	   ReturnError
+	   exit 1	
+        fi
+
+	echo "Will generated a cleaned merged file in ${arg##userfilter=}"
 
     elif [ $COUNTER -gt 3 ]; then
 	
@@ -181,7 +197,11 @@ do
 	mkdir log
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
+    if [ $USERFILTERDIR != "" ]; then
+        USERFILTERARG="-userfilter $USERFILTERDIR/GEBMerged_run$RUN.gtd_000"
+    fi
+    
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
     echo "GEBSort DONE at `date`"
     
     tail -n 5 log/GEBSort_run$RUN.log

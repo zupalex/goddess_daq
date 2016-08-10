@@ -18,7 +18,7 @@ add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 add_library(ORRUBA SHARED $<TARGET_OBJECTS:ORRUBA_OBJECT>)
 target_link_libraries(ORRUBA ${ROOT_LIBRARIES})
 
-set (GODDESSSTRUCT_SOURCES GoddessStruct.cxx GoddessStructDictionary.cxx)
+set (GODDESSSTRUCT_SOURCES GoddessStruct.cxx ${CMAKE_SOURCE_DIR}/scripts/UserEventFilter.cxx  GoddessStructDictionary.cxx)
 
 add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
 add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
