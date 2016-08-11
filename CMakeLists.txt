@@ -31,6 +31,10 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 #Add custom modules to module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
+include(${CMAKE_MODULE_PATH}/ExportDYLD.cmake)
+
+CheckForExportDYLD()
+
 #Find the ROOT package and configure the flags and paths
 find_package (ROOT REQUIRED)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_CXX_FLAGS}")

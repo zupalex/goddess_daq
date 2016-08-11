@@ -15,23 +15,6 @@ void LinuxLibrariesLoader ( string myPath )
 
 void MacLibrariesLoader ( string myPath )
 {
-    std::ifstream expScript ( Form ( "%s/exec/exportToDYLD.sh", myPath.c_str() ) );
-
-    if ( !expScript.is_open() )
-    {
-        std::ofstream newExpScript ( Form ( "%s/exec/exportToDYLD.sh", myPath.c_str() ) );
-
-        newExpScript << "#!/bin/bash" << std::endl << std::endl;
-
-        newExpScript << "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:" << myPath << "/exec/" << std::endl;
-
-        newExpScript.close();
-
-        expScript.open ( Form ( "%s/exec/exportToDYLD.sh", myPath.c_str() ) );
-    }
-
-    gROOT->ProcessLine ( Form ( ".! . %s/exec/exportToDYLD.sh", myPath.c_str() ) );
-
     gSystem->AddDynamicPath ( Form ( "%s/exec", myPath.c_str() ) );
 
     gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );

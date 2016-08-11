@@ -13,16 +13,16 @@ bool SortManager::GetWriteEventFlag()
 
     if ( siDets->size() > 0 )
     {
-        for ( auto itr = siDets->begin(); itr != siDets->end(); itr++ )
-        {
-            SiDataBase siData = *itr;
-
-            if ( siData.eSumLayer ( 1, false ) > 0.8 )
-            {
-                flag = true;
-                break;
-            }
-        }
+//         for ( auto itr = siDets->begin(); itr != siDets->end(); itr++ )
+//         {
+//             SiDataBase siData = *itr;
+// 
+//             if ( siData.eSumLayer ( 1, false ) > 0.8 )
+//             {
+//                 flag = true;
+//                 break;
+//             }
+//         }
     }
 
     if ( ionChamber->size() > 0 )
@@ -30,5 +30,7 @@ bool SortManager::GetWriteEventFlag()
 
     }
 
+    flag = true;
+    
     return flag;
 }
