@@ -15,7 +15,7 @@ function(CheckForExportDYLD)
 
       foreach(line ${testStrs})
   
-	if(${line} STREQUAL "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec")
+	if(${line} STREQUAL "export DYLD_LIBRARY_PATH=\"$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec\"")
   
 	  message(STATUS "Found ${bashProfileName} and the export DYLD_LIBRARY_PATH line...")
 	  return()
@@ -28,14 +28,14 @@ function(CheckForExportDYLD)
       
       file(APPEND "${bashProfileName}" "\n")
       file(APPEND "${bashProfileName}" "#Export DYLD_LIBRARY_PATH for goddess_daq\n")
-      file(APPEND "${bashProfileName}" "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec")
+      file(APPEND "${bashProfileName}" "export DYLD_LIBRARY_PATH=\"$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec\"")
 
     else()
   
       message(STATUS "${bashProfileName} does not exist... Creating it...")
   
       file(WRITE "${bashProfileName}" "#Export DYLD_LIBRARY_PATH for goddess_daq\n")
-      file(APPEND "${bashProfileName}" "export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec")
+      file(APPEND "${bashProfileName}" "export DYLD_LIBRARY_PATH=\"$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec\"")
   
     endif()
 
