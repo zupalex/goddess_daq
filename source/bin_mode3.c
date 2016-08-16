@@ -23,6 +23,8 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
+#include "ProcessManagers.h"
+
 #define MAXINT   2147483647
 
 /* pointers to ROOT spectra */

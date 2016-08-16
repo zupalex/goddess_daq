@@ -1,7 +1,5 @@
-set (GEBSort_SOURCES GEBSort.cxx GTPrint.c time_stamp.c GEBHeader.c
-get_a_seed.c bin_mode1.c bin_mode3.c bin_mode2.c bin_template.c bin_dgs.c
-bin_god.c bin_dgod.c bin_agod.c bin_dfma.c bin_gtcal.c spe_fun.c str_decomp.c
-	GoddessData.cxx)
+set (GEBSort_SOURCES GEBSort.cxx time_stamp.c bin_dgs.c bin_god.c bin_dgod.c bin_agod.c GoddessData.cxx ProcessManagers.cxx ${CMAKE_SOURCE_DIR}/scripts/UserEventFilter.cxx)
+
 set (GEBMerge_SOURCES GEBMerge.c spe_fun.c get_a_seed.c time_stamp.c printEvent.c)
 #We force the compiler to treat .c files as c++.
 # (Seems the original authors used .c as a c++ extension?)

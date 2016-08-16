@@ -8,31 +8,20 @@
 #include "TH1F.h"
 #include "TH2F.h"
 
-typedef struct PAYLOAD
-{
-    char p[MAXDATASIZE];
-} PAYLOAD;
+#include "ProcessManagers.h"
 
-typedef struct TRACK_STRUCT
-{
-    int n;
-    GEBDATA* gd;
-    PAYLOAD* payload;
-} TRACK_STRUCT;
+// typedef struct PAYLOAD
+// {
+//     char p[MAXDATASIZE];
+// } PAYLOAD;
+//
+// typedef struct TRACK_STRUCT
+// {
+//     int n;
+//     GEBDATA* gd;
+//     PAYLOAD* payload;
+// } TRACK_STRUCT;
 
-
-/* pointers to ROOT spectra */
-
-
-/* parameters */
-
-extern PARS Pars;
-
-extern AGODEVENT AGODEvent[MAXCOINEV];
-extern unsigned int numAGOD;
-
-extern DGSEVENT DGSEvent[MAXCOINEV];
-extern int ng;
 
 void AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theAGODEvent )
 {
@@ -71,7 +60,9 @@ TH1D* h1_agod_dTS;
 
 void sup_agod()
 {
-    if ( !Pars.noHists )
+    PARS* Pars = SortManager::sinstance()->execParams;
+
+    if ( !Pars->noHists )
     {
         /* declarations */
 
@@ -93,8 +84,8 @@ void sup_agod()
 
         printf ( " we have define the following spectra:\n" );
 
-        Pars.wlist = gDirectory->GetList();
-        Pars.wlist->Print();
+        Pars->wlist = gDirectory->GetList();
+        Pars->wlist->Print();
     }
 }
 
@@ -102,8 +93,7 @@ void sup_agod()
 
 int bin_agod ( GEB_EVENT* GEB_event )
 {
-
-    static unsigned long long lastTS = 0;
+    PARS* Pars = SortManager::sinstance()->execParams;
 
     /* declarations */
 
@@ -113,12 +103,18 @@ int bin_agod ( GEB_EVENT* GEB_event )
 
     int GebTypeStr ( int type, char str[] );
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "entered bin_agod:\n" );
     }
 
-    numAGOD = 0;
+    AGODEVENT* AGODEvent = SortManager::sinstance()->AGODEvent;
+    DGSEVENT* DGSEvent = SortManager::sinstance()->DGSEvent;
+
+    unsigned int* numAGOD = &SortManager::sinstance()->numAGOD;
+    *numAGOD = 0;
+    
+    int* ng = &SortManager::sinstance()->ng;
 
     /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
 
@@ -127,26 +123,26 @@ int bin_agod ( GEB_EVENT* GEB_event )
         // look for analog marker 0x13 = 19
         if ( GEB_event->ptgd[i]->type == 19 )
         {
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( Pars->CurEvNo <= Pars->NumToPrint )
             {
                 GebTypeStr ( GEB_event->ptgd[i]->type, str );
                 //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp);
             }
-            AGODEvDecompose ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ), &AGODEvent[numAGOD] );
+            AGODEvDecompose ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ), &AGODEvent[*numAGOD] );
 
-            numAGOD++;
+            ( *numAGOD ) ++;
         }
     }
 
     // histogram incrementation
-    for ( unsigned int i = 0; i < numAGOD; i++ )
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
     {
-        if ( !Pars.noHists ) h1_agod_dTS->Fill ( ( long long ) ( AGODEvent[i].timestamp - lastTS ) );
-        lastTS = AGODEvent[i].timestamp;
+        if ( !Pars->noHists ) h1_agod_dTS->Fill ( ( long long ) ( AGODEvent[i].timestamp - SortManager::sinstance()->lastTS ) );
+        SortManager::sinstance()->lastTS = AGODEvent[i].timestamp;
         for ( size_t j = 0; j < AGODEvent[i].values.size(); j++ )
         {
-            if ( !Pars.noHists ) h2_agod_en->Fill ( AGODEvent[i].values[j], AGODEvent[i].channels[j] );
-            if ( !Pars.noHists ) h1_agod_en->Fill ( AGODEvent[i].values[j] );
+            if ( !Pars->noHists ) h2_agod_en->Fill ( AGODEvent[i].values[j], AGODEvent[i].channels[j] );
+            if ( !Pars->noHists ) h1_agod_en->Fill ( AGODEvent[i].values[j] );
         }
     }
 
@@ -155,22 +151,22 @@ int bin_agod ( GEB_EVENT* GEB_event )
     double dTg_agod;
     dTg_agod = 0.0;
 
-    for ( unsigned int i = 0; i < numAGOD; i++ )
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
     {
-        //printf("AGOD: %d %d %d %d\n", i, numAGOD, ng, theAGODEvent[i].values.size());
-        if ( ng > 0 )
+        //printf("AGOD: %d %d %d %d\n", i, numAGOD, *ng, theAGODEvent[i].values.size());
+        if ( *ng > 0 )
         {
             for ( size_t j = 0; j < AGODEvent[i].values.size(); j++ )
             {
                 dTg_agod = double ( DGSEvent[0].event_timestamp ) - double ( AGODEvent[i].timestamp );
-                if ( !Pars.noHists ) h2_dTg_agod->Fill ( dTg_agod, AGODEvent[i].channels[j] );
+                if ( !Pars->noHists ) h2_dTg_agod->Fill ( dTg_agod, AGODEvent[i].channels[j] );
             }
         }
     }
 
-    for ( unsigned int i = 0; i < numAGOD; i++ )
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
     {
-        for ( int j = 0; j < ng; j++ )
+        for ( int j = 0; j < *ng; j++ )
         {
             if ( DGSEvent[j].tpe == GE )
             {
@@ -179,7 +175,7 @@ int bin_agod ( GEB_EVENT* GEB_event )
                 {
                     if ( ( AGODEvent[i].channels[k] == 10 ) && ( dTg_agod > 407 ) & ( dTg_agod < 420 ) )
                     {
-                        if ( !Pars.noHists ) h2_g_agod->Fill ( DGSEvent[j].ehi, AGODEvent[i].values[k] );
+                        if ( !Pars->noHists ) h2_g_agod->Fill ( DGSEvent[j].ehi, AGODEvent[i].values[k] );
                     }
                 }
             }
@@ -188,11 +184,11 @@ int bin_agod ( GEB_EVENT* GEB_event )
 
     /* done */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "exit bin_agod\n" );
     }
 
-    return ( 0 );
+    return 0;
 
 }

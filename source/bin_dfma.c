@@ -24,6 +24,8 @@
 #include "GTMerge.h"
 #include "functions_dfma.h"
 
+#include "ProcessManagers.h"
+
 #define LEFT 1
 #define RIGHT 2
 #define ICDE 3
@@ -56,9 +58,6 @@
 #define NGSGE 110
 #define MAXNUMGE 15
 #define MAXNUMDEC 4
-
-
-
 
 struct strip_type
 {
@@ -926,10 +925,8 @@ sup_dfma()
 
 
 
-int
-DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
+int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 {
-
     /* firmware circa Sept 2014 */
 
     /* declarations */
@@ -954,9 +951,6 @@ DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 
         };
     }
-
-
-
 
     /* swap the bytes */
 
@@ -1121,8 +1115,6 @@ DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 
     /* DS changes 3/1/2014 */
 
-
-
     unsigned long long int prevTS;
     int baseline, basesample;
     int postrisebeg, postriseend, prerisebeg, preriseend;
@@ -1199,17 +1191,13 @@ DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 //**********************************************************
 
 
-int
-bin_dfma ( GEB_EVENT* GEB_event )
+int bin_dfma ( GEB_EVENT* GEB_event )
 {
 
     if ( Pars.CurEvNo <= 100 ) //Pars.NumToPrint){
     {
         printf ( "entered bin_dfma:\n" );
     }
-
-
-
 
 #if(1)
 

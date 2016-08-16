@@ -1,6 +1,4 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-#root_generate_dictionary(GoddessCalibDictionnary GoddessCalib.h LINKDEF GoddessAnalysisClassesLinkDef.h)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 root_generate_dictionary(GoddessAnalysisDictionnary GoddessAnalysis.h GoddessCalib.h LINKDEF GoddessAnalysisClassesLinkDef.h)
 

@@ -56,29 +56,7 @@ typedef struct PSAHit2 {
  float tSGh;
 } PSAHIT2;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* mode2 GRETINA formats */
-
-
-
 
 typedef struct DCR_INTPTS3
 {

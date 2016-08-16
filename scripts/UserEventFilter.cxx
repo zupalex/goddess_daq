@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "GoddessStruct.h"
+#include "ProcessManagers.h"
 
 bool SortManager::GetWriteEventFlag()
 {

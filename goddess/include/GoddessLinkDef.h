@@ -19,7 +19,6 @@
 
 #pragma link C++ class ChValPair+;
 #pragma link C++ class ORRUBARawData+;
-#pragma link C++ class SortManager+;
 
 #pragma link C++ class vector<GamData>+;
 #pragma link C++ class vector<SiDataBase>+;

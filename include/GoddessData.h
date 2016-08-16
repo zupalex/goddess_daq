@@ -7,6 +7,7 @@
 #include "IonChamber.h"
 #include "LiquidScint.h"
 #include "GoddessStruct.h"
+#include "ProcessManagers.h"
 
 
 #include "TH1F.h"
@@ -27,7 +28,7 @@ public:
     GoddessData(std::string configFilename);
     ~GoddessData();
 
-    void Fill(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt);
+    int Fill(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt);
 
 private:
     struct GammaData {

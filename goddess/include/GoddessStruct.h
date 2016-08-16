@@ -286,38 +286,6 @@ public:
     /// \endcond
 };
 
-
-class SortManager
-{
-private:
-
-public:
-    SortManager()
-    {
-        gammaDets = new std::vector<GamData>();
-        siDets = new std::vector<SiDataBase>();
-        ionChamber = new std::vector<IonData>();
-    }
-    SortManager(std::vector<GamData>* gD, std::vector<SiDataBase>* sD, std::vector<IonData>* iC)
-    {
-        gammaDets = gD;
-        siDets = sD;
-        ionChamber = iC;
-    }
-
-    virtual ~SortManager() {}
-
-    std::vector<GamData>* gammaDets;
-    std::vector<SiDataBase>* siDets;
-    std::vector<IonData>* ionChamber;
-    
-    bool GetWriteEventFlag();
-
-    /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef ( SortManager, 1 )
-    /// \endcond
-};
-
 #endif
 
 

@@ -25,19 +25,21 @@
 #define NGSGE 110
 #include "gsang.h"
 
-#if(0)
-typedef struct PAYLOAD
-{
-    char p[MAXDATASIZE];
-} PAYLOAD;
+#include "ProcessManagers.h"
 
-typedef struct TRACK_STRUCT
-{
-    int n;
-    GEBDATA* gd;
-    PAYLOAD* payload;
-} TRACK_STRUCT;
-#endif
+// #if(0)
+// typedef struct PAYLOAD
+// {
+//     char p[MAXDATASIZE];
+// } PAYLOAD;
+// 
+// typedef struct TRACK_STRUCT
+// {
+//     int n;
+//     GEBDATA* gd;
+//     PAYLOAD* payload;
+// } TRACK_STRUCT;
+// #endif
 
 /* Gain Calibrtation */
 float M = 350.0; // changed from 350.0
@@ -45,7 +47,6 @@ float ehigain[NGE + 1];
 float ehioffset[NGE + 1];
 float ehibase[NGE + 1];
 float ehiPZ[NGE + 1];
-void SetBeta();
 
 /* Other variables */
 unsigned long long int  EvTimeStam0 = 0;
@@ -61,40 +62,78 @@ TH2F* hTrB, *hFwB;//,*hE_TrB[NGE+1];
 extern TH1D* ehi[MAXDETPOS + 1];
 
 /* parameters */
-extern DGSEVENT DGSEvent[MAXCOINEV];
-extern int ng;
-extern PARS Pars;
-int tlkup[NCHANNELS];
-int tid[NCHANNELS];
-
 double angle[NGSGE], anglephi[NGSGE];
 
 double DopCorFac[NGSGE], ACFac[NGSGE];
 
 /*-----------------------------------------------------*/
 
-int
-sup_dgs()
+void getcal ( char* file )
+{
+    int i, ret = 0;
+    float a, b, c, d;
+    char mystring [1000];
+    std::FILE* fp;
+
+    fp = fopen ( file, "r" ); // read mode
+
+    // if Error opening file - end.
+
+    if ( fp == NULL )
+    {
+        perror ( "Error while opening the file.\n" );
+        exit ( EXIT_FAILURE );
+    }
+
+    // read file and parse
+
+    while ( fgets ( mystring , 100 , fp ) != NULL )
+    {
+        //printf("i= %i %s",i,mystring);
+        ret = strncmp ( mystring, "#", 1 );
+        if ( ret == 0 )
+        {
+            //printf("%s",mystring);
+        }
+        else
+        {
+            ret = sscanf ( mystring, "%i %f %f %f %f", &i, &a, &b, &c, &d );
+            if ( ret == 1 )
+            {
+                M = i;
+                printf ( "M = %i\n", i );
+            }
+            if ( ret == 5 )
+            {
+                printf ( "%i %f %f %f %f \n", i, a, b, c, d );
+                ehiPZ[i] = b;
+                ehibase[i] = a;
+                ehigain[i] = d;
+                ehioffset[i] = c;
+            }
+        }
+    }
+    fclose ( fp );
+}
+
+int sup_dgs()
 {
     /* declarations */
 
     char  str[STRLEN];
     int i, i1, i2, i7, i8;
-    FILE* fp;
+    std::FILE* fp;
 
     void getcal ( char* );
 
     //char file_name[]="./dgscal.dat.350";        // place this is sort directory
     char file_name[] = "./dgscal.dat";      // place this is sort directory
 
-    if ( !Pars.noHists )
+    PARS* Pars = SortManager::sinstance()->execParams;
+
+    if ( !Pars->noHists )
     {
         gDirectory->mkdir ( "dgs" )->cd();
-
-// functions for making root histograms
-
-        TH2F* make2D ( const char*, int, int, int, int, int, int );
-        TH1D* make1D ( const char*, int , int , int );
 
 // 2-D's for Rate
 
@@ -126,8 +165,8 @@ sup_dgs()
 
         //printf (" we have define the following spectra:\n");
 
-        Pars.wlist = gDirectory->GetList();
-        //Pars.wlist->Print ();
+        Pars->wlist = gDirectory->GetList();
+        //Pars->list->Print ();
     }
 
     /* -------------------- */
@@ -136,8 +175,8 @@ sup_dgs()
 
     for ( i = 0; i < NCHANNELS; i++ )
     {
-        tlkup[i] = NOTHING;
-        tid[i] = NOTHING;
+        SortManager::sinstance()->tlkup[i] = NOTHING;
+        SortManager::sinstance()->tid[i] = NOTHING;
     };
 
     fp = fopen ( "map.dat", "r" );
@@ -156,8 +195,8 @@ sup_dgs()
     printf ( "%i %i %i %s\n", i1, i7, i8, str );
     while ( i2 == 4 )
     {
-        tlkup[i1] = i7;
-        tid[i1] = i8;
+        SortManager::sinstance()->tlkup[i1] = i7;
+        SortManager::sinstance()->tid[i1] = i8;
         i2 = fscanf ( fp, "\n%i %i %i %s", &i1, &i7, &i8, str );
         //printf ("%i %i %i %s\n", i1, i7, i8, str);
     };
@@ -187,8 +226,7 @@ sup_dgs()
 
 }
 
-int
-DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
+int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 {
 
     /* firmware circa 9/2013 */
@@ -200,8 +238,9 @@ DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
     unsigned int t1 = 0, t2 = 0, t3 = 0, t4 = 0;
     unsigned long long int ulli1;
 
+    PARS* Pars = SortManager::sinstance()->execParams;
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "entered DGSEvDecompose_v3:\n" );
     }
@@ -227,7 +266,7 @@ DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
     /* debug print */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "event len=%i (%lu bytes) >\n", len, len * sizeof ( unsigned int ) );
         for ( i = 0; i < len; i++ )
@@ -277,8 +316,8 @@ DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
     /* store the type and type ID */
 
-    theDGSEvent->tpe = tlkup[theDGSEvent->id];
-    theDGSEvent->tid = tid[theDGSEvent->id];
+    theDGSEvent->tpe = SortManager::sinstance()->tlkup[theDGSEvent->id];
+    theDGSEvent->tid = SortManager::sinstance()->tid[theDGSEvent->id];
     theDGSEvent->flag = 0;
 
 
@@ -394,12 +433,12 @@ DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
     /* done */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "exit DGSEvDecompose_v3:\n" );
     }
 
-    return ( 0 );
+    return 0;
 
 }
 
@@ -408,8 +447,9 @@ DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 int
 bin_dgs ( GEB_EVENT* GEB_event )
 {
-
     /* declarations */
+
+    PARS* Pars = SortManager::sinstance()->execParams;
 
     char str[128];
     int i, j, gsid;
@@ -424,7 +464,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* Print debug */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "entered bin_dgs:\n" );
     }
@@ -432,12 +472,16 @@ bin_dgs ( GEB_EVENT* GEB_event )
     /* loop through the coincidence event and fish out DGS data */
     /* (gamma rays) count in ng */
 
-    ng = 0;
+    int* ng = &SortManager::sinstance()->ng;
+    
+    *ng = 0;
+    DGSEVENT* DGSEvent = SortManager::sinstance()->DGSEvent;
+    
     for ( i = 0; i < GEB_event->mult; i++ )
     {
         if ( GEB_event->ptgd[i]->type == GEB_TYPE_DGS )
         {
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( Pars->CurEvNo <= Pars->NumToPrint )
             {
                 GebTypeStr ( GEB_event->ptgd[i]->type, str );
                 printf ( "bin_mode1, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str,
@@ -445,18 +489,18 @@ bin_dgs ( GEB_EVENT* GEB_event )
             }
 
             DGSEvDecompose_v3 ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ),
-                                &DGSEvent[ng] );
-            ng++;
+                                &DGSEvent[*ng] );
+            (*ng)++;
         }
     }
 
     // Initialize EvTimeStam0
 
     //printf("Stat 1 \n");
-    if ( Pars.CurEvNo < 100 )
+    if ( Pars->CurEvNo < 100 )
     {
-        printf ( "\n\nCurEvNo: %i", Pars.CurEvNo );
-        for ( i = 0; i < ng; i++ )
+        printf ( "\n\nCurEvNo: %i", Pars->CurEvNo );
+        for ( i = 0; i < *ng; i++ )
         {
             printf ( "\n DGSEvent[%i].event_timestamp: %llu", i, DGSEvent[i].event_timestamp );
         }
@@ -469,7 +513,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
         EvTimeStam0 = DGSEvent[0].event_timestamp;
     }
     RelEvT = ( int ) ( ( DGSEvent[0].event_timestamp - EvTimeStam0 ) / 100000000 ); // overflow?
-    if ( !Pars.noHists ) hEventCounter->Fill ( RelEvT );
+    if ( !Pars->noHists ) hEventCounter->Fill ( RelEvT );
 
 
 // GS ENERGY CALIBRATION
@@ -485,29 +529,29 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* Compton Suppression Loop */
 
-    for ( i = 0; i < ng; i++ )
+    for ( i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
             gsid = DGSEvent[i].tid;
-            if ( !Pars.noHists ) hGeCounter->Fill ( ( int ) ( ( DGSEvent[0].event_timestamp - EvTimeStam0 ) / 100000000 ), gsid );
+            if ( !Pars->noHists ) hGeCounter->Fill ( ( int ) ( ( DGSEvent[0].event_timestamp - EvTimeStam0 ) / 100000000 ), gsid );
             Energy = ( ( float ) ( DGSEvent[i].post_rise_energy ) - ( float ) ( DGSEvent[i].pre_rise_energy ) * ehiPZ[gsid] ) / M * ehigain[gsid];
             //Energy = Energy - ehibase[gsid]*(1.-ehiPZ[gsid])*ehigain[gsid] + ehioffset[gsid];
             Energy = Energy - float ( DGSEvent[i].base_sample ) * ( 1. - ehiPZ[gsid] ) * ehigain[gsid] + ehioffset[gsid];
 
 
-            if ( Pars.beta != 0 )
+            if ( Pars->beta != 0 )
             {
                 d1 = angtheta[gsid - 1] / 57.29577951;
-                Energy = Energy * ( 1 - Pars.beta * cos ( d1 ) ) / sqrt ( 1 - Pars.beta * Pars.beta );
+                Energy = Energy * ( 1 - Pars->beta * cos ( d1 ) ) / sqrt ( 1 - Pars->beta * Pars->beta );
             }
             DGSEvent[i].ehi = Energy;
-            for ( j = 0; j < ng; j++ )
+            for ( j = 0; j < *ng; j++ )
             {
                 if ( DGSEvent[j].tpe == BGO && DGSEvent[j].tid == gsid )    // BGO & GE in coincidence
                 {
                     tdiff = ( int ) ( DGSEvent[i].event_timestamp - DGSEvent[j].event_timestamp );
-                    if ( !Pars.noHists ) hGeBGO_DT->Fill ( tdiff, gsid );
+                    if ( !Pars->noHists ) hGeBGO_DT->Fill ( tdiff, gsid );
                     if ( abs ( tdiff ) <= 50 )
                     {
                         DGSEvent[i].flag = 1;    // Mark as Dirty Ge
@@ -517,20 +561,20 @@ bin_dgs ( GEB_EVENT* GEB_event )
         }
         if ( DGSEvent[i].tpe == BGO )
         {
-            if ( !Pars.noHists ) hBGOCounter->Fill ( ( int ) ( ( DGSEvent[0].event_timestamp - EvTimeStam0 ) / 100000000 ), DGSEvent[i].tid );
+            if ( !Pars->noHists ) hBGOCounter->Fill ( ( int ) ( ( DGSEvent[0].event_timestamp - EvTimeStam0 ) / 100000000 ), DGSEvent[i].tid );
             DGSEvent[i].ehi = ( float ) ( DGSEvent[i].post_rise_energy ) - ( float ) ( DGSEvent[i].pre_rise_energy );
         }
     }
 
     /* Energy Histogram loop */
 
-    for ( i = 0; i < ng; i++ )
+    for ( i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
             e = ( int ) DGSEvent[i].ehi;
             gsid = DGSEvent[i].tid;
-            if ( !Pars.noHists )
+            if ( !Pars->noHists )
             {
                 hEhiRaw->Fill ( e, gsid );
                 if ( DGSEvent[i].flag == 0 )
@@ -547,13 +591,13 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* Histogram's for PZ and baseline correction */
 
-    for ( i = 0; i < ng; i++ )
+    for ( i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
             gsid = DGSEvent[i].tid;
 
-            if ( !Pars.noHists )
+            if ( !Pars->noHists )
             {
                 hTrB->Fill ( DGSEvent[i].baseline, gsid );
                 hFwB->Fill ( DGSEvent[i].base_sample, gsid );
@@ -568,7 +612,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     //printf("\nPars.beta: %f\n",Pars.beta);
 
-    for ( i = 0; i < ng; i++ )
+    for ( i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
@@ -590,10 +634,10 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* debug list the gamma rays we found */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
-        for ( i = 0; i < ng; i++ )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
+        for ( i = 0; i < *ng; i++ )
         {
-            printf ( "we have %i gamma rays\n", ng );
+            printf ( "we have %i gamma rays\n", *ng );
             printf ( "%2i> ", i );
             printf ( "chan_id=%i; ", DGSEvent[i].chan_id );
             printf ( "board_id=%i; ", DGSEvent[i].board_id );
@@ -610,7 +654,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
     /*
      * if ( !Pars.noHists )
      * {
-        for (i = 0; i < ng; i++)
+        for (i = 0; i < *ng; i++)
           if (DGSEvent[i].tpe == GE) {
             if (DGSEvent[i].ehi > 0 && DGSEvent[i].ehi < LONGLEN) {
               dgs_sumehi->Fill ((double) DGSEvent[i].ehi, 1);
@@ -636,7 +680,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
 #endif
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "exit bin_dgs\n" );
     }
@@ -646,93 +690,15 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
 
 }
-//////////////////////////////////////////////////////////////////////////////
-TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi )
-{
-    char* str = ( char* ) calloc ( STRLEN, sizeof ( char ) );;
-    strcpy ( str, txt );
-
-    TH2F* mkTH2F ( char*, char*, int, double, double, int, double, double );
-
-
-    TH2F* h2D;
-
-//sprintf(str,txt);
-    h2D = mkTH2F ( str, str, xln, xlo, xhi, yln, ylo, yhi );
-
-    return h2D;
-}
-//////////////////////////////////////////////////////////////////////////////
-TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
-{
-    char* str = ( char* ) calloc ( STRLEN, sizeof ( char ) );
-    strcpy ( str, txt );
-    double xlod, xhid;
-    TH1D* mkTH1D ( char*, char*, int, double, double );
-    TH1D* h1D;
-
-    xlod = xlo;
-    xhid = xhi;
-
-    h1D = mkTH1D ( str, str, xln, xlod, xhid );
-    return h1D;
-}
-//////////////////////////////////////////////////////////////////////////////
-void getcal ( char* file )
-{
-    int i, ret = 0;
-    float a, b, c, d;
-    char mystring [1000];
-    FILE* fp;
-
-    fp = fopen ( file, "r" ); // read mode
-
-    // if Error opening file - end.
-
-    if ( fp == NULL )
-    {
-        perror ( "Error while opening the file.\n" );
-        exit ( EXIT_FAILURE );
-    }
-
-    // read file and parse
-
-    while ( fgets ( mystring , 100 , fp ) != NULL )
-    {
-        //printf("i= %i %s",i,mystring);
-        ret = strncmp ( mystring, "#", 1 );
-        if ( ret == 0 )
-        {
-            //printf("%s",mystring);
-        }
-        else
-        {
-            ret = sscanf ( mystring, "%i %f %f %f %f", &i, &a, &b, &c, &d );
-            if ( ret == 1 )
-            {
-                M = i;
-                printf ( "M = %i\n", i );
-            }
-            if ( ret == 5 )
-            {
-                printf ( "%i %f %f %f %f \n", i, a, b, c, d );
-                ehiPZ[i] = b;
-                ehibase[i] = a;
-                ehigain[i] = d;
-                ehioffset[i] = c;
-            }
-        }
-    }
-    fclose ( fp );
-}
 
 /*--------------------------------------------------------*/
 void
 SetBeta()
 {
-
     /* delarations */
 
+    PARS* Pars = SortManager::sinstance()->execParams;
+    
     int i;
     double d1;
 
@@ -744,7 +710,7 @@ SetBeta()
     {
         //printf("det %3.3i-> ", i);
         d1 = angle[i] / 57.29577951;
-        DopCorFac[i] = ( 1 - Pars.beta * cos ( d1 ) ) / sqrt ( 1 - Pars.beta * Pars.beta );
+        DopCorFac[i] = ( 1 - Pars->beta * cos ( d1 ) ) / sqrt ( 1 - Pars->beta * Pars->beta );
         //printf("dop cor fac: %6.4f; ", DopCorFac[i]);
         ACFac[i] = DopCorFac[i] * DopCorFac[i];
         //printf("aberration cor fac: %6.4f\n", ACFac[i]);

@@ -22,6 +22,8 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
+#include "ProcessManagers.h"
+
 float egamBinWidth;
 
 /* pointers to ROOT spectra */
@@ -41,8 +43,6 @@ float egamBinWidth;
 //TH2F *xy_plot;
 
 /* parameters */
-
-extern PARS Pars;
 extern TH1D* ehi[MAXDETPOS + 1];
 
 /* for mean polar and azimuth angles */
@@ -53,8 +53,7 @@ long long int ndethits[MAXDETPOS + 1];
 
 /* ----------------------------------------------------------------- */
 
-int
-sup_mode2()
+int sup_mode2()
 {
     /* declarations  else
        {
@@ -66,8 +65,9 @@ sup_mode2()
     //char str1[STRLEN], str2[STRLEN]; //unused
     //float pi, il;//unused
     int i;
+    PARS* Pars = SortManager::sinstance()->execParams;
 
-    if ( !Pars.noHists )
+    if ( !Pars->noHists )
     {
         TH1D* mkTH1D ( char*, char*, int, double, double );
         TH2F* mkTH2F ( char*, char*, int, double, double, int, double, double );
@@ -82,124 +82,21 @@ sup_mode2()
         ndethits[i] = 0;
     };
 
-//  gDirectory->mkdir("bin_mode2")->cd();
-//
-//  /* define spectra */
-//
-//  sprintf (str1, "hitpat");
-//  sprintf (str2, "hitpat");
-//  hitpat = mkTH1D (str1, str2, 200, 1, 200);
-//  sprintf (str1, "det number");
-//  hitpat->SetXTitle (str1);
-//
-//  sprintf (str1, "CCmult");
-//  sprintf (str2, "CCmult");
-//  CCmult = mkTH1D (str1, str2, 21, 0, 20);
-//  sprintf (str1, "CCmult");
-//  CCmult->SetXTitle (str1);
-//
-//  sprintf (str1, "CCsum");
-//  sprintf (str2, "CCsum");
-//  CCsum = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-//  sprintf (str1, "(keV)");
-//  CCsum->SetXTitle (str1);
-//
-//  sprintf (str1, "CCsum_s");
-//  sprintf (str2, "CCsum_s");
-//  CCsum_s = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-//  sprintf (str1, "(keV)");
-//  CCsum_s->SetXTitle (str1);
-//
-//  sprintf (str1, "CCadd");
-//  sprintf (str2, "CCadd");
-//  CCadd = mkTH1D (str1, str2, LONGLEN, 1, LONGLEN);
-//  sprintf (str1, "(keV)");
-//  CCadd->SetXTitle (str1);
-//
-//  sprintf (str1, "radius_all");
-//  sprintf (str2, "radius (all points)");
-//  radius_all = mkTH1D (str1, str2, 4096, RMIN, RMAX);
-//  radius_all->SetXTitle (str1);
-//
-//  sprintf (str1, "rate_mode2");
-//  sprintf (str2, "rate_mode2");
-//  rate_mode2 = mkTH1D (str1, str2, RATELEN, 0, RATELEN);
-//  rate_mode2->SetXTitle (str1);
-//
-//  /* star map of GRETA */
-//
-//  sprintf (str1, "evsr_all");
-//  sprintf (str2, "evsr_all");
-//  evsr_all = mkTH2F (str1, str2, MEDIUMLEN, RMIN, RMAX, MEDIUMLEN, 1, MEDIUMLEN);
-//  sprintf (str1, "energy");
-//  evsr_all->SetXTitle (str1);
-//  sprintf (str1, "radius");
-//  evsr_all->SetYTitle (str1);
-//
-//  sprintf (str1, "SMAP_allhits");
-//  sprintf (str2, "SMAP_allhits");
-//  SMAP_allhits = mkTH2F (str1, str2, 720, -180, 180, 360, 0, 180);
-//  sprintf (str1, "Azimuth");
-//  SMAP_allhits->SetXTitle (str1);
-//  sprintf (str1, "Polar");
-//  SMAP_allhits->SetYTitle (str1);
-//
-//  sprintf (str1, "CCe");
-//  sprintf (str2, "CCe");
-//  CCe = mkTH2F (str1, str2, MAXDETPOS, 1, MAXDETPOS, LONGLEN, 1, LONGLEN);
-//  sprintf (str1, "crystal #");
-//  CCe->SetXTitle (str1);
-//  sprintf (str1, "cc energy");
-//  CCe->SetYTitle (str1);
-//
-//  sprintf (str1, "ggCC");
-//  sprintf (str2, "ggCC");
-//  ggCC = mkTH2F (str1, str2, Pars.GGMAX, 1, Pars.GGMAX, Pars.GGMAX, 1, Pars.GGMAX);
-//  sprintf (str1, "g1");
-//  ggCC->SetXTitle (str1);
-//  sprintf (str1, "g2");
-//  ggCC->SetYTitle (str1);
-//
-//  sprintf (str1, "z_plot");
-//  sprintf (str2, "z_plot");
-//  z_plot = mkTH2F (str1, str2, NUMAGATAPOS+1, 0, NUMAGATAPOS, 1024, 0, 100);
-//  sprintf (str1, "crystal");
-//  z_plot->SetXTitle (str1);
-//  sprintf (str1, "z values");
-//  z_plot->SetYTitle (str1);
-//
-//  sprintf (str1, "xy_plot");
-//  sprintf (str2, "xy_plot");
-//  xy_plot = mkTH2F (str1, str2, 1024, -60, 60, 1024, -60, 60);
-//  sprintf (str1, "crystal");
-//  xy_plot->SetXTitle (str1);
-//  sprintf (str1, "z values");
-//  xy_plot->SetYTitle (str1);
-//
-//  gDirectory->cd("/");
-
-    /* list what we have */
-
-//  Pars.wlist = gDirectory->GetList ();
-//  Pars.wlist->Print ();
-
     for ( i = 1; i <= MAXDETPOS; i++ )
     {
-        Pars.detpolang[i] = 0;
+        Pars->detpolang[i] = 0;
     }
     printf ( "MAXDETPOS=%i\n", MAXDETPOS );
     fflush ( stdout );
 
-    return ( 0 );
+    return 0;
 
 }
 
 /* ----------------------------------------------------------------- */
 
-int
-exit_mode2 ( void )
+int exit_mode2 ()
 {
-
     /* declarations*/
 
     int i, mod, crystal;
@@ -226,16 +123,14 @@ exit_mode2 ( void )
     printf ( "------------------------------------------\n" );
     printf ( "\n" );
 
-    return ( 0 );
+    return 0;
 
 }
 
 /* ----------------------------------------------------------------- */
 
-int
-bin_mode2 ( GEB_EVENT* GEB_event )
+int bin_mode2 ( GEB_EVENT* GEB_event )
 {
-
     /* declarations */
     //int nn, rmax,rmin;//unused
     int i, j, crystalno, moduleno, detno;
@@ -243,7 +138,6 @@ bin_mode2 ( GEB_EVENT* GEB_event )
     //double d2;//unused
     double d1;
     char str[128];
-    int GebTypeStr ( int type, char str[] );
     //float detDpFac, orig_seg_e;//unused
     float dp, addedEnergy = 0, r2;
     float RAD2DEG = 0.0174532925;
@@ -258,15 +152,10 @@ bin_mode2 ( GEB_EVENT* GEB_event )
     int nCCenergies;
     static int nperrors = 0;
 
-    CRYS_INTPTS* ptinp;
-    //GEBDATA *ptgd;//unused
+    PARS* Pars = SortManager::sinstance()->execParams;
+    char* ptinp;
 
-    /* prototypes */
-
-    float findAzimuthFromCartesian ( float, float );
-    float findPolarFromCartesian ( float, float, float, float* );
-
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
         printf ( "entered bin_mode2: %i/%i\n", Pars.CurEvNo, Pars.NumToPrint );
     }
@@ -305,7 +194,7 @@ bin_mode2 ( GEB_EVENT* GEB_event )
 
             /* cast */
 
-            ptinp = ( CRYS_INTPTS* ) GEB_event->ptinp[i];
+            ptinp = ( char* ) GEB_event->ptinp[i];
 
             if ( Pars.CurEvNo <= Pars.NumToPrint )
             {
