@@ -118,7 +118,7 @@ int bin_agod ( GEB_EVENT* GEB_event )
 
     /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
 
-    for ( int i = 0; i < GEB_event->mult; i++ )
+    for ( int i = 0; i < GEB_event->ptgd.size(); i++ )
     {
         // look for analog marker 0x13 = 19
         if ( GEB_event->ptgd[i]->type == 19 )

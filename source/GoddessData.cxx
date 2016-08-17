@@ -327,7 +327,8 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
     //Loop over GEB_event and get the lowest timestmap
     firstTimestamp = gebEvt->ptgd[0]->timestamp;
-    for ( int i = 1; i < gebEvt->mult; i++ )
+
+    for ( int i = 1; i < gebEvt->ptgd.size(); i++ )
         if ( gebEvt->ptgd[i]->timestamp < firstTimestamp )
         {
             firstTimestamp = gebEvt->ptgd[i]->timestamp;
@@ -498,15 +499,6 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
     if ( Pars->noMapping )
     {
         rawTree->Fill();
-    }
-
-    if ( userFilterFlag && Pars->cleanedMerged.is_open() )
-    {
-        for ( int i = 0; i < gebEvt->mult; i++ )
-        {
-            Pars->cleanedMerged.write ( ( char* ) gebEvt->ptgd[i], sizeof ( gebData ) );
-            Pars->cleanedMerged.write ( ( char* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length );
-        }
     }
 
     //We clear everything here since we know what was actually fired.
@@ -1118,6 +1110,12 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
     //if (!gamData->empty() && !siData->empty()) tree->Fill();
     //std::cout << ionData->size() << '\n';
 
+    SortManager::sinstance()->SetGamDets ( gamData );
+    SortManager::sinstance()->SetSiDets ( siData );
+    SortManager::sinstance()->SetIonChamber ( ionData );
+    
+    int uff = SortManager::sinstance()->GetWriteEventFlag();
+
     tree->Fill();
 
     if ( Pars->noCalib == 2 )
@@ -1137,7 +1135,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
         ionData_snc->clear();
     }
 
-    return 1;
+    return uff;
 }
 
 

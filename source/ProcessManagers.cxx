@@ -205,14 +205,18 @@ TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
 
 GEB_EVENT::GEB_EVENT()
 {
-    ptgd = new GEBDATA*[MAXGEBS];
-    ptinp = new char*[MAXGEBS];
+    ptgd.clear();
+    ptinp.clear();
+
+    maxGebs = MAXGEBS;
 }
 
 GEB_EVENT::GEB_EVENT ( int maxGebs_ )
 {
-    ptgd = new GEBDATA*[maxGebs_];
-    ptinp = new char*[maxGebs_];
+    ptgd.clear();
+    ptinp.clear();
+
+    maxGebs = maxGebs_;
 }
 
 
@@ -240,7 +244,7 @@ SortManager::SortManager()
 
 SortManager::~SortManager()
 {
-  
+
 }
 
 SortManager* SortManager::sinstance()
@@ -597,226 +601,364 @@ int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
     unsigned long long int TS;
     long long int dTS;
     char str[256];
+    GEBDATA* buffHeader = new GEBDATA;
+    char* buffData;
 
 #if(DEBUG2)
     printf ( "GEBGetEv: called, nx=%i\n", nx );
     fflush ( stdout );
 #endif
 
-    if ( firsttime )
+    GEV_event->ptgd.clear();
+    GEV_event->ptinp.clear();
+
+    while ( !inData.eof() )
     {
-        firsttime = 0;
-
-        /* get the initial header, into position 1, not 0 */
-
-        ii = 1;
-        inData.read ( ( char* ) GEV_event->ptgd[ii], sizeof ( GEBDATA ) );
-        if ( inData.gcount() != sizeof ( GEBDATA ) )
+        if ( overflowGEBEv.ptgd.size() > 1 )
         {
-            printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), siz );
+            std::cerr << "ERROR: The GEB_event overflow contains more than 1 element!\n";
+
+            return -1;
+        }
+        else if ( overflowGEBEv.ptgd.size() == 1 )
+        {
+            GEBDATA* prevGEBHeader = new GEBDATA;
+            *prevGEBHeader = *overflowGEBEv.ptgd[0];
+
+            char* prevDataPack = new char[ prevGEBHeader->length];
+            memcpy ( prevDataPack, overflowGEBEv.ptinp[0], prevGEBHeader->length );
+
+            GEV_event->ptgd.push_back ( prevGEBHeader );
+            GEV_event->ptinp.push_back ( prevDataPack );
+
+            execParams->curTS = prevGEBHeader->timestamp;
+
+            overflowGEBEv.ptgd.clear();
+            overflowGEBEv.ptinp.clear();
+        }
+
+        inData.read ( ( char* ) buffHeader, sizeof ( GEBDATA ) );
+
+        if ( inData.gcount() != sizeof ( GEBDATA ) || inData.fail() )
+        {
+            printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), inData.gcount() );
             return 1;
-        };
-        execParams->nbytes += siz;
-        nn2++;
-        printf ( "got initial header, TS=%lli\n", GEV_event->ptgd[ii]->timestamp );
+        }
 
-        /* get the initial payload */
-
-        i1 = GEV_event->ptgd[ii]->length;
-        inData.read ( ( char* ) GEV_event->ptinp[ii], i1 );
-        if ( inData.gcount() != i1 )
+        if ( GEV_event->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
         {
-            printf ( "failed to read %i bytes for payload, got %i\n", i1, siz );
-            return 2;
-        };
-        nn3++;
-        execParams->nbytes += siz;
-        printf ( "read initial payload of siz=%i into event position %i\n", siz, ii );
-        fflush ( stdout );
-
-        printf ( "__ptgd[0]->type=%2i; ", GEV_event->ptgd[0]->type );
-        printf ( "ptgd[0]->length=%4i; ", GEV_event->ptgd[0]->length );
-        printf ( "ptgd[0]->timestamp=%lli\n", GEV_event->ptgd[0]->timestamp );
-        fflush ( stdout );
-
-        ii = 1;
-        nn = 1;
-        printf ( "initial ii=%i, nn=%i\n", ii, nn );
-
-    };
-
-    execParams->curTS = GEV_event->ptgd[0]->timestamp;
-    TS = execParams->curTS;
-
-    /* process leftovers from the last read */
-
-    if ( nn > 0 )
-    {
-
-#if(DEBUG2)
-        printf ( "we have old geb/payload left over at position %i: \n", nn );
-        fflush ( stdout );
-        printf ( "__ptgd[nn]->type=%2i; ", GEV_event->ptgd[nn]->type );
-        printf ( "ptgd[nn]->length=%4i; ", GEV_event->ptgd[nn]->length );
-        printf ( "ptgd[nn]->timestamp=%lli\n", GEV_event->ptgd[nn]->timestamp );
-        fflush ( stdout );
-#endif
-        /* move the last (at pos nn) to the first position */
-
-        memcpy ( ( char* ) GEV_event->ptgd[0], ( char* ) GEV_event->ptgd[nn], sizeof ( GEBDATA ) );
-        memcpy ( ( char* ) GEV_event->ptinp[0], ( char* ) GEV_event->ptinp[nn], GEV_event->ptgd[0]->length );
-
-    }
-
-    /* reset, ii=0 alwasy taken for the first leftover from last time */
-
-    ii = 1;
-    nn = 1;
-    execParams->curTS = GEV_event->ptgd[0]->timestamp;
-
-    GEV_event->mult = 0;
-#if(DEBUG2)
-    printf ( "ii=%i, nn=%i\n", ii, nn );
-    printf ( "Pars.curTS=%lli, TS=%lli\n", Pars.curTS, TS );
-#endif
-
-    while ( ( long long ) ( TS - execParams->curTS ) < execParams->dTS )
-    {
-        /*read geb header */
-
-//      assert (i < MAXGEBS);
-//      assert (GEV_event->ptgd[i] != NULL);
-
-#if (0)
-        printf ( "for ii=%i:: trying to get a geb header of size %i\n", ii, sizeof ( GEBDATA ) );
-        printf ( "GEV_event->ptgd[%i]=0x%p\n", ii, GEV_event->ptgd[ii] );
-        fflush ( stdout );
-#endif
-
-        /* trap for too long events */
-
-        if ( ii >= MAXGEBS )
-        {
-            printf ( "error: this event is too long > %i\n", ii );
-            return 1;
-        };
-
-         inData.read ( ( char* ) GEV_event->ptgd[ii], sizeof ( GEBDATA ) );
-        if ( inData.gcount() != sizeof ( GEBDATA ) )
-        {
-            printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), siz );
-            return 1;
-        };
-        nn2++;
-        execParams->nbytes += siz;
-        GEV_event->mult++;
-
-
-#if (0)
-        printf ( "ii=%i, found header with TS=%lli, payload length=%i\n", ii, GEV_event->ptgd[ii]->timestamp,
-                 GEV_event->ptgd[ii]->length );
-        fflush ( stdout );
-#endif
-        TS = GEV_event->ptgd[ii]->timestamp;
-#if(DEBUG2)
-        printf ( "ii=%i, nn=%i\n", ii, nn );
-        printf ( "Pars.curTS=%lli, TS=%lli\n", execParams->curTS, TS );
-#endif
-
-
-        if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
-        {
-            printf ( "ev# %5i ", execParams->CurEvNo );
-            stType = GebTypeStr ( GEV_event->ptgd[ii]->type, str );
-            printf ( "%s ", str );
-            printf ( "%4iBytes ", GEV_event->ptgd[ii]->length );
-            printf ( "TS=%lli ", GEV_event->ptgd[ii]->timestamp );
-            printf ( "curTS=%lli ", execParams->curTS );
-            dTS = TS - execParams->curTS;
-            printf ( "dTS= %lli\n", dTS );
+            printf ( "read initial payload of siz=%i\n", inData.gcount() );
             fflush ( stdout );
-        };
 
-        /* trap for bad timestamps */
+            printf ( "__ptgd[0]->type=%2i; ", buffHeader->type );
+            printf ( "ptgd[0]->length=%4i; ", buffHeader->length );
+            printf ( "ptgd[0]->timestamp=%lli\n", buffHeader->timestamp );
+            fflush ( stdout );
+        }
+
+        execParams->nbytes += inData.gcount();
+
+        buffData = new char[buffHeader->length];
+
+        inData.read ( buffData, buffHeader->length );
+
+        if ( inData.gcount() != buffHeader->length || inData.fail() )
+        {
+            printf ( "failed to read %i bytes for payload, got %i\n", buffHeader->length, inData.gcount() );
+            return 2;
+        }
+
+        execParams->nbytes += inData.gcount();
+
+        if ( GEV_event->ptgd.size() == 0 ) execParams->curTS = buffHeader->timestamp;
+
+        TS = buffHeader->timestamp;
+
+        // -------- TRAP FOR BAD TIMESTAMP -------- //
 
         if ( TS < execParams->curTS )
         {
             if ( nbadTS < 100 )
             {
+                std::cerr << "batflag:: TS<Pars.curTS, reset it at event # " << execParams->CurEvNo << "\n";
+                std::cerr << "TS=" << TS << ", Pars.curTS=" << execParams->curTS << ", DT=" << TS - execParams->curTS << "\n";
                 printf ( "batflag:: TS<Pars.curTS, reset it at event # %i\n", execParams->CurEvNo );
                 printf ( "TS=%lli, Pars.curTS=%lli, DT=%lli\n", TS, execParams->curTS, TS - execParams->curTS );
                 fflush ( stdout );
-            };
+            }
             execParams->curTS = TS;
             if ( nbadTS < 100 )
             {
                 printf ( "new Pars.curTS=%lli\n", execParams->curTS );
                 printf ( "we have read %lli bytes so far\n", execParams->nbytes );
-            };
+            }
             nbadTS++;
 
-#if(0)
-            if ( nbadTS > 1000 )
-            {
-                printf ( "too many bad TS, quit withe error code 3\n" );
-                fflush ( stdout );
-//              return (3);
-            };
-#endif
-        };
+//             if ( nbadTS > 1000 )
+//             {
+//                 printf ( "too many bad TS, quit withe error code 3\n" );
+//                 fflush ( stdout );
+// //              return (3);
+//             }
+        }
 
+        GEBDATA* GEBHeader = new GEBDATA;
+        *GEBHeader = *buffHeader;
 
-        /* read payload */
+        char* dataPack = new char[buffHeader->length];
+        memcpy ( dataPack, buffData, buffHeader->length );
 
-        i1 = GEV_event->ptgd[ii]->length;
-        inData.read ( ( char* ) GEV_event->ptinp[ii], i1 );
-        if ( inData.gcount() != i1 )
+        if ( ( long long ) ( TS - execParams->curTS ) < execParams->dTS )
         {
-            printf ( "failed to read %i bytes for payload, got %i\n", i1, siz );
-            return 2;
-        };
-        nn3++;
-        execParams->nbytes += siz;
-#if (DEBUG2)
-        printf ( "__read payload of siz=%i into event position %i\n", siz, ii );
-        fflush ( stdout );
-#endif
+//             std::cerr << "..........................\n";
+//             std::cerr << "Should push back in GEB_event:\n";
+//             std::cerr << "---> type: " << buffHeader->type << "\n";
+//             std::cerr << "---> length: " << buffHeader->length << "\n";
+//             std::cerr << "---> timestamp: " << buffHeader->timestamp << "\n";
 
-        ii++;
-        nn++;
-#if (DEBUG2)
-        printf ( "1: ii=%i, nn=%i\n", ii, nn );
-        fflush ( stdout );
-#endif
+            GEV_event->ptgd.push_back ( GEBHeader );
+            GEV_event->ptinp.push_back ( dataPack );
 
-        if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
-            if ( stType != 0 )
+//             std::cerr << "Pushed back in GEB_event:\n";
+//             std::cerr << "---> type: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->type << "\n";
+//             std::cerr << "---> length: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->length << "\n";
+//             std::cerr << "---> timestamp: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->timestamp << "\n";
+
+            if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
             {
-                printf ( "data processing error, stType=%i\n", stType );
-                return 1;
-            };
+                printf ( "ev# %5i ", execParams->CurEvNo );
+                stType = GebTypeStr ( GEBHeader->type, str );
+                printf ( "%s ", str );
+                printf ( "%4iBytes ", GEBHeader->length );
+                printf ( "TS=%lli ", GEBHeader->timestamp );
+                printf ( "curTS=%lli ", execParams->curTS );
+                dTS = TS - execParams->curTS;
+                printf ( "dTS= %lli\n", dTS );
+                fflush ( stdout );
+            }
+        }
+        else
+        {
+            overflowGEBEv.ptgd.push_back ( GEBHeader );
+            overflowGEBEv.ptinp.push_back ( dataPack );
+            break;
+        }
     }
 
-    ii--;
-    nn--;
-#if (DEBUG2)
-    printf ( "2: ii=%i, nn=%i\n", ii, nn );
-    fflush ( stdout );
-#endif
+//     if ( firsttime )
+//     {
+//         firsttime = 0;
+//
+//         /* get the initial header, into position 1, not 0 */
+//
+//         ii = 1;
+//         inData.read ( ( char* ) GEV_event->ptgd[ii], sizeof ( GEBDATA ) );
+//         if ( inData.gcount() != sizeof ( GEBDATA ) )
+//         {
+//             printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), siz );
+//             return 1;
+//         };
+//         execParams->nbytes += siz;
+//         nn2++;
+//         printf ( "got initial header, TS=%lli\n", GEV_event->ptgd[ii]->timestamp );
+//
+//         /* get the initial payload */
+//
+//         i1 = GEV_event->ptgd[ii]->length;
+//         inData.read ( ( char* ) GEV_event->ptinp[ii], i1 );
+//         if ( inData.gcount() != i1 )
+//         {
+//             printf ( "failed to read %i bytes for payload, got %i\n", i1, siz );
+//             return 2;
+//         };
+//         nn3++;
+//         execParams->nbytes += siz;
+//         printf ( "read initial payload of siz=%i into event position %i\n", siz, ii );
+//         fflush ( stdout );
+//
+//         printf ( "__ptgd[0]->type=%2i; ", GEV_event->ptgd[0]->type );
+//         printf ( "ptgd[0]->length=%4i; ", GEV_event->ptgd[0]->length );
+//         printf ( "ptgd[0]->timestamp=%lli\n", GEV_event->ptgd[0]->timestamp );
+//         fflush ( stdout );
+//
+//         ii = 1;
+//         nn = 1;
+//         printf ( "initial ii=%i, nn=%i\n", ii, nn );
+//
+//     };
+//
+//     execParams->curTS = GEV_event->ptgd[0]->timestamp;
+//     TS = execParams->curTS;
+//
+//     /* process leftovers from the last read */
+//
+//     if ( nn > 0 )
+//     {
+//
+// #if(DEBUG2)
+//         printf ( "we have old geb/payload left over at position %i: \n", nn );
+//         fflush ( stdout );
+//         printf ( "__ptgd[nn]->type=%2i; ", GEV_event->ptgd[nn]->type );
+//         printf ( "ptgd[nn]->length=%4i; ", GEV_event->ptgd[nn]->length );
+//         printf ( "ptgd[nn]->timestamp=%lli\n", GEV_event->ptgd[nn]->timestamp );
+//         fflush ( stdout );
+// #endif
+//         /* move the last (at pos nn) to the first position */
+//
+//         memcpy ( ( char* ) GEV_event->ptgd[0], ( char* ) GEV_event->ptgd[nn], sizeof ( GEBDATA ) );
+//         memcpy ( ( char* ) GEV_event->ptinp[0], ( char* ) GEV_event->ptinp[nn], GEV_event->ptgd[0]->length );
+//
+//     }
+//
+//     /* reset, ii=0 alwasy taken for the first leftover from last time */
+//
+//     ii = 1;
+//     nn = 1;
+//     execParams->curTS = GEV_event->ptgd[0]->timestamp;
+//
+//     GEV_event->mult = 0;
+// #if(DEBUG2)
+//     printf ( "ii=%i, nn=%i\n", ii, nn );
+//     printf ( "Pars.curTS=%lli, TS=%lli\n", Pars.curTS, TS );
+// #endif
+//
+//     while ( ( long long ) ( TS - execParams->curTS ) < execParams->dTS )
+//     {
+//         /*read geb header */
+//
+// //      assert (i < MAXGEBS);
+// //      assert (GEV_event->ptgd[i] != NULL);
+//
+// #if (0)
+//         printf ( "for ii=%i:: trying to get a geb header of size %i\n", ii, sizeof ( GEBDATA ) );
+// //         printf ( "GEV_event->ptgd[%i]=0x%p\n", ii, GEV_event->ptgd[ii] );
+//         fflush ( stdout );
+// #endif
+//
+//         /* trap for too long events */
+//
+//         if ( ii >= MAXGEBS )
+//         {
+//             printf ( "error: this event is too long > %i\n", ii );
+//             return 1;
+//         };
+//
+//         inData.read ( ( char* ) GEV_event->ptgd[ii], sizeof ( GEBDATA ) );
+//         if ( inData.gcount() != sizeof ( GEBDATA ) )
+//         {
+//             printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), siz );
+//             return 1;
+//         };
+//         nn2++;
+//         execParams->nbytes += siz;
+//         GEV_event->mult++;
+//
+//
+// #if (0)
+//         printf ( "ii=%i, found header with TS=%lli, payload length=%i\n", ii, GEV_event->ptgd[ii]->timestamp,
+//                  GEV_event->ptgd[ii]->length );
+//         fflush ( stdout );
+// #endif
+//         TS = GEV_event->ptgd[ii]->timestamp;
+// #if(DEBUG2)
+//         printf ( "ii=%i, nn=%i\n", ii, nn );
+//         printf ( "Pars.curTS=%lli, TS=%lli\n", execParams->curTS, TS );
+// #endif
+//
+//
+//         if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
+//         {
+//             printf ( "ev# %5i ", execParams->CurEvNo );
+//             stType = GebTypeStr ( GEV_event->ptgd[ii]->type, str );
+//             printf ( "%s ", str );
+//             printf ( "%4iBytes ", GEV_event->ptgd[ii]->length );
+//             printf ( "TS=%lli ", GEV_event->ptgd[ii]->timestamp );
+//             printf ( "curTS=%lli ", execParams->curTS );
+//             dTS = TS - execParams->curTS;
+//             printf ( "dTS= %lli\n", dTS );
+//             fflush ( stdout );
+//         };
+//
+//         /* trap for bad timestamps */
+//
+//         if ( TS < execParams->curTS )
+//         {
+//             if ( nbadTS < 100 )
+//             {
+//                 printf ( "batflag:: TS<Pars.curTS, reset it at event # %i\n", execParams->CurEvNo );
+//                 printf ( "TS=%lli, Pars.curTS=%lli, DT=%lli\n", TS, execParams->curTS, TS - execParams->curTS );
+//                 fflush ( stdout );
+//             };
+//             execParams->curTS = TS;
+//             if ( nbadTS < 100 )
+//             {
+//                 printf ( "new Pars.curTS=%lli\n", execParams->curTS );
+//                 printf ( "we have read %lli bytes so far\n", execParams->nbytes );
+//             };
+//             nbadTS++;
+//
+// #if(0)
+//             if ( nbadTS > 1000 )
+//             {
+//                 printf ( "too many bad TS, quit withe error code 3\n" );
+//                 fflush ( stdout );
+// //              return (3);
+//             };
+// #endif
+//         };
+//
+//
+//         /* read payload */
+//
+//         i1 = GEV_event->ptgd[ii]->length;
+//         inData.read ( ( char* ) GEV_event->ptinp[ii], i1 );
+//         if ( inData.gcount() != i1 )
+//         {
+//             printf ( "failed to read %i bytes for payload, got %i\n", i1, siz );
+//             return 2;
+//         };
+//         nn3++;
+//         execParams->nbytes += siz;
+// #if (DEBUG2)
+//         printf ( "__read payload of siz=%i into event position %i\n", siz, ii );
+//         fflush ( stdout );
+// #endif
 
-    /* return the mutiplicity */
-
-    GEV_event->mult = ii;
-
+//         ii++;
+//         nn++;
+// // #if (DEBUG2)
+//         printf ( "1: ii=%i, nn=%i\n", ii, nn );
+//         fflush ( stdout );
+// #endif
+//
+//         if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
+//             if ( stType != 0 )
+//             {
+//                 printf ( "data processing error, stType=%i\n", stType );
+//                 return 1;
+//             };
+//     }
+//
+//     ii--;
+//     nn--;
+// #if (DEBUG2)
+//     printf ( "2: ii=%i, nn=%i\n", ii, nn );
+//     fflush ( stdout );
+// #endif
+//
+//     /* return the mutiplicity */
+//
+//     GEV_event->mult = ii;
+//
 #if(DEBUG2)
     printf ( "complete event, next TS is %lli or  %lli out\n", TS, TS - execParams->curTS );
-    printf ( "we found %i events in coincidence, timestamps are\n", GEV_event->mult );
-    for ( i = 0; i < GEV_event->mult; i++ )
+    printf ( "we found %i events in coincidence, timestamps are\n", GEV_event->ptgd.size() );
+    for ( i = 0; i < GEV_event->ptgd.size(); i++ )
     {
         printf ( "[%i] TS=%lli\n", i, GEV_event->ptgd[i]->timestamp );
     }
     printf ( "we have read %lli bytes so far\n", execParams->nbytes );
-    printf ( "GEV_event->mult=%i\n", GEV_event->mult );
+    printf ( "GEV_event mult = %i\n", GEV_event->ptgd.size() );
     fflush ( stdout );
     nx++;
     if ( nx > 3 )
@@ -838,7 +980,10 @@ int SortManager::GEBacq ( char* ChatFileName )
     /* declarations */
 
     int NprintEvNo = 0, in, zero = 0;
-    GEB_EVENT* GEB_event = new GEB_EVENT ( MAXGEBS );
+
+    GEB_event = new GEB_EVENT ( MAXGEBS );
+    GEBDATA* GEBHeader = new GEBDATA;
+
     int st = 0, eov = 0, i1, i2, i, j, nret, siz;
     char str[256], str1[256];
     std::FILE* fp;
@@ -922,11 +1067,11 @@ int SortManager::GEBacq ( char* ChatFileName )
     execParams->multhi = 20;
     execParams->requiretracked = 0;
 
-    for ( i = 0; i < MAXGEBS; i++ )
-    {
-        GEB_event->ptgd[i] = ( GEBDATA* ) calloc ( 1, 2 * sizeof ( GEBDATA ) );
-        GEB_event->ptinp[i] = ( char* ) calloc ( 1, MAXPAYLOADSIZE );
-    };
+//     for ( i = 0; i < MAXGEBS; i++ )
+//     {
+//         GEB_event->ptgd[i] = ( GEBDATA* ) calloc ( 1, 2 * sizeof ( GEBDATA ) );
+//         GEB_event->ptinp[i] = ( char* ) calloc ( 1, MAXPAYLOADSIZE );
+//     };
 
     /* get the GRETINA rotation matrices */
 
@@ -1032,6 +1177,11 @@ int SortManager::GEBacq ( char* ChatFileName )
 #if(USEZLIB==0)
         /* attempt to open input file */
 
+        if ( !execParams->userFilter.empty() )
+        {
+            execParams->cleanedMerged.open ( execParams->userFilter.c_str(), std::ios_base::out | std::ios_base::trunc );
+        }
+
         inData.open ( execParams->GTSortInputFile, std::ios_base::in | std::ios_base::binary );
         if ( !inData.is_open() )
         {
@@ -1045,22 +1195,26 @@ int SortManager::GEBacq ( char* ChatFileName )
 
         /* find the very first GEB header to find start TS */
 
-        inData.read ( ( char* ) GEB_event->ptgd[0], sizeof ( GEBDATA ) );
+        inData.read ( ( char* ) GEBHeader, sizeof ( GEBDATA ) );
+
 #if (1)
         printf ( "siz=%li;", inData.gcount() );
-        printf ( "ptgd[i]->type=%2i; ", GEB_event->ptgd[0]->type );
-        printf ( "ptgd[i]->length=%4i; ", GEB_event->ptgd[0]->length );
-        printf ( "ptgd[i]->timestamp=%lli\n", GEB_event->ptgd[0]->timestamp );
+        printf ( "ptgd[i]->type=%2i; ", GEBHeader->type );
+        printf ( "ptgd[i]->length=%4i; ", GEBHeader->length );
+        printf ( "ptgd[i]->timestamp=%lli\n", GEBHeader->timestamp );
         fflush ( stdout );
 #endif
-        execParams->curTS = GEB_event->ptgd[0]->timestamp;
+        execParams->curTS = GEBHeader->timestamp;
         printf ( "start TS is %lli\n", execParams->curTS );
+        std::cout << "position in file is " << inData.tellg() << "\n";
 
         /* reopen */
 
-        inData.close ();
-        inData.open ( execParams->GTSortInputFile, std::ios_base::in | std::ios_base::binary );
-        printf ( "reopened input file\n" );
+        inData.seekg ( 0, inData.beg );
+        std::cout << "Setting back the initial position to 0: " << inData.tellg() << "\n";
+//         inData.close ();
+//         inData.open ( execParams->GTSortInputFile, std::ios_base::in | std::ios_base::binary );
+//         printf ( "reopened input file\n" );
 
 #endif
 
@@ -1497,42 +1651,34 @@ int SortManager::GEBacq ( char* ChatFileName )
     int userFlagedEvtCounter = 0;
 
     tdmplast = time ( NULL );
-    while ( st >= 0 && ( execParams->CurEvNo - execParams->firstEvent ) < execParams->nEvents && eov == 0 )
+
+    while ( ( execParams->CurEvNo - execParams->firstEvent ) < execParams->nEvents && !inData.eof() )
     {
-
-        /* zap [this may be too safe and slow...; yes it is] */
-
-        //memset ((char *) &CEvent, 0, sizeof (COINEV));
-
         /*----------------*/
         /* get next event */
         /*----------------*/
 
-#if(1)
+#if(0)
         printf ( "calling GEBGetEv, execParams->CurEvNo=%i\n", execParams->CurEvNo );
 #endif
+
+//         std::cerr << "========================= Entering GEBGetEv =========================\n";
+
         st = GEBGetEv ( GEB_event );
 
-        if ( st == 0 && execParams->CurEvNo < execParams->tsnumwrites )
-        {
-            for ( i = 0; i < GEB_event->mult; i++ )
-            {
-                if ( i == 0 )
-                {
-                    fprintf ( TSfile, "\n" );
-                }
-                GebTypeStr ( GEB_event->ptgd[i]->type, str );
-                fprintf ( TSfile, "%4i/%2i: (%2i,%s) TS=%20lli; ", execParams->CurEvNo, i, GEB_event->ptgd[i]->type, str,
-                          GEB_event->ptgd[i]->timestamp );
-                fprintf ( TSfile, "dT=%lli\n", GEB_event->ptgd[i]->timestamp - TSprev );
-                TSprev = GEB_event->ptgd[i]->timestamp;
-            }
+//         std::cerr << "------- Exiting GEBGetEv -------\n";
+//         for ( int i = 0; i < GEB_event->ptgd.size(); i++ )
+//         {
+//             std::cerr << "---> type: " << GEB_event->ptgd[i]->type << "\n";
+//             std::cerr << "---> length: " << GEB_event->ptgd[i]->length << "\n";
+//             std::cerr << "---> timestamp: " << GEB_event->ptgd[i]->timestamp << "\n";
+//             std::cerr << "....................\n";
+//         }
 
-        };
 
 #if(DEBUG2)
         printf ( "st=%i\n", st );
-        printf ( "GEB_event.mult=%i\n", GEB_event->mult );
+        printf ( "GEB_event mult =%i\n", GEB_event->ptgd.size() );
         fflush ( stdout );
         if ( 1 )
         {
@@ -1540,88 +1686,52 @@ int SortManager::GEBacq ( char* ChatFileName )
         }
 #endif
 
-        if ( st == 0 )
+        if ( GEB_event->ptgd.size() > 0 )
         {
-
-            if ( firsttime )
-            {
-                firsttime = 0;
-                t0 = GEB_event->ptgd[0]->timestamp;
-                printf ( "t0=%lli\n", t0 );
-                printf ( "first event: GEB_event.mult=%i\n", GEB_event->mult );
-                for ( i = 0; i < GEB_event->mult; i++ )
-                {
-                    GebTypeStr ( GEB_event->ptgd[i]->type, str );
-                    printf ( "%4i/%2i: (%2i,%s) TS=%20lli; ", execParams->CurEvNo, i, GEB_event->ptgd[i]->type, str,
-                             GEB_event->ptgd[i]->timestamp );
-                    printf ( "dT=%lli\n", GEB_event->ptgd[i]->timestamp - TSprev );
-                };
-            }
-
             tcur = GEB_event->ptgd[0]->timestamp;
-
 
             /* count data types */
 
-            for ( i = 0; i < GEB_event->mult; i++ )
+            firtsTSinEvent = LLONG_MAX;
+
+            for ( i = 0; i < GEB_event->ptgd.size(); i++ )
             {
+                if ( execParams->CurEvNo < execParams->tsnumwrites )
+                {
+                    if ( i == 0 )
+                    {
+                        fprintf ( TSfile, "\n" );
+                    }
+
+                    GebTypeStr ( GEB_event->ptgd[i]->type, str );
+                    fprintf ( TSfile, "%4i/%2i: (%2i,%s) TS=%20lli; ", execParams->CurEvNo, i, GEB_event->ptgd[i]->type, str,
+                              GEB_event->ptgd[i]->timestamp );
+
+                    fprintf ( TSfile, "dT=%lli\n", GEB_event->ptgd[i]->timestamp - TSprev );
+
+                    TSprev = GEB_event->ptgd[i]->timestamp;
+                }
+
                 if ( GEB_event->ptgd[i]->type > 0 && GEB_event->ptgd[i]->type < MAX_GEB_TYPE )
                 {
                     typehit[GEB_event->ptgd[i]->type]++;
                 }
-            };
 
-            /* fill dtbtev spectrum */
-
-            firtsTSinEvent = LLONG_MAX;
-            for ( i = 0; i < GEB_event->mult; i++ )
                 if ( GEB_event->ptgd[i]->timestamp < firtsTSinEvent )
                 {
                     firtsTSinEvent = GEB_event->ptgd[i]->timestamp;
                 }
+            }
 
-            for ( i = 0; i < GEB_event->mult; i++ )
+            /* fill dtbtev spectrum */
+
+            for ( i = 0; i < GEB_event->ptgd.size(); i++ )
             {
                 dTS = GEB_event->ptgd[i]->timestamp - firtsTSinEvent;
                 d1 = ( double ) dTS;
                 //if (d1 >= (double) 0 && d1 < RATELEN)
                 //dtbtev->Fill (d1, GEB_event.ptgd[i]->type, 1);
-            };
-
-        };
-
-        /*----------------------------------------*/
-        /* allow user to manipulate raw data here */
-        /*----------------------------------------*/
-
-        if ( st != 0 )
-        {
-            printf ( " GEBGetEv returned %i\n", st );
-            printf ( "we have read %lli bytes; ", execParams->nbytes );
-            printf ( "CurEvNo=%i\n", execParams->CurEvNo );
-            fflush ( stdout );
-
-            /* terminate sort */
-
-            eov = 1;
-
-            /* note: */
-            /* we might want to wait and try GEBGetEv */
-            /* later to give the impresssion of interactivity */
-            /* here in some future version... */
-
-        }
-
-#include "UserRawEv.h"
-
-        //    assert (execParams->InputSrc == DISK);
-
-        if ( st == 0 )
-        {
-
-            /*----------------------------*/
-            /* good event, now process it */
-            /*----------------------------*/
+            }
 
             /* statistics */
 
@@ -1634,79 +1744,51 @@ int SortManager::GEBacq ( char* ChatFileName )
                 printf ( "we have read %lli bytes; ", execParams->nbytes );
                 printf ( "CurEvNo=%i\n", execParams->CurEvNo );
                 fflush ( stdout );
-            };
-
-#include "UserGoodEv.h"
-
+            }
 
             /* debug print some events */
 
             if ( execParams->CurEvNo <= execParams->NumToPrint )
             {
                 printf ( "\n+++++++++++++++++++++++++++++++\n" );
-                printf ( "*start event # %i with multiplicity %i looks like this:\n", execParams->CurEvNo, GEB_event->mult );
-                for ( i = 0; i < GEB_event->mult; i++ )
+                printf ( "*start event # %i with multiplicity %i looks like this:\n", execParams->CurEvNo, GEB_event->ptgd.size() );
+                for ( i = 0; i < GEB_event->ptgd.size(); i++ )
                 {
                     GebTypeStr ( GEB_event->ptgd[i]->type, str );
                     printf ( "%2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp );
-                };
-            };
+                }
+            }
 
             if ( 0 )
             {
                 printf ( "debug quit\n" );
                 exit ( 0 );
-            };
-
-#include "UserPreCond.h"
-
-            /* bin GT mode 3 data  (== raw data with traces) */
-
-            //bin_mode3 (GEB_event);
-
-            /* bin GT mode 2 data  (== decomposed data) */
-
-            //bin_mode2 (GEB_event);
-
-            /* bin mode 1 data (==tracked data) */
-
-            //bin_mode1 (GEB_event);
-
-            /* bin DGS data */
-
-            bin_dgs ( GEB_event );
-            bin_dgod ( GEB_event );
-            bin_agod ( GEB_event );
-
-            //bin_god must come after unpacking of dgod and agod.
-            if ( bin_god ( GEB_event ) ) userFlagedEvtCounter++;
-            //bin_dfma (GEB_event);
-
-
-            //bin_phoswich (&GEB_event);
-            //added by JK 08/26/2014
-
-            /* bin GT data for calibration */
-
-            //bin_gtcal (GEB_event);
-
-            /* bin other stuff in template */
-
-            //bin_template (GEB_event);
-
-            /*-------------------------*/
-            /* execute user event code */
-            /*-------------------------*/
-#include "UserEv.h"
+            }
 
             if ( execParams->CurEvNo <= execParams->NumToPrint )
             {
                 printf ( "*end of event # %i\n", execParams->CurEvNo );
                 printf ( "+++++++++++++++++++++++++++++++\n" );
-            };
+            }
 
+            bin_dgs ( GEB_event );
+            bin_dgod ( GEB_event );
+            bin_agod ( GEB_event );
 
-        };
+            if ( bin_god ( GEB_event ) )
+            {
+                userFlagedEvtCounter++;
+
+                for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+                {
+                    execParams->cleanedMerged.write ( ( char* ) GEB_event->ptgd[i], sizeof ( GEBDATA ) );
+                    execParams->cleanedMerged.write ( GEB_event->ptinp[i], GEB_event->ptgd[i]->length );
+                }
+            }
+        }
+
+        //    assert (execParams->InputSrc == DISK);
+
 
 
         /*---------------------*/
@@ -1723,7 +1805,7 @@ int SortManager::GEBacq ( char* ChatFileName )
             tdmp = time ( NULL );
             tdmp -= tdmplast;
 
-        };
+        }
 
         /*-----------------------------------------------------------*/
         /* dump all spectra on signal or dump every execParams->DumpEvery events */
@@ -1882,7 +1964,18 @@ int SortManager::GEBacq ( char* ChatFileName )
         };
 
 
-    };
+    }
+
+    std::cout << "Terminating Sorting Process because ";
+
+    if ( ( execParams->CurEvNo - execParams->firstEvent ) >= execParams->nEvents ) std::cout << "we treated " << execParams->CurEvNo << " out of " << execParams->nEvents << "\n";
+    else if ( !inData.eof() ) std::cout << "we reached the end of the file...\n";
+
+    std::cout << "we have read "<< execParams->nbytes << "bytes\n";
+    std::cout << "CurEvNo = " << execParams->CurEvNo << "\n";
+    fflush ( stdout );
+
+    /* terminate sort */
 
     std::cerr << "GEBSort done treating " << execParams->CurEvNo << " events...\n";
     std::cerr << userFlagedEvtCounter << " events fulfilled the user filter(s)...\n";

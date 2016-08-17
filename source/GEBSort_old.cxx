@@ -443,10 +443,10 @@ buf_read ( off_t inData_buf_read, char* buf, int nbytes )
     static int bpos = RBUFSIZE, ActualBufSize;
     static int bleft = 0;
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
-    {
-        printf ( "buf_read called, asked for %i byte, have %i bytes left in buffer, bpos=%i\n", nbytes, bleft, bpos );
-    }
+//     if ( Pars.CurEvNo <= Pars.NumToPrint )
+//     {
+    printf ( "buf_read called, asked for %i byte, have %i bytes left in buffer, bpos=%i\n", nbytes, bleft, bpos );
+//     }
 
     if ( buf == NULL )
     {
@@ -1252,11 +1252,11 @@ main ( int argc, char** argv )
             else if ( ( p = strstr ( argv[j], "-userfilter" ) ) != NULL )
             {
                 j++;
-		char filteredName[500];
-		strcpy ( filteredName, argv[j++] );
-		
-		Pars.userFilter = filteredName;
-		
+                char filteredName[500];
+                strcpy ( filteredName, argv[j++] );
+
+                Pars.userFilter = filteredName;
+
                 printf ( "An additional binary file will be generated using the user filters\n" );
             }
             else if ( ( p = strstr ( argv[j], "-rootfile" ) ) != NULL )
@@ -1885,7 +1885,7 @@ GEBacq ( char* ChatFileName )
     int bin_gtcal ( GEB_EVENT* );
     int bin_dgs ( GEB_EVENT* );
     int bin_dfma ( GEB_EVENT* );
-    void bin_god ( GEB_EVENT* );
+    int bin_god ( GEB_EVENT* );
     int bin_dgod ( GEB_EVENT* );
     int bin_agod ( GEB_EVENT* );
     //int bin_phoswich (GEB_EVENT *);
@@ -2519,6 +2519,8 @@ GEBacq ( char* ChatFileName )
     printf ( "\n" );
     fflush ( stdout );
 
+    int userFlagedEvtCounter = 0;
+
     tdmplast = time ( NULL );
     while ( st >= 0 && ( Pars.CurEvNo - Pars.firstEvent ) < Pars.nEvents && eov == 0 )
     {
@@ -2531,7 +2533,7 @@ GEBacq ( char* ChatFileName )
         /* get next event */
         /*----------------*/
 
-#if(DEBUG2)
+#if(1)
         printf ( "calling GEBGetEv, Pars.CurEvNo=%i\n", Pars.CurEvNo );
 #endif
         st = GEBGetEv ( &GEB_event );
@@ -2702,7 +2704,7 @@ GEBacq ( char* ChatFileName )
             bin_agod ( &GEB_event );
 
             //bin_god must come after unpacking of dgod and agod.
-            bin_god ( &GEB_event );
+            if ( bin_god ( &GEB_event ) ) userFlagedEvtCounter++;
             //bin_dfma (&GEB_event);
 
 
@@ -2907,6 +2909,9 @@ GEBacq ( char* ChatFileName )
 
     };
 
+    std::cerr << "GEBSort done treating " << Pars.CurEvNo << " events...\n";
+    std::cerr << userFlagedEvtCounter << " events fulfilled the user filter(s)...\n";
+
     /*-----------------------*/
     /* we are done sorting!! */
     /* save all ROOT spectra */
@@ -2975,8 +2980,8 @@ GEBacq ( char* ChatFileName )
         Pars.treeDir = 0;
         printf ( "done saving rootfile \"%s\n\n", Pars.ROOTFile );
         fflush ( stdout );
-	
-	if(Pars.cleanedMerged.is_open()) Pars.cleanedMerged.close();
+
+        if ( Pars.cleanedMerged.is_open() ) Pars.cleanedMerged.close();
     }
     printf ( "\n" );
 

@@ -32,7 +32,7 @@
 // {
 //     char p[MAXDATASIZE];
 // } PAYLOAD;
-// 
+//
 // typedef struct TRACK_STRUCT
 // {
 //     int n;
@@ -247,6 +247,9 @@ int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
     /* swap the bytes */
 
+//     std::cerr << "====Entered DGSEvDecompose_v3====\n";
+//     std::cerr << "Swapping the bytes........\n";
+
     i = 0;
     while ( i < len )
     {
@@ -296,6 +299,8 @@ int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
     // Decode the generic part of the header.
 
+//     std::cerr << "Decode the generic part of the header...\n";
+
     theDGSEvent->chan_id = ( * ( ev + 0 ) & 0x0000000f );
     theDGSEvent->board_id = ( ( * ( ev + 0 ) & 0x0000fff0 ) >> 4 ); // USER_DEF
     theDGSEvent->id = theDGSEvent->board_id * 10 + theDGSEvent->chan_id;
@@ -307,6 +312,7 @@ int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
     theDGSEvent->header_length = ( ( * ( ev + 2 ) & 0xFC000000 )  >> 26 ); // hope this is right.
 
     /* extract the LED time stamp */
+//     std::cerr << "Extract the LED timestamp...\n";
 
     theDGSEvent->event_timestamp = 0;
     theDGSEvent->event_timestamp = ( unsigned long long int ) * ( ev + 1 );
@@ -315,13 +321,14 @@ int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
     theDGSEvent->event_timestamp += ulli1;
 
     /* store the type and type ID */
+//     std::cerr << "Store the type and typeID... (DGSEvent ID = " << theDGSEvent->id << " )\n";
 
     theDGSEvent->tpe = SortManager::sinstance()->tlkup[theDGSEvent->id];
     theDGSEvent->tid = SortManager::sinstance()->tid[theDGSEvent->id];
     theDGSEvent->flag = 0;
 
-
     /* extract the energy */
+//     std::cerr << "Extract the energy...\n";
 
     switch ( theDGSEvent->header_type )
     {
@@ -419,6 +426,7 @@ int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
 
     /* Now load Trace into theDGSEvent Structure */
+//     std::cerr << "Load trace into the DGSEvent structure...\n";
 
     theDGSEvent->traceLen = 0;
     for ( i = 13; i < len - 1; i++ )
@@ -468,17 +476,24 @@ bin_dgs ( GEB_EVENT* GEB_event )
     {
         printf ( "entered bin_dgs:\n" );
     }
+    
+//     std::cerr << "****************Entered bin_dgs****************\n";
+//     std::cerr << "GEB_event size = " << GEB_event->ptgd.size() << "\n";
 
     /* loop through the coincidence event and fish out DGS data */
     /* (gamma rays) count in ng */
 
     int* ng = &SortManager::sinstance()->ng;
-    
+
     *ng = 0;
     DGSEVENT* DGSEvent = SortManager::sinstance()->DGSEvent;
-    
-    for ( i = 0; i < GEB_event->mult; i++ )
+
+    for ( i = 0; i < GEB_event->ptgd.size(); i++ )
     {
+//       std::cerr << "Found GEB_event type " << GEB_event->ptgd[i]->type << " (DGS type is " << GEB_TYPE_DGS << ")\n";
+//       std::cerr << "--> length: " << GEB_event->ptgd[i]->length << "\n";
+//       std::cerr << "--> timestamp: " << GEB_event->ptgd[i]->timestamp << "\n";
+      
         if ( GEB_event->ptgd[i]->type == GEB_TYPE_DGS )
         {
             if ( Pars->CurEvNo <= Pars->NumToPrint )
@@ -490,7 +505,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
             DGSEvDecompose_v3 ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ),
                                 &DGSEvent[*ng] );
-            (*ng)++;
+            ( *ng ) ++;
         }
     }
 
@@ -698,7 +713,7 @@ SetBeta()
     /* delarations */
 
     PARS* Pars = SortManager::sinstance()->execParams;
-    
+
     int i;
     double d1;
 

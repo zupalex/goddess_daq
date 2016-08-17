@@ -372,7 +372,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
 
     /* loop through the coincidence event and fish out GEB_TYPE_DFMA data */
 
-    for ( i = 0; i < GEB_event->mult; i++ )
+    for ( i = 0; i < GEB_event->ptgd.size(); i++ )
     {
 
         if ( GEB_event->ptgd[i]->type == 16 )

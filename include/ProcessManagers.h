@@ -176,9 +176,9 @@ public:
     GEB_EVENT ( int maxGebs_ );
     virtual ~GEB_EVENT() {}
 
-    int mult;
-    GEBDATA** ptgd;
-    char** ptinp;
+    int maxGebs;
+    std::vector<GEBDATA*> ptgd;
+    std::vector<char*> ptinp;
 };
 
 // In time_stamp.c
@@ -207,7 +207,7 @@ int bin_god ( GEB_EVENT* gebEvt );
 
 // In ProcessManagers.cxx
 int GebTypeStr ( int type, char str[] );
-void CheckNoArgs ( int required, int actual, char *str );
+void CheckNoArgs ( int required, int actual, char* str );
 void UPDSSHMEM();
 float findAzimuthFromCartesian ( float xx, float yy );
 float findPolarFromCartesian ( float xx, float yy, float zz, float* rr );
@@ -232,7 +232,7 @@ public:
     PARS* execParams;
 
     std::ifstream inData;
-    
+
     char CommandFileName[STRLEN];
     time_t tdmp;
     time_t tdmplast;
@@ -244,8 +244,11 @@ public:
     int nn1, nn2, nn3, firsttime;
     long long int t0, TSprev;
     int nn, ii, nbadTS;
-    
+
     static void signal_catcher ( int sigval );
+
+    GEB_EVENT* GEB_event;
+    GEB_EVENT overflowGEBEv;
 
     DFMAEVENT DFMAEvent[MAXCOINEV];
     unsigned int numDGOD;
@@ -270,6 +273,21 @@ public:
     std::vector<GamData>* gammaDets;
     std::vector<SiDataBase>* siDets;
     std::vector<IonData>* ionChamber;
+
+    void SetGamDets ( std::vector<GamData>* gd_ )
+    {
+        gammaDets = gd_;
+    }
+    
+    void SetSiDets ( std::vector<SiDataBase>* sd_ )
+    {
+        siDets = sd_;
+    }
+    
+    void SetIonChamber ( std::vector<IonData>* ic_ )
+    {
+        ionChamber = ic_;
+    }
 
     bool GetWriteEventFlag();
 };
