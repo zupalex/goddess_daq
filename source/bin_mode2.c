@@ -22,7 +22,7 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 float egamBinWidth;
 

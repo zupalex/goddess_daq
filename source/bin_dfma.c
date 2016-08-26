@@ -24,7 +24,7 @@
 #include "GTMerge.h"
 #include "functions_dfma.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 #define LEFT 1
 #define RIGHT 2

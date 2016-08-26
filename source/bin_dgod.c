@@ -6,7 +6,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 // typedef struct PAYLOAD
 // {
@@ -340,7 +340,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
     PARS* Pars = SortManager::sinstance()->execParams;
 
     char str[128];
-    int i, j;
+    int j;
     int ndssd;
     int ndfma;
     int nfp;
@@ -372,7 +372,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
 
     /* loop through the coincidence event and fish out GEB_TYPE_DFMA data */
 
-    for ( i = 0; i < GEB_event->ptgd.size(); i++ )
+    for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
     {
 
         if ( GEB_event->ptgd[i]->type == 16 )
@@ -407,7 +407,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
 
     // histogram incremantation
 
-    for ( i = 0; i < nsubev; i++ )
+    for ( int i = 0; i < nsubev; i++ )
     {
 
         if ( !Pars->noHists && DFMAEvent[i].tpe == DSSD )
@@ -422,7 +422,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
     double dTg_god;
     dTg_god = 0.0;
 
-    for ( i = 0; i < nsubev; i++ )
+    for ( int i = 0; i < nsubev; i++ )
     {
         if ( ( DFMAEvent[i].LEDts > 0 ) && ( DFMAEvent[i].tpe == DSSD ) && ( *ng > 0 ) )
         {
@@ -433,7 +433,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
         }
     }
 
-    for ( i = 0; i < nsubev; i++ )
+    for ( int i = 0; i < nsubev; i++ )
     {
         for ( j = 0; j < *ng; j++ )
         {
@@ -454,7 +454,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
     unsigned int lr = 0;
     unsigned int x = 0;
 
-    for ( i = 0; i < nsubev; i++ )
+    for ( int i = 0; i < nsubev; i++ )
     {
         if ( DFMAEvent[i].tpe == FP )
         {
@@ -484,7 +484,7 @@ int bin_dgod ( GEB_EVENT* GEB_event )
     unsigned int left_g = 0;
     unsigned int right_g = 0;
 
-    for ( i = 0; i < nsubev; i++ )
+    for ( int i = 0; i < nsubev; i++ )
     {
         if ( ( DFMAEvent[i].LEDts > 0 ) && ( DFMAEvent[i].tpe == FP ) )
         {

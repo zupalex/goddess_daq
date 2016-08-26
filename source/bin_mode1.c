@@ -23,7 +23,7 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 #define MAXH 50
 #define MAXK 40

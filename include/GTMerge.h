@@ -56,6 +56,10 @@
 #define MAXTPE 12
 #define MAXTID 1000
 
+#define MAXBIGBUFSIZ 50000
+
+#define STRLEN 256
+
 /*---------------*/
 /* single events */
 /*---------------*/

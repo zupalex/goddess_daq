@@ -831,11 +831,8 @@ main (int argc, char **argv)
             }
           nn++;
           printf ("found reset at TS=%20lli for PoolEvents=%i after %i reads\n", Event[i].gd->timestamp, i, j);
-        };
-
-    };
-
-
+        }
+    }
 
   /* -------------------------------------------- */
   /* read until we have filled our pool of events */
@@ -919,7 +916,6 @@ main (int argc, char **argv)
 
   printf ("\n");
   printf ("initial pool of events read (%i events)\n", nPoolEvents);
-
 
   /* find the very first time stamp */
 

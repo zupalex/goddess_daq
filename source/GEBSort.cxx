@@ -1,9 +1,7 @@
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 using std::string;
 using std::vector;
-
-SortManager* SortManager::s_instance = nullptr;
 
 int main ( int argc, char** argv )
 {

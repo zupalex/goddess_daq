@@ -1,5 +1,5 @@
-#ifndef PROCESSMANAGERS_H
-#define PROCESSMANAGERS_H
+#ifndef SORTMANAGER_H
+#define SORTMANAGER_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -170,35 +170,6 @@ public:
 //     unsigned long long timestamp;
 // };
 
-struct InDataInfo
-{
-    int fileNum;
-    string fileName;
-    int type;
-    long long unsigned int firstTimestamp;
-    std::ifstream* istream;
-
-    InDataInfo ( std::ifstream* istream_ )
-    {
-        fileNum = -1;
-        fileName = "";
-        type = -1;
-        firstTimestamp = 0;
-        istream = istream_;
-    }
-};
-
-struct PAYLOAD
-{
-    char p[MAXDATASIZE];
-};
-
-struct EVENT
-{
-    GEBDATA *gd;
-    PAYLOAD *payload;
-};
-
 class GEB_EVENT
 {
 private:
@@ -212,9 +183,6 @@ public:
     std::vector<GEBDATA*> ptgd;
     std::vector<char*> ptinp;
 };
-
-// In get_a_seed.c
-int get_a_seed ( unsigned int *seed );
 
 // In time_stamp.c
 int time_stamp();
@@ -243,55 +211,14 @@ int bin_god ( GEB_EVENT* gebEvt );
 // In ProcessManagers.cxx
 int GebTypeStr ( int type, char str[] );
 void CheckNoArgs ( int required, int actual, char* str );
-void CheckNoArgs ( int required, int actual, string str );
 void UPDSSHMEM ( time_t& t1, time_t& t2, TMapFile* mfile, char* shareMemFile );
 float findAzimuthFromCartesian ( float xx, float yy );
 float findPolarFromCartesian ( float xx, float yy, float zz, float* rr );
-
-// In GEBMerge.cxx
-int GTGetDiskEv ( InDataInfo& inFile, bool printInfo );
-#if (USEZLIB == 0 )
-int bread ( std::ifstream inFile, char *val, int *pos, int *buf, int *bufsiz );
-#else
-int bread ( gzFile in, int *val, int *pos, int *buf, int *bufsiz );
-#endif
 
 TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2 );
 TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi );
 TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi );
 TH1D* make1D ( const char* txt, int xln, int xlo, int xhi );
-
-class MergeManager
-{
-private:
-    MergeManager();
-
-    static MergeManager* s_instance;
-
-public:
-    virtual ~MergeManager();
-
-    static MergeManager* sinstance();
-
-    unsigned int maxCoincEv;
-    std::vector<EVENT>* Event;
-    std::vector<EVENT>* overflowEvent;
-
-    unsigned int maxBigBufSize;
-    std::vector<char*>* bigbuf;
-
-    std::vector<InDataInfo>* inData;
-    std::ofstream outData;
-
-    void RemoveFromInputList ( string input );
-
-    int tlkup[NCHANNELS];
-    int tid[NCHANNELS];
-
-#if(USEZLIB==1)
-    gzFile zFile[MAXFILES];
-#endif
-};
 
 class SortManager
 {

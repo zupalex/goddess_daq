@@ -25,7 +25,7 @@
 #define NGSGE 110
 #include "gsang.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 // #if(0)
 // typedef struct PAYLOAD
@@ -460,7 +460,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
     PARS* Pars = SortManager::sinstance()->execParams;
 
     char str[128];
-    int i, j, gsid;
+    int j, gsid;
     //DGSEVENT DGSEvent[MAXCOINEV];
 
     int RelEvT = 0, tdiff = 0;
@@ -488,7 +488,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
     *ng = 0;
     DGSEVENT* DGSEvent = SortManager::sinstance()->DGSEvent;
 
-    for ( i = 0; i < GEB_event->ptgd.size(); i++ )
+    for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
     {
 //       std::cerr << "Found GEB_event type " << GEB_event->ptgd[i]->type << " (DGS type is " << GEB_TYPE_DGS << ")\n";
 //       std::cerr << "--> length: " << GEB_event->ptgd[i]->length << "\n";
@@ -515,7 +515,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
     if ( Pars->CurEvNo < 100 )
     {
         printf ( "\n\nCurEvNo: %i", Pars->CurEvNo );
-        for ( i = 0; i < *ng; i++ )
+        for ( int i = 0; i < *ng; i++ )
         {
             printf ( "\n DGSEvent[%i].event_timestamp: %llu", i, DGSEvent[i].event_timestamp );
         }
@@ -544,7 +544,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* Compton Suppression Loop */
 
-    for ( i = 0; i < *ng; i++ )
+    for ( int i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
@@ -583,7 +583,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* Energy Histogram loop */
 
-    for ( i = 0; i < *ng; i++ )
+    for ( int i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
@@ -606,7 +606,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     /* Histogram's for PZ and baseline correction */
 
-    for ( i = 0; i < *ng; i++ )
+    for ( int i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
@@ -627,7 +627,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
     //printf("\nPars.beta: %f\n",Pars.beta);
 
-    for ( i = 0; i < *ng; i++ )
+    for ( int i = 0; i < *ng; i++ )
     {
         if ( DGSEvent[i].tpe == GE )
         {
@@ -650,7 +650,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
     /* debug list the gamma rays we found */
 
     if ( Pars->CurEvNo <= Pars->NumToPrint )
-        for ( i = 0; i < *ng; i++ )
+        for ( int i = 0; i < *ng; i++ )
         {
             printf ( "we have %i gamma rays\n", *ng );
             printf ( "%2i> ", i );

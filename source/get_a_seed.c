@@ -5,9 +5,9 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <unistd.h>
+//#include "ProcessManagers.h"
 
-int
-get_a_seed (unsigned int *seed)
+int get_a_seed (unsigned int *seed)
 {
   /* delarations */
 
@@ -26,6 +26,5 @@ get_a_seed (unsigned int *seed)
     };
   /* printf("get_a_seed:: %i\n", *seed); */
 
-  return (0);
-
+  return 0;
 }

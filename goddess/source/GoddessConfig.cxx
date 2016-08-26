@@ -11,7 +11,7 @@
 #include "QQQ5.h"
 #include <GEBSort.h>
 
-#include "ProcessManagers.h"
+// #include "ProcessManagers.h"
 
 /**
  *
@@ -21,6 +21,7 @@
  *  and their calibration parameters.
  *
  */
+
 GoddessConfig::GoddessConfig ( std::string positionFile, std::string configFile )
 {
     superX3s = new TClonesArray ( "superX3", 0 );
@@ -655,14 +656,14 @@ bool GoddessConfig::IsInsertable ( short daqType, int daqCh, Detector* det_, int
  */
 Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigned int rawValue, int ignThr, unsigned long long timestamp /*=0*/ )
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     MapKey key = std::make_pair ( daqType, digitizerCh );
     auto mapItr = chMap.upper_bound ( key );
 
     if ( mapItr == chMap.begin() )
     {
-        std::cerr << "ERROR (event #" << Pars->CurEvNo << "): Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << ", ERR 1!\n";
+//         std::cerr << "ERROR (event #" << Pars->CurEvNo << "): Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << ", ERR 1!\n";
         return NULL;
     }
 
@@ -674,7 +675,7 @@ Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigne
 
     if ( detCh >= det->GetNumChannels ( secondaryType ) )
     {
-        std::cerr << "ERROR (event #" << Pars->CurEvNo << "): Unable to find mapped channel for DAQ type: " << daqType << " ch: " << std::setw ( 3 ) << digitizerCh << "!";
+//         std::cerr << "ERROR (event #" << Pars->CurEvNo << "): Unable to find mapped channel for DAQ type: " << daqType << " ch: " << std::setw ( 3 ) << digitizerCh << "!";
         std::cerr << " Computed detector ch " << std::setw ( 2 ) << detCh << " was larger than expected number of channels, " << std::setw ( 2 ) << det->GetNumChannels ( secondaryType );
         orrubaDet *siDet = dynamic_cast<orrubaDet *> ( det );
 

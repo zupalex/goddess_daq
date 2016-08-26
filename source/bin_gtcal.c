@@ -27,7 +27,7 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 
 /* pointers to ROOT spectra */

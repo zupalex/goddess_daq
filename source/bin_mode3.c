@@ -23,7 +23,7 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 #define MAXINT   2147483647
 

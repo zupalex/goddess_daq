@@ -1,5 +1,4 @@
 #include "GoddessData.h"
-#include "ProcessManagers.h"
 
 //ROOT Headers
 #include "TDirectory.h"
@@ -134,7 +133,7 @@ GoddessData::GoddessData ( std::string configFilename )
 
 void GoddessData::InitBB10Hists()
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     TClonesArray* bb10s = config->GetBB10s();
     int nbb10s = bb10s->GetEntries();
@@ -164,7 +163,7 @@ void GoddessData::InitBB10Hists()
 
 void GoddessData::InitQQQ5Hists()
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     TClonesArray* qqq5s = config->GetQQQ5s();
     int nqqq5s = qqq5s->GetEntries();
@@ -206,7 +205,7 @@ void GoddessData::InitQQQ5Hists()
 }
 void GoddessData::InitSuperX3Hists()
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     TDirectory* dirSX3 = gDirectory->mkdir ( "sx5" );
 
@@ -285,7 +284,7 @@ void GoddessData::InitSuperX3Hists()
 }
 void GoddessData::InitLiquidScintHists()
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     std::vector<LiquidScint*> liquids = config->GetLiquidScints();
     int nliquids = liquids.size();
@@ -308,7 +307,7 @@ void GoddessData::InitLiquidScintHists()
 
 void GoddessData::InitGammaHists()
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     TDirectory* dirDet = gDirectory->mkdir ( "gamma" );
     dirDet->cd();
@@ -328,11 +327,13 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
     //Loop over GEB_event and get the lowest timestmap
     firstTimestamp = gebEvt->ptgd[0]->timestamp;
 
-    for ( int i = 1; i < gebEvt->ptgd.size(); i++ )
+    for ( unsigned int i = 1; i < gebEvt->ptgd.size(); i++ )
+    {
         if ( gebEvt->ptgd[i]->timestamp < firstTimestamp )
         {
             firstTimestamp = gebEvt->ptgd[i]->timestamp;
         }
+    }
 
     if ( Pars->noMapping )
     {
@@ -391,6 +392,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             orrubaDet* siDet = dynamic_cast<orrubaDet*> ( det );
             IonChamber* ionChamber_ = dynamic_cast<IonChamber*> ( det );
             LiquidScint* liquidScint_ = dynamic_cast<LiquidScint*> ( det );
+            
             if ( siDet )
             {
                 posID = siDet->GetPosID();
@@ -442,6 +444,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         }
 
         std::pair<short, short> key = std::make_pair ( GEB_TYPE_DFMA, channel );
+        
         if ( suppressCh.find ( key ) != suppressCh.end() )
         {
             continue;
@@ -521,7 +524,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
 void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
     std::map<std::string, int> numSectorHits;
 
