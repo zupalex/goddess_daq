@@ -197,7 +197,7 @@ do
 	mkdir log
     fi
     
-    if [ $USERFILTERDIR != "" ]; then
+    if [ "$USERFILTERDIR" != "" ]; then
         USERFILTERARG="-userfilter $USERFILTERDIR/GEBMerged_run$RUN.gtd_000"
     fi
     

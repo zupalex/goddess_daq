@@ -78,13 +78,13 @@ using std::string;
 
 class GoddessData; // forward declaration
 
-class PARS
+class PARS : public TObject
 {
 private:
 
 public:
-    PARS() {}
-    virtual ~PARS() {}
+    PARS();
+    virtual ~PARS();
 
     char ConfigFile[STRLEN];
     short noCalib;
@@ -161,6 +161,8 @@ public:
     float maxsnglintrE;
     float maxsnglintrEFOM;
     char AGATA_data_fn[512];
+
+    ClassDef ( PARS, 1 );
 };
 
 // struct GEBDATA
@@ -170,18 +172,20 @@ public:
 //     unsigned long long timestamp;
 // };
 
-class GEB_EVENT
+class GEB_EVENT : public TObject
 {
 private:
 
 public:
     GEB_EVENT();
     GEB_EVENT ( int maxGebs_ );
-    virtual ~GEB_EVENT() {}
+    virtual ~GEB_EVENT();
 
     int maxGebs;
     std::vector<GEBDATA*> ptgd;
     std::vector<char*> ptinp;
+
+    ClassDef ( GEB_EVENT, 1 );
 };
 
 // In time_stamp.c
@@ -220,7 +224,7 @@ TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int
 TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi );
 TH1D* make1D ( const char* txt, int xln, int xlo, int xhi );
 
-class SortManager
+class SortManager : public TObject
 {
 private:
     SortManager();
@@ -250,8 +254,11 @@ public:
 
     static void signal_catcher ( int sigval );
 
+    GEBDATA* buffHeader[MAXCOINEV];
+    char* buffData[MAXCOINEV];
+
     GEB_EVENT* GEB_event;
-    GEB_EVENT overflowGEBEv;
+    GEB_EVENT* overflowGEBEv;
 
     DFMAEVENT DFMAEvent[MAXCOINEV];
     unsigned int numDGOD;
@@ -271,7 +278,7 @@ public:
 
     int GEBSort_read_chat ( char* name );
     int GEBacq ( char* ChatFileName );
-    int GEBGetEv ( GEB_EVENT* GEV_event );
+    int GEBGetEv ( );
 
     std::vector<GamData>* gammaDets;
     std::vector<SiDataBase>* siDets;
@@ -293,6 +300,8 @@ public:
     }
 
     bool GetWriteEventFlag();
+
+    ClassDef ( SortManager, 1 );
 };
 
 #endif

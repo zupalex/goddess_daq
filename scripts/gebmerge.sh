@@ -84,13 +84,12 @@ fi
 
 echo "GEBMerge started for run #$RUN at `date`"
 #Run the merge program
-./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd \
-	$DFMA_FILES $DGS_FILES $ORNL_FILES \
-	 > log/GEBMerge_run$RUN.log
+./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd $DFMA_FILES $DGS_FILES $ORNL_FILES | tee log/GEBMerge_current.log > log/GEBMerged_run$RUN.log
 	
 err=$?
 #Remove intermediate converted file
-rm -f .run$RUN.geb
+#rm -f .run$RUN.geb
+
 if [ $err = 0 ]; then
 	printf "${GREEN}GEBMerge DONE at `date`${RESET}\n"
 else

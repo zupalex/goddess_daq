@@ -200,6 +200,17 @@ TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
 
 // --------------------- PARS ---------------------- //
 
+PARS::PARS()
+{
+    
+}
+
+PARS::~PARS()
+{
+    
+}
+
+ClassImp ( PARS )
 
 // --------------------- GEB_EVENT ---------------------- //
 
@@ -218,6 +229,13 @@ GEB_EVENT::GEB_EVENT ( int maxGebs_ )
 
     maxGebs = maxGebs_;
 }
+
+GEB_EVENT::~GEB_EVENT()
+{
+    
+}
+
+ClassImp ( GEB_EVENT )
 
 // --------------------- SortManager ---------------------- //
 
@@ -241,6 +259,19 @@ SortManager::SortManager()
     nn = 0;
     ii = 0;
     nbadTS = 0;
+
+    GEB_event = new GEB_EVENT();
+    overflowGEBEv = new GEB_EVENT();
+
+    for ( int i = 0; i < MAXCOINEV; i++ )
+    {
+        buffHeader[i] = new GEBDATA;
+        buffData[i] = new char[50000];
+
+//         DFMAEvent[i] = new DFMAEVENT;
+//         AGODEvent[i] = new AGODEVENT;
+//         DGSEvent[i] = new DGSEVENT;
+    }
 }
 
 SortManager::~SortManager()
@@ -588,42 +619,42 @@ int SortManager::GEBSort_read_chat ( char* name )
     return 0;
 }
 
-int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
+int SortManager::GEBGetEv ( )
 {
     unsigned long long int TS;
     long long int dTS;
-    GEBDATA* buffHeader = new GEBDATA;
-    char* buffData;
 
-    GEV_event->ptgd.clear();
-    GEV_event->ptinp.clear();
+    GEB_event->ptgd.clear();
+    GEB_event->ptinp.clear();
 
-    while ( !inData.eof() )
+    int coincCounter = 0;
+
+    while ( !inData.eof() && coincCounter < MAXCOINEV )
     {
-        if ( overflowGEBEv.ptgd.size() > 1 )
+        if ( overflowGEBEv->ptgd.size() > 1 )
         {
             std::cerr << "ERROR: The GEB_event overflow contains more than 1 element!\n";
 
             return -1;
         }
-        else if ( overflowGEBEv.ptgd.size() == 1 )
+        else if ( overflowGEBEv->ptgd.size() == 1 )
         {
-            GEBDATA* prevGEBHeader = new GEBDATA;
-            *prevGEBHeader = *overflowGEBEv.ptgd[0];
+            *buffHeader[coincCounter] = * ( overflowGEBEv->ptgd[0] );
 
-            char* prevDataPack = new char[ prevGEBHeader->length];
-            memcpy ( prevDataPack, overflowGEBEv.ptinp[0], prevGEBHeader->length );
+            memcpy ( buffData[coincCounter], overflowGEBEv->ptinp[0], overflowGEBEv->ptgd[0]->length );
 
-            GEV_event->ptgd.push_back ( prevGEBHeader );
-            GEV_event->ptinp.push_back ( prevDataPack );
+            GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
+            GEB_event->ptinp.push_back ( buffData[coincCounter] );
 
-            execParams->curTS = prevGEBHeader->timestamp;
+            execParams->curTS = buffHeader[coincCounter]->timestamp;
 
-            overflowGEBEv.ptgd.clear();
-            overflowGEBEv.ptinp.clear();
+            overflowGEBEv->ptgd.clear();
+            overflowGEBEv->ptinp.clear();
+
+            coincCounter++;
         }
 
-        inData.read ( ( char* ) buffHeader, sizeof ( GEBDATA ) );
+        inData.read ( ( char* ) buffHeader[coincCounter], sizeof ( GEBDATA ) );
 
         if ( inData.gcount() != sizeof ( GEBDATA ) || inData.fail() )
         {
@@ -631,34 +662,32 @@ int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
             return 1;
         }
 
-        if ( GEV_event->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
+        if ( GEB_event->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
         {
             printf ( "read initial payload of siz=%li\n", inData.gcount() );
             fflush ( stdout );
 
-            printf ( "__ptgd[0]->type=%2i; ", buffHeader->type );
-            printf ( "ptgd[0]->length=%4i; ", buffHeader->length );
-            printf ( "ptgd[0]->timestamp=%lli\n", buffHeader->timestamp );
+            printf ( "__ptgd[0]->type=%2i; ", buffHeader[coincCounter]->type );
+            printf ( "ptgd[0]->length=%4i; ", buffHeader[coincCounter]->length );
+            printf ( "ptgd[0]->timestamp=%lli\n", buffHeader[coincCounter]->timestamp );
             fflush ( stdout );
         }
 
         execParams->nbytes += inData.gcount();
 
-        buffData = new char[buffHeader->length];
+        inData.read ( buffData[coincCounter], buffHeader[coincCounter]->length );
 
-        inData.read ( buffData, buffHeader->length );
-
-        if ( inData.gcount() != buffHeader->length || inData.fail() )
+        if ( inData.gcount() != buffHeader[coincCounter]->length || inData.fail() )
         {
-            printf ( "failed to read %i bytes for payload, got %li\n", buffHeader->length, inData.gcount() );
+            printf ( "failed to read %i bytes for payload, got %li\n", buffHeader[coincCounter]->length, inData.gcount() );
             return 2;
         }
 
         execParams->nbytes += inData.gcount();
 
-        if ( GEV_event->ptgd.size() == 0 ) execParams->curTS = buffHeader->timestamp;
+        if ( GEB_event->ptgd.size() == 0 ) execParams->curTS = buffHeader[coincCounter]->timestamp;
 
-        TS = buffHeader->timestamp;
+        TS = buffHeader[coincCounter]->timestamp;
 
         // -------- TRAP FOR BAD TIMESTAMP -------- //
 
@@ -688,12 +717,6 @@ int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
 //             }
         }
 
-        GEBDATA* GEBHeader = new GEBDATA;
-        *GEBHeader = *buffHeader;
-
-        char* dataPack = new char[buffHeader->length];
-        memcpy ( dataPack, buffData, buffHeader->length );
-
         if ( ( long long ) ( TS - execParams->curTS ) < execParams->dTS )
         {
 //             std::cerr << "..........................\n";
@@ -702,8 +725,8 @@ int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
 //             std::cerr << "---> length: " << buffHeader->length << "\n";
 //             std::cerr << "---> timestamp: " << buffHeader->timestamp << "\n";
 
-            GEV_event->ptgd.push_back ( GEBHeader );
-            GEV_event->ptinp.push_back ( dataPack );
+            GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
+            GEB_event->ptinp.push_back ( buffData[coincCounter] );
 
 //             std::cerr << "Pushed back in GEB_event:\n";
 //             std::cerr << "---> type: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->type << "\n";
@@ -714,10 +737,10 @@ int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
             {
                 printf ( "ev# %5i ", execParams->CurEvNo );
                 char str[256];
-                GebTypeStr ( GEBHeader->type, str );
+                GebTypeStr ( buffHeader[coincCounter]->type, str );
                 printf ( "%s ", str );
-                printf ( "%4iBytes ", GEBHeader->length );
-                printf ( "TS=%lli ", GEBHeader->timestamp );
+                printf ( "%4iBytes ", buffHeader[coincCounter]->length );
+                printf ( "TS=%lli ", buffHeader[coincCounter]->timestamp );
                 printf ( "curTS=%lli ", execParams->curTS );
                 dTS = TS - execParams->curTS;
                 printf ( "dTS= %lli\n", dTS );
@@ -726,10 +749,17 @@ int SortManager::GEBGetEv ( GEB_EVENT* GEV_event )
         }
         else
         {
-            overflowGEBEv.ptgd.push_back ( GEBHeader );
-            overflowGEBEv.ptinp.push_back ( dataPack );
+            overflowGEBEv->ptgd.push_back ( buffHeader[coincCounter] );
+            overflowGEBEv->ptinp.push_back ( buffData[coincCounter] );
             break;
         }
+
+        coincCounter++;
+    }
+
+    if ( coincCounter == MAXCOINEV )
+    {
+        std::cerr << "/!\\ WARNING: Maximum coincidence counter reached for event #" << execParams->CurEvNo << "\n";
     }
 
 #if(DEBUG2)
@@ -757,9 +787,6 @@ int SortManager::GEBacq ( char* ChatFileName )
     /* declarations */
 
     int NprintEvNo = 0, in, zero = 0;
-
-    GEB_event = new GEB_EVENT ( MAXGEBS );
-    GEBDATA* GEBHeader = new GEBDATA;
 
     int st = 0, eov = 0, i1, i2, j, nret, siz;
     char str[256], str1[256];
@@ -927,7 +954,6 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     GEBSort_read_chat ( ChatFileName );
 
-
     printf ( "checking proper input of chat file...\n" );
     if ( execParams->InputSrc == NOTDEF )
     {
@@ -957,15 +983,15 @@ int SortManager::GEBacq ( char* ChatFileName )
 
         /* find the very first GEB header to find start TS */
 
-        inData.read ( ( char* ) GEBHeader, sizeof ( GEBDATA ) );
+        inData.read ( ( char* ) buffHeader[0], sizeof ( GEBDATA ) );
 
         printf ( "siz=%li;", inData.gcount() );
-        printf ( "ptgd[i]->type=%2i; ", GEBHeader->type );
-        printf ( "ptgd[i]->length=%4i; ", GEBHeader->length );
-        printf ( "ptgd[i]->timestamp=%lli\n", GEBHeader->timestamp );
+        printf ( "ptgd[i]->type=%2i; ", buffHeader[0]->type );
+        printf ( "ptgd[i]->length=%4i; ", buffHeader[0]->length );
+        printf ( "ptgd[i]->timestamp=%lli\n", buffHeader[0]->timestamp );
         fflush ( stdout );
 
-        execParams->curTS = GEBHeader->timestamp;
+        execParams->curTS = buffHeader[0]->timestamp;
         printf ( "start TS is %lli\n", execParams->curTS );
         std::cout << "position in file is " << inData.tellg() << "\n";
 
@@ -1313,7 +1339,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
 //         std::cerr << "========================= Entering GEBGetEv =========================\n";
 
-        st = GEBGetEv ( GEB_event );
+        st = GEBGetEv ( );
 
 //         std::cerr << "------- Exiting GEBGetEv -------\n";
 //         for ( int i = 0; i < GEB_event->ptgd.size(); i++ )
@@ -1440,7 +1466,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
         if ( execParams->CurEvNo % 1000 == 0 )
         {
-            fprintf ( stderr, "Event: %d\r", execParams->CurEvNo );
+            std::cerr << "Event: " << execParams->CurEvNo << "\r" << std::flush;
             /* calc time since last dump */
 
             tdmp = time ( NULL );
@@ -1732,3 +1758,5 @@ int SortManager::GEBacq ( char* ChatFileName )
     return ( 0 );
 
 }
+
+ClassImp ( SortManager )

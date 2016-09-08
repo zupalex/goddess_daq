@@ -1117,7 +1117,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
     SortManager::sinstance()->SetSiDets ( siData );
     SortManager::sinstance()->SetIonChamber ( ionData );
     
-    int uff = SortManager::sinstance()->GetWriteEventFlag();
+    int uff = (!Pars->userFilter.empty() ? SortManager::sinstance()->GetWriteEventFlag() : 1);
 
     tree->Fill();
 

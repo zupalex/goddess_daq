@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <deque>
 
 int usage ( std::string executable )
 {
@@ -37,6 +38,10 @@ int main ( int argc, char *argv[] )
     float avgNumADCs = 0;
     float stdDevNumADCs = 0;
     std::map<unsigned short, unsigned short> *values = buffer.GetMap();
+    const int numStamps = 10;
+    std::deque< unsigned long long int > lastTimestamp;
+    for ( int i=0; i<numStamps; i++ )
+        lastTimestamp.push_back ( -1 );
     while ( buffer.ReadNextBuffer() > 0 )
     {
 
@@ -49,7 +54,8 @@ int main ( int argc, char *argv[] )
 
         if ( buffer.GetBufferType() == hribfBuffer::BUFFER_TYPE_DATA )
         {
-            unsigned long long int lastTimestamp = 0;
+
+
             while ( buffer.GetEventsRemaining() )
             {
                 eventCnt++;
@@ -84,6 +90,10 @@ int main ( int argc, char *argv[] )
                 if ( values->at ( myriadParam[2] ) == 0xAAAA )
                 {
                     myriadMalformed++;
+                    /*    std::cerr << "WARNING: " << myriadParam[2] << "!\n";
+                    std::cerr << "Last Last Timestamp:\t" << lastlastTimestamp << " " << std::hex <<  lastlastTimestamp << std::dec << "\n";
+                    std::cerr << "Last Timestamp:\t" << lastTimestamp << " " << std::hex <<  lastTimestamp << std::dec << "\n";
+                    std::cerr << "Timestamp:\t" << timestamp << " " << std::hex << timestamp << std::dec << "\n";*/
 
                     if ( verbose )
                     {
@@ -97,14 +107,50 @@ int main ( int argc, char *argv[] )
 
                     continue;
                 }
-                if ( timestamp < lastTimestamp )
+//                 if ( values->at ( myriadParam[1] ) == 0xAAAA && values->at ( myriadParam[2] ) != lastTimestamp[4] >> 32 )
+//                 {
+//                     // myriadMalformed++;
+//                     std::cerr << "WARNING: " << myriadParam[1] << "!\n";
+//                     for ( int i=0; i<numStamps; i++ )
+//                     {
+//                         std::cerr << std::hex << lastTimestamp[i] << " ";
+//                     }
+//                     std::cout << std::hex << timestamp << std::dec << "\n";
+// 
+//                 }
+//                 if ( values->at ( myriadParam[0] ) == 0xAAAA && values->at ( myriadParam[2] ) != lastTimestamp[4] >> 32 )
+//                 {
+//                     // myriadMalformed++;
+//                     std::cerr << "WARNING: " << myriadParam[0] << "!\n";
+//                     for ( int i=0; i<numStamps; i++ )
+//                     {
+//                         std::cerr << std::hex << lastTimestamp[i] << " ";
+//                     }
+//                     std::cout << std::hex << timestamp << std::dec << "\n";
+// 
+//                 }
+//                 if ( timestamp == 0 )
+//                 {
+//                     std::cerr << "WARNING: 0!\n";
+//                     for ( int i=0; i<numStamps; i++ )
+//                     {
+//                         std::cerr << std::hex << lastTimestamp[i] << " ";
+//                     }
+//                     std::cout << std::hex << timestamp << std::dec << "\n";
+//                 }
+                if ( timestamp < lastTimestamp.back() )
                 {
                     invertedOrderMalformed++;
-                    /*
+
                     std::cerr << "WARNING: Current timestamp smaller than last timestamp!\n";
-                    std::cerr << "Timestamp:\t" << timestamp << " " << std::hex << timestamp << std::dec << "\n";
-                    std::cerr << "Last Timestamp:\t" << lastTimestamp << " " << std::hex <<  lastTimestamp << std::dec << "\n";
-                    */
+                    for ( int i=0; i<numStamps; i++ )
+                    {
+                        std::cerr << std::hex << lastTimestamp[i] << " ";
+                    }
+                    std::cout << std::hex << timestamp << std::dec << "\n";
+
+
+
                 }
 
                 int length = values->size() * 2 * sizeof ( short );
@@ -121,7 +167,10 @@ int main ( int argc, char *argv[] )
                 avgNumADCs = avgNumADCs + ( values->size() - avgNumADCs ) / eventCnt;
                 if ( eventCnt > 1 ) stdDevNumADCs = stdDevNumADCs + ( float ) ( eventCnt ) / ( eventCnt -1 ) * pow ( avgNumADCs - values->size(),2 );
 
-                lastTimestamp = timestamp;
+                lastTimestamp.push_back ( timestamp );
+                lastTimestamp.pop_front();
+
+
             } // Next event
         } //If Data Buffer
 

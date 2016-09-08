@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "ProcessManagers.h"
+#include "SortManager.h"
 
 bool SortManager::GetWriteEventFlag()
 {
@@ -17,11 +17,11 @@ bool SortManager::GetWriteEventFlag()
 //         }
 //     }
 
-    if ( gammaDets->size() > 0 )
-    {
-
-    }
-
+//     if ( gammaDets->size() > 0 )
+//     {
+// 
+//     }
+// 
     if ( siDets->size() > 0 )
     {
         for ( auto itr = siDets->begin(); itr != siDets->end(); itr++ )
@@ -35,11 +35,11 @@ bool SortManager::GetWriteEventFlag()
             }
         }
     }
-
-    if ( ionChamber->size() > 0 )
-    {
-
-    }
+// 
+//     if ( ionChamber->size() > 0 )
+//     {
+// 
+//     }
 
 //     flag = true;
 

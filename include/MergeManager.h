@@ -44,16 +44,17 @@ public:
     std::ifstream* istream;
 };
 
-struct EVENT
+class EVENT
 {
+private:
+
+public:
+    EVENT();
+    ~EVENT();
+
     GEBDATA* gd;
     char* payload;
-
-    EVENT()
-    {
-        gd = new GEBDATA;
-        payload = new char[5000];
-    }
+    int key;
 };
 
 // In get_a_seed.c
@@ -62,7 +63,7 @@ int get_a_seed ( unsigned int *seed );
 void CheckNoArgs ( int required, int actual, string str );
 
 // In GEBMerge.cxx
-EVENT* GTGetDiskEv ( InDataInfo inFile, bool printInfo );
+EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEVENT, bool printInfo );
 #if (USEZLIB == 0 )
 int bread ( std::ifstream inFile, char *val, int *pos, int *buf, int *bufsiz );
 #else
@@ -82,20 +83,24 @@ public:
 
     static MergeManager* sinstance();
 
+    unsigned long long int readBytesCount;
+
     unsigned int maxCoincEv;
-    std::map<unsigned long long int, std::vector<EVENT>> Event;
-    std::map<unsigned long long int, std::vector<std::pair<InDataInfo*, EVENT>>> overflowEvent;
+    std::map<unsigned long long int, std::vector<EVENT*>*> Event;
+    std::map<unsigned long long int, std::vector<std::pair<InDataInfo*, EVENT*>*>*> overflowEvent;
 
     unsigned int maxBigBufSize;
     std::vector<char*>* bigbuf;
 
-    std::vector<InDataInfo>* inData;
+    std::vector<InDataInfo*>* inData;
     std::ofstream outData;
 
     void RemoveFromInputList ( string input );
 
     int tlkup[NCHANNELS];
     int tid[NCHANNELS];
+
+    std::pair<unsigned int, unsigned long long int> GetSizeAndBytesCount ( bool ofTyspe );
 
 #if(USEZLIB==1)
     gzFile zFile[MAXFILES];
