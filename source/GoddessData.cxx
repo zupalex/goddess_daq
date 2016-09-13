@@ -350,6 +350,8 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
         if ( !Pars->noHists ) analogADCMult->Fill ( agodEvt.values.size() );
 
+        unsigned long long int timestamp = agodEvt.timestamp;
+
         for ( size_t j = 0; j < agodEvt.values.size(); j++ )
         {
             unsigned long int value = agodEvt.values[j];
@@ -379,7 +381,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
                 continue;
             }
 
-            Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, Pars->ignoreThresholds );
+            Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, Pars->ignoreThresholds, timestamp );
 
             if ( !det )
             {
@@ -392,7 +394,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             orrubaDet* siDet = dynamic_cast<orrubaDet*> ( det );
             IonChamber* ionChamber_ = dynamic_cast<IonChamber*> ( det );
             LiquidScint* liquidScint_ = dynamic_cast<LiquidScint*> ( det );
-            
+
             if ( siDet )
             {
                 posID = siDet->GetPosID();
@@ -425,7 +427,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         DFMAEVENT dgodEvt = dgodEvts->at ( i );
         unsigned int value = dgodEvt.ehi;
         unsigned short channel = dgodEvt.tid;
-        //unsigned long long timestamp = dgodEvt.LEDts;
+        unsigned long long timestamp = dgodEvt.LEDts;
 
         DAQchannel = channel;
         //DAQCh_Energy[channel] = value; //filling this will overwrite the analog
@@ -444,13 +446,14 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         }
 
         std::pair<short, short> key = std::make_pair ( GEB_TYPE_DFMA, channel );
-        
+
         if ( suppressCh.find ( key ) != suppressCh.end() )
         {
             continue;
         }
 
-        Detector* det = config->SetRawValue ( GEB_TYPE_DFMA, channel, value, Pars->ignoreThresholds );
+        Detector* det = config->SetRawValue ( GEB_TYPE_DFMA, channel, value, Pars->ignoreThresholds, timestamp );
+
         if ( !det )
         {
             suppressCh[key] = true;
@@ -856,25 +859,32 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     else datum = & ( siData->at ( siMap[sectorStr] ) );
                 }
 
-                std::vector<float> *eP = 0;
-                std::vector<float> *eN = 0;
+                std::vector<float>* eP = 0;
+                std::vector<float>* eN = 0;
 
-                std::vector<int> *stripP = 0;
-                std::vector<int> *stripN = 0;
+                std::vector<int>* stripP = 0;
+                std::vector<int>* stripN = 0;
 
+                std::vector<unsigned long long int>* tsP = 0;
+                std::vector<unsigned long long int>* tsN = 0;
 
                 float* eSumP = 0;
                 int* stripMaxP = 0;
+                unsigned long long int* tsMaxP = 0;
                 float* eSumN = 0;
                 int* stripMaxN = 0;
+                unsigned long long int* tsMaxN = 0;
 
                 float esp = 0.0,esn = 0.0;
                 float enear_tot = 0.0, efar_tot = 0.0;
                 int smp = -1, smn = -1;
+                unsigned long long int tsmp = 0, tsmn = 0;
                 eSumP = &esp;
                 eSumN = &esn;
                 stripMaxP = &smp;
                 stripMaxN = &smn;
+                tsMaxP = &tsmp;
+                tsMaxN = &tsmn;
 
                 if ( writeDetails )
                 {
@@ -885,18 +895,24 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                         datum->SetMemberAddress ( "dE_e_n", &eN );
                         datum->SetMemberAddress ( "dE_strip_p", &stripP );
                         datum->SetMemberAddress ( "dE_strip_n", &stripN );
+                        datum->SetMemberAddress ( "dE_ts_p", &tsP );
+                        datum->SetMemberAddress ( "dE_ts_n", &tsN );
                         break;
                     case 1:
                         datum->SetMemberAddress ( "E1_e_p", &eP );
                         datum->SetMemberAddress ( "E1_strip_p", &stripP );
                         datum->SetMemberAddress ( "E1_e_n", &eN );
                         datum->SetMemberAddress ( "E1_strip_n", &stripN );
+                        datum->SetMemberAddress ( "E1_ts_p", &tsP );
+                        datum->SetMemberAddress ( "E1_ts_n", &tsN );
                         break;
                     case 2:
                         datum->SetMemberAddress ( "E2_e_p", &eP );
                         datum->SetMemberAddress ( "E2_strip_p", &stripP );
                         datum->SetMemberAddress ( "E2_e_n", &eN );
                         datum->SetMemberAddress ( "E2_strip_n", &stripN );
+                        datum->SetMemberAddress ( "E2_ts_p", &tsP );
+                        datum->SetMemberAddress ( "E2_ts_n", &tsN );
                         break;
                     }
                 }
@@ -916,6 +932,11 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     enNMap = det->GetRawEn ( true );
                 }
 
+                siDet::TimeMap tsPMap, tsNMap;
+
+                tsPMap = det->GetTsMap ( false );
+                tsNMap = det->GetTsMap ( true );
+
                 if ( enPMap.size() > 0 )
                 {
                     float enMax = 0.0;
@@ -930,6 +951,8 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                             {
                                 stripP->push_back ( stripItr->first );
                                 eP->push_back ( stripItr->second );
+//                                 tsP->push_back ( tsPMap[stripItr->first] );
+                                tsP->push_back ( 0 );
                             }
 
                             if ( ( Pars->noCalib + nc ) % 2 == 0 )
@@ -940,6 +963,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                                 {
                                     *stripMaxP = stripItr->first;
                                     enMax = stripItr->second;
+                                    *tsMaxP = tsPMap[stripItr->first];
                                 }
                             }
                         }
@@ -966,9 +990,11 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                             if ( writeDetails )
                             {
                                 eP->push_back ( en_near );
+//                                 tsP->push_back ( tsPMap[nearStrip] );
                                 stripP->push_back ( st_ );
 
                                 eN->push_back ( en_far );
+//                                 tsN->push_back ( tsPMap[farStrip] );
                                 stripN->push_back ( -1 );
                             }
 
@@ -985,13 +1011,13 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                                     enear_tot += en_near;
                                     efar_tot += en_far;
 
-                                    if ( resStripParCal[st_].at ( 1 ) == 1 ) *eSumP = -10;
-                                    else *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+                                    *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
 
                                     if ( en_ > enMax )
                                     {
                                         *stripMaxP = st_;
                                         enMax = en_;
+                                        *tsMaxP = ( tsPMap[nearStrip] + tsPMap[farStrip] ) / 2;
                                     }
                                 }
                             }
@@ -1010,6 +1036,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                         {
                             stripN->push_back ( stripItr->first );
                             eN->push_back ( stripItr->second );
+//                             tsN->push_back ( tsNMap[stripItr->first] );
                         }
 
                         if ( ( Pars->noCalib + nc ) % 2 == 0 )
@@ -1020,6 +1047,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                             {
                                 *stripMaxN = stripItr->first;
                                 enMax = stripItr->second;
+                                *tsMaxN = tsNMap[stripItr->first];
                             }
                         }
                     }
@@ -1030,6 +1058,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                 {
                     datum->eSum.push_back ( *eSumP );
                     datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
+                    datum->timestampMax.push_back ( *tsMaxP );
                 }
 
 //                 if ( *eSumN != 0.0 )
@@ -1037,6 +1066,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                 {
                     datum->eSum.push_back ( *eSumN );
                     datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
+                    datum->timestampMax.push_back ( *tsMaxN );
                 }
 
                 if ( *stripMaxP >= 0 )
@@ -1056,6 +1086,8 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
         datum.type = dgsEvts->at ( dgsEvtNum ).tpe;
         datum.num = dgsEvts->at ( dgsEvtNum ).tid;
+
+        datum.time = dgsEvts->at ( dgsEvtNum ).event_timestamp;
 
         switch ( Pars->noCalib )
         {
@@ -1116,8 +1148,8 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
     SortManager::sinstance()->SetGamDets ( gamData );
     SortManager::sinstance()->SetSiDets ( siData );
     SortManager::sinstance()->SetIonChamber ( ionData );
-    
-    int uff = (!Pars->userFilter.empty() ? SortManager::sinstance()->GetWriteEventFlag() : 1);
+
+    int uff = ( !Pars->userFilter.empty() ? SortManager::sinstance()->GetWriteEventFlag() : 1 );
 
     tree->Fill();
 

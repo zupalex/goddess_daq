@@ -476,7 +476,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
     {
         printf ( "entered bin_dgs:\n" );
     }
-    
+
 //     std::cerr << "****************Entered bin_dgs****************\n";
 //     std::cerr << "GEB_event size = " << GEB_event->ptgd.size() << "\n";
 
@@ -493,7 +493,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
 //       std::cerr << "Found GEB_event type " << GEB_event->ptgd[i]->type << " (DGS type is " << GEB_TYPE_DGS << ")\n";
 //       std::cerr << "--> length: " << GEB_event->ptgd[i]->length << "\n";
 //       std::cerr << "--> timestamp: " << GEB_event->ptgd[i]->timestamp << "\n";
-      
+
         if ( GEB_event->ptgd[i]->type == GEB_TYPE_DGS )
         {
             if ( Pars->CurEvNo <= Pars->NumToPrint )
@@ -505,6 +505,9 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
             DGSEvDecompose_v3 ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ),
                                 &DGSEvent[*ng] );
+
+//             std::cerr << "DGS event: GEB_event TS = " << GEB_event->ptgd[i]->timestamp << " / DGSEents TS = " << DGSEvent[*ng].event_timestamp << "\n";
+
             ( *ng ) ++;
         }
     }

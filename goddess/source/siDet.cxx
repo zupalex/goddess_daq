@@ -275,6 +275,12 @@ siDet::ValueMap siDet::GetCalEn ( bool nType )
     return enCalP;
 }
 
+siDet::TimeMap siDet::GetTsMap ( bool nType )
+{
+    if(nType) return timeN;
+    else return timeP;
+}
+
 bool siDet::ContactHit ( int contact, bool nType )
 {
     ValueMap *map = &enRawP;

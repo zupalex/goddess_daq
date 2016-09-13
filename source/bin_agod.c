@@ -47,6 +47,7 @@ void AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theAGODEvent )
             readWords++;
         }
     }
+
     theAGODEvent->timestamp = timestamp;
 }
 
@@ -113,7 +114,7 @@ int bin_agod ( GEB_EVENT* GEB_event )
 
     unsigned int* numAGOD = &SortManager::sinstance()->numAGOD;
     *numAGOD = 0;
-    
+
     int* ng = &SortManager::sinstance()->ng;
 
     /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
@@ -128,7 +129,10 @@ int bin_agod ( GEB_EVENT* GEB_event )
                 GebTypeStr ( GEB_event->ptgd[i]->type, str );
                 //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp);
             }
+
             AGODEvDecompose ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ), &AGODEvent[*numAGOD] );
+
+//             std::cerr << "Analog ORRUBA event: GEB_event TS = " << GEB_event->ptgd[i]->timestamp << " / AGODEVENT TS = " << AGODEvent[*numAGOD].timestamp << "\n";
 
             ( *numAGOD ) ++;
         }

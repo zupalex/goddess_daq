@@ -138,20 +138,17 @@ int main ( int argc, char *argv[] )
 //                     }
 //                     std::cout << std::hex << timestamp << std::dec << "\n";
 //                 }
-                if ( timestamp < lastTimestamp.back() )
-                {
-                    invertedOrderMalformed++;
-
-                    std::cerr << "WARNING: Current timestamp smaller than last timestamp!\n";
-                    for ( int i=0; i<numStamps; i++ )
-                    {
-                        std::cerr << std::hex << lastTimestamp[i] << " ";
-                    }
-                    std::cout << std::hex << timestamp << std::dec << "\n";
-
-
-
-                }
+//                 if ( timestamp < lastTimestamp.back() )
+//                 {
+//                     invertedOrderMalformed++;
+// 
+//                     std::cerr << "WARNING: Current timestamp smaller than last timestamp!\n";
+//                     for ( int i=0; i<numStamps; i++ )
+//                     {
+//                         std::cerr << std::hex << lastTimestamp[i] << " ";
+//                     }
+//                     std::cout << std::hex << timestamp << std::dec << "\n";
+//                 }
 
                 int length = values->size() * 2 * sizeof ( short );
                 output.write ( ( char* ) &type,sizeof ( int ) );

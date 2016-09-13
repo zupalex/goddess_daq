@@ -18,8 +18,8 @@ struct GamData
     int type;
     //The number of the gamma ray detector
     int num;
-    ///The time of the gamma relative to the beginning of the event.
-    unsigned int time;
+    ///Timestamp of the gamma
+    unsigned long long int time;
 };
 
 ///Structure of silicon data from ORRUBA. This one is used when running geb_sort in default mode
@@ -44,12 +44,16 @@ public:
     virtual std::vector<float>* SetMemberAddress ( std::string member, std::vector<float>** address );
     ///Function used in GoddessData.cxx to set the address of a member of SiDataBase class by name.
     virtual std::vector<int>* SetMemberAddress ( std::string member, std::vector<int>** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
+    virtual std::vector<unsigned long long int>* SetMemberAddress ( std::string member, std::vector<unsigned long long int>** address );
 
     ///Method which can be used within the root Draw command to plot the sum of the energies collected in a specific layer and a specific side.
-    virtual float eSumLayer ( unsigned short layer = 1, bool isNType = false ) const;
+    virtual float ESumLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
     ///Method which can be used within the root Draw command to plot the strip number which collected the max energy in a specific layer and specific side.
-    virtual int stripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
+    virtual int StripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
+
+    virtual unsigned long long int TimestampMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
     ///Method which can be used within the root Draw command to plot the position of a hit in the dE layer
     virtual TVector3 posdE() const;
@@ -71,15 +75,17 @@ public:
 
     /// Vector containing the sum of the energies gathered in the different layers.
     /**They are not sorted so do not use with thr Draw command in root.
-     * Use eSumLayer() method instead.
+     * Use ESumLayer() method instead.
      */
     std::vector<float> eSum;
 
     /// Vector containing the number of the strips which gathered the max energy in the different layers.
     /**They are not sorted so do not use with thr Draw command in root.
-     * Use eSumLayer() method instead.
+     * Use ESumLayer() method instead.
      */
     std::vector<int> stripMax;
+
+    std::vector<unsigned long long int> timestampMax;
 
     ///The unique ID of the telescope to allow an easier selection of a specific portion of the detection system.
     /** This ID is composed of 4 digits following this pattern
@@ -157,11 +163,14 @@ public:
     ///The number of the strips which fired.
     PNPair<int> strip;
 
+    PNPair<unsigned long long int> timestamp;
+
     ///Clear the different class members of SiDetStripInfo
     inline void Clear()
     {
         en.Clear();
         strip.Clear();
+        timestamp.Clear();
     }
 
     /// \cond This is just for ROOT and doesn't need to be documented
@@ -191,6 +200,8 @@ public:
     std::vector<float>* SetMemberAddress ( std::string member, std::vector<float>** address );
     ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
     std::vector<int>* SetMemberAddress ( std::string member, std::vector<int>** address );
+    ///Function used in GoddessData.cxx to set the address of a member of SiDataDetailed class by name.
+    std::vector<unsigned long long int>* SetMemberAddress ( std::string member, std::vector<unsigned long long int>** address );
 
     ///Clear the different class members of SiDataDetailed
     void Clear();

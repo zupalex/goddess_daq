@@ -7,6 +7,7 @@
 
 #pragma link C++ class PNPair<float>+;
 #pragma link C++ class PNPair<int>+;
+#pragma link C++ class PNPair<unsigned long long int>+;
 #pragma link C++ class SiDetEnStripInfo+;
 
 #pragma link C++ class vector<SiDetEnStripInfo>+;

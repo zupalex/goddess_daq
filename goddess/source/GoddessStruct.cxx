@@ -7,11 +7,11 @@
 #include "GoddessStruct.h"
 
 template<typename T> T* GetMemberFromName ( std::string name , SiDataBase* siDat )
-{  
+{
     //Useless but this prevent warning that the variable is not used. I just don't know if I keep this function yet.
-    if(name.length() > 0 && siDat)    
+    if ( name.length() > 0 && siDat )
         return 0;
-    
+
     else
         return 0;
 }
@@ -30,7 +30,13 @@ template<typename T> T* GetMemberFromName ( std::string name , SiDataDetailed* s
     else if ( name == "E1_strip_n" ) return ( T* ) &siDat->E1.strip.n;
     else if ( name == "E2_strip_p" ) return ( T* ) &siDat->E2.strip.p;
     else if ( name == "E2_strip_n" ) return ( T* ) &siDat->E2.strip.n;
-    
+    else if ( name == "dE_ts_p" ) return ( T* ) &siDat->dE.timestamp.p;
+    else if ( name == "dE_ts_n" ) return ( T* ) &siDat->dE.timestamp.n;
+    else if ( name == "E1_ts_p" ) return ( T* ) &siDat->E1.timestamp.p;
+    else if ( name == "E1_ts_n" ) return ( T* ) &siDat->E1.timestamp.n;
+    else if ( name == "E2_ts_p" ) return ( T* ) &siDat->E2.timestamp.p;
+    else if ( name == "E2_ts_n" ) return ( T* ) &siDat->E2.timestamp.n;
+
     return GetMemberFromName<T> ( name , dynamic_cast<SiDataBase*> ( siDat ) );
 }
 
@@ -68,7 +74,13 @@ std::vector<int>* SiDataBase::SetMemberAddress ( std::string member, std::vector
     return *address;
 }
 
-float SiDataBase::eSumLayer ( short unsigned int layer, bool isNType ) const
+std::vector<unsigned long long int>* SiDataBase::SetMemberAddress ( std::string member, std::vector<unsigned long long int>** address )
+{
+    *address = GetMemberFromName<std::vector<unsigned long long int>> ( member, this );
+    return *address;
+}
+
+float SiDataBase::ESumLayer ( short unsigned int layer, bool isNType ) const
 {
     if ( eSum.size() > 0 )
         for ( unsigned short i = 0; i < eSum.size(); i++ )
@@ -78,7 +90,7 @@ float SiDataBase::eSumLayer ( short unsigned int layer, bool isNType ) const
     return 0.0;
 }
 
-int SiDataBase::stripMaxLayer ( short unsigned int layer, bool isNType ) const
+int SiDataBase::StripMaxLayer ( short unsigned int layer, bool isNType ) const
 {
     if ( stripMax.size() > 0 )
         for ( unsigned short i = 0; i < stripMax.size(); i++ )
@@ -86,6 +98,16 @@ int SiDataBase::stripMaxLayer ( short unsigned int layer, bool isNType ) const
                 return stripMax[i] - ( layer*100 + 300*isNType );
 
     return -1;
+}
+
+long long unsigned int SiDataBase::TimestampMaxLayer ( short unsigned int layer, bool isNType ) const
+{
+    if ( timestampMax.size() > 0 )
+        for ( unsigned short i = 0; i < eSum.size(); i++ )
+            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+                return timestampMax[i];
+
+    return 0.0;
 }
 
 TVector3 SiDataBase::posdE() const
@@ -130,7 +152,7 @@ float SiDataBase::angle ( short unsigned int layer ) const
 
 float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const
 {
-    float energy = eSumLayer ( 1, false );  // MeV
+    float energy = ESumLayer ( 1, false );  // MeV
 
     float Qval = -100;
 
@@ -139,13 +161,13 @@ float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float 
         float amu = 931.5; // MeV
 
         float labAngle = angle ( 1 );  // degree
-        
+
         float mbeam = massBeam * amu;  // MeV
-        float mreac = (massBeam + massTarget - massEjec) * amu; // MeV
-        
+        float mreac = ( massBeam + massTarget - massEjec ) * amu; // MeV
+
         float mejec = massEjec * amu;
-        
-        Qval = (1+mejec/mreac) * (energy) - (1 - mbeam/mreac) * (kBeam) - 2 * TMath::Sqrt(mbeam*mejec*(energy)*(kBeam)) / mreac * TMath::Cos(labAngle * TMath::Pi() / 180.);
+
+        Qval = ( 1+mejec/mreac ) * ( energy ) - ( 1 - mbeam/mreac ) * ( kBeam ) - 2 * TMath::Sqrt ( mbeam*mejec* ( energy ) * ( kBeam ) ) / mreac * TMath::Cos ( labAngle * TMath::Pi() / 180. );
     }
 
     return Qval;
@@ -189,6 +211,12 @@ std::vector<float>* SiDataDetailed::SetMemberAddress ( std::string member, std::
 std::vector<int>* SiDataDetailed::SetMemberAddress ( std::string member, std::vector<int>** address )
 {
     *address = GetMemberFromName<std::vector<int>> ( member, this );
+    return *address;
+}
+
+std::vector<unsigned long long int>* SiDataDetailed::SetMemberAddress ( std::string member, std::vector<unsigned long long int>** address )
+{
+    *address = GetMemberFromName<std::vector<unsigned long long int>> ( member, this );
     return *address;
 }
 
