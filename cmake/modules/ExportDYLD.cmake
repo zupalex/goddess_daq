@@ -2,7 +2,7 @@ function(CheckForExportDYLD)
 
   message(STATUS "Checking Platform: ${CMAKE_SYSTEM_NAME}")
     
-  if(${APPLE})
+#  if(${APPLE})
 
     set(bashProfileName "$ENV{HOME}/.bash_profile")
 
@@ -14,8 +14,10 @@ function(CheckForExportDYLD)
       file(STRINGS "${bashProfileName}" testStrs)
 
       foreach(line ${testStrs})
+      
+      string(REGEX MATCH "export DYLD_LIBRARY_PATH=\"[$]DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec\"" foundDYLDExport ${line})
   
-	if(${line} STREQUAL "export DYLD_LIBRARY_PATH=\"$DYLD_LIBRARY_PATH:${CMAKE_SOURCE_DIR}/exec\"")
+	if(foundDYLDExport)
   
 	  message(STATUS "Found ${bashProfileName} and the export DYLD_LIBRARY_PATH line...")
 	  return()
@@ -39,10 +41,10 @@ function(CheckForExportDYLD)
   
     endif()
 
-  else()
+#  else()
     
-     message(STATUS "Congratulation for using a decent OS")
+#     message(STATUS "Congratulation for using a decent OS")
     
-  endif()
+#  endif()
 
 endfunction()
