@@ -2,7 +2,7 @@ function(CheckForExportDYLD)
 
   message(STATUS "Checking Platform: ${CMAKE_SYSTEM_NAME}")
     
-#  if(${APPLE})
+  if(${APPLE})
 
     set(bashProfileName "$ENV{HOME}/.bash_profile")
 
@@ -41,10 +41,10 @@ function(CheckForExportDYLD)
   
     endif()
 
-#  else()
+  else()
     
-#     message(STATUS "Congratulation for using a decent OS")
+      message(STATUS "Congratulation for using a decent OS")
     
-#  endif()
+  endif()
 
 endfunction()
