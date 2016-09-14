@@ -17,7 +17,9 @@
 #include <iostream>
 #include <iomanip>
 
+#ifdef __unix__
 #include "sys/sysinfo.h"
+#endif
 
 #include "gdecomp.h"
 #include "GTMerge.h"
@@ -242,8 +244,10 @@ int main ( int argc, char **argv )
 
     char esc ( 27 );
 
+#ifdef __unix__
     struct sysinfo memInfo;
-
+#endif
+    
     /* declarations */
 
     MergeManager* theMergeManager = MergeManager::sinstance();
@@ -717,6 +721,7 @@ int main ( int argc, char **argv )
             unsigned int writeBufSize = writeBufInfo.first;
             unsigned long long int bufferBytesCount = writeBufInfo.second;
 
+#ifdef __unix__
             sysinfo ( &memInfo );
 
             long long totalPhysMem = memInfo.totalram;
@@ -724,6 +729,7 @@ int main ( int argc, char **argv )
 
             long long physMemUsed = memInfo.totalram - memInfo.freeram;
             physMemUsed *= memInfo.mem_unit;
+#endif
 
             unsigned long long int outSize = outData->tellp();
 
@@ -742,7 +748,11 @@ int main ( int argc, char **argv )
             std::cerr<< evCounter << " events treated / " << writeBufSize << " events currently waiting in the write buffer / ";
             std::cerr << ofEvSize << " awaiting treatment for " << theMergeManager->overflowEvent.size() << " map entries / ";
             std::cerr << theMergeManager->inData->size() << " files left in the queue\n";
+#ifdef __unix
             std::cerr << "Memory used: " << physMemUsed/1000000 << " MB (" << totalPhysMem/1000000 << "MB total)" << esc << "[1A" << esc << "[1A" << "\r" << std::flush;
+#else
+            std::cerr << "Memory used: " << "... memory info is not available for this platform. I could make it but I won't. Go get a real computer." << esc << "[1A" << esc << "[1A" << "\r" << std::flush;
+#endif
         }
 
         if ( printDebug )
