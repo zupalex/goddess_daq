@@ -94,11 +94,7 @@ int main ( int argc, char** argv )
             }
             else if ( ( p = strstr ( argv[j], "-help" ) ) != NULL )
             {
-                printf ( "\n" );
-                printf ( "GEBSort is documented on the WWW, URL:\n" );
-                printf ( "\n" );
-                printf ( "http://wiki.anl.gov/gretina_at_anl \n" );
-                printf ( "\n" );
+                printf ( "Coming soon...\n" );
                 exit ( 0 );
 
             }

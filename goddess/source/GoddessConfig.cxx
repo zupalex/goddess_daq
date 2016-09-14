@@ -11,8 +11,6 @@
 #include "QQQ5.h"
 #include <GEBSort.h>
 
-#include "SortManager.h"
-
 /**
  *
  * \param[in] positionFile The configuration file specfying the central position
@@ -656,14 +654,12 @@ bool GoddessConfig::IsInsertable ( short daqType, int daqCh, Detector* det_, int
  */
 Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigned int rawValue, int ignThr, unsigned long long timestamp /*=0*/ )
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
-
     MapKey key = std::make_pair ( daqType, digitizerCh );
     auto mapItr = chMap.upper_bound ( key );
 
     if ( mapItr == chMap.begin() )
     {
-        std::cerr << "ERROR (event #" << Pars->CurEvNo << "): Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << ", ERR 1!\n";
+        std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << digitizerCh << ", ERR 1!\n";
         return NULL;
     }
 
@@ -675,7 +671,7 @@ Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigne
 
     if ( detCh >= det->GetNumChannels ( secondaryType ) )
     {
-        std::cerr << "ERROR (event #" << Pars->CurEvNo << "): Unable to find mapped channel for DAQ type: " << daqType << " ch: " << std::setw ( 3 ) << digitizerCh << "!";
+        std::cerr << "ERROR: Unable to find mapped channel for DAQ type: " << daqType << " ch: " << std::setw ( 3 ) << digitizerCh << "!";
         std::cerr << " Computed detector ch " << std::setw ( 2 ) << detCh << " was larger than expected number of channels, " << std::setw ( 2 ) << det->GetNumChannels ( secondaryType );
         orrubaDet *siDet = dynamic_cast<orrubaDet *> ( det );
 
@@ -693,7 +689,7 @@ Detector *GoddessConfig::SetRawValue ( short daqType, short digitizerCh, unsigne
 
     if ( detCh < 0 )
     {
-        std::cerr << "ERROR (event #" << Pars->CurEvNo << "): DAQ type " << daqType << " / Digitizer ch " << digitizerCh << " / Computed ch " << detCh << "! Somehow the mapping is corrupted!?\n";
+        std::cerr << "ERROR: DAQ type " << daqType << " / Digitizer ch " << digitizerCh << " / Computed ch " << detCh << "! Somehow the mapping is corrupted!?\n";
         return NULL;
     }
 

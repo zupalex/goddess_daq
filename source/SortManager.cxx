@@ -202,15 +202,13 @@ TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
 
 PARS::PARS()
 {
-    
+
 }
 
 PARS::~PARS()
 {
-    
-}
 
-ClassImp ( PARS )
+}
 
 // --------------------- GEB_EVENT ---------------------- //
 
@@ -232,10 +230,8 @@ GEB_EVENT::GEB_EVENT ( int maxGebs_ )
 
 GEB_EVENT::~GEB_EVENT()
 {
-    
-}
 
-ClassImp ( GEB_EVENT )
+}
 
 // --------------------- SortManager ---------------------- //
 
@@ -662,6 +658,8 @@ int SortManager::GEBGetEv ( )
             return 1;
         }
 
+        totBytesRead += sizeof ( GEBDATA );
+
         if ( GEB_event->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
         {
             printf ( "read initial payload of siz=%li\n", inData.gcount() );
@@ -682,6 +680,8 @@ int SortManager::GEBGetEv ( )
             printf ( "failed to read %i bytes for payload, got %li\n", buffHeader[coincCounter]->length, inData.gcount() );
             return 2;
         }
+
+        totBytesRead += buffHeader[coincCounter]->length;
 
         execParams->nbytes += inData.gcount();
 
@@ -1327,6 +1327,16 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     tdmplast = time ( NULL );
 
+    unsigned long long int totBinSize = 0;
+
+    inData.seekg ( 0, inData.end );
+
+    totBinSize = inData.tellg();
+
+    inData.seekg ( 0, inData.beg );
+
+    totBytesRead = 0;
+
     while ( ( execParams->CurEvNo - execParams->firstEvent ) < execParams->nEvents && !inData.eof() )
     {
         /*----------------*/
@@ -1464,9 +1474,10 @@ int SortManager::GEBacq ( char* ChatFileName )
         /* done every so often */
         /*---------------------*/
 
-        if ( execParams->CurEvNo % 1000 == 0 )
+        if ( execParams->CurEvNo % 10000 == 0 )
         {
-            std::cerr << "Event: " << execParams->CurEvNo << "\r" << std::flush;
+            std::cerr << "Event: " << std::left << std::setw(12) << execParams->CurEvNo << " / Bytes read: " << std::setw(13) << totBytesRead << " out of " << std::setw(13) << totBinSize;
+            std::cerr << " ( " << std::right << std::setw(6) << std::setprecision(2) << std::fixed << ( float ) totBytesRead/totBinSize * 100. << " % )\r" << std::flush;
             /* calc time since last dump */
 
             tdmp = time ( NULL );
@@ -1758,5 +1769,3 @@ int SortManager::GEBacq ( char* ChatFileName )
     return ( 0 );
 
 }
-
-ClassImp ( SortManager )

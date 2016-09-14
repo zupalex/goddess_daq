@@ -78,7 +78,7 @@ using std::string;
 
 class GoddessData; // forward declaration
 
-class PARS : public TObject
+class PARS
 {
 private:
 
@@ -161,8 +161,6 @@ public:
     float maxsnglintrE;
     float maxsnglintrEFOM;
     char AGATA_data_fn[512];
-
-    ClassDef ( PARS, 1 );
 };
 
 // struct GEBDATA
@@ -172,7 +170,7 @@ public:
 //     unsigned long long timestamp;
 // };
 
-class GEB_EVENT : public TObject
+class GEB_EVENT
 {
 private:
 
@@ -184,8 +182,6 @@ public:
     int maxGebs;
     std::vector<GEBDATA*> ptgd;
     std::vector<char*> ptinp;
-
-    ClassDef ( GEB_EVENT, 1 );
 };
 
 // In time_stamp.c
@@ -224,7 +220,7 @@ TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int
 TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi );
 TH1D* make1D ( const char* txt, int xln, int xlo, int xhi );
 
-class SortManager : public TObject
+class SortManager
 {
 private:
     SortManager();
@@ -239,6 +235,8 @@ public:
     PARS* execParams;
 
     std::ifstream inData;
+    
+    unsigned long long int totBytesRead;
 
     char CommandFileName[STRLEN];
     time_t tdmp;
@@ -300,8 +298,6 @@ public:
     }
 
     bool GetWriteEventFlag();
-
-    ClassDef ( SortManager, 1 );
 };
 
 #endif
