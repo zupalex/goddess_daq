@@ -56,11 +56,11 @@ public:
     virtual unsigned long long int TimestampMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
     ///Method which can be used within the root Draw command to plot the position of a hit in the dE layer
-    virtual TVector3 posdE() const;
+    virtual TVector3 PosdE() const;
     ///Method which can be used within the root Draw command to plot the position of a hit in the E1 layer
-    virtual TVector3 posE1() const;
+    virtual TVector3 PosE1() const;
     ///Method which can be used within the root Draw command to plot the position of a hit in the E2 layer
-    virtual TVector3 posE2() const;
+    virtual TVector3 PosE2() const;
 
     ///Method which can be used within the root Draw command to reconstruct the Q value.
     /**massBeam is the mass of the beam in a.m.u.
@@ -68,10 +68,10 @@ public:
      * massTarget is the mass of the target in a.m.u.
      * massEjec is the mass of the emitted light particle in a.m.u.
      */
-    virtual float QValue ( float massBeam, float kBeam, float massTarget, float massEjec ) const;
+    virtual float QValue ( float massBeam = 134., float kBeam = 1337.7, float massTarget = 2., float massEjec = 1. ) const;
 
     ///Method which can be used within the root Draw command to plot the angular distribution of the particles detected in a specific layer
-    virtual float angle ( unsigned short layer = 1 ) const;
+    virtual float Angle ( unsigned short layer = 1 ) const;
 
     /// Vector containing the sum of the energies gathered in the different layers.
     /**They are not sorted so do not use with thr Draw command in root.

@@ -83,9 +83,15 @@ std::vector<unsigned long long int>* SiDataBase::SetMemberAddress ( std::string 
 float SiDataBase::ESumLayer ( short unsigned int layer, bool isNType ) const
 {
     if ( eSum.size() > 0 )
+    {
         for ( unsigned short i = 0; i < eSum.size(); i++ )
+        {
             if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+            {
                 return eSum[i];
+            }
+        }
+    }
 
     return 0.0;
 }
@@ -93,9 +99,15 @@ float SiDataBase::ESumLayer ( short unsigned int layer, bool isNType ) const
 int SiDataBase::StripMaxLayer ( short unsigned int layer, bool isNType ) const
 {
     if ( stripMax.size() > 0 )
+    {
         for ( unsigned short i = 0; i < stripMax.size(); i++ )
+        {
             if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+            {
                 return stripMax[i] - ( layer*100 + 300*isNType );
+            }
+        }
+    }
 
     return -1;
 }
@@ -103,49 +115,79 @@ int SiDataBase::StripMaxLayer ( short unsigned int layer, bool isNType ) const
 long long unsigned int SiDataBase::TimestampMaxLayer ( short unsigned int layer, bool isNType ) const
 {
     if ( timestampMax.size() > 0 )
+    {
         for ( unsigned short i = 0; i < eSum.size(); i++ )
+        {
             if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+            {
                 return timestampMax[i];
+            }
+        }
+    }
 
     return 0.0;
 }
 
-TVector3 SiDataBase::posdE() const
+TVector3 SiDataBase::PosdE() const
 {
-    if ( pos.size() > 0 )
+    if ( pos.size() > 0 && stripMax.size() >= pos.size() )
+    {
         for ( unsigned short i = 0; i < pos.size(); i++ )
+        {
             if ( stripMax[i] >= 0  && stripMax[i] < 100 )
+            {
                 return pos[i];
+            }
+        }
+    }
 
     return TVector3 ( 0, 0, 0 );
 }
 
-TVector3 SiDataBase::posE1() const
+TVector3 SiDataBase::PosE1() const
 {
-    if ( pos.size() > 0 )
+    if ( pos.size() > 0 && stripMax.size() >= pos.size() )
+    {
         for ( unsigned short i = 0; i < pos.size(); i++ )
+        {
             if ( stripMax[i] >= 100  && stripMax[i] < 200 )
+            {
                 return pos[i];
+            }
+        }
+    }
 
     return TVector3 ( 0, 0, 0 );
 }
 
-TVector3 SiDataBase::posE2() const
+TVector3 SiDataBase::PosE2() const
 {
-    if ( pos.size() > 0 )
+    if ( pos.size() > 0 && stripMax.size() >= pos.size() )
+    {
         for ( unsigned short i = 0; i < pos.size(); i++ )
+        {
             if ( stripMax[i] >= 200  && stripMax[i] < 300 )
+            {
                 return pos[i];
+            }
+        }
+    }
 
     return TVector3 ( 0, 0, 0 );
 }
 
-float SiDataBase::angle ( short unsigned int layer ) const
+float SiDataBase::Angle ( short unsigned int layer ) const
 {
-    if ( pos.size() > 0 )
+    if ( pos.size() > 0 && stripMax.size() >= pos.size() )
+    {
         for ( unsigned short i = 0; i < pos.size(); i++ )
+        {
             if ( stripMax[i] >= ( layer*100 )  && stripMax[i] < ( layer*100 ) + 100 )
+            {
                 return pos[i].Angle ( TVector3 ( 0, 0, 1 ) ) * 180. / TMath::Pi();
+            }
+        }
+    }
 
     return 0;
 }
@@ -160,14 +202,17 @@ float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float 
     {
         float amu = 931.5; // MeV
 
-        float labAngle = angle ( 1 );  // degree
+        float labAngle = Angle ( 1 );  // degree
 
-        float mbeam = massBeam * amu;  // MeV
-        float mreac = ( massBeam + massTarget - massEjec ) * amu; // MeV
+        if ( labAngle != 0 )
+        {
+            float mbeam = massBeam * amu;  // MeV
+            float mreac = ( massBeam + massTarget - massEjec ) * amu; // MeV
 
-        float mejec = massEjec * amu;
+            float mejec = massEjec * amu;
 
-        Qval = ( 1+mejec/mreac ) * ( energy ) - ( 1 - mbeam/mreac ) * ( kBeam ) - 2 * TMath::Sqrt ( mbeam*mejec* ( energy ) * ( kBeam ) ) / mreac * TMath::Cos ( labAngle * TMath::Pi() / 180. );
+            Qval = ( 1+mejec/mreac ) * ( energy ) - ( 1 - mbeam/mreac ) * ( kBeam ) - 2 * TMath::Sqrt ( mbeam*mejec* ( energy ) * ( kBeam ) ) / mreac * TMath::Cos ( labAngle * TMath::Pi() / 180. );
+        }
     }
 
     return Qval;

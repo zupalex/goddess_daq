@@ -53,3 +53,10 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
     std::cout << "To get the list of the functions you can use, call \"GoddessCalib::Help()\"" << std::endl;
     std::cout << std::endl;
 }
+
+void StartUserAnalysis ( )
+{
+    gROOT->ProcessLine ( Form ( ".L %s/scripts/UserAnalysisMacros.cxx++", localPathToGoddessDaq.c_str() ) );
+
+    std::cout << "\nType LoadTrees() to get started...\n\n";
+}

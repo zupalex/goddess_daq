@@ -12,12 +12,9 @@ private:
 
 public:
     GoddessAnalysis();
-    GoddessAnalysis ( std::string filename );
-    GoddessAnalysis ( std::string filename, std::string treename, std::string treename2 );
-
     virtual ~GoddessAnalysis();
-    
-    void SetDefaultFileAndTrees(std::string fileName, std::string treeName1, std::string treeName2);
+
+    // ---------------- General useful functions -------------------------- //
 
     template<typename T> inline static void DisplayMapKeys ( std::map<std::string, T> map_ );
     inline static void DisplayMapKeys ( std::map<std::string, float> map_ );
@@ -38,12 +35,44 @@ public:
 
     std::vector<unsigned short> GetStripsListToTreat ( std::string strips );
 
+    // ------------------ For the check mapping tool ------------------------ //
+
+    GoddessAnalysis ( std::string filename );
+    GoddessAnalysis ( std::string filename, std::string treename, std::string treename2 );
+
+    void SetDefaultFileAndTrees ( std::string fileName, std::string treeName1, std::string treeName2 );
+
     void CheckMapping ( std::string filename, std::string treename, std::string treename2, unsigned short channel1, unsigned short channel2, bool Digital, std::string DetectorID );
 
     void CheckMapping ( unsigned short channel1, unsigned short channel2, bool Digital, std::string DetectorID );
 
+    // ------------------ For the User Macros ------------------------------- //
+
+    TChain* userChain;
+    TTree* userTree;
+
+    void AddFileToTreat ( TFile* inFile, std::string treeName );
+    void AddFileToTreat ( std::string inFile, std::string treeName );
+
+    template<typename T> inline void InitUserAnalysis ( std::string treeName, T inFile1 );
+    template<typename First, typename... Rest> inline void InitUserAnalysis ( std::string treeName, First inFile1, Rest... inFileRest );
+
     ClassDef ( GoddessAnalysis, 1 )
 };
+
+template<typename T> inline void GoddessAnalysis::InitUserAnalysis ( std::string treeName, T inFile1 )
+{
+    TFile* inRootFile = new TFile ( ( ( std::string ) inFile1 ).c_str(), "read" );
+
+    AddFileToTreat ( inRootFile, treeName );
+}
+
+template<typename First, typename... Rest> inline void GoddessAnalysis::InitUserAnalysis ( std::string treeName, First inFile1, Rest... inFileRest )
+{
+    InitUserAnalysis<std::string> ( treeName, inFile1 );
+
+    InitUserAnalysis ( treeName, inFileRest... );
+}
 
 template<typename T> inline void GoddessAnalysis::DisplayMapKeys ( std::map<std::string, T> map_ )
 {

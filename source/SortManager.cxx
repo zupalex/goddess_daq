@@ -1638,6 +1638,8 @@ int SortManager::GEBacq ( char* ChatFileName )
             fflush ( stdout );
         }
     }
+    
+    std::cerr << "\n";
 
     std::cout << "Terminating Sorting Process because ";
 

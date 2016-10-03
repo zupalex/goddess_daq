@@ -4,6 +4,9 @@ GoddessAnalysis::GoddessAnalysis()
 {
     defaultTreeName1 = "raw";
     defaultTreeName2 = "sorted";
+    
+    userTree = nullptr;
+    userChain = nullptr;
 }
 
 GoddessAnalysis::GoddessAnalysis ( std::string filename ) : GoddessAnalysis()
@@ -25,9 +28,9 @@ GoddessAnalysis::~GoddessAnalysis ()
 
 void GoddessAnalysis::SetDefaultFileAndTrees ( std::string fileName, std::string treeName1, std::string treeName2 )
 {
-    if(fileName.length() > 0) defaultFileName = fileName;
-    if(treeName1.length() > 0) defaultTreeName1 = treeName1;
-    if(treeName2.length() > 0) defaultTreeName2 = treeName2;
+    if ( fileName.length() > 0 ) defaultFileName = fileName;
+    if ( treeName1.length() > 0 ) defaultTreeName1 = treeName1;
+    if ( treeName2.length() > 0 ) defaultTreeName2 = treeName2;
 }
 
 std::vector<unsigned short> GoddessAnalysis::GetStripsListToTreat ( std::string strips )
@@ -398,5 +401,53 @@ void GoddessAnalysis::CheckMapping ( short unsigned int channel1, short unsigned
 
     CheckMapping ( defaultFileName, defaultTreeName1, defaultTreeName2, channel1, channel2, Digital, DetectorID );
 }
+
+// -------------------------- Core User Analysis Macro Functions --------------------------- //
+
+void GoddessAnalysis::AddFileToTreat ( TFile* inFile, std::string treeName )
+{
+    userTree = ( TTree* ) inFile->FindObjectAny ( treeName.c_str() );
+
+    std::cout << "Found tree " << treeName << " in the file " << inFile->GetName() << "\n";
+
+    if ( userTree == NULL )
+    {
+        std::cerr << treeName << ": tree not found...\n";
+        return;
+    }
+
+    if ( userChain == NULL )
+    {
+        std::cout << "User TChain did not exist... Creating it...\n";
+
+        userChain = new TChain ( treeName.c_str() );
+    }
+
+    if ( treeName != ( std::string ) userChain->GetName() )
+    {
+        std::cerr << "Cannot add " << treeName << " to the chain. Trees have different sctructure...\n";
+
+        return;
+    }
+
+    userChain->Add ( inFile->GetName() );
+}
+
+void GoddessAnalysis::AddFileToTreat ( std::string inFile, std::string treeName )
+{
+    TFile* inRootFile = new TFile ( inFile.c_str(), "read" );
+
+    if ( inRootFile == NULL )
+    {
+        std::cerr << "Unabled to open the root file " << inFile << "\n";
+
+        return;
+    }
+
+    AddFileToTreat ( inRootFile, treeName );
+
+    return;
+}
+
 
 ClassImp ( GoddessAnalysis )
