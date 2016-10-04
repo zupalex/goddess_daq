@@ -53,8 +53,8 @@ if [ -e $MERGE_DIR/GEBMerged_run$RUN.gtd_000 ]; then
 fi
 
 #Create log folder if it exists.
-if [ ! -e log ]; then
-	mkdir log
+if [ ! -e $MERGE_DIR/log ]; then
+	mkdir $MERGE_DIR/log
 fi
 
 # data from DGS, new data format (firmware) 9/25/2012
@@ -63,7 +63,7 @@ fi
 if [ -e "$DATA_DIR/run$RUN.ldf" ]; then
 	printf "${BLUE}Converting ldf to GEB format.${RESET}\n"
 	ORNL_FILES=.run$RUN.geb
-	./hribfConvert `ls $DATA_DIR/run$RUN.ldf` .run$RUN.geb
+	./hribfConvert `ls $DATA_DIR/run$RUN.ldf` $MERGE_DIR/.run$RUN.geb
 else
 	printf "${YELLOW}WARNING:${RESET} No ORNL ldfs found!\n"
 fi
@@ -84,11 +84,11 @@ fi
 
 echo "GEBMerge started for run #$RUN at `date`"
 #Run the merge program
-./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd $DFMA_FILES $DGS_FILES $ORNL_FILES | tee log/GEBMerge_current.log > log/GEBMerged_run$RUN.log
+./GEBMerge chatfiles/GEBMerge.chat $MERGE_DIR/GEBMerged_run$RUN.gtd $DFMA_FILES $DGS_FILES $ORNL_FILES | tee $MERGE_DIR/log/GEBMerge_current.log > $MERGE_DIR/log/GEBMerged_run$RUN.log
 	
 err=$?
 #Remove intermediate converted file
-#rm -f .run$RUN.geb
+rm -f $MERGE_DIR/.run$RUN.geb
 
 if [ $err = 0 ]; then
 	printf "${GREEN}GEBMerge DONE at `date`${RESET}\n"
@@ -96,7 +96,7 @@ else
 	printf "${RED}GEBMerge FAILED at `date`${RESET}\n"
 fi
 
-tail log/GEBMerge_run$RUN.log -n 3
+tail $MERGE_DIR/log/GEBMerge_run$RUN.log -n 3
 done
 
 exit

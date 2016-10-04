@@ -193,18 +193,18 @@ do
     fi
     
     echo "GEBSort started sorting run $RUN at `date`"
-    if [ ! -e log ]; then
-	mkdir log
+    if [ ! -e $OUTPUT_DIR/log ]; then
+	mkdir $OUTPUT_DIR/log
     fi
     
     if [ "$USERFILTERDIR" != "" ]; then
         USERFILTERARG="-userfilter $USERFILTERDIR/GEBMerged_run$RUN.gtd_000"
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG -chat chatfiles/GEBSort.chat | tee log/GEBSort_current.log > log/GEBSort_run$RUN.log
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     echo "GEBSort DONE at `date`"
     
-    tail -n 5 log/GEBSort_run$RUN.log
+    tail -n 5 $OUTPUT_DIR/log/GEBSort_run$RUN.log
 done
 
 #exit
