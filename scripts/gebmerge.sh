@@ -62,7 +62,7 @@ fi
 #convert ldf to a format that can be merged.
 if [ -e "$DATA_DIR/run$RUN.ldf" ]; then
 	printf "${BLUE}Converting ldf to GEB format.${RESET}\n"
-	ORNL_FILES=.run$RUN.geb
+	ORNL_FILES=$MERGE_DIR/.run$RUN.geb
 	./hribfConvert `ls $DATA_DIR/run$RUN.ldf` $MERGE_DIR/.run$RUN.geb
 else
 	printf "${YELLOW}WARNING:${RESET} No ORNL ldfs found!\n"
