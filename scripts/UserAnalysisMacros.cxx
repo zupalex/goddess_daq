@@ -39,16 +39,20 @@ void PrintProgress ( unsigned long long int maxEvents_ )
     }
 }
 
-void MakeNewHist ( TH1F** hist, string name, string title, unsigned int nBinsX, unsigned int minX, unsigned int maxX )
+TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX )
 {
-    *hist = new TH1F ( name.c_str(), title.c_str(), nBinsX, minX, maxX );
-    histsMap[title] = *hist;
+    TH1F* newHist = new TH1F ( name.c_str(), title.c_str(), nBinsX, minX, maxX );
+    histsMap[title] = newHist;
+    
+    return newHist;
 }
 
-void MakeNewHist ( TH2F** hist, string name, string title, unsigned int nBinsX, unsigned int minX, unsigned int maxX, unsigned int nBinsY, unsigned int minY, unsigned int maxY )
+TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY )
 {
-    *hist = new TH2F ( name.c_str(), title.c_str(), nBinsX, minX, maxX, nBinsY, minY, maxY );
-    histsMap[title] = *hist;
+    TH2F* newHist = new TH2F ( name.c_str(), title.c_str(), nBinsX, minX, maxX, nBinsY, minY, maxY );
+    histsMap[title] = newHist;
+    
+    return newHist;
 }
 
 
@@ -68,22 +72,22 @@ void InitEvsAHist ( unsigned int nBinsX, unsigned int minX, unsigned int maxX, u
 {
     char* hname = new char[500];
 
-    MakeNewHist ( &hEvsA, "Energy_vs_Angle", "Energy vs. Angle", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    MakeNewHist ( &hEvsA_SX3U_tot, "Energy_vs_Angle_SX3U", "Energy vs. Angle SX3 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    MakeNewHist ( &hEvsA_QQQ5U_tot, "Energy_vs_Angle_QQQ5U", "Energy vs. Angle QQQ5 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    hEvsA = MakeNewHist ( "Energy_vs_Angle", "Energy vs. Angle", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    hEvsA_SX3U_tot = MakeNewHist ( "Energy_vs_Angle_SX3U", "Energy vs. Angle SX3 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    hEvsA_QQQ5U_tot = MakeNewHist ( "Energy_vs_Angle_QQQ5U", "Energy vs. Angle QQQ5 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
 
     for ( int i = 0; i < 12; i++ )
     {
         sprintf ( hname, "Energy vs Angle SX3 U%d", i );
 
-        MakeNewHist ( &hEvsA_SX3U[i], hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
+        hEvsA_SX3U[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
     }
 
     for ( int i = 0; i < 4; i++ )
     {
         sprintf ( hname, "Energy vs Angle QQQ5 U%d", i );
 
-        MakeNewHist ( &hEvsA_QQQ5U[i], hname, hname, 32, -1, 33, nBinsY, minY, maxY );
+        hEvsA_QQQ5U[i] = MakeNewHist ( hname, hname, 32, -1, 33, nBinsY, minY, maxY );
     }
 }
 
@@ -93,6 +97,7 @@ void FillEvsAHist ( SiDataBase* siData_ )
     float angle = siData_->Angle ( 1 );
 
     unsigned int sector = siData_->sector;
+    unsigned int strip = siData_->StripMaxLayer ( 1, false );
 
     if ( angle != 0 && energy > 0 )
     {
@@ -107,8 +112,8 @@ void FillEvsAHist ( SiDataBase* siData_ )
             }
             else
             {
-                hEvsA_QQQ5U_tot->Fill ( angle, energy );
-                hEvsA_QQQ5U[sector]->Fill ( angle, energy );
+                hEvsA_QQQ5U_tot->Fill ( strip, energy );
+                hEvsA_QQQ5U[sector]->Fill ( strip, energy );
             }
         }
     }
@@ -128,22 +133,22 @@ void InitQvalHist ( unsigned int nBinsX, unsigned int minX, unsigned int maxX )
 {
     char* hname = new char[500];
 
-    MakeNewHist ( &hQval_tot, "Qvalue_tot", "Q-value tot", nBinsX, minX, maxX );
-    MakeNewHist ( &hQval_SX3U_tot, "Qvalue_tot_SX3U", "Q-value SX3s Upstream", nBinsX, minX, maxX );
-    MakeNewHist ( &hQval_QQQ5U_tot, "Qvalue_tot_QQQ5U", "Q-value QQQ5s Upstream", nBinsX, minX, maxX );
+    hQval_tot = MakeNewHist ( "Qvalue_tot", "Q-value tot", nBinsX, minX, maxX );
+    hQval_SX3U_tot = MakeNewHist ( "Qvalue_tot_SX3U", "Q-value SX3s Upstream", nBinsX, minX, maxX );
+    hQval_QQQ5U_tot = MakeNewHist ( "Qvalue_tot_QQQ5U", "Q-value QQQ5s Upstream", nBinsX, minX, maxX );
 
     for ( int i = 0; i < 12; i++ )
     {
         sprintf ( hname, "Qvalue SX3 U%d", i );
 
-        MakeNewHist ( &hQval_SX3U[i], hname, hname, nBinsX, minX, maxX );
+        hQval_SX3U[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX );
     }
 
     for ( int i = 0; i < 4; i++ )
     {
         sprintf ( hname, "Qvalue QQQ5 U%d", i );
 
-        MakeNewHist ( &hQval_QQQ5U[i], hname, hname, 32, -1, 33 );
+        hQval_QQQ5U[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX );
     }
 }
 
@@ -163,13 +168,13 @@ void FillQvalHist ( SiDataBase* siData_, float massBeam, float massTarget, float
         {
             if ( siData_->isBarrel )
             {
-                hQval_SX3U_tot->Fill ( angle, energy );
-                hQval_SX3U[sector]->Fill ( angle, energy );
+                hQval_SX3U_tot->Fill ( qval );
+                hQval_SX3U[sector]->Fill ( qval );
             }
             else
             {
-                hQval_QQQ5U_tot->Fill ( angle, energy );
-                hQval_QQQ5U[sector]->Fill ( angle, energy );
+                hQval_QQQ5U_tot->Fill ( qval );
+                hQval_QQQ5U[sector]->Fill ( qval );
             }
         }
     }
@@ -190,11 +195,11 @@ void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, unsigned int minX = -500,
 
         sprintf ( hname, "dT GS SX3 U%d", i );
 
-        MakeNewHist ( &dTGsSX3U[i], hname, hname, nBinsX, minX, maxX );
+        dTGsSX3U[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX );
 
         sprintf ( hname, "dT GS SX3 D%d", i );
 
-        MakeNewHist ( &dTGsSX3D[i], hname, hname, nBinsX, minX, maxX );
+        dTGsSX3D[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX );
     }
 
     for ( int i = 0; i < 4; i++ )
@@ -203,11 +208,11 @@ void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, unsigned int minX = -500,
 
         sprintf ( hname, "dT GS QQQ5 U%d", i );
 
-        MakeNewHist ( &dTGsQQQ5U[i], hname, hname, nBinsX, minX, maxX );
+        dTGsQQQ5U[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX );
 
         sprintf ( hname, "dT GS QQQ5 D%d", i );
 
-        MakeNewHist ( &dTGsQQQ5D[i], hname, hname, nBinsX, minX, maxX );
+        dTGsQQQ5D[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX );
     }
 }
 
@@ -267,21 +272,21 @@ TH1F* gsGatedQQQ5D_digital;
 
 void InitGsGateORRUBAHists ( unsigned int nBinsX = 5000, unsigned int minX = 0, unsigned int maxX = 5000 )
 {
-    MakeNewHist ( &gsGatedSX3U, "GammaSphere Gates SX3 Upstream", "GammaSphere Gates SX3 Upstream", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedSX3U_analog, "GammaSphere Gates SX3 Upstream Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedSX3U_digital, "GammaSphere Gates SX3 Upstream Digital ", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX );
+    gsGatedSX3U = MakeNewHist ( "GammaSphere Gates SX3 Upstream", "GammaSphere Gates SX3 Upstream", nBinsX, minX, maxX );
+    gsGatedSX3U_analog = MakeNewHist ( "GammaSphere Gates SX3 Upstream Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX );
+    gsGatedSX3U_digital = MakeNewHist ( "GammaSphere Gates SX3 Upstream Digital ", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX );
 
-    MakeNewHist ( &gsGatedSX3D, "GammaSphere Gates SX3 Downstream", "GammaSphere Gates SX3 Downstream", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedSX3D_analog, "GammaSphere Gates SX3 Downstream Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedSX3D_digital, "GammaSphere Gates SX3 Downstream Digital ", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX );
+    gsGatedSX3D = MakeNewHist ( "GammaSphere Gates SX3 Downstream", "GammaSphere Gates SX3 Downstream", nBinsX, minX, maxX );
+    gsGatedSX3D_analog = MakeNewHist ( "GammaSphere Gates SX3 Downstream Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX );
+    gsGatedSX3D_digital = MakeNewHist ( "GammaSphere Gates SX3 Downstream Digital ", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX );
 
-    MakeNewHist ( &gsGatedQQQ5U, "GammaSphere Gates QQQ5 Upstream", "GammaSphere Gates QQQ5 Upstream", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedQQQ5U_analog, "GammaSphere Gates QQQ5 Upstream Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedQQQ5U_digital, "GammaSphere Gates QQQ5 Upstream Digital ", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX );
+    gsGatedQQQ5U = MakeNewHist ( "GammaSphere Gates QQQ5 Upstream", "GammaSphere Gates QQQ5 Upstream", nBinsX, minX, maxX );
+    gsGatedQQQ5U_analog = MakeNewHist ( "GammaSphere Gates QQQ5 Upstream Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX );
+    gsGatedQQQ5U_digital = MakeNewHist ( "GammaSphere Gates QQQ5 Upstream Digital ", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX );
 
-    MakeNewHist ( &gsGatedQQQ5D, "GammaSphere Gates QQQ5 Downstream", "GammaSphere Gates QQQ5 Downstream", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedQQQ5D_analog, "GammaSphere Gates QQQ5 Downstream Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX );
-    MakeNewHist ( &gsGatedQQQ5D_digital, "GammaSphere Gates QQQ5 Downstream Digital ", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX );
+    gsGatedQQQ5D = MakeNewHist ( "GammaSphere Gates QQQ5 Downstream", "GammaSphere Gates QQQ5 Downstream", nBinsX, minX, maxX );
+    gsGatedQQQ5D_analog = MakeNewHist ( "GammaSphere Gates QQQ5 Downstream Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX );
+    gsGatedQQQ5D_digital = MakeNewHist ( "GammaSphere Gates QQQ5 Downstream Digital ", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX );
 }
 
 bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_ )
