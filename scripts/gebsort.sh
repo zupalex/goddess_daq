@@ -204,7 +204,7 @@ do
     time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     echo "GEBSort DONE at `date`"
     
-    tail -n 5 $OUTPUT_DIR/log/GEBSort_run$RUN.log
+    #tail -n 5 $OUTPUT_DIR/log/GEBSort_run$RUN.log
 done
 
 #exit

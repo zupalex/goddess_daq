@@ -96,7 +96,7 @@ else
 	printf "${RED}GEBMerge FAILED at `date`${RESET}\n"
 fi
 
-tail $MERGE_DIR/log/GEBMerge_run$RUN.log -n 3
+#tail $MERGE_DIR/log/GEBMerge_run$RUN.log -n 3
 done
 
 exit

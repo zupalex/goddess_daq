@@ -10,6 +10,8 @@ GoddessAnalysis* gA = 0;
 
 TChain* uChain = 0;
 
+std::map<string, TObject*> histsMap;
+
 unsigned long long int eventNbr = 0;
 unsigned long long int totEvents = 0;
 
@@ -37,6 +39,18 @@ void PrintProgress ( unsigned long long int maxEvents_ )
     }
 }
 
+void MakeNewHist ( TH1F** hist, string name, string title, unsigned int nBinsX, unsigned int minX, unsigned int maxX )
+{
+    *hist = new TH1F ( name.c_str(), title.c_str(), nBinsX, minX, maxX );
+    histsMap[title] = *hist;
+}
+
+void MakeNewHist ( TH2F** hist, string name, string title, unsigned int nBinsX, unsigned int minX, unsigned int maxX, unsigned int nBinsY, unsigned int minY, unsigned int maxY )
+{
+    *hist = new TH2F ( name.c_str(), title.c_str(), nBinsX, minX, maxX, nBinsY, minY, maxY );
+    histsMap[title] = *hist;
+}
+
 
 // ------------- Write your macros here ----------------------------------- //
 // ------------- Use the variable uChain to process your root files ------- //
@@ -54,22 +68,22 @@ void InitEvsAHist ( unsigned int nBinsX, unsigned int minX, unsigned int maxX, u
 {
     char* hname = new char[500];
 
-    hEvsA = new TH2F ( "Energy_vs_Angle", "Energy vs. Angle", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    hEvsA_SX3U_tot = new TH2F ( "Energy_vs_Angle_SX3U", "Energy vs. Angle SX3 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    hEvsA_QQQ5U_tot = new TH2F ( "Energy_vs_Angle_QQQ5U", "Energy vs. Angle QQQ5 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    MakeNewHist ( &hEvsA, "Energy_vs_Angle", "Energy vs. Angle", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    MakeNewHist ( &hEvsA_SX3U_tot, "Energy_vs_Angle_SX3U", "Energy vs. Angle SX3 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    MakeNewHist ( &hEvsA_QQQ5U_tot, "Energy_vs_Angle_QQQ5U", "Energy vs. Angle QQQ5 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
 
     for ( int i = 0; i < 12; i++ )
     {
         sprintf ( hname, "Energy vs Angle SX3 U%d", i );
 
-        hEvsA_SX3U[i] = new TH2F ( hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
+        MakeNewHist ( &hEvsA_SX3U[i], hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
     }
 
     for ( int i = 0; i < 4; i++ )
     {
         sprintf ( hname, "Energy vs Angle QQQ5 U%d", i );
 
-        hEvsA_QQQ5U[i] = new TH2F ( hname, hname, 32, -1, 33, nBinsY, minY, maxY );
+        MakeNewHist ( &hEvsA_QQQ5U[i], hname, hname, 32, -1, 33, nBinsY, minY, maxY );
     }
 }
 
@@ -77,7 +91,7 @@ void FillEvsAHist ( SiDataBase* siData_ )
 {
     float energy = siData_->ESumLayer ( 1, false );
     float angle = siData_->Angle ( 1 );
-    
+
     unsigned int sector = siData_->sector;
 
     if ( angle != 0 && energy > 0 )
@@ -101,6 +115,66 @@ void FillEvsAHist ( SiDataBase* siData_ )
 }
 
 
+// ------------- Q-Value spectra ----------- //
+
+TH1F* hQval_tot;
+TH1F* hQval_SX3U_tot;
+TH1F* hQval_QQQ5U_tot;
+TH1F* hQval_SX3U[12];
+TH1F* hQval_QQQ5U[4];
+
+
+void InitQvalHist ( unsigned int nBinsX, unsigned int minX, unsigned int maxX )
+{
+    char* hname = new char[500];
+
+    MakeNewHist ( &hQval_tot, "Qvalue_tot", "Q-value tot", nBinsX, minX, maxX );
+    MakeNewHist ( &hQval_SX3U_tot, "Qvalue_tot_SX3U", "Q-value SX3s Upstream", nBinsX, minX, maxX );
+    MakeNewHist ( &hQval_QQQ5U_tot, "Qvalue_tot_QQQ5U", "Q-value QQQ5s Upstream", nBinsX, minX, maxX );
+
+    for ( int i = 0; i < 12; i++ )
+    {
+        sprintf ( hname, "Qvalue SX3 U%d", i );
+
+        MakeNewHist ( &hQval_SX3U[i], hname, hname, nBinsX, minX, maxX );
+    }
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        sprintf ( hname, "Qvalue QQQ5 U%d", i );
+
+        MakeNewHist ( &hQval_QQQ5U[i], hname, hname, 32, -1, 33 );
+    }
+}
+
+void FillQvalHist ( SiDataBase* siData_, float massBeam, float massTarget, float massRecoil, float massEjec, float beamEk )
+{
+    float energy = siData_->ESumLayer ( 1, false );
+    float angle = siData_->Angle ( 1 );
+    float qval = siData_->QValue ( massBeam, beamEk, massTarget, massEjec );
+
+    unsigned int sector = siData_->sector;
+
+    if ( angle != 0 && energy > 0 )
+    {
+        hQval_tot->Fill ( qval );
+
+        if ( siData_->isUpstream )
+        {
+            if ( siData_->isBarrel )
+            {
+                hQval_SX3U_tot->Fill ( angle, energy );
+                hQval_SX3U[sector]->Fill ( angle, energy );
+            }
+            else
+            {
+                hQval_QQQ5U_tot->Fill ( angle, energy );
+                hQval_QQQ5U[sector]->Fill ( angle, energy );
+            }
+        }
+    }
+}
+
 // ------------- Time difference between GammaSphere and ORRUBA ----------- //
 
 TH1F* dTGsSX3D[12];
@@ -116,11 +190,11 @@ void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, unsigned int minX = -500,
 
         sprintf ( hname, "dT GS SX3 U%d", i );
 
-        dTGsSX3U[i] = new TH1F ( hname, hname, nBinsX, minX, maxX );
+        MakeNewHist ( &dTGsSX3U[i], hname, hname, nBinsX, minX, maxX );
 
         sprintf ( hname, "dT GS SX3 D%d", i );
 
-        dTGsSX3D[i] = new TH1F ( hname, hname, nBinsX, minX, maxX );
+        MakeNewHist ( &dTGsSX3D[i], hname, hname, nBinsX, minX, maxX );
     }
 
     for ( int i = 0; i < 4; i++ )
@@ -129,11 +203,11 @@ void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, unsigned int minX = -500,
 
         sprintf ( hname, "dT GS QQQ5 U%d", i );
 
-        dTGsQQQ5U[i] = new TH1F ( hname, hname, nBinsX, minX, maxX );
+        MakeNewHist ( &dTGsQQQ5U[i], hname, hname, nBinsX, minX, maxX );
 
         sprintf ( hname, "dT GS QQQ5 D%d", i );
 
-        dTGsQQQ5D[i] = new TH1F ( hname, hname, nBinsX, minX, maxX );
+        MakeNewHist ( &dTGsQQQ5D[i], hname, hname, nBinsX, minX, maxX );
     }
 }
 
@@ -193,21 +267,21 @@ TH1F* gsGatedQQQ5D_digital;
 
 void InitGsGateORRUBAHists ( unsigned int nBinsX = 5000, unsigned int minX = 0, unsigned int maxX = 5000 )
 {
-    gsGatedSX3U = new TH1F ( "GammaSphere Gates SX3 Upstream", "GammaSphere Gates SX3 Upstream", nBinsX, minX, maxX );
-    gsGatedSX3U_analog = new TH1F ( "GammaSphere Gates SX3 Upstream Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX );
-    gsGatedSX3U_digital = new TH1F ( "GammaSphere Gates SX3 Upstream Digital ", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedSX3U, "GammaSphere Gates SX3 Upstream", "GammaSphere Gates SX3 Upstream", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedSX3U_analog, "GammaSphere Gates SX3 Upstream Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedSX3U_digital, "GammaSphere Gates SX3 Upstream Digital ", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX );
 
-    gsGatedSX3D = new TH1F ( "GammaSphere Gates SX3 Downstream", "GammaSphere Gates SX3 Downstream", nBinsX, minX, maxX );
-    gsGatedSX3D_analog = new TH1F ( "GammaSphere Gates SX3 Downstream Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX );
-    gsGatedSX3D_digital = new TH1F ( "GammaSphere Gates SX3 Downstream Digital ", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedSX3D, "GammaSphere Gates SX3 Downstream", "GammaSphere Gates SX3 Downstream", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedSX3D_analog, "GammaSphere Gates SX3 Downstream Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedSX3D_digital, "GammaSphere Gates SX3 Downstream Digital ", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX );
 
-    gsGatedQQQ5U = new TH1F ( "GammaSphere Gates QQQ5 Upstream", "GammaSphere Gates QQQ5 Upstream", nBinsX, minX, maxX );
-    gsGatedQQQ5U_analog = new TH1F ( "GammaSphere Gates QQQ5 Upstream Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX );
-    gsGatedQQQ5U_digital = new TH1F ( "GammaSphere Gates QQQ5 Upstream Digital ", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedQQQ5U, "GammaSphere Gates QQQ5 Upstream", "GammaSphere Gates QQQ5 Upstream", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedQQQ5U_analog, "GammaSphere Gates QQQ5 Upstream Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedQQQ5U_digital, "GammaSphere Gates QQQ5 Upstream Digital ", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX );
 
-    gsGatedQQQ5D = new TH1F ( "GammaSphere Gates QQQ5 Downstream", "GammaSphere Gates QQQ5 Downstream", nBinsX, minX, maxX );
-    gsGatedQQQ5D_analog = new TH1F ( "GammaSphere Gates QQQ5 Downstream Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX );
-    gsGatedQQQ5D_digital = new TH1F ( "GammaSphere Gates QQQ5 Downstream Digital ", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedQQQ5D, "GammaSphere Gates QQQ5 Downstream", "GammaSphere Gates QQQ5 Downstream", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedQQQ5D_analog, "GammaSphere Gates QQQ5 Downstream Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX );
+    MakeNewHist ( &gsGatedQQQ5D_digital, "GammaSphere Gates QQQ5 Downstream Digital ", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX );
 }
 
 bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_ )
@@ -290,6 +364,7 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
     InitdTGsORRUBAHists();
     InitGsGateORRUBAHists();
     InitEvsAHist ( 1800, 0, 180, 1000, 0, 10 );
+    InitQvalHist ( 800, -20, 20 );
 
     eventNbr = 0;
 
@@ -304,6 +379,7 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
         for ( unsigned int i = 0; i < siData->size(); i++ )
         {
             FillEvsAHist ( & ( siData->at ( i ) ) );
+            FillQvalHist ( & ( siData->at ( i ) ), 134., 2., 135., 1., 1337. );
 
             for ( unsigned int j = 0; j < gamData->size(); j++ )
             {
@@ -324,6 +400,57 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
     std::cout << "\n\n";
 
     return;
+}
+
+// ----------- Handles the writing to a TFile ---------------------- //
+
+void WriteUserHists ( string outName )
+{
+    string mode = "recreate";
+
+    TFile* outRootFile = new TFile ( outName.c_str(), "read" );
+
+    int userChoice;
+
+    if ( outRootFile->IsOpen() )
+    {
+        std::cout << "File " << outName << " already exists...\n";
+        std::cout << "Would you like to overwrite it [1] or update it [2]? ";
+        std::cin >> userChoice;
+
+        if ( userChoice == 2 )
+        {
+            mode = "update";
+        }
+        else if ( std::cin.fail() || userChoice < 1 || userChoice > 2 )
+        {
+            std::cout << "Invalid input... aborting...\n";
+            return;
+        }
+
+        outRootFile->Close();
+
+        std::cout << "\n";
+    }
+
+    outRootFile = new TFile ( outName.c_str(), mode.c_str() );
+
+    for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
+    {
+        TH1F* h1 = dynamic_cast<TH1F*> ( itr->second );
+        TH2F* h2 = dynamic_cast<TH2F*> ( itr->second );
+
+        if ( h1 != NULL )
+        {
+            h1->Write();
+        }
+        else if ( h2 != NULL )
+        {
+            h2->Write();
+        }
+    }
+
+    outRootFile->Close();
 }
 
 

@@ -247,7 +247,7 @@ int main ( int argc, char **argv )
 #ifdef __unix__
     struct sysinfo memInfo;
 #endif
-    
+
     /* declarations */
 
     MergeManager* theMergeManager = MergeManager::sinstance();
@@ -671,10 +671,14 @@ int main ( int argc, char **argv )
     std::vector<unsigned int> unusedEventsCAKeys;
     unusedEventsCAKeys.clear();
 
-    for ( int i = 0; i < maxEventMapSize+1; i++ )
+    std::vector<EVENT*>* evMapEntry[maxEventMapSize+1];
+
+    for ( unsigned int i = 0; i < maxEventMapSize+1; i++ )
     {
         EventsCA[i] = new EVENT();
         EventsCA[i]->key = i;
+
+        evMapEntry[i] = new std::vector<EVENT*>;
 
         unusedEventsCAKeys.push_back ( i );
     }
@@ -683,7 +687,11 @@ int main ( int argc, char **argv )
 
     std::pair<InDataInfo*, EVENT*>* newOfEv[nfiles];
 
-    for ( int i = 0; i < nfiles; i++ )
+    std::vector<std::pair<InDataInfo*, EVENT*>*>* ofEvMapEntry[nfiles];
+    std::vector<unsigned int> unusedOfEvMapEntries;
+    unusedOfEvMapEntries.clear();
+
+    for ( unsigned int i = 0; i < nfiles; i++ )
     {
         ofEventsCA[i] = new EVENT();
 
@@ -695,6 +703,10 @@ int main ( int argc, char **argv )
         }
 
         newOfEv[i] = new std::pair<InDataInfo*, EVENT*>;
+
+        ofEvMapEntry[i] = new std::vector<std::pair<InDataInfo*, EVENT*>*>;
+
+        unusedOfEvMapEntries.push_back ( i );
     }
 
     unsigned long long int dTWarning = 1e9;
@@ -813,15 +825,22 @@ int main ( int argc, char **argv )
 
                     if ( theMergeManager->overflowEvent.find ( newEv->gd->timestamp ) == theMergeManager->overflowEvent.end() )
                     {
-                        std::vector<std::pair<InDataInfo*, EVENT*>*>* ofEvMapEntry = new std::vector<std::pair<InDataInfo*, EVENT*>*>;
-                        ofEvMapEntry->clear();
+                        unsigned int fstUnused = * ( unusedOfEvMapEntries.begin() );
+                        unusedOfEvMapEntries.erase ( unusedOfEvMapEntries.begin() );
 
-                        ofEvMapEntry->push_back ( newOfEv[fnum] );
-                        theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry;
+                        newEv->key = fstUnused;
+
+                        ofEvMapEntry[fstUnused]->clear();
+
+                        ofEvMapEntry[fstUnused]->push_back ( newOfEv[fnum] );
+
+                        theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry[fstUnused];
                     }
                     else
                     {
                         if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
+
+                        newEv->key = theMergeManager->overflowEvent[newEv->gd->timestamp]->at ( 0 )->second->key;
 
                         theMergeManager->overflowEvent[newEv->gd->timestamp]->push_back ( newOfEv[fnum] );
                     }
@@ -901,6 +920,7 @@ int main ( int argc, char **argv )
                     * ( EventsCA[evtCAKey]->gd ) = * ( itr->second->at ( m )->second->gd );
                     memcpy ( EventsCA[evtCAKey]->payload, itr->second->at ( m )->second->payload, EventsCA[evtCAKey]->gd->length );
 
+                    if ( m == 0 ) unusedOfEvMapEntries.push_back ( itr->second->at ( m )->second->key );
 
                     int fnum = input->fileNum ;
 
@@ -908,11 +928,11 @@ int main ( int argc, char **argv )
 
                     if ( theMergeManager->Event.find ( EventsCA[evtCAKey]->gd->timestamp ) == theMergeManager->Event.end() )
                     {
-                        std::vector<EVENT*>* evMapEntry = new std::vector<EVENT*>;
-                        evMapEntry->clear();
+                        evMapEntry[evtCAKey]->clear();
 
-                        evMapEntry->push_back ( EventsCA[evtCAKey] );
-                        theMergeManager->Event[EventsCA[evtCAKey]->gd->timestamp] = evMapEntry;
+                        evMapEntry[evtCAKey]->push_back ( EventsCA[evtCAKey] );
+
+                        theMergeManager->Event[EventsCA[evtCAKey]->gd->timestamp] = evMapEntry[evtCAKey];
                     }
                     else
                     {
@@ -958,22 +978,29 @@ int main ( int argc, char **argv )
 
                         if ( theMergeManager->overflowEvent.find ( newEv->gd->timestamp ) == theMergeManager->overflowEvent.end() )
                         {
-                            std::vector<std::pair<InDataInfo*, EVENT*>*>* ofEvMapEntry = new std::vector<std::pair<InDataInfo*, EVENT*>*>;
-                            ofEvMapEntry->clear();
+                            unsigned int fstUnused = * ( unusedOfEvMapEntries.begin() );
+                            unusedOfEvMapEntries.erase ( unusedOfEvMapEntries.begin() );
 
-                            ofEvMapEntry->push_back ( newOfEv[fnum] );
-                            theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry;
+                            newEv->key = fstUnused;
+
+                            ofEvMapEntry[fstUnused]->clear();
+
+                            ofEvMapEntry[fstUnused]->push_back ( newOfEv[fnum] );
+
+                            theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry[fstUnused];
                         }
                         else
                         {
                             if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
+                            
+                            newEv->key = theMergeManager->overflowEvent[newEv->gd->timestamp]->at ( 0 )->second->key;
+                            
                             theMergeManager->overflowEvent[newEv->gd->timestamp]->push_back ( newOfEv[fnum] );
                         }
                     }
                 }
 
                 itr->second->clear();
-                delete itr->second;
                 theMergeManager->overflowEvent.erase ( itr );
             }
         }
@@ -987,17 +1014,19 @@ int main ( int argc, char **argv )
             * ( EventsCA[evtCAKey]->gd ) = * ( itr->second->at ( 0 )->second->gd );
             memcpy ( EventsCA[evtCAKey]->payload, itr->second->at ( 0 )->second->payload, EventsCA[evtCAKey]->gd->length );
 
+            unusedOfEvMapEntries.push_back ( itr->second->at ( 0 )->second->key );
+
             int fnum = input->fileNum;
 
             if ( printDebug ) std::cerr << "Copying entry from file #" << fnum << " to the list of events to be written on file: TS = " << EventsCA[evtCAKey]->gd->timestamp << ")\n";
 
             if ( theMergeManager->Event.find ( ts ) == theMergeManager->Event.end() )
             {
-                std::vector<EVENT*>* evMapEntry = new std::vector<EVENT*>;
-                evMapEntry->clear();
+                evMapEntry[evtCAKey]->clear();
 
-                evMapEntry->push_back ( EventsCA[evtCAKey] );
-                theMergeManager->Event[ts] = evMapEntry;
+                evMapEntry[evtCAKey]->push_back ( EventsCA[evtCAKey] );
+
+                theMergeManager->Event[ts] = evMapEntry[evtCAKey];
             }
             else
             {
@@ -1052,11 +1081,10 @@ int main ( int argc, char **argv )
 
                         if ( theMergeManager->Event.find ( newEv->gd->timestamp ) == theMergeManager->Event.end() )
                         {
-                            std::vector<EVENT*>* evMapEntry = new std::vector<EVENT*>;
-                            evMapEntry->clear();
+                            evMapEntry[evtCAKey]->clear();
 
-                            evMapEntry->push_back ( newEv );
-                            theMergeManager->Event[newEv->gd->timestamp] = evMapEntry;
+                            evMapEntry[evtCAKey]->push_back ( newEv );
+                            theMergeManager->Event[newEv->gd->timestamp] = evMapEntry[evtCAKey];
                         }
                         else
                         {
@@ -1073,7 +1101,6 @@ int main ( int argc, char **argv )
                         }
 
                         itr->second->clear();
-                        delete itr->second;
                         theMergeManager->overflowEvent.erase ( itr );
 
                         * ( ofEventsCA[input->fileNum]->gd ) = * ( newEv->gd );
@@ -1084,16 +1111,23 @@ int main ( int argc, char **argv )
 
                         if ( theMergeManager->overflowEvent.find ( newEv->gd->timestamp ) == theMergeManager->overflowEvent.end() )
                         {
-                            std::vector<std::pair<InDataInfo*, EVENT*>*>* ofEvMapEntry = new std::vector<std::pair<InDataInfo*, EVENT*>*>;
-                            ofEvMapEntry->clear();
+                            unsigned int fstUnused = * ( unusedOfEvMapEntries.begin() );
+                            unusedOfEvMapEntries.erase ( unusedOfEvMapEntries.begin() );
 
-                            ofEvMapEntry->push_back ( newOfEv[fnum] );
-                            theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry;
+                            newOfEv[fnum]->second->key = fstUnused;
+
+                            ofEvMapEntry[fstUnused]->clear();
+
+                            ofEvMapEntry[fstUnused]->push_back ( newOfEv[fnum] );
+
+                            theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry[fstUnused];
                         }
                         else
                         {
                             if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
 
+                            newOfEv[fnum]->second->key = theMergeManager->overflowEvent[newEv->gd->timestamp]->at ( 0 )->second->key;
+                            
                             theMergeManager->overflowEvent[newEv->gd->timestamp]->push_back ( newOfEv[fnum] );
                         }
                     }
@@ -1103,7 +1137,6 @@ int main ( int argc, char **argv )
                 else
                 {
                     itr->second->clear();
-                    delete itr->second;
                     theMergeManager->overflowEvent.erase ( itr );
                     break;
                 }
