@@ -142,14 +142,17 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
             std::cerr << "\n\n\n";
             std::cerr << "The file " << inFile->fileName << " (#" << inFile->fileNum << ") do not have anymore data" << ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ) << "...\n";
             std::cerr << "--------> Last timestamp was " << bufEvent->gd->timestamp << "\n";
+
+            printf ( "===> The file %s (#%d) do not have anymore data. Last timestamp = %llu\n", ( inFile->fileName ).c_str(), inFile->fileNum, bufEvent->gd->timestamp );
         }
 
-        printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), ( inFile->istream )->gcount() );
+        printf ( "File #%i (%s): failed to read %lu bytes for header, got %i\n", inFile->fileNum, ( inFile->fileName ).c_str(), sizeof ( GEBDATA ), ( inFile->istream )->gcount() );
 
         theMergeManager->RemoveFromInputList ( inFile->fileName );
 
         if ( inFile->istream->eof() )
         {
+            printf ( "The file %s has been removed from the list of files to treat... (files remaining: %d)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
             std::cerr << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
         }
 
@@ -709,7 +712,7 @@ int main ( int argc, char **argv )
         unusedOfEvMapEntries.push_back ( i );
     }
 
-    unsigned long long int dTWarning = 1e9;
+    unsigned long long int dTWarning = 3e9;
 
     theMergeManager->readBytesCount = 0;
 
@@ -754,6 +757,12 @@ int main ( int argc, char **argv )
                 prevBytesDiff = bytesDiff;
             }
 
+//             if ( ( float ) theMergeManager->readBytesCount/totBytesCount * 100. > 5.69 )
+//             {
+//                 printDebug = true;
+//                 printProgress = false;
+//             }
+
             std::cerr << "Loop #" << loopCounter << ": " << theMergeManager->readBytesCount << " bytes read (" <<  ofBytesCount << " + " << bufferBytesCount << " in buffer / " << ignoredBytesCount << " ignored) out of " << totBytesCount;
             std::cerr << " ( " << std::setprecision ( 4 ) << ( float ) theMergeManager->readBytesCount/totBytesCount * 100. << "% )";
             std::cerr << "... Output file size: " << outSize << " bytes (diff = " << bytesDiff << " bytes)...\n";
@@ -784,11 +793,35 @@ int main ( int argc, char **argv )
 
 //         theMergeManager->Event.clear();
 
+        unsigned long long int lstTsBuffered = 0;
+
+        if ( theMergeManager->Event.size() > 0 )
+        {
+            auto lstEvtBufferedItr = theMergeManager->Event.end();
+            lstEvtBufferedItr--;
+
+            lstTsBuffered = lstEvtBufferedItr->first;
+        }
+
+
+//         if ( lstTsBuffered >= 2124569150000 )
+//         {
+//             printDebug = true;
+//             printProgress = false;
+//         }
+
+//         if ( theMergeManager->inData->size() <= 130 )
+//         {
+//             printDebug = true;
+//             printProgress = false;
+//         }
+
         if ( printDebug )
         {
             std::cerr << "Size of theMergeManager->overflowEvent is " << theMergeManager->overflowEvent.size() << "\n";
             std::cerr << "-*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
             std::cerr << "-*-*-*-*-*--*-*-*-*-*-  LOOP # " << loopCounter << " / EVENT #" << evCounter << " -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
+            std::cerr << "-*-*-*-*-*--*-*-*-*-*-  Last Timestamp buffered: " << lstTsBuffered << " -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
             std::cerr << "-*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
         }
 
@@ -915,16 +948,19 @@ int main ( int argc, char **argv )
                     std::cerr << "!!!!!!!!!!!!!!!!!!!!!! Multiplicity is " << itr->second->size() << "\n";
                 }
 
-                for ( unsigned m = 0; m < itr->second->size(); m++ )
+//                 for ( unsigned m = 0; m < itr->second->size(); m++ )
+                while ( itr->second->size() > 0 )
                 {
                     unsigned int evtCAKey = * ( unusedEventsCAKeys.begin() );
                     unusedEventsCAKeys.erase ( unusedEventsCAKeys.begin() );
 
-                    InDataInfo* input = itr->second->at ( m )->first;
-                    * ( EventsCA[evtCAKey]->gd ) = * ( itr->second->at ( m )->second->gd );
-                    memcpy ( EventsCA[evtCAKey]->payload, itr->second->at ( m )->second->payload, EventsCA[evtCAKey]->gd->length );
+                    std::pair<InDataInfo*, EVENT*>* ofEvToCopy = * ( itr->second->begin() );
 
-                    if ( m == 0 ) keyToEnable = itr->second->at ( m )->second->key;
+                    InDataInfo* input = ofEvToCopy->first;
+                    * ( EventsCA[evtCAKey]->gd ) = * ( ofEvToCopy->second->gd );
+                    memcpy ( EventsCA[evtCAKey]->payload, ofEvToCopy->second->payload, EventsCA[evtCAKey]->gd->length );
+
+                    keyToEnable = ofEvToCopy->second->key;
 
                     int fnum = input->fileNum ;
 
@@ -947,12 +983,12 @@ int main ( int argc, char **argv )
 
                     if ( printDebug )
                     {
-                        std::cerr << "------------ (Overflow Event) Entering GTGetDiskEv for " << input->fileName << " (file # " << input->fileNum << "\n";
+                        std::cerr << "------------ (Overflow Event) Entering GTGetDiskEv for " << input->fileName << " (file # " << input->fileNum << ")\n";
                     }
 
                     EVENT* newEv = GTGetDiskEv ( input, ofEventsCA[input->fileNum], false );
 
-                    if ( EventsCA[evtCAKey] == ofEventsCA[input->fileNum] ) std::cerr << "WARNING!!!! The Buffer Event #" << m << " and the Overflow Event #" << input->fileNum << " have the same address somehow!!!!!!!!!!!!!!\n";
+                    if ( EventsCA[evtCAKey] == ofEventsCA[input->fileNum] ) std::cerr << "WARNING!!!! The Buffer Event #" << evtCAKey << " and the Overflow Event #" << input->fileNum << " have the same address somehow!!!!!!!!!!!!!!\n";
 
                     auto lastEvtItr = theMergeManager->Event.end();
                     lastEvtItr--;
@@ -967,46 +1003,63 @@ int main ( int argc, char **argv )
 
                             newEv = GTGetDiskEv ( input, ofEventsCA[input->fileNum], false );
 
-                            std::cerr << "Ignored this event... Next event timestamp: " << newEv->gd->timestamp << "...\n";
-
-                            if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                            if ( newEv != NULL )
                             {
-                                std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
+                                std::cerr << "Ignored this event... Next event timestamp: " << newEv->gd->timestamp << "...\n";
+
+                                if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                                {
+                                    std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
+                                }
+
+                                std::cerr << "\n";
                             }
-
-                            std::cerr << "\n";
                         }
 
-                        newOfEv[fnum]->first = input;
-                        newOfEv[fnum]->second = newEv;
-
-                        if ( theMergeManager->overflowEvent.find ( newEv->gd->timestamp ) == theMergeManager->overflowEvent.end() )
+                        if ( newEv != NULL )
                         {
-                            unsigned int fstUnused = * ( unusedOfEvMapEntries.begin() );
-                            unusedOfEvMapEntries.erase ( unusedOfEvMapEntries.begin() );
+                            newOfEv[fnum]->first = input;
+                            newOfEv[fnum]->second = newEv;
 
-                            newEv->key = fstUnused;
+                            if ( theMergeManager->overflowEvent.find ( newEv->gd->timestamp ) == theMergeManager->overflowEvent.end() )
+                            {
+                                unsigned int fstUnused = * ( unusedOfEvMapEntries.begin() );
+                                unusedOfEvMapEntries.erase ( unusedOfEvMapEntries.begin() );
 
-                            ofEvMapEntry[fstUnused]->clear();
+                                newEv->key = fstUnused;
 
-                            ofEvMapEntry[fstUnused]->push_back ( newOfEv[fnum] );
+                                ofEvMapEntry[fstUnused]->clear();
 
-                            theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry[fstUnused];
+                                ofEvMapEntry[fstUnused]->push_back ( newOfEv[fnum] );
+
+                                theMergeManager->overflowEvent[newEv->gd->timestamp] = ofEvMapEntry[fstUnused];
+                            }
+                            else
+                            {
+                                if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
+
+                                newEv->key = theMergeManager->overflowEvent[newEv->gd->timestamp]->at ( 0 )->second->key;
+
+                                theMergeManager->overflowEvent[newEv->gd->timestamp]->push_back ( newOfEv[fnum] );
+                            }
                         }
-                        else
-                        {
-                            if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
+                    }
 
-                            newEv->key = theMergeManager->overflowEvent[newEv->gd->timestamp]->at ( 0 )->second->key;
+                    itr->second->erase ( itr->second->begin() );
 
-                            theMergeManager->overflowEvent[newEv->gd->timestamp]->push_back ( newOfEv[fnum] );
-                        }
+                    if ( unusedEventsCAKeys.size() < 5 )
+                    {
+                        forceWrite = true;
+                        break;
                     }
                 }
 
-                unusedOfEvMapEntries.push_back ( keyToEnable );
-                itr->second->clear();
-                theMergeManager->overflowEvent.erase ( itr );
+                if ( !forceWrite )
+                {
+                    unusedOfEvMapEntries.push_back ( keyToEnable );
+                    itr->second->clear();
+                    theMergeManager->overflowEvent.erase ( itr );
+                }
             }
         }
 
@@ -1062,41 +1115,56 @@ int main ( int argc, char **argv )
 
                         newEv = GTGetDiskEv ( input, EventsCA[evtCAKey], false );
 
-                        std::cerr << "Ignored this event... Next event timestamp: " << newEv->gd->timestamp << "...\n";
-
-                        if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                        if ( newEv != NULL )
                         {
-                            std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
-                        }
+                            std::cerr << "Ignored this event... Next event timestamp: " << newEv->gd->timestamp << "...\n";
 
-                        std::cerr << "\n";
+                            if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                            {
+                                std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
+                            }
+
+                            std::cerr << "\n";
+                        }
                     }
 
-                    ts = newEv->gd->timestamp;
-
-                    if ( ts < nextTs && iteration < maxEventMapSize )
+                    if ( newEv != NULL )
                     {
-                        unusedEventsCAKeys.erase ( unusedEventsCAKeys.begin() );
+                        ts = newEv->gd->timestamp;
 
-                        if ( printDebug )
+                        if ( ts < nextTs && iteration < maxEventMapSize )
                         {
-                            std::cerr << "-*\\_/*-> Timestamp is smaller than the one from the next file (file #";
-                            std::cerr << ( ( nextItr != theMergeManager->overflowEvent.end() ) ? nextItr->second->at ( 0 )->first->fileNum : -1 ) << "): " << ts << " < " << nextTs << ")\n";
-                        }
+                            unusedEventsCAKeys.erase ( unusedEventsCAKeys.begin() );
 
-                        if ( theMergeManager->Event.find ( ts ) == theMergeManager->Event.end() )
-                        {
-                            evMapEntry[evtCAKey]->clear();
+                            if ( printDebug )
+                            {
+                                std::cerr << "-*\\_/*-> Timestamp is smaller than the one from the next file (file #";
+                                std::cerr << ( ( nextItr != theMergeManager->overflowEvent.end() ) ? nextItr->second->at ( 0 )->first->fileNum : -1 ) << "): " << ts << " < " << nextTs << ")\n";
+                            }
 
-                            evMapEntry[evtCAKey]->push_back ( newEv );
-                            theMergeManager->Event[ts] = evMapEntry[evtCAKey];
+                            if ( theMergeManager->Event.find ( ts ) == theMergeManager->Event.end() )
+                            {
+                                evMapEntry[evtCAKey]->clear();
+
+                                evMapEntry[evtCAKey]->push_back ( newEv );
+                                theMergeManager->Event[ts] = evMapEntry[evtCAKey];
+                            }
+                            else
+                            {
+                                if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
+                                theMergeManager->Event[ts]->push_back ( newEv );
+                            }
                         }
+                        
                         else
                         {
-                            if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
-                            theMergeManager->Event[ts]->push_back ( newEv );
+                            unusedOfEvMapEntries.push_back ( keyToEnable );
+                            itr->second->clear();
+                            theMergeManager->overflowEvent.erase ( itr );
+                            break;
                         }
                     }
+                    
                     else
                     {
                         if ( printDebug )
@@ -1128,6 +1196,7 @@ int main ( int argc, char **argv )
 
                             theMergeManager->overflowEvent[ts] = ofEvMapEntry[fstUnused];
                         }
+                        
                         else
                         {
                             if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
@@ -1140,6 +1209,7 @@ int main ( int argc, char **argv )
 
                     iteration++;
                 }
+                
                 else
                 {
                     unusedOfEvMapEntries.push_back ( keyToEnable );
@@ -1291,6 +1361,13 @@ int main ( int argc, char **argv )
     return 0;
 
 }
+
+
+
+
+
+
+
 
 
 

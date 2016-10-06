@@ -8,14 +8,49 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
 
-if [ $# -ne 3 ] 
-  then
-   echo "USAGE: gebmerge.sh <data_dir> <merge_dir> <run>"
-  exit 1
+ReturnError()
+{
+  echo "USAGE: gebmerge.sh <data_dir> <merge_dir> <run> <options>"
+  echo "---------------------------------------------------------"
+  echo "OPTIONS LIST:"
+  echo "overwrite : force the overwrite of the output merged file if it already exists (won't prompt for it!)"
+  echo "noldf     : will not convert and include the ldf file in the lsit of files to merge"
+}
+  
+if [ $# -lt 3 ]; then
+   ReturnError
+   exit 1
 fi
 
 INPUT_DATA_DIR=$1
 INPUT_MERGE_DIR=$2
+
+NOLDFFLAG=0
+OVERWRITEFLAG=0
+
+for arg in "$@" 
+do
+COUNTER=$(($COUNTER + 1))
+
+  if [ "$arg" = "noldf" ]; then
+  
+    NOLDFFLAG=1
+    echo "/!\\ The ldf file won't be merged /!\\"
+
+  elif [ "$arg" = "overwrite" ]; then
+
+    OVERWRITEFLAG=1
+      echo "/!\\ If the file existed, it has been overwritten /!\\"
+
+  elif [ $COUNTER -gt 3 ]; then
+
+    echo "ONE OR MORE INVALID ARGUMENT"
+    ReturnError
+    exit 1
+    
+  fi
+done
+
 
 echo "The following runs will be treated:"
 
@@ -47,7 +82,7 @@ if [ ! -e $MERGE_DIR ]; then
 	exit 3
 fi
 
-if [ -e $MERGE_DIR/GEBMerged_run$RUN.gtd_000 ]; then
+if [ -e $MERGE_DIR/GEBMerged_run$RUN.gtd_000 -a $OVERWRITEFLAG = 0 ]; then
 	printf "${YELLOW}ERROR:${RESET} Merged file already exists! Remove manually to overwrite.\n"
 	exit 4
 fi
@@ -59,13 +94,17 @@ fi
 
 # data from DGS, new data format (firmware) 9/25/2012
 
+ORNL_FILES=""
+
 #convert ldf to a format that can be merged.
-if [ -e "$DATA_DIR/run$RUN.ldf" ]; then
-	printf "${BLUE}Converting ldf to GEB format.${RESET}\n"
-	ORNL_FILES=$MERGE_DIR/.run$RUN.geb
-	./hribfConvert `ls $DATA_DIR/run$RUN.ldf` $MERGE_DIR/.run$RUN.geb
-else
-	printf "${YELLOW}WARNING:${RESET} No ORNL ldfs found!\n"
+if [ $NOLDFFLAG = 0 ]; then
+  if [ -e "$DATA_DIR/run$RUN.ldf" ]; then
+    printf "${BLUE}Converting ldf to GEB format.${RESET}\n"
+    ORNL_FILES=$MERGE_DIR/.run$RUN.geb
+    ./hribfConvert `ls $DATA_DIR/run$RUN.ldf` $MERGE_DIR/.run$RUN.geb
+  else
+    printf "${YELLOW}WARNING:${RESET} No ORNL ldfs found!\n"
+  fi
 fi
 
 #Check if previous command was successfull
