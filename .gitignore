@@ -15,3 +15,7 @@ OpenScriptsMacro.sh
 *.so
 *.pcm
 .kdev4/
+
+#Ignore the specific user scripts
+*/UserAnalysisMacros.cxx
+*/UserEventFilter.cxx

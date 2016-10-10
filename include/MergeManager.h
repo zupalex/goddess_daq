@@ -84,6 +84,8 @@ public:
     static MergeManager* sinstance();
 
     unsigned long long int readBytesCount;
+    
+    bool goBackToTop;
 
     unsigned int maxCoincEv;
     std::map<unsigned long long int, std::vector<EVENT*>*> Event;

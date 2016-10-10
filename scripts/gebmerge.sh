@@ -40,7 +40,7 @@ COUNTER=$(($COUNTER + 1))
   elif [ "$arg" = "overwrite" ]; then
 
     OVERWRITEFLAG=1
-      echo "/!\\ If the file existed, it has been overwritten /!\\"
+      echo "${RED}/!\\ FORCED OVERWRITE: If the file exists, it will be overwritten after the ldf conversion /!\\ ${RESET}"
 
   elif [ $COUNTER -gt 3 ]; then
 

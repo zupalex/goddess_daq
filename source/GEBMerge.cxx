@@ -33,6 +33,8 @@ CONTROL control;
 bool printDebug = false;
 bool printBytesCount = false;
 bool printProgress = true;
+bool alwaysCalcBytesDiff = false;
+bool printWeirdTs = false;
 
 // MergeManager* MergeManager::s_instance = nullptr;
 
@@ -139,11 +141,16 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
     {
         if ( inFile->istream->eof() )
         {
-            std::cerr << "\n\n\n";
-            std::cerr << "The file " << inFile->fileName << " (#" << inFile->fileNum << ") do not have anymore data" << ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ) << "...\n";
-            std::cerr << "--------> Last timestamp was " << bufEvent->gd->timestamp << "\n";
+            if ( printDebug )
+            {
+                std::cerr << "\n\n";
+                std::cerr << "The file " << inFile->fileName << " (#" << inFile->fileNum << ") does not have anymore data" << ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ) << "...\n";
+                std::cerr << "--------> Last timestamp was " << bufEvent->gd->timestamp << "\n";
+                theMergeManager->goBackToTop = false;
+            }
 
-            printf ( "===> The file %s (#%d) do not have anymore data. Last timestamp = %llu\n", ( inFile->fileName ).c_str(), inFile->fileNum, bufEvent->gd->timestamp );
+            printf ( "===> The file %s (#%d) do not have anymore data%s. Last timestamp = %llu\n", ( inFile->fileName ).c_str(), inFile->fileNum,
+                     ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ), bufEvent->gd->timestamp );
         }
 
         printf ( "File #%i (%s): failed to read %lu bytes for header, got %i\n", inFile->fileNum, ( inFile->fileName ).c_str(), sizeof ( GEBDATA ), ( inFile->istream )->gcount() );
@@ -153,7 +160,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
         if ( inFile->istream->eof() )
         {
             printf ( "The file %s has been removed from the list of files to treat... (files remaining: %d)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
-            std::cerr << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
+            if ( printDebug ) std::cerr << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
         }
 
         return nullptr;
@@ -204,17 +211,27 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
     {
         if ( inFile->istream->eof() )
         {
-            std::cout << "\n\n\n";
-            std::cout << "The file " << inFile->fileName << " (#" << inFile->fileNum << ") do not have anymore data" << ( inFile->istream->gcount() == 0 ? "" : " after reading the payload" ) << "...\n";
-            std::cout << "--------> Last timestamp was " << bufEvent->gd->timestamp << "\n";
+            if ( printDebug )
+            {
+                std::cerr << "\n\n";
+                std::cerr << "The file " << inFile->fileName << " (#" << inFile->fileNum << ") does not have anymore data" << ( inFile->istream->gcount() == 0 ? "" : " after reading the payload" ) << "...\n";
+                std::cerr << "--------> Last timestamp was " << bufEvent->gd->timestamp << "\n";
+                theMergeManager->goBackToTop = false;
+            }
+
+            printf ( "===> The file %s (#%d) do not have anymore data%s. Last timestamp = %llu\n", ( inFile->fileName ).c_str(), inFile->fileNum,
+                     ( inFile->istream->gcount() == 0 ? "" : " after reading the payload" ), bufEvent->gd->timestamp );
+
         }
 
-        printf ( "failed to read %i bytes for payload, got %i\n", i1, siz );
+        printf ( "File #%i (%s): failed to read %lu bytes for payload, got %i\n", inFile->fileNum, ( inFile->fileName ).c_str(), i1, ( inFile->istream )->gcount() );
+
         theMergeManager->RemoveFromInputList ( inFile->fileName );
 
         if ( inFile->istream->eof() )
         {
-            std::cout << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
+            printf ( "The file %s has been removed from the list of files to treat... (files remaining: %d)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
+            if ( printDebug ) std::cerr << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
         }
 
         return nullptr;
@@ -714,6 +731,8 @@ int main ( int argc, char **argv )
 
     unsigned long long int dTWarning = 3e9;
 
+    EVENT* weirdTsNextEvt = new EVENT();
+
     theMergeManager->readBytesCount = 0;
 
     unsigned long long int ignoredBytesCount = 0;
@@ -722,40 +741,41 @@ int main ( int argc, char **argv )
 
     unsigned long long int prevBytesDiff = 0;
 
+    theMergeManager->goBackToTop = false;
+
+    unsigned long long int weirdTsCounter = 0;
+
     while ( theMergeManager->inData->size() > 0  || theMergeManager->overflowEvent.size() > 0 )
     {
-//         if ( loopCounter > 1300000 ) printDebug = true;
+//         if ( loopCounter > 3044195 )
+//         {
+//             printProgress = false;
+//             printBytesCount = true;
+//             printDebug = true;
+//         }
 
-        if ( printProgress && ( loopCounter%10000 == 0 || loopCounter == 1 ) )
+        if ( printProgress )
         {
-            auto ofInfo = theMergeManager->GetSizeAndBytesCount ( true );
-            unsigned int ofEvSize = ofInfo.first;
-            unsigned long long int ofBytesCount = ofInfo.second;
-
-            auto writeBufInfo = theMergeManager->GetSizeAndBytesCount ( false );
-            unsigned int writeBufSize = writeBufInfo.first;
-            unsigned long long int bufferBytesCount = writeBufInfo.second;
-
-#ifdef __unix__
-            sysinfo ( &memInfo );
-
-            long long totalPhysMem = memInfo.totalram;
-            totalPhysMem *= memInfo.mem_unit;
-
-            long long physMemUsed = memInfo.totalram - memInfo.freeram;
-            physMemUsed *= memInfo.mem_unit;
-#endif
-
-            unsigned long long int outSize = outData->tellp();
-
-            long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
-
-            if ( bytesDiff != 0 && prevBytesDiff != bytesDiff )
+            if ( loopCounter%10000 == 0 || loopCounter == 1 || alwaysCalcBytesDiff )
             {
-                std::cerr << "\n\n/!\\WARNING/!\\ Amount of bytes read differs from amount of bytes treated !!! (diff = " << bytesDiff << ")\n\n";
+                auto ofInfo = theMergeManager->GetSizeAndBytesCount ( true );
+                unsigned int ofEvSize = ofInfo.first;
+                unsigned long long int ofBytesCount = ofInfo.second;
 
-                prevBytesDiff = bytesDiff;
-            }
+                auto writeBufInfo = theMergeManager->GetSizeAndBytesCount ( false );
+                unsigned int writeBufSize = writeBufInfo.first;
+                unsigned long long int bufferBytesCount = writeBufInfo.second;
+
+                unsigned long long int outSize = outData->tellp();
+
+                long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
+
+                if ( bytesDiff != 0 && prevBytesDiff != bytesDiff )
+                {
+                    std::cerr << "\n\n\n" << esc << "[31;1m/!\\WARNING/!\\ Loop #" << loopCounter << " : Amount of bytes read differs from amount of bytes treated !!! (diff = " << bytesDiff << ")" << esc << "[0m\n\n\n";
+
+                    prevBytesDiff = bytesDiff;
+                }
 
 //             if ( ( float ) theMergeManager->readBytesCount/totBytesCount * 100. > 5.69 )
 //             {
@@ -763,17 +783,54 @@ int main ( int argc, char **argv )
 //                 printProgress = false;
 //             }
 
-            std::cerr << "Loop #" << loopCounter << ": " << theMergeManager->readBytesCount << " bytes read (" <<  ofBytesCount << " + " << bufferBytesCount << " in buffer / " << ignoredBytesCount << " ignored) out of " << totBytesCount;
-            std::cerr << " ( " << std::setprecision ( 4 ) << ( float ) theMergeManager->readBytesCount/totBytesCount * 100. << "% )";
-            std::cerr << "... Output file size: " << outSize << " bytes (diff = " << bytesDiff << " bytes)...\n";
-            std::cerr<< evCounter << " events treated / " << writeBufSize << " events currently waiting in the write buffer / ";
-            std::cerr << ofEvSize << " awaiting treatment for " << theMergeManager->overflowEvent.size() << " map entries / ";
-            std::cerr << theMergeManager->inData->size() << " files left in the queue\n";
-#ifdef __unix
-            std::cerr << "Memory used: " << physMemUsed/1000000 << " MB (" << totalPhysMem/1000000 << "MB total)" << esc << "[1A" << esc << "[1A" << "\r" << std::flush;
-#else
-            std::cerr << "Memory used: " << "... memory info is not available for this platform. I could make it but I won't. Go get a real computer." << esc << "[1A" << esc << "[1A" << "\r" << std::flush;
+                if ( loopCounter%10000 == 0 || loopCounter == 1 )
+                {
+#ifdef __unix__
+                    sysinfo ( &memInfo );
+
+                    long long totalPhysMem = memInfo.totalram;
+                    totalPhysMem *= memInfo.mem_unit;
+
+                    long long physMemUsed = memInfo.totalram - memInfo.freeram;
+                    physMemUsed *= memInfo.mem_unit;
 #endif
+
+
+                    if ( theMergeManager->goBackToTop )
+                    {
+                        for ( int rl = 0; rl < 10; rl++ ) std::cerr << esc << "[1A";
+                        std::cerr << "\r" << std::flush;
+                    }
+
+                    string weirdTsWarningLevel;
+
+                    if ( weirdTsCounter == 0 ) weirdTsWarningLevel = "[0m";
+                    else if ( weirdTsCounter > 0 && weirdTsCounter <= 20 ) weirdTsWarningLevel = "[33;1m";
+                    else if ( weirdTsCounter > 20 && weirdTsCounter <= 100 ) weirdTsWarningLevel = "[38;5;208m";
+                    else if ( weirdTsCounter > 100 ) weirdTsWarningLevel = "[31;1m";
+
+                    std::cerr << esc << "[32;1m" << "Loop #" << loopCounter << esc << "[0m \n";
+                    std::cerr << "Bytes read: " << std::right << std::setw ( 15 ) << theMergeManager->readBytesCount << " / " <<  std::left << std::setw ( 15 ) << totBytesCount;
+                    std::cerr << " ( " << std::fixed << std::showpoint << std::setprecision ( 2 ) << std::setw ( 6 ) << std::right << ( float ) theMergeManager->readBytesCount/totBytesCount * 100. << "% )\n";
+                    std::cerr << "Bytes in buffer: " << std::setw ( 10 ) << std::left << ofBytesCount << " + " << std::setw ( 10 ) << bufferBytesCount;
+                    std::cerr << " / Ignored: " << std::setw ( 10 ) << ignoredBytesCount << "\n";
+                    std::cerr << "Output file size (bytes): " << std::left << std::setw ( 15 ) << outSize;
+                    std::cerr << esc << ( bytesDiff > 0 ? "[31;1m" : "[0m" ) << " ( diff = " << bytesDiff << ")..." << esc << "[0m\n";
+                    std::cerr << "Events treated: " << std::setw ( 15 ) << evCounter << "\n";
+                    std::cerr << "Events buffered: " << std::setw ( 4 ) << writeBufSize << "\n";
+                    std::cerr << "Awaiting treatment: " << std::setw ( 4 ) << ofEvSize << " ( Map entries: " << std::setw ( 4 ) << theMergeManager->overflowEvent.size() << " )\n";
+                    std::cerr << "Files left in the queue: " << std::setw ( 4 ) << theMergeManager->inData->size() << "\n";
+                    std::cerr << esc << weirdTsWarningLevel << "Weird Timestamp: " << std::setw ( 8 ) << weirdTsCounter;
+                    std::cerr << esc << "[0m" << ( weirdTsCounter > 0 ? "(see log for more details)" : "" ) << "\n";
+#ifdef __unix
+                    std::cerr << "Memory used (MB): " << physMemUsed/1000000 << " ( " << totalPhysMem/1000000 << " total )\n";
+#else
+                    std::cerr << "Memory used: " << "... memory info is not available for this platform. I could make it but I won't. Go get a real computer.\n";
+#endif
+
+                    theMergeManager->goBackToTop = true;
+                }
+            }
         }
 
         if ( printDebug )
@@ -782,9 +839,21 @@ int main ( int argc, char **argv )
             {
                 for ( int j = 0; j < maxEventMapSize+1; j++ )
                 {
-                    if ( ofEventsCA[i] == EventsCA[j] ) std::cerr << std::flush << "WARNING!!!! The Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
-                    if ( ofEventsCA[i]->gd == EventsCA[j]->gd ) std::cerr << std::flush << "WARNING!!!! The headers for Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
-                    if ( ofEventsCA[i]->payload == EventsCA[j]->payload ) std::cerr << std::flush << "WARNING!!!! The payloads for Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
+                    if ( ofEventsCA[i] == EventsCA[j] )
+                    {
+                        std::cerr << std::flush << "WARNING!!!! The Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
+                        theMergeManager->goBackToTop = false;
+                    }
+                    if ( ofEventsCA[i]->gd == EventsCA[j]->gd )
+                    {
+                        std::cerr << std::flush << "WARNING!!!! The headers for Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
+                        theMergeManager->goBackToTop = false;
+                    }
+                    if ( ofEventsCA[i]->payload == EventsCA[j]->payload )
+                    {
+                        std::cerr << std::flush << "WARNING!!!! The payloads for Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
+                        theMergeManager->goBackToTop = false;
+                    }
                 }
             }
 
@@ -973,12 +1042,16 @@ int main ( int argc, char **argv )
                         evMapEntry[evtCAKey]->push_back ( EventsCA[evtCAKey] );
 
                         theMergeManager->Event[EventsCA[evtCAKey]->gd->timestamp] = evMapEntry[evtCAKey];
+
+                        bufEvtSize++;
                     }
                     else
                     {
                         if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
 
                         theMergeManager->Event[EventsCA[evtCAKey]->gd->timestamp]->push_back ( EventsCA[evtCAKey] );
+
+                        bufEvtSize++;
                     }
 
                     if ( printDebug )
@@ -988,7 +1061,11 @@ int main ( int argc, char **argv )
 
                     EVENT* newEv = GTGetDiskEv ( input, ofEventsCA[input->fileNum], false );
 
-                    if ( EventsCA[evtCAKey] == ofEventsCA[input->fileNum] ) std::cerr << "WARNING!!!! The Buffer Event #" << evtCAKey << " and the Overflow Event #" << input->fileNum << " have the same address somehow!!!!!!!!!!!!!!\n";
+                    if ( EventsCA[evtCAKey] == ofEventsCA[input->fileNum] )
+                    {
+                        std::cerr << "WARNING!!!! The Buffer Event #" << evtCAKey << " and the Overflow Event #" << input->fileNum << " have the same address somehow!!!!!!!!!!!!!!\n";
+                        theMergeManager->goBackToTop = false;
+                    }
 
                     auto lastEvtItr = theMergeManager->Event.end();
                     lastEvtItr--;
@@ -997,23 +1074,44 @@ int main ( int argc, char **argv )
                     {
                         if ( ( newEv->gd->timestamp > lastEvtItr->first ) && ( newEv->gd->timestamp - lastEvtItr->first > dTWarning ) )
                         {
-                            std::cerr << "\n\n\n\nWeird Timestamp at loop #" << loopCounter << " / event #" << evCounter << " (file: " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
+                            EVENT* testNextEv = GTGetDiskEv ( input, weirdTsNextEvt, false );
 
-                            ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
-
-                            newEv = GTGetDiskEv ( input, ofEventsCA[input->fileNum], false );
-
-                            std::cerr << "Ignored this event...";
-
-
-                            std::cerr << " Next event timestamp: " << newEv->gd->timestamp << "...\n";
-
-                            if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                            if ( testNextEv != NULL )
                             {
-                                std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
-                            }
+                                if ( testNextEv->gd->timestamp < newEv->gd->timestamp )
+                                {
+                                    weirdTsCounter++;
 
-                            std::cerr << "\n";
+                                    ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
+
+                                    if ( printWeirdTs )
+                                    {
+                                        std::cerr << "\nWeird Timestamp at loop #" << loopCounter << " / event #" << evCounter << " (file: " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
+                                        theMergeManager->goBackToTop = false;
+
+                                        std::cerr << "Ignored this event...";
+
+                                        std::cerr << " Next event timestamp: " << weirdTsNextEvt->gd->timestamp << "...\n";
+
+                                        if ( testNextEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                                        {
+                                            std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
+                                        }
+
+                                        std::cerr << "\n";
+                                    }
+
+                                    * ( newEv->gd ) = * ( testNextEv->gd );
+                                    memcpy ( newEv->payload, testNextEv->payload, testNextEv->gd->length );
+                                }
+                                else
+                                {
+                                    int rewindCount = sizeof ( GEBDATA ) + testNextEv->gd->length;
+                                    theMergeManager->readBytesCount -= rewindCount;
+
+                                    input->istream->seekg ( -rewindCount, std::ios::cur );
+                                }
+                            }
                         }
 
                         newOfEv[fnum]->first = input;
@@ -1082,11 +1180,15 @@ int main ( int argc, char **argv )
                 evMapEntry[evtCAKey]->push_back ( EventsCA[evtCAKey] );
 
                 theMergeManager->Event[ts] = evMapEntry[evtCAKey];
+
+                bufEvtSize++;
             }
             else
             {
                 if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
                 theMergeManager->Event[ts]->push_back ( EventsCA[evtCAKey] );
+
+                bufEvtSize++;
             }
 
             int iteration = bufEvtSize+1;
@@ -1106,22 +1208,44 @@ int main ( int argc, char **argv )
                 {
                     if ( ( newEv->gd->timestamp > lastEvtItr->first ) && ( newEv->gd->timestamp - lastEvtItr->first > dTWarning ) )
                     {
-                        std::cerr << "\n\n\n\nWeird Timestamp at loop #" << loopCounter << " / event #" << evCounter << " (file " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
+                        EVENT* testNextEv = GTGetDiskEv ( input, weirdTsNextEvt, false );
 
-                        ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
-
-                        newEv = GTGetDiskEv ( input, EventsCA[evtCAKey], false );
-
-                        std::cerr << "Ignored this event...";
-
-                        std::cerr << " Next event timestamp: " << newEv->gd->timestamp << "...\n";
-
-                        if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                        if ( testNextEv != NULL )
                         {
-                            std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
-                        }
+                            if ( testNextEv->gd->timestamp < newEv->gd->timestamp )
+                            {
+                                weirdTsCounter++;
 
-                        std::cerr << "\n";
+                                ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
+
+                                if ( printWeirdTs )
+                                {
+                                    std::cerr << "\nWeird Timestamp at loop #" << loopCounter << " / event #" << evCounter << " (file " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
+                                    theMergeManager->goBackToTop = false;
+
+                                    std::cerr << "Ignored this event...";
+
+                                    std::cerr << " Next event timestamp: " << newEv->gd->timestamp << "...\n";
+
+                                    if ( newEv->gd->timestamp - lastEvtItr->first > dTWarning )
+                                    {
+                                        std::cerr << "The timestamp difference is still pretty high... You might want to look into the raw files...\n";
+                                    }
+
+                                    std::cerr << "\n";
+                                }
+
+                                * ( newEv->gd ) = * ( testNextEv->gd );
+                                memcpy ( newEv->payload, testNextEv->payload, testNextEv->gd->length );
+                            }
+                            else
+                            {
+                                int rewindCount = sizeof ( GEBDATA ) + testNextEv->gd->length;
+                                theMergeManager->readBytesCount -= rewindCount;
+
+                                input->istream->seekg ( -rewindCount, std::ios::cur );
+                            }
+                        }
                     }
 
                     ts = newEv->gd->timestamp;
@@ -1142,11 +1266,15 @@ int main ( int argc, char **argv )
 
                             evMapEntry[evtCAKey]->push_back ( newEv );
                             theMergeManager->Event[ts] = evMapEntry[evtCAKey];
+
+                            bufEvtSize++;
                         }
                         else
                         {
                             if ( printDebug ) std::cerr << "!!!! Timestamp already present in the map. Pushing it back as a vector...\n";
                             theMergeManager->Event[ts]->push_back ( newEv );
+
+                            bufEvtSize++;
                         }
                     }
 
@@ -1154,8 +1282,15 @@ int main ( int argc, char **argv )
                     {
                         if ( printDebug )
                         {
-                            std::cerr << "-*\\_/*-> Timestamp is bigger than the one from the next file #";
-                            std::cerr << ( ( nextItr != theMergeManager->overflowEvent.end() ) ? nextItr->second->at ( 0 )->first->fileNum : -1 ) << "): " << ts << " > " << nextTs << "\n";
+                            if ( ts < nextTs )
+                            {
+                                std::cerr << "-*\\_/*-> Timestamp is bigger than the one from the next file (file #";
+                                std::cerr << ( ( nextItr != theMergeManager->overflowEvent.end() ) ? nextItr->second->at ( 0 )->first->fileNum : -1 ) << "): " << ts << " > " << nextTs << "\n";
+                            }
+                            else
+                            {
+                                std::cerr << "-*\\_/*-> Buffer is full...\n";
+                            }
                         }
 
                         unusedOfEvMapEntries.push_back ( keyToEnable );
@@ -1200,6 +1335,7 @@ int main ( int argc, char **argv )
                     unusedOfEvMapEntries.push_back ( keyToEnable );
                     itr->second->clear();
                     theMergeManager->overflowEvent.erase ( itr );
+
                     break;
                 }
             }
@@ -1341,11 +1477,13 @@ int main ( int argc, char **argv )
 
     theMergeManager->outData.close();
 
-    std::cerr << "\n\n\n\nDone Merging the files... Read a total of " << theMergeManager->readBytesCount << " out of " << totBytesCount << " bytes...\n\n";
+    std::cerr << "\n\nDone Merging the files... Read a total of " << theMergeManager->readBytesCount << " out of " << totBytesCount << " bytes...\n\n";
 
     return 0;
 
 }
+
+
 
 
 
