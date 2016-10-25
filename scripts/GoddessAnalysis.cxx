@@ -1,5 +1,81 @@
 #include "GoddessAnalysis.h"
 
+std::vector<unsigned short> DecodeSectorsString ( std::string sectorsString, bool verbose )
+{
+    std::vector<unsigned short> sectorsNum;
+
+    sectorsNum.clear();
+
+    while ( sectorsString.length() > 0 )
+    {
+        size_t foundComa = sectorsString.find ( "," );
+        size_t foundDash = sectorsString.find ( "-" );
+
+        std::string sub1 = "";
+        std::string sub2 = "";
+
+        if ( foundComa != std::string::npos && foundComa < foundDash )
+        {
+            sub1 = sectorsString.substr ( 0, foundComa );
+        }
+        else if ( foundDash != std::string::npos )
+        {
+            sub1 = sectorsString.substr ( 0, foundDash );
+            sub2 = sectorsString.substr ( foundDash+1, foundComa );
+        }
+        else
+            sub1 = sectorsString;
+
+        if ( sub1.length() > 0 )
+        {
+            while ( sub1.find ( " " ) != std::string::npos )
+            {
+                sub1.replace ( sub1.find ( " " ), 1, "" );
+            }
+
+            sectorsNum.push_back ( stoi ( sub1 ) );
+        }
+        if ( sub2.length() > 0 )
+        {
+            while ( sub1.find ( " " ) != std::string::npos )
+            {
+                sub1.replace ( sub1.find ( " " ), 1, "" );
+            }
+
+            int lowerBound = stoi ( sub1 );
+            int upperBound = stoi ( sub2 );
+
+            for ( int i = lowerBound+1; i < upperBound; i++ )
+            {
+                sectorsNum.push_back ( i );
+            }
+        }
+
+        if ( foundComa != std::string::npos || foundDash != std::string::npos )
+        {
+//                 std::cout << "sectorsString was " << sectorsString;
+            sectorsString.replace ( 0, sub2.length() > 0 ? foundDash+1 : foundComa+1, "" );
+//                 std::cout << " ... is now " << sectorsString << "\n";
+        }
+        else
+        {
+            sectorsString.clear();
+        }
+    }
+
+    if ( verbose )
+    {
+        std::cout << "Decoded the sectors string:\n";
+
+        for ( unsigned int i = 0; i <sectorsNum.size(); i++ )
+        {
+            std::cout << "-> " << sectorsNum[i] << "\n";
+        }
+    }
+
+    return sectorsNum;
+}
+
 GoddessAnalysis::GoddessAnalysis()
 {
     defaultTreeName1 = "raw";

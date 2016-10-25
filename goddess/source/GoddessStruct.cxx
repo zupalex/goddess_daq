@@ -80,6 +80,7 @@ std::vector<unsigned long long int>* SiDataBase::SetMemberAddress ( std::string 
     return *address;
 }
 
+
 float SiDataBase::ESumLayer ( short unsigned int layer, bool isNType ) const
 {
     if ( eSum.size() > 0 )
@@ -94,6 +95,22 @@ float SiDataBase::ESumLayer ( short unsigned int layer, bool isNType ) const
     }
 
     return 0.0;
+}
+
+int SiDataBase::MultLayer ( short unsigned int layer, bool isNType ) const
+{
+    if ( mult.size() > 0 )
+    {
+        for ( unsigned short i = 0; i < mult.size(); i++ )
+        {
+            if ( stripMax[i] >= ( layer*100 + 300*isNType )  && stripMax[i] < ( layer*100 + 300*isNType ) + 100 )
+            {
+                return mult[i];
+            }
+        }
+    }
+
+    return 0;
 }
 
 int SiDataBase::StripMaxLayer ( short unsigned int layer, bool isNType ) const

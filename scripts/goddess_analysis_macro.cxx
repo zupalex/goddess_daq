@@ -46,6 +46,8 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
 #endif
 
     std::cout << std::endl;
+    std::cout << "Type \"StartUserAnalysis()\" to load the user macros from UserAnalysisMacros.cxx" << std::endl;
+    std::cout << std::endl;
     std::cout << "To load the TEntryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;
     std::cout << "To get the list of the functions you can use, type \"EntryListsHelp()\"" << std::endl;
     std::cout << std::endl;
@@ -54,9 +56,16 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
     std::cout << std::endl;
 }
 
-void StartUserAnalysis ( )
+void StartUserAnalysis ( bool useTemplate = false )
 {
-    gROOT->ProcessLine ( Form ( ".L %s/scripts/UserAnalysisMacros.cxx++", localPathToGoddessDaq.c_str() ) );
+    if ( !useTemplate )
+    {
+        gROOT->ProcessLine ( Form ( ".L %s/user/UserAnalysisMacros.cxx++", localPathToGoddessDaq.c_str() ) );
+    }
+    else
+    {
+        gROOT->ProcessLine ( Form ( ".L %s/scripts/UserAnalysisMacrosTemplate.cxx++", localPathToGoddessDaq.c_str() ) );
+    }
 
     std::cout << "\nType LoadTrees() to get started...\n\n";
 }

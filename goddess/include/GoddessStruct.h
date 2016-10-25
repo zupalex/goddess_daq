@@ -50,6 +50,9 @@ public:
     ///Method which can be used within the root Draw command to plot the sum of the energies collected in a specific layer and a specific side.
     virtual float ESumLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
+    ///Method which can be used within the root Draw command to plot the multiplicity of a specific layer and a specific side.
+    virtual int MultLayer ( unsigned short layer = 1, bool isNType = false ) const;
+
     ///Method which can be used within the root Draw command to plot the strip number which collected the max energy in a specific layer and specific side.
     virtual int StripMaxLayer ( unsigned short layer = 1, bool isNType = false ) const;
 
@@ -74,13 +77,19 @@ public:
     virtual float Angle ( unsigned short layer = 1 ) const;
 
     /// Vector containing the sum of the energies gathered in the different layers.
-    /**They are not sorted so do not use with thr Draw command in root.
+    /**They are not sorted so do not use with the Draw command in root.
      * Use ESumLayer() method instead.
      */
     std::vector<float> eSum;
 
+    /// Vector containing the multiplicity for the different layers.
+    /**They are not sorted so do not use with the Draw command in root.
+     * Use MultLayer() method instead.
+     */
+    std::vector<int> mult;
+
     /// Vector containing the number of the strips which gathered the max energy in the different layers.
-    /**They are not sorted so do not use with thr Draw command in root.
+    /**They are not sorted so do not use with the Draw command in root.
      * Use ESumLayer() method instead.
      */
     std::vector<int> stripMax;
@@ -109,7 +118,7 @@ public:
     unsigned int time;
 
     /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef ( SiDataBase, 1 );
+    ClassDef ( SiDataBase, 2 );
     /// \endcond
 };
 

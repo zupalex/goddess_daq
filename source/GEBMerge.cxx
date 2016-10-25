@@ -815,7 +815,7 @@ int main ( int argc, char **argv )
                     std::cerr << "Bytes in buffer: " << std::setw ( 10 ) << std::left << ofBytesCount << " + " << std::setw ( 10 ) << bufferBytesCount;
                     std::cerr << " / Ignored: " << std::setw ( 10 ) << ignoredBytesCount << "\n";
                     std::cerr << "Output file size (bytes): " << std::left << std::setw ( 15 ) << outSize;
-                    std::cerr << esc << ( bytesDiff > 0 ? "[31;1m" : "[0m" ) << " ( diff = " << bytesDiff << ")..." << esc << "[0m\n";
+                    std::cerr << esc << ( bytesDiff > 0 ? "[31;1m" : "[0m" ) << " ( diff = " << bytesDiff << " )..." << esc << "[0m\n";
                     std::cerr << "Events treated: " << std::setw ( 15 ) << evCounter << "\n";
                     std::cerr << "Events buffered: " << std::setw ( 4 ) << writeBufSize << "\n";
                     std::cerr << "Awaiting treatment: " << std::setw ( 4 ) << ofEvSize << " ( Map entries: " << std::setw ( 4 ) << theMergeManager->overflowEvent.size() << " )\n";

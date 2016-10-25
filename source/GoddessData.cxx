@@ -868,23 +868,16 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                 std::vector<unsigned long long int>* tsP = 0;
                 std::vector<unsigned long long int>* tsN = 0;
 
-                float* eSumP = 0;
-                int* stripMaxP = 0;
-                unsigned long long int* tsMaxP = 0;
-                float* eSumN = 0;
-                int* stripMaxN = 0;
-                unsigned long long int* tsMaxN = 0;
+                float eSumP = 0;
+                int stripMaxP = -1;
+                int multP = 0;
+                unsigned long long int tsMaxP = 0;
+                float eSumN = 0;
+                int stripMaxN = -1;
+                int multN = 0;
+                unsigned long long int tsMaxN = 0;
 
-                float esp = 0.0,esn = 0.0;
                 float enear_tot = 0.0, efar_tot = 0.0;
-                int smp = -1, smn = -1;
-                unsigned long long int tsmp = 0, tsmn = 0;
-                eSumP = &esp;
-                eSumN = &esn;
-                stripMaxP = &smp;
-                stripMaxN = &smn;
-                tsMaxP = &tsmp;
-                tsMaxN = &tsmn;
 
                 if ( writeDetails )
                 {
@@ -947,6 +940,8 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     {
                         if ( ! ( detType == "superX3" && det->GetDepth() == 1 ) )
                         {
+                            multP++;
+
                             if ( writeDetails )
                             {
                                 stripP->push_back ( stripItr->first );
@@ -957,13 +952,13 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
                             if ( ( Pars->noCalib + nc ) % 2 == 0 )
                             {
-                                *eSumP += stripItr->second;
+                                eSumP += stripItr->second;
 
                                 if ( stripItr->second > enMax )
                                 {
-                                    *stripMaxP = stripItr->first;
+                                    stripMaxP = stripItr->first;
                                     enMax = stripItr->second;
-                                    *tsMaxP = tsPMap[stripItr->first];
+                                    tsMaxP = tsPMap[stripItr->first];
                                 }
                             }
                         }
@@ -972,6 +967,8 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                             int st_ = superX3::GetStrip ( stripItr->first );
 
                             if ( std::find ( alreadyTreatedStrips.begin(), alreadyTreatedStrips.end(), st_ ) != alreadyTreatedStrips.end() ) continue;
+
+                            multP++;
 
                             alreadyTreatedStrips.push_back ( st_ );
 
@@ -1011,13 +1008,13 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                                     enear_tot += en_near;
                                     efar_tot += en_far;
 
-                                    *eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+                                    eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
 
                                     if ( en_ > enMax )
                                     {
-                                        *stripMaxP = st_;
+                                        stripMaxP = st_;
                                         enMax = en_;
-                                        *tsMaxP = ( tsPMap[nearStrip] + tsPMap[farStrip] ) / 2;
+                                        tsMaxP = ( tsPMap[nearStrip] + tsPMap[farStrip] ) / 2;
                                     }
                                 }
                             }
@@ -1032,6 +1029,8 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     //Get the strips which fired and the energy deposites in each of them for the front side
                     for ( auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr )
                     {
+                        multN++;
+
                         if ( writeDetails )
                         {
                             stripN->push_back ( stripItr->first );
@@ -1041,37 +1040,39 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
                         if ( ( Pars->noCalib + nc ) % 2 == 0 )
                         {
-                            *eSumN += stripItr->second;
+                            eSumN += stripItr->second;
 
                             if ( stripItr->second > enMax )
                             {
-                                *stripMaxN = stripItr->first;
+                                stripMaxN = stripItr->first;
                                 enMax = stripItr->second;
-                                *tsMaxN = tsNMap[stripItr->first];
+                                tsMaxN = tsNMap[stripItr->first];
                             }
                         }
                     }
                 }
 
 //                 if ( *eSumP != 0.0 )
-                if ( *eSumP > 0 )
+                if ( eSumP > 0 )
                 {
-                    datum->eSum.push_back ( *eSumP );
-                    datum->stripMax.push_back ( *stripMaxP + 100*det->GetDepth() );
-                    datum->timestampMax.push_back ( *tsMaxP );
+                    datum->eSum.push_back ( eSumP );
+                    datum->stripMax.push_back ( stripMaxP + 100*det->GetDepth() );
+                    datum->timestampMax.push_back ( tsMaxP );
+                    datum->mult.push_back ( multP );
                 }
 
 //                 if ( *eSumN != 0.0 )
-                if ( *eSumN > 0 )
+                if ( eSumN > 0 )
                 {
-                    datum->eSum.push_back ( *eSumN );
-                    datum->stripMax.push_back ( *stripMaxN + 100*det->GetDepth() + 300 );
-                    datum->timestampMax.push_back ( *tsMaxN );
+                    datum->eSum.push_back ( eSumN );
+                    datum->stripMax.push_back ( stripMaxN + 100*det->GetDepth() + 300 );
+                    datum->timestampMax.push_back ( tsMaxN );
+                    datum->mult.push_back ( multN );
                 }
 
-                if ( *stripMaxP >= 0 )
+                if ( stripMaxP >= 0 )
                 {
-                    datum->pos.push_back ( det->GetEventPosition ( *stripMaxP, *stripMaxN, enear_tot, efar_tot ) );
+                    datum->pos.push_back ( det->GetEventPosition ( stripMaxP, stripMaxN, enear_tot, efar_tot ) );
                 }
             }
         }

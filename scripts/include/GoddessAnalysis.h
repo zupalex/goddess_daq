@@ -3,6 +3,8 @@
 
 #include "goddess_analysis_macros.h"
 
+std::vector<unsigned short> DecodeSectorsString ( std::string sectorsString, bool verbose = false );
+
 class GoddessAnalysis : public TObject, public TQObject
 {
 private:

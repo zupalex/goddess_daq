@@ -35,19 +35,9 @@ include(${CMAKE_MODULE_PATH}/ExportDYLD.cmake)
 
 CheckForExportDYLD()
 
-message(STATUS "Checking for UserAnalysisMacros.cxx and UserEventFilter.cxx")
+include(${CMAKE_MODULE_PATH}/DealWithUserStuffs.cmake)
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/scripts/UserAnalysisMacros.cxx")
-  message(STATUS "Copying UserAnalysisMacrosTemplate.cxx to UserAnalysisMacros.cxx")
-  file(COPY "${CMAKE_SOURCE_DIR}/scripts/UserAnalysisMacrosTemplate.cxx" DESTINATION "${CMAKE_SOURCE_DIR}/share")
-  file(RENAME "${CMAKE_SOURCE_DIR}/share/UserAnalysisMacrosTemplate.cxx" "${CMAKE_SOURCE_DIR}/scripts/UserAnalysisMacros.cxx")
-endif()
-
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/scripts/UserEventFilter.cxx")
-  message(STATUS "Copying UserEventFilterTemplate.cxx to UserEventFilter.cxx")
-  file(COPY "${CMAKE_SOURCE_DIR}/scripts/UserEventFilterTemplate.cxx" DESTINATION "${CMAKE_SOURCE_DIR}/share")
-  file(RENAME "${CMAKE_SOURCE_DIR}/share/UserEventFilterTemplate.cxx" "${CMAKE_SOURCE_DIR}/scripts/UserEventFilter.cxx")
-endif()
+DealWithUserStuffs()
 
 #Find the ROOT package and configure the flags and paths
 find_package (ROOT REQUIRED)
