@@ -5,7 +5,13 @@
 
 using std::string;
 
+
+//******************************************************************************************//
+//******************************************************************************************//
 // --------- Initialization and Utilities. Should not be touched -------------------------- //
+// --------- User functions should be defined in the next section ------------------------- //
+//******************************************************************************************//
+//******************************************************************************************//
 
 
 GoddessAnalysis* gA = 0;
@@ -166,10 +172,64 @@ TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, in
     return newHist;
 }
 
+// ----------- Handles the writing to a TFile ---------------------- //
 
-// ------------- Write your macros here ----------------------------------- //
-// ------------- Use the variable uChain to process your root files ------- //
+void WriteUserHists ( string outName )
+{
+    string mode = "recreate";
 
+    TFile* outRootFile = new TFile ( outName.c_str(), "read" );
+
+    int userChoice;
+
+    if ( outRootFile->IsOpen() )
+    {
+        std::cout << "File " << outName << " already exists...\n";
+        std::cout << "Would you like to overwrite it [1] or update it [2]? ";
+        std::cin >> userChoice;
+
+        if ( userChoice == 2 )
+        {
+            mode = "update";
+        }
+        else if ( std::cin.fail() || userChoice < 1 || userChoice > 2 )
+        {
+            std::cout << "Invalid input... aborting...\n";
+            return;
+        }
+
+        outRootFile->Close();
+
+        std::cout << "\n";
+    }
+
+    outRootFile = new TFile ( outName.c_str(), mode.c_str() );
+
+    for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
+    {
+        TH1F* h1 = dynamic_cast<TH1F*> ( itr->second );
+        TH2F* h2 = dynamic_cast<TH2F*> ( itr->second );
+
+        if ( h1 != NULL )
+        {
+            h1->Write();
+        }
+        else if ( h2 != NULL )
+        {
+            h2->Write();
+        }
+    }
+
+    outRootFile->Close();
+}
+
+
+//******************************************************************************************//
+//******************************************************************************************//
+// ------------------------- Write your macros here --------------------------------------- //
+// ----------------- Use the variable uChain to process your root files ------------------- //
+//******************************************************************************************//
+//******************************************************************************************//
 
 // ------------- Particles Energy vs. Angle ----------- //
 
@@ -905,57 +965,6 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
     std::cout << "\n\n";
 
     return;
-}
-
-// ----------- Handles the writing to a TFile ---------------------- //
-
-void WriteUserHists ( string outName )
-{
-    string mode = "recreate";
-
-    TFile* outRootFile = new TFile ( outName.c_str(), "read" );
-
-    int userChoice;
-
-    if ( outRootFile->IsOpen() )
-    {
-        std::cout << "File " << outName << " already exists...\n";
-        std::cout << "Would you like to overwrite it [1] or update it [2]? ";
-        std::cin >> userChoice;
-
-        if ( userChoice == 2 )
-        {
-            mode = "update";
-        }
-        else if ( std::cin.fail() || userChoice < 1 || userChoice > 2 )
-        {
-            std::cout << "Invalid input... aborting...\n";
-            return;
-        }
-
-        outRootFile->Close();
-
-        std::cout << "\n";
-    }
-
-    outRootFile = new TFile ( outName.c_str(), mode.c_str() );
-
-    for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
-    {
-        TH1F* h1 = dynamic_cast<TH1F*> ( itr->second );
-        TH2F* h2 = dynamic_cast<TH2F*> ( itr->second );
-
-        if ( h1 != NULL )
-        {
-            h1->Write();
-        }
-        else if ( h2 != NULL )
-        {
-            h2->Write();
-        }
-    }
-
-    outRootFile->Close();
 }
 
 
