@@ -1152,11 +1152,14 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
     int uff = ( !Pars->userFilter.empty() ? SortManager::sinstance()->GetWriteEventFlag() : 1 );
 
-    tree->Fill();
-
-    if ( Pars->noCalib == 2 )
+    if ( uff == 1 )
     {
-        sortedTree->Fill();
+        tree->Fill();
+
+        if ( Pars->noCalib == 2 )
+        {
+            sortedTree->Fill();
+        }
     }
 
     gamData->clear();

@@ -265,7 +265,7 @@ int main ( int argc, char** argv )
 
                 Pars->userFilter = filteredName;
 
-                printf ( "An additional binary file will be generated using the user filters\n" );
+                printf ( "The UserEventFilter will be applied to generate the root file\n" );
             }
             else if ( ( p = strstr ( argv[j], "-rootfile" ) ) != NULL )
             {

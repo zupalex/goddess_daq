@@ -965,7 +965,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     {
         /* attempt to open input file */
 
-        if ( !execParams->userFilter.empty() )
+        if ( !execParams->userFilter.empty() &&  execParams->userFilter != "none" )
         {
             execParams->cleanedMerged.open ( execParams->userFilter.c_str(), std::ios_base::out | std::ios_base::trunc );
         }
@@ -1459,14 +1459,16 @@ int SortManager::GEBacq ( char* ChatFileName )
             {
                 userFlagedEvtCounter++;
 
-                for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+                if ( execParams->userFilter != "none" )
                 {
-                    execParams->cleanedMerged.write ( ( char* ) GEB_event->ptgd[i], sizeof ( GEBDATA ) );
-                    execParams->cleanedMerged.write ( GEB_event->ptinp[i], GEB_event->ptgd[i]->length );
+                    for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+                    {
+                        execParams->cleanedMerged.write ( ( char* ) GEB_event->ptgd[i], sizeof ( GEBDATA ) );
+                        execParams->cleanedMerged.write ( GEB_event->ptinp[i], GEB_event->ptgd[i]->length );
+                    }
                 }
             }
         }
-
         //    assert (execParams->InputSrc == DISK);
 
         /*---------------------*/
@@ -1476,8 +1478,8 @@ int SortManager::GEBacq ( char* ChatFileName )
 
         if ( execParams->CurEvNo % 10000 == 0 )
         {
-            std::cerr << "Event: " << std::left << std::setw(12) << execParams->CurEvNo << " / Bytes read: " << std::setw(13) << totBytesRead << " out of " << std::setw(13) << totBinSize;
-            std::cerr << " ( " << std::right << std::setw(6) << std::setprecision(2) << std::fixed << ( float ) totBytesRead/totBinSize * 100. << " % )\r" << std::flush;
+            std::cerr << "Event: " << std::left << std::setw ( 12 ) << execParams->CurEvNo << " / Bytes read: " << std::setw ( 13 ) << totBytesRead << " out of " << std::setw ( 13 ) << totBinSize;
+            std::cerr << " ( " << std::right << std::setw ( 6 ) << std::setprecision ( 2 ) << std::fixed << ( float ) totBytesRead/totBinSize * 100. << " % )\r" << std::flush;
             /* calc time since last dump */
 
             tdmp = time ( NULL );
@@ -1638,7 +1640,7 @@ int SortManager::GEBacq ( char* ChatFileName )
             fflush ( stdout );
         }
     }
-    
+
     std::cerr << "\n";
 
     std::cout << "Terminating Sorting Process because ";

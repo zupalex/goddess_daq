@@ -8,24 +8,25 @@ ReturnError()
     echo ""
     echo "-> Optional arguments can be put in any order"
     echo ""
-    echo "-> suffix=[output_file_suffix] will append the specified suffix at the end of the output rootfile name"
-    echo "-> nevents=[XXXX] command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file" 
-    echo "-> config=[config_file_name] force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
-    echo "-> nocalib=[mode] handles the calibration level."
-    echo "           [mode]==1 will generate one tree sorted but not calibrated." 
-    echo "           [mode]==2 will generate two sorted trees, one calibrated, the other one not"
-    echo "           [mode]==-1 will not generate any sorted tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
-    echo "-> ignorethr=[mode] handles the thresholds ignore level."
-    echo "             [mode]==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
-    echo "             [mode]==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
-    echo "             [mode]==2 won't apply any threshold to any tree"
-    echo "-> sidetails=[mode] handles the detail level for the output Si Data."
-    echo "           [mode]==0 won't generate any output for the Si detectors." 
-    echo "           [mode]==1 will store only the sum of the energies per sector."
-    echo "           [mode]==2 will store all the energies collected by each strips individually as well as the sum per sector."
+    echo "-> suffix=output_file_suffix will append the specified suffix at the end of the output rootfile name"
+    echo "-> nevents=XXXX command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file" 
+    echo "-> config=config_file_name force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
+    echo "-> nocalib=mode handles the calibration level."
+    echo "           mode==1 will generate one tree sorted but not calibrated." 
+    echo "           mode==2 will generate two sorted trees, one calibrated, the other one not"
+    echo "           mode==-1 will not generate any sorted tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
+    echo "-> ignorethr=mode handles the thresholds ignore level."
+    echo "             mode==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
+    echo "             mode==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
+    echo "             mode==2 won't apply any threshold to any tree"
+    echo "-> sidetails=mode handles the detail level for the output Si Data."
+    echo "           mode==0 won't generate any output for the Si detectors." 
+    echo "           mode==1 will store only the sum of the energies per sector."
+    echo "           mode==2 will store all the energies collected by each strips individually as well as the sum per sector."
     echo "-> nomapping will create an additional tree containing the raw data in pairs <channel, value>"
     echo "-> nohists will prevent histograms to be generated"
-    echo "-> userfilter=[folder name] will create a \"cleaned\" merged file in the specified folder using the filters defined in scripts/UserEventFilter.cxx"
+    echo "-> userfilter[=folder_name] will apply the UserEventFilter to generate the root file."
+    echo "                            if [=folder_name] is specified, a \"cleaned\" merged file will be generated in the specified folder"
 }
 
 if [ $# -lt 3 ] 
@@ -165,7 +166,13 @@ COUNTER=$(($COUNTER + 1))
 	   exit 1	
         fi
 
-	echo "Will generated a cleaned merged file in ${arg##userfilter=}"
+	echo "Will apply the UserEventFilter to generated the root file and produced a cleaned merged file in ${arg##userfilter=}"
+	
+    elif [ "$arg" = "userfilter" ]; then
+
+	echo "Will apply the UserEventFilter to generated the root file"
+	
+	USERFILTERARG="-userfilter none"
 
     elif [ $COUNTER -gt 3 ]; then
 	
