@@ -149,7 +149,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
                 theMergeManager->goBackToTop = false;
             }
 
-            printf ( "===> The file %s (#%d) do not have anymore data%s. Last timestamp = %llu\n", ( inFile->fileName ).c_str(), inFile->fileNum,
+            printf ( "\n===> Loop #%llu: The file %s (#%d) do not have anymore data%s. Last timestamp = %llu\n", theMergeManager->loopCounter, ( inFile->fileName ).c_str(), inFile->fileNum,
                      ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ), bufEvent->gd->timestamp );
         }
 
@@ -219,7 +219,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
                 theMergeManager->goBackToTop = false;
             }
 
-            printf ( "===> The file %s (#%d) do not have anymore data%s. Last timestamp = %llu\n", ( inFile->fileName ).c_str(), inFile->fileNum,
+            printf ( "\n===> Loop #%llu: The file %s (#%d) do not have anymore data%s. Last timestamp = %llu\n", theMergeManager->loopCounter, ( inFile->fileName ).c_str(), inFile->fileNum,
                      ( inFile->istream->gcount() == 0 ? "" : " after reading the payload" ), bufEvent->gd->timestamp );
 
         }
@@ -682,7 +682,9 @@ int main ( int argc, char **argv )
 
     bool firstExec = true;
 
-    unsigned long long int loopCounter = 0, evCounter = 0;
+    theMergeManager->loopCounter = 0;
+
+    unsigned long long int evCounter = 0;
 
     unsigned int maxEventMapSize = 200;
 
@@ -747,35 +749,50 @@ int main ( int argc, char **argv )
 
     while ( theMergeManager->inData->size() > 0  || theMergeManager->overflowEvent.size() > 0 )
     {
-//         if ( loopCounter > 3044195 )
+//         if ( theMergeManager->loopCounter > 16133325 )
 //         {
 //             printProgress = false;
 //             printBytesCount = true;
 //             printDebug = true;
 //         }
+// 
+//         if ( theMergeManager->loopCounter > 16133340 )
+//         {
+//             printProgress = true;
+//             printBytesCount = false;
+//             printDebug = false;
+// 
+//             theMergeManager->goBackToTop = false;
+//         }
 
         if ( printProgress )
         {
-            if ( loopCounter%10000 == 0 || loopCounter == 1 || alwaysCalcBytesDiff )
+            auto ofInfo = theMergeManager->GetSizeAndBytesCount ( true );
+            unsigned int ofEvSize = ofInfo.first;
+            unsigned long long int ofBytesCount = ofInfo.second;
+
+            auto writeBufInfo = theMergeManager->GetSizeAndBytesCount ( false );
+            unsigned int writeBufSize = writeBufInfo.first;
+            unsigned long long int bufferBytesCount = writeBufInfo.second;
+
+            unsigned long long int outSize = outData->tellp();
+
+            long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
+
+            if ( bytesDiff != 0 && prevBytesDiff != bytesDiff )
             {
-                auto ofInfo = theMergeManager->GetSizeAndBytesCount ( true );
-                unsigned int ofEvSize = ofInfo.first;
-                unsigned long long int ofBytesCount = ofInfo.second;
+                std::cerr << "\n\n\n" << esc << "[31;1m/!\\WARNING/!\\ Loop #" << theMergeManager->loopCounter << " : Amount of bytes read differs from amount of bytes treated !!! (diff = " << bytesDiff << ")" << esc << "[0m\n\n\n";
 
-                auto writeBufInfo = theMergeManager->GetSizeAndBytesCount ( false );
-                unsigned int writeBufSize = writeBufInfo.first;
-                unsigned long long int bufferBytesCount = writeBufInfo.second;
+                printf ( "\n\n/!\\WARNING/!\\ Loop #%llu : Amount of bytes read differs from amount of bytes treated !!! (diff = %d)\n\n\n", theMergeManager->loopCounter, bytesDiff );
 
-                unsigned long long int outSize = outData->tellp();
+                prevBytesDiff = bytesDiff;
 
-                long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
+                theMergeManager->goBackToTop = false;
+            }
 
-                if ( bytesDiff != 0 && prevBytesDiff != bytesDiff )
-                {
-                    std::cerr << "\n\n\n" << esc << "[31;1m/!\\WARNING/!\\ Loop #" << loopCounter << " : Amount of bytes read differs from amount of bytes treated !!! (diff = " << bytesDiff << ")" << esc << "[0m\n\n\n";
+            if ( theMergeManager->loopCounter%10000 == 0 || theMergeManager->loopCounter == 1 || alwaysCalcBytesDiff )
+            {
 
-                    prevBytesDiff = bytesDiff;
-                }
 
 //             if ( ( float ) theMergeManager->readBytesCount/totBytesCount * 100. > 5.69 )
 //             {
@@ -783,7 +800,7 @@ int main ( int argc, char **argv )
 //                 printProgress = false;
 //             }
 
-                if ( loopCounter%10000 == 0 || loopCounter == 1 )
+                if ( theMergeManager->loopCounter%10000 == 0 || theMergeManager->loopCounter == 1 )
                 {
 #ifdef __unix__
                     sysinfo ( &memInfo );
@@ -809,7 +826,7 @@ int main ( int argc, char **argv )
                     else if ( weirdTsCounter > 20 && weirdTsCounter <= 100 ) weirdTsWarningLevel = "[38;5;208m";
                     else if ( weirdTsCounter > 100 ) weirdTsWarningLevel = "[31;1m";
 
-                    std::cerr << esc << "[32;1m" << "Loop #" << loopCounter << esc << "[0m \n";
+                    std::cerr << esc << "[32;1m" << "Loop #" << theMergeManager->loopCounter << esc << "[0m \n";
                     std::cerr << "Bytes read: " << std::right << std::setw ( 15 ) << theMergeManager->readBytesCount << " / " <<  std::left << std::setw ( 15 ) << totBytesCount;
                     std::cerr << " ( " << std::fixed << std::showpoint << std::setprecision ( 2 ) << std::setw ( 6 ) << std::right << ( float ) theMergeManager->readBytesCount/totBytesCount * 100. << "% )\n";
                     std::cerr << "Bytes in buffer: " << std::setw ( 10 ) << std::left << ofBytesCount << " + " << std::setw ( 10 ) << bufferBytesCount;
@@ -889,7 +906,7 @@ int main ( int argc, char **argv )
         {
             std::cerr << "Size of theMergeManager->overflowEvent is " << theMergeManager->overflowEvent.size() << "\n";
             std::cerr << "-*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
-            std::cerr << "-*-*-*-*-*--*-*-*-*-*-  LOOP # " << loopCounter << " / EVENT #" << evCounter << " -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
+            std::cerr << "-*-*-*-*-*--*-*-*-*-*-  LOOP # " << theMergeManager->loopCounter << " / EVENT #" << evCounter << " -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
             std::cerr << "-*-*-*-*-*--*-*-*-*-*-  Last Timestamp buffered: " << lstTsBuffered << " -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
             std::cerr << "-*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-\n";
         }
@@ -954,7 +971,7 @@ int main ( int argc, char **argv )
 
         if ( printBytesCount )
         {
-            std::cerr << ".......................... Loop #" << loopCounter << " ...........................\n";
+            std::cerr << ".......................... Loop #" << theMergeManager->loopCounter << " ...........................\n";
             std::cerr << "Loop Entrance...";
             std::cerr << "\nBytes read: " << theMergeManager->readBytesCount << " / Buffer byte count: " << theMergeManager->GetSizeAndBytesCount ( true ).second;
             std::cerr << " + " << theMergeManager->GetSizeAndBytesCount ( false ).second;
@@ -1084,9 +1101,15 @@ int main ( int argc, char **argv )
 
                                     ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
 
+                                    printf ( "\nWeird Timestamp at loop #%llu  / event #%llu (file: %s) => Previous: %llu --- Current: %llu ... \n",
+                                             theMergeManager->loopCounter, evCounter,input->fileName.c_str(), lastEvtItr->first, newEv->gd->timestamp );
+
+                                    printf ( "Next event timestamp: %llu \n\n",
+                                             weirdTsNextEvt->gd->timestamp );
+
                                     if ( printWeirdTs )
                                     {
-                                        std::cerr << "\nWeird Timestamp at loop #" << loopCounter << " / event #" << evCounter << " (file: " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
+                                        std::cerr << "\nWeird Timestamp at loop #" << theMergeManager->loopCounter << " / event #" << evCounter << " (file: " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
                                         theMergeManager->goBackToTop = false;
 
                                         std::cerr << "Ignored this event...";
@@ -1218,9 +1241,15 @@ int main ( int argc, char **argv )
 
                                 ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
 
+                                printf ( "\nWeird Timestamp at loop #%llu  / event #%llu (file: %s) => Previous: %llu --- Current: %llu ... \n",
+                                         theMergeManager->loopCounter, evCounter,input->fileName.c_str(), lastEvtItr->first, newEv->gd->timestamp );
+
+                                printf ( "Next event timestamp: %llu \n\n",
+                                         weirdTsNextEvt->gd->timestamp );
+
                                 if ( printWeirdTs )
                                 {
-                                    std::cerr << "\nWeird Timestamp at loop #" << loopCounter << " / event #" << evCounter << " (file " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
+                                    std::cerr << "\nWeird Timestamp at loop #" << theMergeManager->loopCounter << " / event #" << evCounter << " (file " << input->fileName << ") => Previous: " << lastEvtItr->first << " --- Current: " << newEv->gd->timestamp << " ...\n";
                                     theMergeManager->goBackToTop = false;
 
                                     std::cerr << "Ignored this event...";
@@ -1472,7 +1501,7 @@ int main ( int argc, char **argv )
             break;
         }
 
-        loopCounter++;
+        theMergeManager->loopCounter++;
     }
 
     theMergeManager->outData.close();
