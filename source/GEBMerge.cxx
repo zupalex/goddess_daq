@@ -510,7 +510,7 @@ int main ( int argc, char **argv )
     /* open all input files */
     /************************/
 
-    std::ifstream ifstreamArray[500];
+    std::ifstream ifstreamArray[700];
 
     unsigned long long int totBytesCount = 0;
 
