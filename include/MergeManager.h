@@ -83,6 +83,8 @@ public:
 
     static MergeManager* sinstance();
 
+    unsigned long long int loopCounter;
+    
     unsigned long long int readBytesCount;
 
     bool goBackToTop;
