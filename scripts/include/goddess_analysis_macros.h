@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <cxxabi.h>
 #include <pthread.h>
+#include <dirent.h>
 
 #include "TROOT.h"
 #include <TQObject.h>

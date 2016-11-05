@@ -34,7 +34,7 @@ class InDataInfo
 private:
 
 public:
-    InDataInfo ( std::ifstream& istream_ );
+    InDataInfo ( std::ifstream* istream_ );
     ~InDataInfo() {}
 
     int fileNum;
@@ -84,7 +84,7 @@ public:
     static MergeManager* sinstance();
 
     unsigned long long int readBytesCount;
-    
+
     bool goBackToTop;
 
     unsigned int maxCoincEv;

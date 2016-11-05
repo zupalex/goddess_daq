@@ -510,7 +510,7 @@ int main ( int argc, char **argv )
     /* open all input files */
     /************************/
 
-    std::ifstream ifstreamArray[500];
+    std::vector<std::ifstream*> ifstreamArray;
 
     unsigned long long int totBytesCount = 0;
 
@@ -520,11 +520,14 @@ int main ( int argc, char **argv )
 
 #if(USEZLIB==0)
 
-        ifstreamArray[i].open ( argv[nn], std::ios_base::in );
+        std::ifstream* newIfstreamEntry = new std::ifstream;
+        ifstreamArray.push_back(newIfstreamEntry);
+        
+        ifstreamArray[i]->open ( argv[nn], std::ios_base::in );
 
-        ifstreamArray[i].seekg ( 0, ifstreamArray[i].end );
-        totBytesCount += ifstreamArray[i].tellg();
-        ifstreamArray[i].seekg ( 0, ifstreamArray[i].beg );
+        ifstreamArray[i]->seekg ( 0, ifstreamArray[i]->end );
+        totBytesCount += ifstreamArray[i]->tellg();
+        ifstreamArray[i]->seekg ( 0, ifstreamArray[i]->beg );
 
         InDataInfo* newInDataInfo = new InDataInfo ( ifstreamArray[i] );
 

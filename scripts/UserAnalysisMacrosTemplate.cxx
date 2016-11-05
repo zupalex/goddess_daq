@@ -1,4 +1,4 @@
-// UserAnalysisTemplate version 161024 //
+// UserAnalysisTemplate version 161104 //
 
 #include "GoddessAnalysis.h"
 #include <sys/times.h>
@@ -37,7 +37,6 @@ template<typename First, typename... Rest> void LoadTrees ( string treeName, Fir
     uChain = gA->userChain;
     totEvents = uChain->GetEntries();
 }
-
 
 template<typename THist> void AddHists ( THist* h1, THist* h2 )
 {
@@ -147,6 +146,35 @@ TH2F* DrawSum ( TH2F** hists, string toSum )
     return nullptr;
 }
 
+TH1F* DrawSum ( TH1F** hists )
+{
+    if ( *hists != nullptr )
+    {
+        TH1F* hSum = dynamic_cast<TH1F*> ( *hists );
+
+        if ( hSum != nullptr )
+        {
+            int counter = 1;
+
+            while ( * ( hists+counter ) != nullptr )
+            {
+                TH1F* hAdd = dynamic_cast<TH1F*> ( * ( hists+counter ) );
+
+                if ( hAdd != nullptr )
+                {
+                    hSum->Add ( hAdd );
+                }
+
+                counter++;
+            }
+
+            return hSum;
+        }
+    }
+
+    return nullptr;
+}
+
 void PrintProgress ( unsigned long long int maxEvents_ )
 {
     if ( eventNbr % 10000 == 0 )
@@ -233,32 +261,48 @@ void WriteUserHists ( string outName )
 
 // ------------- Particles Energy vs. Angle ----------- //
 
-TH2F* hEvsA;
-TH2F* hEvsA_SX3U_tot;
-TH2F* hEvsA_QQQ5U_tot;
-TH2F* hEvsA_SX3U[12];
-TH2F* hEvsA_QQQ5U[4];
+const int maxMult = 10;
 
-void InitEvsAHist ( unsigned int nBinsX, unsigned int minX, unsigned int maxX, unsigned int nBinsY, unsigned int minY, unsigned int maxY )
+TH2F* hEvsA[maxMult];
+TH2F* hEvsA_SX3U_tot[maxMult];
+TH2F* hEvsA_QQQ5U_tot[maxMult];
+TH2F* hEvsA_SX3U[12][maxMult];
+TH2F* hEvsA_QQQ5U[4][maxMult];
+
+void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY )
 {
     char* hname = new char[500];
 
-    hEvsA = MakeNewHist ( "Energy_vs_Angle", "Energy vs. Angle", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    hEvsA_SX3U_tot = MakeNewHist ( "Energy_vs_Angle_SX3U", "Energy vs. Angle SX3 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    hEvsA_QQQ5U_tot = MakeNewHist ( "Energy_vs_Angle_QQQ5U", "Energy vs. Angle QQQ5 Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    for ( int j = 0; j < maxMult; j++ )
+    {
+        sprintf ( hname, "Energy vs. Angle mult %d", j );
+        hEvsA[j] = MakeNewHist ( hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
+
+        sprintf ( hname, "Energy vs. Angle SX3 Upstream mult %d", j );
+        hEvsA_SX3U_tot[j] = MakeNewHist ( hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
+
+        sprintf ( hname, "Energy vs. Angle QQQ5 Upstream mult %d", j );
+        hEvsA_QQQ5U_tot[j] = MakeNewHist ( hname, hname, 34, -1, 33, nBinsY, minY, maxY );
+    }
 
     for ( int i = 0; i < 12; i++ )
     {
-        sprintf ( hname, "Energy vs Angle SX3 U%d", i );
+        for ( int j = 0; j < maxMult; j++ )
+        {
+            sprintf ( hname, "Energy vs Angle SX3 U%d mult %d", i, j );
 
-        hEvsA_SX3U[i] = MakeNewHist ( hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
+            hEvsA_SX3U[i][j] = MakeNewHist ( hname, hname, nBinsX, minX, maxX, nBinsY, minY, maxY );
+        }
     }
 
     for ( int i = 0; i < 4; i++ )
     {
-        sprintf ( hname, "Energy vs Angle QQQ5 U%d", i );
+        for ( int j = 0; j < maxMult; j++ )
+        {
+            sprintf ( hname, "Energy vs Angle QQQ5 U%d mult %d", i, j );
 
-        hEvsA_QQQ5U[i] = MakeNewHist ( hname, hname, 32, -1, 33, nBinsY, minY, maxY );
+            hEvsA_QQQ5U[i][j] = MakeNewHist ( hname, hname, 34, -1, 33, nBinsY, minY, maxY );
+        }
     }
 }
 
@@ -267,24 +311,26 @@ void FillEvsAHist ( SiDataBase* siData_ )
     float energy = siData_->ESumLayer ( 1, false );
     float angle = siData_->Angle ( 1 );
 
-    unsigned int sector = siData_->sector;
-    unsigned int strip = siData_->StripMaxLayer ( 1, false );
+    int sector = siData_->sector;
+    int strip = siData_->StripMaxLayer ( 1, false );
 
-    if ( angle != 0 && energy > 0 )
+    int mult = siData_->MultLayer ( 1, false );
+
+    if ( energy > 0  && mult < 3 )
     {
-        hEvsA->Fill ( angle, energy );
+        if ( angle != 0 ) hEvsA[mult]->Fill ( angle, energy );
 
         if ( siData_->isUpstream )
         {
-            if ( siData_->isBarrel )
+            if ( angle != 0 && siData_->isBarrel )
             {
-                hEvsA_SX3U_tot->Fill ( angle, energy );
-                hEvsA_SX3U[sector]->Fill ( angle, energy );
+                hEvsA_SX3U_tot[mult]->Fill ( angle, energy );
+                hEvsA_SX3U[sector][mult]->Fill ( angle, energy );
             }
             else
             {
-                hEvsA_QQQ5U_tot->Fill ( strip, energy );
-                hEvsA_QQQ5U[sector]->Fill ( strip, energy );
+                hEvsA_QQQ5U_tot[mult]->Fill ( strip, energy );
+                hEvsA_QQQ5U[sector][mult]->Fill ( strip, energy );
             }
         }
     }
@@ -300,7 +346,7 @@ TH1F* hQval_SX3U[12];
 TH1F* hQval_QQQ5U[4];
 
 
-void InitQvalHist ( unsigned int nBinsX, unsigned int minX, unsigned int maxX )
+void InitQvalHist ( unsigned int nBinsX, int minX, int maxX )
 {
     char* hname = new char[500];
 
@@ -364,7 +410,7 @@ TH1F* dTGsNoBGOSX3U[12];
 TH1F* dTGsNoBGOQQQ5D[4];
 TH1F* dTGsNoBGOQQQ5U[4];
 
-void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, unsigned int minX = -500, unsigned int maxX = 500 )
+void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, int minX = -500, int maxX = 500 )
 {
     for ( int i = 0; i < 12; i++ )
     {
@@ -544,7 +590,7 @@ void ResetGsHistsState()
     gsNoBGOGatedQQQ5D_digital.second = false;
 }
 
-void InitGsGateORRUBAHists ( unsigned int nBinsX = 5000, unsigned int minX = 0, unsigned int maxX = 5000 )
+void InitGsGateORRUBAHists ( unsigned int nBinsX = 5000, int minX = 0, int maxX = 5000 )
 {
     ResetGsHistsState();
 

@@ -15,9 +15,9 @@ void CheckNoArgs ( int required, int actual, string str )
 
 // --------------------- InDataInfo ---------------------- //
 
-InDataInfo::InDataInfo ( std::ifstream& istream_ )
+InDataInfo::InDataInfo ( std::ifstream* istream_ )
 {
-    istream = &istream_;
+    istream = istream_;
 }
 
 // --------------------- EVENT ---------------------- //

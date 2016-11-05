@@ -106,8 +106,8 @@ function(DealWithUserStuffs)
     if(NOT (userUAMVerNum EQUAL currUAMVerNum))
       message(STATUS "Current UserAnalysisMacros version: ${Red}${userUAMVerNum}${ColourReset}")
       message("${Red}${CMAKE_SOURCE_DIR}/user/UserAnalysisMacros.cxx version is using an outdated version of the template${ColourReset}")
-      message("${Red}This is due to a change in the structure of the root tree.${ColourReset}")
-      message("${Red}You should check that your function are still compatible with the new structure.${ColourReset}")
+      message("${Red}This is due to a change in the structure of the root tree or heavy modifications of the tools provided for the analysis.${ColourReset}")
+      message("${Red}You may want to backup your UserAnalysisMacros.cxx, delete it, do a \"cmake build ..\" and reimplement your changes.${ColourReset}")
       
     else()
      
@@ -139,8 +139,8 @@ function(DealWithUserStuffs)
     if(NOT (userUEFVerNum EQUAL currUEFVerNum))
       message(STATUS "Current UserEventFilter version: ${Red}${userUEFVerNum}${ColourReset}")
       message("${Red}${CMAKE_SOURCE_DIR}/user/UserEventFilter.cxx version is using an outdated version of the template${ColourReset}")
-      message("${Red}This is due to a change in the structure of the root tree.${ColourReset}")
-      message("${Red}You should check that your function are still compatible with the new structure.${ColourReset}")
+      message("${Red}This is due to a change in the structure of the root tree or heavy modifications of the tools provided for the analysis.${ColourReset}")
+      message("${Red}You may want to backup your UserAnalysisMacros.cxx, delete it, do a \"cmake build ..\" and reimplement your changes.${ColourReset}")
       
     else()
     

@@ -5,6 +5,12 @@
 
 std::vector<unsigned short> DecodeSectorsString ( std::string sectorsString, bool verbose = false );
 
+std::vector<std::string> DecodeTags( std::string tagsStr );
+
+std::vector<std::string> GetDirContent( std::string dirName = "./", std::string fileExt = "", std::string mustHaveAll = "", std::string cantHaveAny = "", std::string mustHaveOneOf = "", std::string startWith = "" );
+
+std::vector<std::string> DecodeFilesToTreat ( std::string filesStr );
+
 class GoddessAnalysis : public TObject, public TQObject
 {
 private:
@@ -55,6 +61,7 @@ public:
 
     void AddFileToTreat ( TFile* inFile, std::string treeName );
     void AddFileToTreat ( std::string inFile, std::string treeName );
+    void AddFileToTreat ( std::vector<std::string> inFile, std::string treeName );
 
     template<typename T> inline void InitUserAnalysis ( std::string treeName, T inFile1 );
     template<typename First, typename... Rest> inline void InitUserAnalysis ( std::string treeName, First inFile1, Rest... inFileRest );
@@ -64,9 +71,7 @@ public:
 
 template<typename T> inline void GoddessAnalysis::InitUserAnalysis ( std::string treeName, T inFile1 )
 {
-    TFile* inRootFile = new TFile ( ( ( std::string ) inFile1 ).c_str(), "read" );
-
-    AddFileToTreat ( inRootFile, treeName );
+    AddFileToTreat ( (std::string) inFile1, treeName );
 }
 
 template<typename First, typename... Rest> inline void GoddessAnalysis::InitUserAnalysis ( std::string treeName, First inFile1, Rest... inFileRest )
@@ -188,4 +193,9 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
 
 
 #endif
+
+
+
+
+
 

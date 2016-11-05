@@ -76,11 +76,205 @@ std::vector<unsigned short> DecodeSectorsString ( std::string sectorsString, boo
     return sectorsNum;
 }
 
+std::vector<std::string> DecodeTags ( std::string tagsStr )
+{
+    std::vector<std::string> tags;
+
+    std::size_t startPos = tagsStr.find_first_not_of ( " ," );;
+
+    std::size_t separator = tagsStr.find_first_of ( " ,", startPos );
+
+    std::string newTag;
+
+    while ( separator != std::string::npos && startPos != std::string::npos )
+    {
+        newTag = tagsStr.substr ( startPos, separator - startPos );
+
+        tags.push_back ( newTag );
+
+        startPos = tagsStr.find_first_not_of ( " ,", separator );
+        separator = tagsStr.find_first_of ( " ,", startPos );
+    }
+
+    if ( startPos != std::string::npos )
+    {
+        newTag = tagsStr.substr ( startPos, tagsStr.length() - startPos );
+
+        tags.push_back ( newTag );
+    }
+
+    return tags;
+}
+
+std::vector<std::string> GetDirContent ( std::string dirName, std::string fileExt, std::string mustHaveAll, std::string cantHaveAny, std::string mustHaveOneOf, std::string startWith )
+{
+    DIR* toScan = opendir ( dirName.c_str() );
+    dirent* dirEntry = new dirent;
+
+    std::vector<std::string> fileList, mustAllTags, cantTags, mustOneOfTags;
+
+    if ( !mustHaveAll.empty() )
+    {
+        mustAllTags = DecodeTags ( mustHaveAll );
+    }
+
+    if ( !cantHaveAny.empty() )
+    {
+        cantTags = DecodeTags ( cantHaveAny );
+    }
+
+    if ( !mustHaveOneOf.empty() )
+    {
+        mustOneOfTags = DecodeTags ( mustHaveOneOf );
+    }
+
+    while ( ( dirEntry = readdir ( toScan ) ) != NULL )
+    {
+        std::string entName = dirEntry->d_name;
+
+        if ( startWith.empty() || ( !startWith.empty() && entName.find ( startWith.c_str() ) == 0 ) )
+        {
+            if ( fileExt.empty() || ( !fileExt.empty() && entName.find ( fileExt.c_str() ) != std::string::npos ) )
+            {
+                bool mustAllFlag = true, cantFlag = false, mustOneOfFlag = ( mustOneOfTags.size() > 0 ? false : true );
+
+                if ( mustAllTags.size() > 0 )
+                {
+                    for ( unsigned int i = 0; i < mustAllTags.size(); i++ )
+                    {
+                        if ( entName.find ( mustAllTags[i].c_str() ) == std::string::npos ) mustAllFlag = false;
+                    }
+                }
+
+                if ( cantTags.size() > 0 )
+                {
+                    for ( unsigned int i = 0; i < cantTags.size(); i++ )
+                    {
+                        if ( entName.find ( cantTags[i].c_str() ) != std::string::npos ) cantFlag = true;
+                    }
+                }
+
+                if ( mustOneOfTags.size() > 0 )
+                {
+                    for ( unsigned int i = 0; i < mustOneOfTags.size(); i++ )
+                    {
+                        if ( entName.find ( mustOneOfTags[i].c_str() ) != std::string::npos ) mustOneOfFlag = true;
+                    }
+                }
+
+                if ( mustAllFlag && !cantFlag && mustOneOfFlag ) fileList.push_back ( entName );
+            }
+        }
+    }
+
+    return fileList;
+}
+
+std::vector<std::string> DecodeFilesToTreat ( std::string filesStr )
+{
+    std::vector<std::string> files;
+
+    std::size_t startPos = filesStr.find_first_not_of ( "*[]" );
+    std::size_t special = filesStr.find_first_of ( "*[]", startPos );
+
+    std::vector<std::string> fNameParts;
+    std::vector<std::tuple<std::size_t, char, std::size_t>> sChars;
+
+    std::string fStartWith;
+    std::string fMustHaveAll;
+    std::string fMustHaveOneOf;
+
+    if ( special == std::string::npos )
+    {
+        files.push_back ( filesStr );
+    }
+    else
+    {
+        if ( startPos == 0 ) fStartWith = filesStr.substr ( 0, special );
+
+        while ( special != std::string::npos )
+        {
+            fNameParts.push_back ( filesStr.substr ( startPos, special - startPos ) );
+
+//             std::cout << "new name part: " << filesStr.substr ( startPos, special - startPos ) << "\n";
+
+            sChars.push_back ( std::make_tuple ( special, filesStr[special], startPos ) );
+
+//             std::cout << "separator: " << filesStr[special] << " @ " << special << "\n";
+
+            startPos = filesStr.find_first_not_of ( "*[]", special );
+            special = filesStr.find_first_of ( "*[]", startPos );
+        }
+
+        if ( startPos != std::string::npos )
+        {
+            fNameParts.push_back ( filesStr.substr ( startPos, filesStr.length() ) );
+
+            fMustHaveAll += filesStr.substr ( startPos, filesStr.length() );
+            fMustHaveAll += " ";
+
+//             std::cout << "new must all tag: " << filesStr.substr ( startPos, filesStr.length() ) << "\n";
+
+//             std::cout << "new name part: " << filesStr.substr ( startPos, special - startPos ) << "\n";
+        }
+
+        for ( unsigned int i = 0; i < sChars.size(); i++ )
+        {
+            if ( std::get<1> ( sChars[i] ) == '*' )
+            {
+                fMustHaveAll += filesStr.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) );
+                fMustHaveAll += " ";
+
+//                 std::cout << "new must all tag: " << filesStr.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) ) << "\n";
+            }
+
+            else if ( std::get<1> ( sChars[i] ) == '[' )
+            {
+                if ( i == sChars.size()-1 || std::get<1> ( sChars[i+1] ) != ']' )
+                {
+                    std::cerr << "Failed to decode the files input...\n";
+
+                    return files;
+                }
+                else
+                {
+                    std::string toDecode = filesStr.substr ( std::get<0> ( sChars[i] ) +1, std::get<0> ( sChars[i+1] ) - std::get<0> ( sChars[i] ) - 1 );
+
+                    std::vector<unsigned short> filesNbr = DecodeSectorsString ( toDecode, false );
+
+                    std::string baseStr = filesStr.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) );
+
+                    for ( unsigned int j = 0; j < filesNbr.size(); j++ )
+                    {
+                        fMustHaveOneOf += Form ( "%s%d", baseStr.c_str(), filesNbr[j] );
+                        fMustHaveOneOf += " ";
+
+//                         std::cout << "new must one of tag: " << Form ( "%s%d", baseStr.c_str(), filesNbr[j] ) << "\n";
+                    }
+
+                    i++;
+                }
+            }
+
+            else if ( std::get<1> ( sChars[i] ) == ']' )
+            {
+                std::cerr << "Failed to decode the files input...\n";
+
+                return files;
+            }
+        }
+
+        files = GetDirContent ( "./", "", fMustHaveAll, "", fMustHaveOneOf, fStartWith );
+    }
+
+    return files;
+}
+
 GoddessAnalysis::GoddessAnalysis()
 {
     defaultTreeName1 = "raw";
     defaultTreeName2 = "sorted";
-    
+
     userTree = nullptr;
     userChain = nullptr;
 }
@@ -484,13 +678,13 @@ void GoddessAnalysis::AddFileToTreat ( TFile* inFile, std::string treeName )
 {
     userTree = ( TTree* ) inFile->FindObjectAny ( treeName.c_str() );
 
-    std::cout << "Found tree " << treeName << " in the file " << inFile->GetName() << "\n";
-
     if ( userTree == NULL )
     {
-        std::cerr << treeName << ": tree not found...\n";
+        std::cerr << treeName << ": tree not found in file " << inFile->GetName() << "...\n";
         return;
     }
+
+    std::cout << "Found tree " << treeName << " in the file " << inFile->GetName() << "\n";
 
     if ( userChain == NULL )
     {
@@ -506,24 +700,75 @@ void GoddessAnalysis::AddFileToTreat ( TFile* inFile, std::string treeName )
         return;
     }
 
+    auto lOF = userChain->GetListOfFiles();
+
+    if ( lOF != NULL && lOF->GetSize() > 0 )
+    {
+        for ( unsigned int i = 0; i < lOF->GetSize(); i++ )
+        {
+            if ( lOF->At ( i ) != NULL && ( ( std::string ) inFile->GetName() ) == ( ( std::string ) lOF->At ( i )->GetTitle() ) )
+            {
+                std::cerr << "File already in the TChain... skipping it...\n";
+                return;
+            }
+        }
+    }
+
     userChain->Add ( inFile->GetName() );
 }
 
 void GoddessAnalysis::AddFileToTreat ( std::string inFile, std::string treeName )
 {
-    TFile* inRootFile = new TFile ( inFile.c_str(), "read" );
+//     TFile* inRootFile = new TFile ( inFile.c_str(), "read" );
+//
+//     if ( inRootFile == NULL )
+//     {
+//         std::cerr << "Unabled to open the root file " << inFile << "\n";
+//
+//         return;
+//     }
+//
+//     AddFileToTreat ( inRootFile, treeName );
+//
+//     return;
 
-    if ( inRootFile == NULL )
+    std::vector<std::string> listOfFiles = DecodeFilesToTreat ( inFile );
+
+    for ( unsigned int i = 0; i < listOfFiles.size(); i++ )
     {
-        std::cerr << "Unabled to open the root file " << inFile << "\n";
+        TFile* inRootFile = new TFile ( listOfFiles[i].c_str(), "read" );
 
-        return;
+        if ( inRootFile == NULL )
+        {
+            std::cerr << "Unabled to open the root file " << listOfFiles[i] << "\n";
+        }
+        else AddFileToTreat ( inRootFile, treeName );
     }
 
-    AddFileToTreat ( inRootFile, treeName );
+    return;
+}
+
+void GoddessAnalysis::AddFileToTreat ( std::vector<std::string> inFile, std::string treeName )
+{
+    for ( unsigned int i = 0; i < inFile.size(); i++ )
+    {
+        TFile* inRootFile = new TFile ( inFile[i].c_str(), "read" );
+
+        if ( inRootFile == NULL )
+        {
+            std::cerr << "Unabled to open the root file " << inFile[i] << "\n";
+        }
+        else AddFileToTreat ( inRootFile, treeName );
+    }
 
     return;
 }
 
 
 ClassImp ( GoddessAnalysis )
+
+
+
+
+
+
