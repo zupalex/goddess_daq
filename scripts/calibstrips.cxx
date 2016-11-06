@@ -511,8 +511,8 @@ promptFileName:
 
     if ( outStream.is_open() )
     {
-        if ( peakEn > 0.0 ) outStream << "Strip#   " << "Position of the Max   " << "Fit Slope   " << "Chi Square\n\n";
-        else outStream << "Strip#   " << "Position of the Max   " <<"Chi Square\n\n";
+        if ( peakEn > 0.0 ) outStream << std::left << std::setw(8) << "Strip#" << std::setw(13) << "Peak Pos." << std::setw(15) << "Fit Slope" << std::setw(14) << "Chi Square" << "\n\n";
+        else outStream << std::left << std::setw(8) << "Strip#" << std::setw(13) << "Peak Pos." << std::setw(14) << "Chi Square" << "\n\n";
 
         for ( auto itr = myFitsResults.begin(); itr != myFitsResults.end(); itr++ )
         {
@@ -538,8 +538,8 @@ promptFileName:
                 }
             }
 
-            if ( peakEn > 0.0 ) outStream << itr->first << "             " << centroid << "            " << peakEn/centroid  << "      " << fr->GetChisquare() << "\n";
-            else outStream << itr->first << "             " << centroid << "             " << fr->GetChisquare() << "\n";
+            if ( peakEn > 0.0 ) outStream << std::left << std::setw(8) << itr->first << std::setw(13) << centroid << std::setw(15) << (centroid != 0 ? peakEn/centroid : 0)  << std::setw(14) << fr->GetChisquare() << "\n";
+            else outStream << std::left << std::setw(8) << itr->first << std::setw(13) << centroid << std::setw(14) << fr->GetChisquare() << "\n";
         }
 
         outStream.close();
