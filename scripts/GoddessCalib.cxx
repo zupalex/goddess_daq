@@ -1549,7 +1549,7 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool is
 }
 
 std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
-        int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, vector< unsigned short > sectorsList )
+        int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts, vector< unsigned short > sectorsList )
 {
     string isUpstreamID = isUpstream_ ? "U" : "D";
 

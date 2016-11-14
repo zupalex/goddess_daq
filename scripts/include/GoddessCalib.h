@@ -146,7 +146,7 @@ public:
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_ );
 
     map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
-            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
+            int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts,
             vector<unsigned short> sectorsList );
 
     template<typename First, typename... Rest> inline map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
