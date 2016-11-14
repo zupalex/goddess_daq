@@ -231,7 +231,7 @@ template<typename T> string SubstituteStrInFormula ( string formula, map<string,
     {
         string toSubstitute = itr->first;
 
-        std::size_t  subPos = formula.find ( toSubstitute.c_str() );
+        std::size_t  subPos = modFormula.find ( toSubstitute.c_str() );
 
         while ( subPos != string::npos )
         {
@@ -239,11 +239,11 @@ template<typename T> string SubstituteStrInFormula ( string formula, map<string,
 
             modFormula = buffFormula.substr ( 0, subPos );
 
-            modFormula += Form ( "%Lf", ( long double ) * ( itr->second ) );
+            modFormula += Form ( "%Lf", ( long double ) ( * ( itr->second ) ) );
 
             modFormula += buffFormula.substr ( subPos+toSubstitute.length() );
 
-            subPos = modFormula.find_first_of ( toSubstitute.c_str() );
+            subPos = modFormula.find ( toSubstitute.c_str() );
         }
     }
 
@@ -593,7 +593,7 @@ template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, 
 
     if ( linkMap_ != nullptr ) compStrSub = SubstituteStrInFormula ( compStr, *linkMap_ );
 
-    //     cout << "Comparison string after substitution: " << compStrSub << "\n";
+//     cout << "Comparison string after substitution: " << compStrSub << "\n";
 
     std::size_t opPos = compStrSub.find_first_of ( "<>=" );
 
@@ -627,12 +627,12 @@ template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, 
 
     if ( lessThanPos != string::npos && moreThanPos == string::npos )
     {
-        if ( equalPos == string::npos ) return leftMember <= rightMember;
+        if ( equalPos != string::npos ) return leftMember <= rightMember;
         else return leftMember < rightMember;
     }
     else if ( moreThanPos != string::npos && lessThanPos == string::npos )
     {
-        if ( equalPos == string::npos ) return leftMember >= rightMember;
+        if ( equalPos != string::npos ) return leftMember >= rightMember;
         else return leftMember > rightMember;
     }
     else if ( moreThanPos == string::npos && lessThanPos == string::npos && equalPos != string::npos ) return leftMember == rightMember;
@@ -662,7 +662,7 @@ template<typename T> bool ComplexFormulaComparator ( string compStr, map<string,
 
     while ( newAndOrSign != string::npos )
     {
-        members[newMember] = SimpleFormulaComparator<T> ( compStr.substr ( newMember, newAndOrSign-newMember ) );
+        members[newMember] = SimpleFormulaComparator<T> ( compStr.substr ( newMember, newAndOrSign-newMember ), linkMap_ );
         andOrSigns[newAndOrSign] = compStr[newAndOrSign];
 
         newMember = compStr.find_first_not_of ( " |&", newAndOrSign+2 );
@@ -674,7 +674,7 @@ template<typename T> bool ComplexFormulaComparator ( string compStr, map<string,
             return false;
         }
 
-        if ( newAndOrSign == string::npos ) members[newMember] = SimpleFormulaComparator<T> ( compStr.substr ( newMember ) );
+        if ( newAndOrSign == string::npos ) members[newMember] = SimpleFormulaComparator<T> ( compStr.substr ( newMember ), linkMap_ );
     }
 
     auto compItr = andOrSigns.begin();

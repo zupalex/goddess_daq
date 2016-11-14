@@ -36,6 +36,18 @@ extern TH2F* hQval_vs_strip_QQQ5UB_mod;
 extern TH2F* hQval_vs_strip_QQQ5UC_mod;
 extern TH2F* hQval_vs_strip_QQQ5UD_mod;
 
+extern float calibBeamEk, calibBeamMass, calibRecoilMass, calibEjecMass, calibTargetMass, calibQvalGsGs;
+
+inline void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1337., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 )
+{
+    calibBeamEk = beamEk_;
+    calibBeamMass = beamMass_;
+    calibTargetMass = targetMass_;
+    calibEjecMass = ejecMass_;
+    calibRecoilMass = recoilMass_;
+    calibQvalGsGs = qValGsGs_;
+}
+
 class GoddessCalib : public GoddessAnalysis
 {
 private:
@@ -191,10 +203,9 @@ public:
 
     void GenerateEnergyHistPerStrip ( TChain* chain );
 
-    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, 
-					float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
-                                        /*string chi2Mode = "x <= best", string sigmaMode = "x <= best", string magnMode = "x => best", string integralMode = "x => best", string histIntegralMode = "x => best"*/
-				      string betterFitMode = "chi2 <= bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rasIntegral >= bestRawIntegral");
+    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm,
+                                        float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
+                                        string betterFitMode = "chi2 < bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rawIntegral >= bestRawIntegral" );
 
     template<typename First, typename... Rest> void GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest );
 

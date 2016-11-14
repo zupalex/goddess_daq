@@ -132,6 +132,8 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
     currDetType = "";
     currRefEn1 = 0.0;
 
+    SetReacParameters();
+
     cout << "You can use the newly create \"gC\" object to access the GoddessCalib class functions\n";
 }
 
@@ -441,7 +443,7 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         string treeName, sectorsStr;
         unsigned long long int nentries;
         int nBinsX, nBinsY;
-	float binMinX, binMaxX,binMinY, binMaxY;
+        float binMinX, binMaxX,binMinY, binMaxY;
         bool isUS;
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Tree Name IF" ) );
@@ -991,7 +993,7 @@ bool GoddessCalib::DumpFileToResCalMap ( string fileName )
 
     if ( !readFile.is_open() )
     {
-        cerr << "Failed to open file " << fileName << " for previous calibration reading (if it did not exist before, the file has now been created)" << endl;
+        cerr << "Failed to open file " << fileName << " for previous calibration reading" << endl;
         return false;
     }
 
@@ -2000,6 +2002,8 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshol
 
 // --------------------------------------------- QQQ5 functions ---------------------------------- //
 
+float calibBeamEk, calibBeamMass, calibRecoilMass, calibEjecMass, calibTargetMass, calibQvalGsGs;
+
 vector<std::map<int, TH1F*>> hEn_QQQ5UA;
 vector<std::map<int, TH1F*>> hEn_QQQ5UB;
 vector<std::map<int, TH1F*>> hEn_QQQ5UC;
@@ -2246,12 +2250,12 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
 
     chain->SetBranchAddress ( "si", &siData );
 
-    float massBeam = 134.;
-    float beamEk = 1337;
-    float massTarget = 2.;
-    float massRecoil = 135.;
-    float massEjec = 1.;
-    float qValGsGs = 4.1;
+    float massBeam = calibBeamMass;
+    float beamEk = calibBeamEk;
+    float massTarget = calibBeamMass;
+    float massRecoil = calibRecoilMass;
+    float massEjec = calibEjecMass;
+    float qValGsGs = calibQvalGsGs;
 
     vector<std::map<int, TH1F*>>* hQValPerSector[4];
 
@@ -2328,8 +2332,7 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
     return;
 }
 
-vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode
-        /*string chi2Mode, string sigmaMode, string magnMode, string integralMode, string histIntegralMode*/ )
+vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode )
 {
     vector<double> finalMods;
 
@@ -2392,14 +2395,8 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
     // -------------------------
 
-    auto chi2LinkMap = MakeLinkMap ( "x ini best", chi2, firstChi2, bestChi2 );
-    auto sigmaLinkMap = MakeLinkMap ( "x ini best", sigma, firstSigma, bestSigma );
-    auto magnLinkMap = MakeLinkMap ( "x ini best", magn, firstMagn, bestMagn );
-    auto integralLinkMap = MakeLinkMap ( "x ini best", integral, firstIntegral, bestIntegral );
-    auto histIntegralLinkMap = MakeLinkMap ( "x ini best", histIntegral, firstHistIntegral, bestHistIntegral );
-    
     auto linkMap = MakeLinkMap ( "chi2 bestChi2 firstChi2 sigma bestSigma firstSigma magn bestMagn firstMagn gaussIntegral bestGaussIntegral firstGaussIntegral rawIntegral bestRawIntegral firstRawIntegral",
-                                 chi2, firstChi2, bestChi2, sigma, firstSigma, bestSigma, magn, firstMagn, bestMagn, integral, firstIntegral, bestIntegral, histIntegral, firstHistIntegral, bestHistIntegral );
+                                 chi2, bestChi2, firstChi2, sigma, bestSigma, firstSigma, magn, bestMagn, firstMagn, integral, bestIntegral, firstIntegral, histIntegral, bestHistIntegral, firstHistIntegral );
 
     cout << "\n";
 
@@ -2439,14 +2436,7 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
             bool goodFit = false;
 
-//             bool chi2Cond = !chi2Mode.empty() ? StringFormulaComparator<double> ( chi2Mode, &chi2LinkMap ) : true;
-//             bool sigmaCond = !sigmaMode.empty() ? StringFormulaComparator<double> ( sigmaMode, &sigmaLinkMap ) : true;
-//             bool magnCond = !magnMode.empty() ? StringFormulaComparator<double> ( magnMode, &magnLinkMap ) : true;
-//             bool integralCond = !integralMode.empty() ? StringFormulaComparator<double> ( integralMode, &integralLinkMap ) : true;
-//             bool histIntegralCond = !histIntegralMode.empty() ? StringFormulaComparator<double> ( histIntegralMode, &histIntegralLinkMap ) : true;
-
-//             goodFit = chi2Cond && sigmaCond && magnCond && histIntegralCond;
-	    goodFit = StringFormulaComparator<double> ( betterFitMode, &linkMap );
+            goodFit = StringFormulaComparator<double> ( betterFitMode, &linkMap );
 
             if ( goodFit ) finalMods[i] = modCoeff;
 
