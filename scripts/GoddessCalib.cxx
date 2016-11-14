@@ -545,9 +545,9 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         TGNumberEntryField* nbinsXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
         TGDimension defDim = nbinsXIF->GetDefaultSize();
         nbinsXIF->SetName ( "NBinsX IF" );
-        TGNumberEntryField* binMinXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
+        TGNumberEntryField* binMinXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMinXIF->SetName ( "BinMinX IF" );
-        TGNumberEntryField* binMaxXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
+        TGNumberEntryField* binMaxXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMaxXIF->SetName ( "BinMaxX IF" );
 
         nbinsXIF->Resize ( 100, defDim.fHeight );
@@ -564,9 +564,9 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
 
         TGNumberEntryField* nbinsYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
         nbinsYIF->SetName ( "NBinsY IF" );
-        TGNumberEntryField* binMinYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
+        TGNumberEntryField* binMinYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMinYIF->SetName ( "BinMinY IF" );
-        TGNumberEntryField* binMaxYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
+        TGNumberEntryField* binMaxYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMaxYIF->SetName ( "BinMaxY IF" );
 
         nbinsYIF->Resize ( 100, defDim.fHeight );
@@ -660,13 +660,13 @@ void GoddessCalib::OnClickGetLinesInfo ()
 
     auto canPrimList = gPad->GetCanvas()->GetListOfPrimitives();
 
-    TGraph* gr;
+    TH2F* gr;
 
     string grName_ = "";
 
     for ( int i = 0; i < canPrimList->GetSize(); i++ )
     {
-        gr = dynamic_cast<TGraph*> ( canPrimList->At ( i ) );
+        gr = dynamic_cast<TH2F*> ( canPrimList->At ( i ) );
 
         if ( gr != nullptr )
         {
@@ -1420,7 +1420,7 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
 
             resStripsEnCalGraphsMap[Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorsList[i], j )] = TH2Fplot;
 
-            //             cout << "Stored graph in the TGraph map..." << endl;
+            //             cout << "Stored graph in the TH2F map..." << endl;
         }
     }
 
@@ -1511,7 +1511,7 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
     }
 
     f->Close();
-    
+
     return;
 }
 
@@ -1675,7 +1675,7 @@ void GoddessCalib::WritePosCalHistsToFile ( TTree* tree, string fileName )
     }
 
     f->Close();
-    
+
     return;
 }
 
@@ -2327,8 +2327,8 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
     return;
 }
 
-vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_,
-        string chi2Mode, string sigmaMode, string magnMode, string integralMode, string histIntegralMode )
+vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode
+        /*string chi2Mode, string sigmaMode, string magnMode, string integralMode, string histIntegralMode*/ )
 {
     vector<double> finalMods;
 
@@ -2396,6 +2396,9 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
     auto magnLinkMap = MakeLinkMap ( "x ini best", magn, firstMagn, bestMagn );
     auto integralLinkMap = MakeLinkMap ( "x ini best", integral, firstIntegral, bestIntegral );
     auto histIntegralLinkMap = MakeLinkMap ( "x ini best", histIntegral, firstHistIntegral, bestHistIntegral );
+    
+    auto linkMap = MakeLinkMap ( "chi2 bestChi2 firstChi2 sigma bestSigma firstSigma magn bestMagn firstMagn gaussIntegral bestGaussIntegral firstGaussIntegral rawIntegral bestRawIntegral firstRawIntegral",
+                                 chi2, firstChi2, bestChi2, sigma, firstSigma, bestSigma, magn, firstMagn, bestMagn, integral, firstIntegral, bestIntegral, histIntegral, firstHistIntegral, bestHistIntegral );
 
     cout << "\n";
 
@@ -2435,13 +2438,14 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
             bool goodFit = false;
 
-            bool chi2Cond = !chi2Mode.empty() ? StringFormulaComparator<double> ( chi2Mode, &chi2LinkMap ) : true;
-            bool sigmaCond = !sigmaMode.empty() ? StringFormulaComparator<double> ( sigmaMode, &sigmaLinkMap ) : true;
-            bool magnCond = !magnMode.empty() ? StringFormulaComparator<double> ( magnMode, &magnLinkMap ) : true;
-            bool integralCond = !integralMode.empty() ? StringFormulaComparator<double> ( integralMode, &integralLinkMap ) : true;
-            bool histIntegralCond = !histIntegralMode.empty() ? StringFormulaComparator<double> ( histIntegralMode, &histIntegralLinkMap ) : true;
+//             bool chi2Cond = !chi2Mode.empty() ? StringFormulaComparator<double> ( chi2Mode, &chi2LinkMap ) : true;
+//             bool sigmaCond = !sigmaMode.empty() ? StringFormulaComparator<double> ( sigmaMode, &sigmaLinkMap ) : true;
+//             bool magnCond = !magnMode.empty() ? StringFormulaComparator<double> ( magnMode, &magnLinkMap ) : true;
+//             bool integralCond = !integralMode.empty() ? StringFormulaComparator<double> ( integralMode, &integralLinkMap ) : true;
+//             bool histIntegralCond = !histIntegralMode.empty() ? StringFormulaComparator<double> ( histIntegralMode, &histIntegralLinkMap ) : true;
 
-            goodFit = chi2Cond && sigmaCond && magnCond && histIntegralCond;
+//             goodFit = chi2Cond && sigmaCond && magnCond && histIntegralCond;
+	    goodFit = StringFormulaComparator<double> ( betterFitMode, &linkMap );
 
             if ( goodFit ) finalMods[i] = modCoeff;
 

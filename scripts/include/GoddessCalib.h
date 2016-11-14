@@ -191,8 +191,10 @@ public:
 
     void GenerateEnergyHistPerStrip ( TChain* chain );
 
-    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
-                                        string chi2Mode = "x <= best", string sigmaMode = "x <= best", string magnMode = "x => best", string integralMode = "x => best", string histIntegralMode = "x => best" );
+    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, 
+					float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
+                                        /*string chi2Mode = "x <= best", string sigmaMode = "x <= best", string magnMode = "x => best", string integralMode = "x => best", string histIntegralMode = "x => best"*/
+				      string betterFitMode = "chi2 <= bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rasIntegral >= bestRawIntegral");
 
     template<typename First, typename... Rest> void GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest );
 
