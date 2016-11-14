@@ -71,7 +71,7 @@ public:
      * massTarget is the mass of the target in a.m.u.
      * massEjec is the mass of the emitted light particle in a.m.u.
      */
-    virtual float QValue ( float massBeam = 134., float kBeam = 1337.7, float massTarget = 2., float massEjec = 1., float recoilMass = 0.0 ) const;
+    virtual float QValue ( float massBeam = 134., float kBeam = 1337.7, float massTarget = 2., float massEjec = 1., float massRecoil = 0.0 ) const;
 
     ///Method which can be used within the root Draw command to plot the angular distribution of the particles detected in a specific layer
     virtual float Angle ( unsigned short layer = 1 ) const;

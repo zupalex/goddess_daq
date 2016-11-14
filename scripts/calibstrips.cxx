@@ -1,4 +1,12 @@
 #include "goddess_analysis_macros.h"
+#include "GoddessCalib.h"
+
+using std::string;
+using std::vector;
+using std::cout;
+using std::cerr;
+using std::clog;
+using std::endl;
 
 TH2F *histToTreat = 0;
 std::map<Int_t, std::pair<TH1D*, TF1*>> myFitsResults;
@@ -36,17 +44,17 @@ void SetFitMode ( string mode )
 {
     if ( ! ( mode == "iteration" || mode == "random" ) )
     {
-        std::cerr << "The fitting mode is set to an improper value (" << fitMode << "). Expecting \"iteration\" or \"random\"" << std::endl;
-        std::cerr << "Change will be ignored..." << std::endl;
+        cerr << "The fitting mode is set to an improper value (" << fitMode << "). Expecting \"iteration\" or \"random\"" << std::endl;
+        cerr << "Change will be ignored..." << std::endl;
         return;
     }
 
     fitMode = mode;
 }
 
-std::vector<TH1*> GetHistsFromFile ( TFile *file )
+vector<TH1*> GetHistsFromFile ( TFile *file )
 {
-    std::vector<TH1*> listOfHists;
+    vector<TH1*> listOfHists;
 
     listOfHists.clear();
 
@@ -65,7 +73,7 @@ std::vector<TH1*> GetHistsFromFile ( TFile *file )
         }
     }
 
-    std::cout << "Retrieved the histograms from the file: " << std::endl;
+    cout << "Retrieved the histograms from the file: " << std::endl;
 
     file->ls();
 
@@ -266,9 +274,9 @@ TF1* FitWithMyGauss ( TH1D* inHist, Int_t beginFittedRange, float estWidth, unsi
         {
             if ( IsChi2Wrong ( fitRes ) || IsParamWrong ( fitRes, 2, ampLowLim, ampHighLim ) )
             {
-                std::cerr << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
-                std::cerr << "Potential issue for the fit of the range starting at  " << beginFittedRange << std::endl;
-                std::cerr << "Trying to fix it..." << std::endl;
+                cerr << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
+                cerr << "Potential issue for the fit of the range starting at  " << beginFittedRange << std::endl;
+                cerr << "Trying to fix it..." << std::endl;
 
                 for ( int ll = 0; ll < 60; ll++ )
                 {
@@ -280,7 +288,7 @@ TF1* FitWithMyGauss ( TH1D* inHist, Int_t beginFittedRange, float estWidth, unsi
 
                         if ( ! ( IsChi2Wrong ( fitRes ) || IsParamWrong ( fitRes, 2, ampLowLim, ampHighLim ) ) )
                         {
-                            std::cout << "Issue seems fixed after " << ll+rr << " attempts..." << std::endl << std::endl;
+                            cout << "Issue seems fixed after " << ll+rr << " attempts..." << std::endl << std::endl;
                             break;
                         }
                     }
@@ -291,7 +299,7 @@ TF1* FitWithMyGauss ( TH1D* inHist, Int_t beginFittedRange, float estWidth, unsi
 
             if ( IsChi2Wrong ( fitRes ) || IsParamWrong ( fitRes, 2, ampLowLim, ampHighLim ) )
             {
-                std::cerr << "/!\\/!\\/!\\/!\\ WARNING: Issue not resolved for the range starting at  " << beginFittedRange << " .../!\\/!\\/!\\/!\\" << std::endl << std::endl;
+                cerr << "/!\\/!\\/!\\/!\\ WARNING: Issue not resolved for the range starting at  " << beginFittedRange << " .../!\\/!\\/!\\/!\\" << std::endl << std::endl;
             }
         }
 
@@ -301,9 +309,9 @@ TF1* FitWithMyGauss ( TH1D* inHist, Int_t beginFittedRange, float estWidth, unsi
             {
                 if ( endlessBreak == 0 )
                 {
-                    std::cerr << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
-                    std::cerr << "Potential issue for the fit of the range starting at  " << beginFittedRange << std::endl;
-                    std::cerr << "Trying to fix it..." << std::endl;
+                    cerr << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
+                    cerr << "Potential issue for the fit of the range starting at  " << beginFittedRange << std::endl;
+                    cerr << "Trying to fix it..." << std::endl;
                 }
 
                 fitRes = InitMyGaussParams ( inHist, estWidth, nbrOfGauss, mean, xMin, xMax, ignoreTail, true );
@@ -315,17 +323,17 @@ TF1* FitWithMyGauss ( TH1D* inHist, Int_t beginFittedRange, float estWidth, unsi
 
             if ( IsChi2Wrong ( fitRes ) || IsParamWrong ( fitRes, 2, ampLowLim, ampHighLim ) )
             {
-                std::cerr << "/!\\/!\\/!\\/!\\ WARNING: Issue still not resolved after " << endlessBreak << " attemps for range starting at " << beginFittedRange << ".../!\\/!\\/!\\/!\\" << std::endl << std::endl;
+                cerr << "/!\\/!\\/!\\/!\\ WARNING: Issue still not resolved after " << endlessBreak << " attemps for range starting at " << beginFittedRange << ".../!\\/!\\/!\\/!\\" << std::endl << std::endl;
 
                 fitsWithIssues[beginFittedRange] = fitRes;
             }
             else if ( endlessBreak > 0 )
             {
-                std::cout << "Issue seems fixed after " << endlessBreak << " attempts..." << std::endl << std::endl;
+                cout << "Issue seems fixed after " << endlessBreak << " attempts..." << std::endl << std::endl;
             }
         }
 
-        else std::cerr << "The fitting mode is set to an improper value (" << fitMode << "). Expecting \"iteration\" or \"random\"" << std::endl;
+        else cerr << "The fitting mode is set to an improper value (" << fitMode << "). Expecting \"iteration\" or \"random\"" << std::endl;
     }
 
     return fitRes;
@@ -418,9 +426,9 @@ void CloseAllResults()
     }
 }
 
-std::vector<TCanvas*> DrawAllResults()
+vector<TCanvas*> DrawAllResults()
 {
-    std::vector<TCanvas*> resCans;
+    vector<TCanvas*> resCans;
 
     resCans.clear();
 
@@ -444,7 +452,7 @@ template<typename T> T PromptMessage ( string messageToDisplay, T* inputToMod )
         {
             inputIsValid = true;
 
-            std::cout << messageToDisplay;
+            cout << messageToDisplay;
             std::cin >> userInput;
 
             bool aYes = ( strcmp ( userInput, "y" ) == 0 || strcmp ( userInput, "yes" ) == 0 );
@@ -454,7 +462,7 @@ template<typename T> T PromptMessage ( string messageToDisplay, T* inputToMod )
             else
             {
                 inputIsValid = false;
-                std::cerr << "\nInvalid input. Answer [yes/y] or [no/n]\n" << std::endl;
+                cerr << "\nInvalid input. Answer [yes/y] or [no/n]\n" << std::endl;
             }
         }
     }
@@ -464,7 +472,7 @@ template<typename T> T PromptMessage ( string messageToDisplay, T* inputToMod )
         {
             inputIsValid = true;
 
-            std::cout << messageToDisplay;
+            cout << messageToDisplay;
             std::cin >> *inputToMod;
 
             if ( std::cin.fail() )
@@ -476,7 +484,7 @@ template<typename T> T PromptMessage ( string messageToDisplay, T* inputToMod )
 
                 int status;
 
-                std::cerr << "Invalid input. Please enter a " << abi::__cxa_demangle ( typeid ( *inputToMod ).name(), 0, 0, &status ) << " only..." << std::endl;
+                cerr << "Invalid input. Please enter a " << abi::__cxa_demangle ( typeid ( *inputToMod ).name(), 0, 0, &status ) << " only..." << std::endl;
             }
         }
     }
@@ -490,14 +498,14 @@ void WriteFitResToFile ( string outPath = "./", string outFile = "FitRes", float
 
     bool dumpBool = false;
 
-    std::cout << "You are about to write the fit results to a text file..." << std::endl;
+    cout << "You are about to write the fit results to a text file..." << std::endl;
 
     if ( PromptMessage ( "Do you want to change the default path (\""+ outPath + "\") ?  ", &dumpBool ) )
     {
         PromptMessage ( "Enter the new value...\n", &outPath );
     }
 
-    std::cout << "File will be written there: " << outPath << std::endl;
+    cout << "File will be written there: " << outPath << std::endl;
 
 promptFileName:
     if ( PromptMessage<bool> ( "Do you want to change the current file name (\"" + outFile + "\") ?  ", &dumpBool ) )
@@ -511,8 +519,8 @@ promptFileName:
 
     if ( outStream.is_open() )
     {
-        if ( peakEn > 0.0 ) outStream << std::left << std::setw(8) << "Strip#" << std::setw(13) << "Peak Pos." << std::setw(15) << "Fit Slope" << std::setw(14) << "Chi Square" << "\n\n";
-        else outStream << std::left << std::setw(8) << "Strip#" << std::setw(13) << "Peak Pos." << std::setw(14) << "Chi Square" << "\n\n";
+        if ( peakEn > 0.0 ) outStream << std::left << std::setw ( 8 ) << "Strip#" << std::setw ( 13 ) << "Peak Pos." << std::setw ( 15 ) << "Fit Slope" << std::setw ( 14 ) << "Chi Square" << "\n\n";
+        else outStream << std::left << std::setw ( 8 ) << "Strip#" << std::setw ( 13 ) << "Peak Pos." << std::setw ( 14 ) << "Chi Square" << "\n\n";
 
         for ( auto itr = myFitsResults.begin(); itr != myFitsResults.end(); itr++ )
         {
@@ -538,17 +546,17 @@ promptFileName:
                 }
             }
 
-            if ( peakEn > 0.0 ) outStream << std::left << std::setw(8) << itr->first << std::setw(13) << centroid << std::setw(15) << (centroid != 0 ? peakEn/centroid : 0)  << std::setw(14) << fr->GetChisquare() << "\n";
-            else outStream << std::left << std::setw(8) << itr->first << std::setw(13) << centroid << std::setw(14) << fr->GetChisquare() << "\n";
+            if ( peakEn > 0.0 ) outStream << std::left << std::setw ( 8 ) << itr->first << std::setw ( 13 ) << centroid << std::setw ( 15 ) << ( centroid != 0 ? peakEn/centroid : 0 )  << std::setw ( 14 ) << fr->GetChisquare() << "\n";
+            else outStream << std::left << std::setw ( 8 ) << itr->first << std::setw ( 13 ) << centroid << std::setw ( 14 ) << fr->GetChisquare() << "\n";
         }
 
         outStream.close();
 
-        std::cout << "Fit results written to file: " << outFullName << std::endl;
+        cout << "Fit results written to file: " << outFullName << std::endl;
     }
     else
     {
-        std::cerr << "Unabled to create file " << outFullName << std::endl;
+        cerr << "Unabled to create file " << outFullName << std::endl;
     }
 }
 
@@ -556,23 +564,23 @@ void DisplayFailedFitsList()
 {
     if ( fitsWithIssues.size() > 0 )
     {
-        std::cerr << std::endl;
-        std::cerr << "/!\\/!\\/!\\/!\\ WARNING -> The following fits \"failed\" /!\\/!\\/!\\/!\\" << std::endl;
-        std::cerr << "     Please note that \"failed\" fit does not necesaarily mean \"bad\"" << std::endl;
-        std::cerr << "                It may result from:" << std::endl;
-        std::cerr << "                 ->a binning too small in the source 2D histogram" << std::endl;
-        std::cerr << "                 ->a very bad estimation of the width" << std::endl;
-        std::cerr << "                 ->unrealistic requirement on the final Chi2 or amplitude" << std::endl;
-        std::cerr << std::endl;
+        cerr << std::endl;
+        cerr << "/!\\/!\\/!\\/!\\ WARNING -> The following fits \"failed\" /!\\/!\\/!\\/!\\" << std::endl;
+        cerr << "     Please note that \"failed\" fit does not necesaarily mean \"bad\"" << std::endl;
+        cerr << "                It may result from:" << std::endl;
+        cerr << "                 ->a binning too small in the source 2D histogram" << std::endl;
+        cerr << "                 ->a very bad estimation of the width" << std::endl;
+        cerr << "                 ->unrealistic requirement on the final Chi2 or amplitude" << std::endl;
+        cerr << std::endl;
 
-        std::cerr << reqChi2Min << " < Required Chi2 < " << reqChi2Max << std::endl;
+        cerr << reqChi2Min << " < Required Chi2 < " << reqChi2Max << std::endl;
 
         for ( auto itr = fitsWithIssues.begin(); itr != fitsWithIssues.end(); itr++ )
         {
-            std::cerr << "Strip# " << itr->first  << " (Chi2 = " << itr->second->GetChisquare() << ")" << std::endl;
+            cerr << "Strip# " << itr->first  << " (Chi2 = " << itr->second->GetChisquare() << ")" << std::endl;
         }
 
-        std::cerr << std::endl;
+        cerr << std::endl;
 
         bool displayFaulty = false;
 
@@ -599,24 +607,24 @@ void DoMyJob ( TH2F* inHist, float estWidth, unsigned short nbrOfGauss, bool doD
     DisplayFailedFitsList();
 }
 
-int MultipleChoicePrompt ( char* message, std::vector<string> choices, std::vector<string> desc = {} )
+int MultipleChoicePrompt ( char* message, vector<string> choices, vector<string> desc = {} )
 {
     char* userIn = new char[256];
 
     unsigned short choicesSize = choices.size();
 
-    std::cout << message << " (\"q\" to abort, \"b\" to go backward)\n";
+    cout << message << " (\"q\" to abort, \"b\" to go backward)\n";
 
     for ( unsigned short i = 0; i < choicesSize; i++ )
     {
-        std::cout << "[" << i << "] " << choices[i] << std::endl;
-        if ( desc.size() > 0 && desc[i].length() > 0 ) std::cout << "     --> " << desc[i] << std::endl;
+        cout << "[" << i << "] " << choices[i] << std::endl;
+        if ( desc.size() > 0 && desc[i].length() > 0 ) cout << "     --> " << desc[i] << std::endl;
     }
 
-    std::cout << std::endl;
+    cout << std::endl;
 
     std::cin >> userIn;
-    std::cout << std::endl;
+    cout << std::endl;
 
     if ( strcmp ( userIn, "q" ) == 0 ) return -3;
     else if ( strcmp ( userIn, "b" ) == 0 ) return -2;
@@ -631,7 +639,7 @@ int MultipleChoicePrompt ( char* message, std::vector<string> choices, std::vect
             }
         }
 
-        std::cerr << "Invalid input..." << std::endl;
+        cerr << "Invalid input..." << std::endl;
     }
 
     return -1;
@@ -676,14 +684,14 @@ void DoMyJob()
 prompt2DHist:
     if ( histToTreat == NULL )
     {
-        std::cout << "Enter the name of the 2D histogram used as a source or type \"new\" to generate a new one... (\"q\" to quit)\n";
+        cout << "Enter the name of the 2D histogram used as a source or type \"new\" to generate a new one... (\"q\" to quit)\n";
         std::cin >> userIn;
-        std::cout << std::endl;
+        cout << std::endl;
 
         if ( strcmp ( userIn, "q" ) == 0 ) return;
         else if ( strcmp ( userIn, "new" ) == 0 )
         {
-            std::cout << "Come back later when it's implemented" << std::endl;
+            cout << "Come back later when it's implemented" << std::endl;
             goto prompt2DHist;
         }
         else
@@ -692,7 +700,7 @@ prompt2DHist:
 
             if ( hist == NULL )
             {
-                std::cerr << "The 2D histogram specified does not exists!\n\n";
+                cerr << "The 2D histogram specified does not exists!\n\n";
                 goto prompt2DHist;
             }
         }
@@ -729,29 +737,536 @@ std::map<unsigned short, std::pair<float, float>> GetCalibMap ( unsigned short f
 
     ifstream fileToRead;
     fileToRead.open ( inFileName.c_str() );
-    
+
     float p0Read, p1Read;
-    
+
     unsigned short ch = fstCh;
-    
+
     if ( fileToRead.is_open() )
     {
         while ( !fileToRead.eof() )
         {
             fileToRead >> p0Read >> p1Read;
-	    
-	    std::cout << "Read " << ch << " ->" << p0Read << " / " << p1Read << std::endl;
-	    
-	    calMap_[ch] = std::make_pair<float, float>((float) p0Read, (float) p1Read);
-	    
-	    ch++;
+
+            cout << "Read " << ch << " ->" << p0Read << " / " << p1Read << std::endl;
+
+            calMap_[ch] = std::make_pair<float, float> ( ( float ) p0Read, ( float ) p1Read );
+
+            ch++;
         }
     }
 
     fileToRead.close();
-    
+
     myCalMap = calMap_;
-    
+
     return calMap_;
+}
+
+// *************************************************************************************************************** //
+
+void GetEnHistsPerStrip ( TChain* data_, string sectorsStr = "all", string stripsStr = "all" )
+{
+    cout << "The following files will be treated:\n";
+
+    data_->ls();
+
+    vector<SiDataBase>* siData = new vector<SiDataBase>;
+
+    data_->SetBranchAddress ( "si", &siData );
+
+    vector<unsigned short> sectorsList, stripsList;
+
+    if ( sectorsStr == "all" ) sectorsList = {0, 1, 2, 3};
+    else sectorsList = DecodeSectorsString ( sectorsStr );
+
+
+    if ( stripsStr == "all" )
+    {
+        for ( int i = 0; i < 32; i++ ) stripsList.push_back ( i );
+    }
+    else stripsList = DecodeSectorsString ( stripsStr );
+
+    TH1F* hQQQ5En[4][32];
+
+    string QQQ5Str = "ABCD";
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        for ( int j = 0; j < 32; j++ )
+        {
+            hQQQ5En[i][j] = new TH1F ( Form ( "hQQQ5En_U%c_s%d",QQQ5Str[i], j ), Form ( "QQQ5 U%c s%d Energy Histogram",QQQ5Str[i], j ), 500, 0, 10 );
+        }
+    }
+
+    for ( long long int i = 0; i < data_->GetEntries(); i++ )
+    {
+        if ( i%10000 == 0 )
+        {
+            cout << "Treated " << std::setw ( 9 ) << i << " / " << std::setw ( 9 ) << data_->GetEntries();
+            cout << " ( " << std::setw ( 5 ) << std::fixed << std::setprecision ( 2 ) << ( float ) i/data_->GetEntries() *100. << "% )\r" << std::flush;
+        }
+
+        data_->GetEntry ( i );
+
+        for ( unsigned int j = 0; j < siData->size(); j++ )
+        {
+            if ( siData->at ( j ).isUpstream && !siData->at ( j ).isBarrel &&  siData->at ( j ).MultLayer ( 1, false ) == 1 )
+            {
+                int sector = siData->at ( j ).sector;
+                int strip = siData->at ( j ).StripMaxLayer ( 1, false );
+
+//                 if ( std::find ( sectorsList.begin(), sectorsList.end(), sector ) != sectorsList.end()
+//                         && std::find ( stripsList.begin(), stripsList.end(), strip ) != stripsList.end() )
+//                 {
+//                     hQQQ5En[sector][strip]->Fill ( siData->at ( j ).ESumLayer ( 1, false ) );
+//                 }
+
+                hQQQ5En[sector][strip]->Fill ( siData->at ( j ).ESumLayer ( 1, false ) );
+            }
+        }
+    }
+
+    cout << "\n\n";
+
+    TFile* outFile = new TFile ( "QQQ5_Energy_per_strip.root", "recreate" );
+
+    outFile->cd();
+
+    for ( unsigned int i = 0; i < sectorsList.size(); i++ )
+    {
+        for ( unsigned int j = 0; j < stripsList.size(); j++ )
+        {
+            hQQQ5En[sectorsList[i]][stripsList[j]]->Write();
+        }
+    }
+
+    outFile->Close();
+
+    return;
+}
+
+void GetEnHistsPerStrip ( string fName, string treeName, string sectorsStr = "all", string stripsStr = "all" )
+{
+    TChain* data_ = new TChain ( treeName.c_str(), treeName.c_str() );
+
+    vector<string> listOfFiles = DecodeFilesToTreat ( fName );
+
+    for ( unsigned int i = 0; i < listOfFiles.size(); i++ )
+    {
+        data_->Add ( listOfFiles[i].c_str() );
+    }
+
+    return GetEnHistsPerStrip ( data_, sectorsStr, stripsStr );
+}
+
+// *************************************************************************************************************************************** //
+
+vector<std::map<int, TH1F*>> hEn_QQQ5UA;
+vector<std::map<int, TH1F*>> hEn_QQQ5UB;
+vector<std::map<int, TH1F*>> hEn_QQQ5UC;
+vector<std::map<int, TH1F*>> hEn_QQQ5UD;
+
+vector<std::map<int, TH1F*>> hQVal_QQQ5UA;
+vector<std::map<int, TH1F*>> hQVal_QQQ5UB;
+vector<std::map<int, TH1F*>> hQVal_QQQ5UC;
+vector<std::map<int, TH1F*>> hQVal_QQQ5UD;
+
+TH2F* hEn_vs_strip_QQQ5UA;
+TH2F* hEn_vs_strip_QQQ5UB;
+TH2F* hEn_vs_strip_QQQ5UC;
+TH2F* hEn_vs_strip_QQQ5UD;
+
+TH2F* hQval_vs_strip_QQQ5UA;
+TH2F* hQval_vs_strip_QQQ5UB;
+TH2F* hQval_vs_strip_QQQ5UC;
+TH2F* hQval_vs_strip_QQQ5UD;
+
+TH2F* hEn_vs_strip_QQQ5UA_mod;
+TH2F* hEn_vs_strip_QQQ5UB_mod;
+TH2F* hEn_vs_strip_QQQ5UC_mod;
+TH2F* hEn_vs_strip_QQQ5UD_mod;
+
+TH2F* hQval_vs_strip_QQQ5UA_mod;
+TH2F* hQval_vs_strip_QQQ5UB_mod;
+TH2F* hQval_vs_strip_QQQ5UC_mod;
+TH2F* hQval_vs_strip_QQQ5UD_mod;
+
+const int minMod = 40;
+const int maxMod = 160;
+
+TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeff_ = 100 )
+{
+    TH1F* hSum = ( TH1F* ) hists[0][modCoeff_]->Clone();
+
+    for ( int i = 1; i < 32; i++ )
+    {
+        hSum->Add ( hists[i][modCoeff_] );
+    }
+
+    return hSum;
+}
+
+TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeffs[32] )
+{
+    TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
+
+    for ( int i = 1; i < 32; i++ )
+    {
+        hSum->Add ( hists[i][modCoeffs[i]] );
+    }
+
+    return hSum;
+}
+
+TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, vector<int> modCoeffs )
+{
+    TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
+
+    for ( int i = 1; i < 32; i++ )
+    {
+        hSum->Add ( hists[i][modCoeffs[i]] );
+    }
+
+    return hSum;
+}
+
+TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float minBound = 0, float maxBound = 0 )
+{
+    TF1* fitFunc = new TF1 ( "fitFunc", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [5],2 ) ) + [6] + [7] * x", -20, 20 );
+
+    if ( minBound == 0 ) minBound = mean - 2 - fwhm;
+    if ( maxBound == 0 ) maxBound = mean + fwhm*3;
+
+    fitFunc->SetParameters ( 10, mean, fwhm, 10, mean - 2, fwhm, 1, -0.1 );
+
+    hist->Fit ( fitFunc, "Q", "", minBound, maxBound );
+
+    return fitFunc;
+}
+
+TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeff_ = 100 )
+{
+    dest->Reset();
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        unsigned int nBins = src[i][modCoeff_]->GetNbinsX();
+
+        for ( unsigned int j = 0; j < nBins; j++ )
+        {
+            dest->Fill ( i, src[i][modCoeff_]->GetBinCenter ( j ), src[i][modCoeff_]->GetBinContent ( j ) );
+        }
+    }
+
+    return dest;
+}
+
+TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeffs[32] )
+{
+    dest->Reset();
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
+
+        for ( unsigned int j = 0; j < nBins; j++ )
+        {
+            dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
+        }
+    }
+
+    return dest;
+}
+
+TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, vector<int> modCoeffs )
+{
+    dest->Clear();
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
+
+        for ( unsigned int j = 0; j < nBins; j++ )
+        {
+            dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
+        }
+    }
+
+    return dest;
+}
+
+void InitSiEnergySpectra ( unsigned int nBins, int binMin, int binMax )
+{
+    for ( int i = 0; i < 32; i++ )
+    {
+        float modCoeff = minMod;
+
+        std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
+
+        while ( modCoeff <= maxMod )
+        {
+            newMapEntryA[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+            newMapEntryB[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+            newMapEntryC[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+            newMapEntryD[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+
+            modCoeff += 1;
+        }
+
+        hEn_QQQ5UA.push_back ( newMapEntryA );
+        hEn_QQQ5UB.push_back ( newMapEntryB );
+        hEn_QQQ5UC.push_back ( newMapEntryC );
+        hEn_QQQ5UD.push_back ( newMapEntryD );
+    }
+
+    hEn_vs_strip_QQQ5UA = new TH2F ( "hEn_vs_strip_QQQ5UA", "Si Energy vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
+    hEn_vs_strip_QQQ5UB = new TH2F ( "hEn_vs_strip_QQQ5UB", "Si Energy vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
+    hEn_vs_strip_QQQ5UC = new TH2F ( "hEn_vs_strip_QQQ5UC", "Si Energy vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
+    hEn_vs_strip_QQQ5UD = new TH2F ( "hEn_vs_strip_QQQ5UD", "Si Energy vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
+
+    hEn_vs_strip_QQQ5UA_mod = new TH2F ( "hEn_vs_strip_QQQ5UA_mod", "Si Energy vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
+    hEn_vs_strip_QQQ5UB_mod = new TH2F ( "hEn_vs_strip_QQQ5UB_mod", "Si Energy vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
+    hEn_vs_strip_QQQ5UC_mod = new TH2F ( "hEn_vs_strip_QQQ5UC_mod", "Si Energy vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
+    hEn_vs_strip_QQQ5UD_mod = new TH2F ( "hEn_vs_strip_QQQ5UD_mod", "Si Energy vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
+
+    return;
+}
+
+void InitQValSpectra ( unsigned int nBins, int binMin, int binMax )
+{
+    for ( int i = 0; i < 32; i++ )
+    {
+        float modCoeff = minMod;
+
+        std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
+
+        while ( modCoeff <= maxMod )
+        {
+            newMapEntryA[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+            newMapEntryB[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+            newMapEntryC[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+            newMapEntryD[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+
+            modCoeff += 1;
+        }
+
+        hQVal_QQQ5UA.push_back ( newMapEntryA );
+        hQVal_QQQ5UB.push_back ( newMapEntryB );
+        hQVal_QQQ5UC.push_back ( newMapEntryC );
+        hQVal_QQQ5UD.push_back ( newMapEntryD );
+    }
+
+    hQval_vs_strip_QQQ5UA = new TH2F ( "hQval_vs_strip_QQQ5UA", "Q-Value vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
+    hQval_vs_strip_QQQ5UB = new TH2F ( "hQval_vs_strip_QQQ5UB", "Q-Value vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
+    hQval_vs_strip_QQQ5UC = new TH2F ( "hQval_vs_strip_QQQ5UC", "Q-Value vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
+    hQval_vs_strip_QQQ5UD = new TH2F ( "hQval_vs_strip_QQQ5UD", "Q-Value vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
+
+    hQval_vs_strip_QQQ5UA_mod = new TH2F ( "hQval_vs_strip_QQQ5UA_mod", "Q-Value vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
+    hQval_vs_strip_QQQ5UB_mod = new TH2F ( "hQval_vs_strip_QQQ5UB_mod", "Q-Value vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
+    hQval_vs_strip_QQQ5UC_mod = new TH2F ( "hQval_vs_strip_QQQ5UC_mod", "Q-Value vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
+    hQval_vs_strip_QQQ5UD_mod = new TH2F ( "hQval_vs_strip_QQQ5UD_mod", "Q-Value vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
+
+    return;
+}
+
+void GenerateEnergyHistPerStrip ( TChain* chain )
+{
+    InitSiEnergySpectra ( 200, 0, 10 );
+    InitQValSpectra ( 500,-15,10 );
+
+    vector<SiDataBase>* siData = new vector<SiDataBase>;
+
+    chain->SetBranchAddress ( "si", &siData );
+
+    float massBeam = 134.;
+    float beamEk = 1337;
+    float massTarget = 2.;
+    float massRecoil = 135.;
+    float massEjec = 1.;
+    float qValGsGs = 4.1;
+
+    vector<std::map<int, TH1F*>>* hQValPerSector[4];
+
+    hQValPerSector[0] = &hQVal_QQQ5UA;
+    hQValPerSector[1] = &hQVal_QQQ5UB;
+    hQValPerSector[2] = &hQVal_QQQ5UC;
+    hQValPerSector[3] = &hQVal_QQQ5UD;
+
+    vector<std::map<int, TH1F*>>* hEnPerSector[4];
+
+    hEnPerSector[0] = &hEn_QQQ5UA;
+    hEnPerSector[1] = &hEn_QQQ5UB;
+    hEnPerSector[2] = &hEn_QQQ5UC;
+    hEnPerSector[3] = &hEn_QQQ5UD;
+
+    float angle, qval, exEn, modCoeff;
+    int sector, strip, mult;
+    double siEn, newEn, newQval;
+
+    for ( long long int i = 0; i < chain->GetEntries(); i++ )
+    {
+        if ( i%10000 == 0 )
+        {
+            cout << "Treated " << std::setw ( 9 ) << i << " / " << std::setw ( 9 ) << chain->GetEntries();
+            cout << " ( " << std::setw ( 5 ) << std::fixed << std::setprecision ( 2 ) << ( float ) i/chain->GetEntries() *100. << "% )\r" << std::flush;
+        }
+
+        chain->GetEntry ( i );
+
+        for ( unsigned int j = 0; j < siData->size(); j++ )
+        {
+            angle = siData->at ( j ).Angle ( 1 );
+//             qval = siData->at ( j ).QValue ( massBeam, beamEk, massTarget, massEjec );
+
+//             exEn = -qval + qValGsGs;
+
+            sector = siData->at ( j ).sector;
+            strip = siData->at ( j ).StripMaxLayer ( 1, false );
+            mult = siData->at ( j ).MultLayer ( 1, false );
+
+            siEn = siData->at ( j ).ESumLayer ( 1, false );
+
+            if ( angle != 0 && siEn > 0 && mult == 1 )
+            {
+                if ( siData->at ( j ).isUpstream && !siData->at ( j ).isBarrel )
+                {
+                    modCoeff = minMod;
+
+                    while ( modCoeff <= maxMod )
+                    {
+                        newEn = siEn* ( modCoeff/100. );
+
+                        newQval = ( 1+massEjec/massRecoil ) * ( newEn ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
+                                  - 2 * TMath::Sqrt ( massBeam*massEjec* ( newEn ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle * TMath::Pi() / 180. );
+
+                        ( hEnPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newEn );
+
+                        ( hQValPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newQval );
+
+                        modCoeff += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    cout << "\n";
+
+    GetQvalVsStrip ( hQVal_QQQ5UA, hQval_vs_strip_QQQ5UA );
+    GetQvalVsStrip ( hQVal_QQQ5UB, hQval_vs_strip_QQQ5UB );
+    GetQvalVsStrip ( hQVal_QQQ5UC, hQval_vs_strip_QQQ5UC );
+    GetQvalVsStrip ( hQVal_QQQ5UD, hQval_vs_strip_QQQ5UD );
+
+    return;
+}
+
+template<typename First, typename... Rest> void GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest )
+{
+    GoddessAnalysis* gA = new GoddessAnalysis();
+
+    gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
+
+    TChain* uChain = gA->userChain;
+
+    GenerateEnergyHistPerStrip ( uChain );
+}
+
+vector<int> AdjustQValSpectrum ( vector<std::map<int, TH1F*>> hists, float peakPos, float fwhm, float minBound = 0, int maxBound = 0, int minMod_ = minMod, int maxMod_ = maxMod,
+                                 string chi2Mode = "x < y", string sigmaMode = "x <= y", string magnMode = "x => y", string integralMode = "x >= y" )
+{
+    vector<int> bestMods;
+
+    int testMods[32];
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        bestMods.push_back ( 100 );
+    }
+
+    TH1F* sum = AddAllStrips ( hists, bestMods );
+
+    sum->Draw();
+
+    TF1* bestFitFunc = FitQValGS ( sum, peakPos, fwhm );
+
+    double bestChi2, bestMagn, bestMean, bestSigma, bestIntegral;
+
+    bestMagn = bestFitFunc->GetParameter ( 0 );
+    bestMean = bestFitFunc->GetParameter ( 1 );
+    bestSigma = bestFitFunc->GetParameter ( 2 );
+
+    bestChi2 = bestFitFunc->GetChisquare();
+    
+    bestIntegral = bestMagn * TMath::Sqrt(2*TMath::Pi()) * bestSigma;
+
+    TF1* fitFunc;
+
+    double chi2, magn, mean, sigma, integral;
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        for ( int j = 0; j < 32; j++ )
+        {
+            testMods[j] = bestMods[j];
+        }
+
+        int modCoeff = minMod_;
+
+        while ( modCoeff <= maxMod_ )
+        {
+            testMods[i] = modCoeff;
+
+            TH1F* testSum = AddAllStrips ( hists, testMods );
+
+            fitFunc = FitQValGS ( testSum, peakPos, fwhm, minBound, maxBound );
+
+            magn = fitFunc->GetParameter ( 0 );
+            mean = fitFunc->GetParameter ( 1 );
+            sigma = fitFunc->GetParameter ( 2 );
+
+            chi2 = fitFunc->GetChisquare();
+
+	    integral = magn * TMath::Sqrt(2*TMath::Pi()) * sigma;
+
+            bool betterFit = false;
+
+            bool chi2Cond = !chi2Mode.empty() ? StringFormulaComparator<double> ( chi2Mode, chi2, bestChi2 ) : true;
+            bool sigmaCond = !sigmaMode.empty() ? StringFormulaComparator<double> ( sigmaMode, sigma, bestSigma ) : true;
+            bool magnCond = !magnMode.empty() ? StringFormulaComparator<double> ( magnMode, magn, bestMagn ) : true;
+	    bool integralCond = !integralMode.empty() ? StringFormulaComparator<double> ( integralMode, integral, bestIntegral ) : true;
+
+            betterFit = chi2Cond && sigmaCond && magnCond;
+
+            if ( betterFit )
+            {
+                bestFitFunc = ( TF1* ) fitFunc->Clone();
+
+                bestMagn = magn;
+                bestMean = mean;
+                bestSigma = sigma;
+
+                bestChi2 = chi2;
+		
+		bestIntegral = integral;
+
+                bestMods[i] = modCoeff;
+            }
+
+            modCoeff++;
+        }
+    }
+
+    cout << "\n{ ";
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        cout << i << ": " << bestMods[i];
+        if ( i < 31 ) cout << ", ";
+    }
+
+    cout << " }\n";
+
+    return bestMods;
 }
 

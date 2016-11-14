@@ -209,7 +209,7 @@ float SiDataBase::Angle ( short unsigned int layer ) const
     return 0;
 }
 
-float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float massEjec, float recoilMass ) const
+float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float massEjec, float massRecoil ) const
 {
     float energy = ESumLayer ( 1, false );  // MeV
 
@@ -224,7 +224,7 @@ float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float 
         if ( labAngle != 0 )
         {
             float mbeam = massBeam * amu;  // MeV
-            float mrecoil = (recoilMass == 0.0 ? ( massBeam + massTarget - massEjec ) * amu : recoilMass); // MeV
+            float mrecoil = (massRecoil == 0.0 ? ( massBeam + massTarget - massEjec ) * amu : massRecoil); // MeV
 
             float mejec = massEjec * amu;
 

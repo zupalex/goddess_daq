@@ -704,7 +704,7 @@ void GoddessAnalysis::AddFileToTreat ( TFile* inFile, std::string treeName )
 
     if ( lOF != NULL && lOF->GetSize() > 0 )
     {
-        for ( unsigned int i = 0; i < lOF->GetSize(); i++ )
+        for ( int i = 0; i < lOF->GetSize(); i++ )
         {
             if ( lOF->At ( i ) != NULL && ( ( std::string ) inFile->GetName() ) == ( ( std::string ) lOF->At ( i )->GetTitle() ) )
             {

@@ -13,12 +13,17 @@
 #include <cxxabi.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <utility>
+#include <tuple>
+#include <array>
 
 #include "TROOT.h"
+#include "TSystem.h"
 #include <TQObject.h>
 #include "TObject.h"
 #include "TBrowser.h"
 #include "TCanvas.h"
+#include "TString.h"
 #include "TDialogCanvas.h"
 #include "TFrame.h"
 #include "TList.h"
@@ -59,5 +64,13 @@
 #include <RQ_OBJECT.h>
 
 #include "GoddessStruct.h"
+
+using std::map;
+using std::string;
+using std::vector;
+using std::cout;
+using std::cerr;
+using std::clog;
+using std::endl;
 
 #endif
