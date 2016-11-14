@@ -440,7 +440,8 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
 
         string treeName, sectorsStr;
         unsigned long long int nentries;
-        int nBinsX, binMinX, binMaxX, nBinsY, binMinY, binMaxY;
+        int nBinsX, nBinsY;
+	float binMinX, binMaxX,binMinY, binMaxY;
         bool isUS;
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Tree Name IF" ) );
@@ -455,19 +456,19 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         nBinsX = std::stoi ( tE->GetText() );
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "BinMinX IF" ) );
-        binMinX = std::stoi ( tE->GetText() );
+        binMinX = std::stof ( tE->GetText() );
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "BinMaxX IF" ) );
-        binMaxX = std::stoi ( tE->GetText() );
+        binMaxX = std::stof ( tE->GetText() );
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "NBinsY IF" ) );
         nBinsY = std::stoi ( tE->GetText() );
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "BinMinY IF" ) );
-        binMinY = std::stoi ( tE->GetText() );
+        binMinY = std::stof ( tE->GetText() );
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "BinMaxY IF" ) );
-        binMaxY = std::stoi ( tE->GetText() );
+        binMaxY = std::stof ( tE->GetText() );
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Sectors IF" ) );
         sectorsStr = tE->GetText();
