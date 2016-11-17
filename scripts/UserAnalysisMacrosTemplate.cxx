@@ -18,7 +18,8 @@ GoddessAnalysis* gA = 0;
 
 TChain* uChain = 0;
 
-std::map<string, TObject*> histsMap;
+std::map<string, std::pair<TObject*, std::vector<GamData*>>> histsMap;
+std::vector<string> specialHists;
 
 unsigned long long int eventNbr = 0;
 unsigned long long int totEvents = 0;
@@ -36,6 +37,53 @@ template<typename First, typename... Rest> void LoadTrees ( string treeName, Fir
 
     uChain = gA->userChain;
     totEvents = uChain->GetEntries();
+}
+
+void ResetHistsStates ( bool all = false )
+{
+    if ( all )
+    {
+        for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
+        {
+            ( itr->second ).second.clear();
+        }
+    }
+
+    else
+    {
+        for ( unsigned int i = 0; i < specialHists.size(); i++ )
+        {
+            histsMap[specialHists[i]].second.clear();
+        }
+    }
+}
+
+bool CheckHistState ( string histName, GamData* gD )
+{
+    return ( std::find ( histsMap[histName].second.begin(), histsMap[histName].second.end(), gD ) != histsMap[histName].second.end() );
+}
+
+bool CheckHistState ( TObject* hist, GamData* gD )
+{
+    string histName = ( string ) hist->GetName();
+
+    return CheckHistState ( histName, gD );
+}
+
+void AddToHistState ( string histName, GamData* gD )
+{
+    histsMap[histName].second.push_back ( gD );
+
+    return;
+}
+
+void AddToHistState ( TObject* hist, GamData* gD )
+{
+    string histName = ( string ) hist->GetName();
+
+    AddToHistState ( histName, gD );
+
+    return;
 }
 
 template<typename THist> void AddHists ( THist* h1, THist* h2 )
@@ -184,18 +232,34 @@ void PrintProgress ( unsigned long long int maxEvents_ )
     }
 }
 
-TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX )
+void PrintHistsMapContent()
+{
+    std::cout << "List of Histograms: \n\n";
+
+    for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
+    {
+        std::cout << "-> " << itr->first << "\n";
+    }
+
+    return;
+}
+
+TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, bool addToSpecialList = false )
 {
     TH1F* newHist = new TH1F ( name.c_str(), title.c_str(), nBinsX, minX, maxX );
-    histsMap[title] = newHist;
+    histsMap[name] = std::make_pair ( newHist, * ( new std::vector<GamData*> ) );
+
+    if ( addToSpecialList ) specialHists.push_back ( name );
 
     return newHist;
 }
 
-TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY )
+TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, bool addToSpecialList = false )
 {
     TH2F* newHist = new TH2F ( name.c_str(), title.c_str(), nBinsX, minX, maxX, nBinsY, minY, maxY );
-    histsMap[title] = newHist;
+    histsMap[name] = std::make_pair ( newHist, * ( new std::vector<GamData*> ) );
+
+    if ( addToSpecialList ) specialHists.push_back ( name );
 
     return newHist;
 }
@@ -235,8 +299,8 @@ void WriteUserHists ( string outName )
 
     for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
     {
-        TH1F* h1 = dynamic_cast<TH1F*> ( itr->second );
-        TH2F* h2 = dynamic_cast<TH2F*> ( itr->second );
+        TH1F* h1 = dynamic_cast<TH1F*> ( ( itr->second ).first );
+        TH2F* h2 = dynamic_cast<TH2F*> ( ( itr->second ).first );
 
         if ( h1 != NULL )
         {
@@ -274,7 +338,7 @@ bool OrrubaGsGoodTs ( SiDataBase* siData_, GamData* gamData_ )
 
     unsigned long long int gsTs = gamData_->time;
 
-    return ( isDigital && gsTs - orrubaTs > 190 && gsTs - orrubaTs < 210 ) || ( !isDigital && gsTs - orrubaTs > 410 && gsTs - orrubaTs < 430 );
+    return ( isDigital && gsTs - orrubaTs > 180 && gsTs - orrubaTs < 220 ) || ( !isDigital && gsTs - orrubaTs > 410 && gsTs - orrubaTs < 450 );
 }
 
 bool OrrubaEnergyThr ( SiDataBase* siData_ )
@@ -331,8 +395,10 @@ void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
     }
 }
 
-void FillEvsAHist ( SiDataBase* siData_ )
+bool FillEvsAHist ( SiDataBase* siData_ )
 {
+    bool filled = false;
+
     float energy = siData_->ESumLayer ( 1, false );
     float angle = siData_->Angle ( 1 );
 
@@ -351,20 +417,27 @@ void FillEvsAHist ( SiDataBase* siData_ )
             {
                 hEvsA_SX3U_tot[mult]->Fill ( angle, energy );
                 hEvsA_SX3U[sector][mult]->Fill ( angle, energy );
+
+                filled = true;
             }
             else
             {
                 hEvsA_QQQ5U_tot[mult]->Fill ( strip, energy );
                 hEvsA_QQQ5U[sector][mult]->Fill ( strip, energy );
+
+                filled = true;
             }
         }
     }
+
+    return filled;
 }
 
 
 // ------------- Q-Value spectra ----------- //
 
 TH1F* hQval_tot;
+
 TH1F* hQval_SX3U_tot;
 TH1F* hQval_QQQ5U_tot;
 TH1F* hQval_SX3U[12];
@@ -382,11 +455,17 @@ TH2F* hGsVsEx_QQQ5U_tot;
 TH2F* hGsVsEx_SX3U[12];
 TH2F* hGsVsEx_QQQ5U[4];
 
+TH2F* hGsBGOVetoVsEx_tot;
+TH2F* hGsBGOVetoVsEx_SX3U_tot;
+TH2F* hGsBGOVetoVsEx_QQQ5U_tot;
+TH2F* hGsBGOVetoVsEx_SX3U[12];
+TH2F* hGsBGOVetoVsEx_QQQ5U[4];
+
 void InitQvalHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY )
 {
     hQval_tot = MakeNewHist ( "Qvalue_tot", "Q-value tot", nBinsX, minX, maxX );
-    hQval_SX3U_tot = MakeNewHist ( "Qvalue_tot_SX3U", "Q-value SX3s Upstream", nBinsX, minX, maxX );
-    hQval_QQQ5U_tot = MakeNewHist ( "Qvalue_tot_QQQ5U", "Q-value QQQ5s Upstream", nBinsX, minX, maxX );
+    hQval_SX3U_tot = MakeNewHist ( "Qvalue_SX3U_tot", "Q-value SX3s Upstream", nBinsX, minX, maxX );
+    hQval_QQQ5U_tot = MakeNewHist ( "Qvalue_QQQ5U_tot", "Q-value QQQ5s Upstream", nBinsX, minX, maxX );
 
     for ( int i = 0; i < 12; i++ )
     {
@@ -399,8 +478,8 @@ void InitQvalHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
     }
 
     hEx_tot = MakeNewHist ( "Ex_tot", "Excitation Energy tot", nBinsX, minX, maxX );
-    hEx_SX3U_tot = MakeNewHist ( "Ex_tot_SX3U", "Excitation Energy SX3s Upstream", nBinsX, minX, maxX );
-    hEx_QQQ5U_tot = MakeNewHist ( "Ex_tot_QQQ5U", "Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX );
+    hEx_SX3U_tot = MakeNewHist ( "Ex_SX3U_tot", "Excitation Energy SX3s Upstream", nBinsX, minX, maxX );
+    hEx_QQQ5U_tot = MakeNewHist ( "Ex_QQQ5U_tot", "Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX );
 
     for ( int i = 0; i < 12; i++ )
     {
@@ -412,9 +491,9 @@ void InitQvalHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
         hEx_QQQ5U[i] = MakeNewHist ( Form ( "Ex_QQQ5U%d", i ), Form ( "Excitation Energy QQQ5 U%d", i ), nBinsX, minX, maxX );
     }
 
-    hGsVsEx_tot = MakeNewHist ( "GsVsEx_tot", "Gamma Energy vs. Excitation Energy tot", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    hGsVsEx_SX3U_tot = MakeNewHist ( "GsVsEx_tot_SX3U", "Gamma Energy vs. Excitation Energy SX3s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
-    hGsVsEx_QQQ5U_tot = MakeNewHist ( "GsVsEx_tot_QQQ5U", "Gamma Energy vs. Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY );
+    hGsVsEx_tot = MakeNewHist ( "GsVsEx_tot", "Gamma Energy vs. Excitation Energy tot", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
+    hGsVsEx_SX3U_tot = MakeNewHist ( "GsVsEx_SX3U_tot", "Gamma Energy vs. Excitation Energy SX3s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
+    hGsVsEx_QQQ5U_tot = MakeNewHist ( "GsVsEx_QQQ5U_tot", "Gamma Energy vs. Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
 
     for ( int i = 0; i < 12; i++ )
     {
@@ -425,10 +504,26 @@ void InitQvalHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
     {
         hGsVsEx_QQQ5U[i] = MakeNewHist ( Form ( "GsVsEx_QQQ5U%d", i ), Form ( "Gamma Energy vs. Excitation Energy QQQ5 U%d", i ), nBinsX, minX, maxX, nBinsY, minY, maxY );
     }
+
+    hGsBGOVetoVsEx_tot = MakeNewHist ( "GsBGOVetoVsEx_tot", "Gamma Energy BGO Veto vs. Excitation Energy tot", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
+    hGsBGOVetoVsEx_SX3U_tot = MakeNewHist ( "GsBGOVetoVsEx_SX3U_tot", "Gamma Energy BGO Veto vs. Excitation Energy SX3s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
+    hGsBGOVetoVsEx_QQQ5U_tot = MakeNewHist ( "GsBGOVetoVsEx_QQQ5U_tot", "Gamma Energy BGO Veto vs. Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
+
+    for ( int i = 0; i < 12; i++ )
+    {
+        hGsBGOVetoVsEx_SX3U[i] = MakeNewHist ( Form ( "GsBGOVetoVsEx_SX3U%d", i ), Form ( "Gamma Energy BGO Veto vs. Excitation Energy SX3 U%d", i ), nBinsX, minX, maxX, nBinsY, minY, maxY );
+    }
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        hGsBGOVetoVsEx_QQQ5U[i] = MakeNewHist ( Form ( "GsBGOVetoVsEx_QQQ5U%d", i ), Form ( "Gamma Energy BGO Veto vs. Excitation Energy QQQ5 U%d", i ), nBinsX, minX, maxX, nBinsY, minY, maxY );
+    }
 }
 
-void FillQvalHist ( SiDataBase* siData_, float massBeam, float massTarget, float massRecoil, float massEjec, float beamEk, float qValGsGs )
+bool FillQvalHist ( SiDataBase* siData_, float massBeam, float massTarget, float massRecoil, float massEjec, float beamEk, float qValGsGs )
 {
+    bool filled = false;
+
     float angle = siData_->Angle ( 1 );
     float qval = siData_->QValue ( massBeam, beamEk, massTarget, massEjec );
 
@@ -438,36 +533,37 @@ void FillQvalHist ( SiDataBase* siData_, float massBeam, float massTarget, float
 
     double siEn = siData_->ESumLayer ( 1, false );
 
+    string histsBaseName = "Qvalue_";
 
-    if ( angle != 0 && siEn > 0 )
+    if ( siData_->isBarrel ) histsBaseName += "SX3";
+    else histsBaseName += "QQQ5";
+
+    if ( siData_->isUpstream ) histsBaseName += "U";
+    else histsBaseName += "D";
+
+    TH1F* hQvalBorE = ( TH1F* ) histsMap[ ( string ) ( histsBaseName + "_tot" )].first;
+
+    string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), sector );
+    TH1F* hQvalSector = ( TH1F* ) histsMap[histsSectorName].first;
+
+    if ( siData_->isUpstream && angle != 0 && siEn > 0 )
     {
+        hQvalSector->Fill ( qval );
+
         hQval_tot->Fill ( qval );
-        hEx_tot->Fill ( qval );
 
-        if ( siData_->isUpstream )
-        {
-            if ( siData_->isBarrel )
-            {
-                hQval_SX3U_tot->Fill ( qval );
-                hQval_SX3U[sector]->Fill ( qval );
+        hQvalBorE->Fill ( qval );
 
-                hEx_SX3U_tot->Fill ( exEn );
-                hEx_SX3U[sector]->Fill ( exEn );
-            }
-            else
-            {
-                hQval_QQQ5U_tot->Fill ( qval );
-                hQval_QQQ5U[sector]->Fill ( qval );
-
-                hEx_QQQ5U_tot->Fill ( exEn );
-                hEx_QQQ5U[sector]->Fill ( exEn );
-            }
-        }
+        filled = true;
     }
+
+    return filled;
 }
 
-void FillGsVsExHist ( GamData* gamData_, SiDataBase* siData_, float massBeam, float massTarget, float massRecoil, float massEjec, float beamEk, float qValGsGs )
+bool FillGsVsExHist ( GamData* gamData_, SiDataBase* siData_, bool vetoBGO, float massBeam, float massTarget, float massRecoil, float massEjec, float beamEk, float qValGsGs )
 {
+    bool filled = false;
+
     float angle = siData_->Angle ( 1 );
     float qval = siData_->QValue ( massBeam, beamEk, massTarget, massEjec );
 
@@ -481,8 +577,6 @@ void FillGsVsExHist ( GamData* gamData_, SiDataBase* siData_, float massBeam, fl
 
     double gsEn = ( double ) gamData_->en/3.;
     double siEn = siData_->ESumLayer ( 1, false );
-
-    bool filled = false;
 
     bool isDigital = OrrubaIsDigital ( siData_ );
 
@@ -494,32 +588,42 @@ void FillGsVsExHist ( GamData* gamData_, SiDataBase* siData_, float massBeam, fl
 
     bool doFill = timestampOK && sectorOK && energyOK;
 
-    if ( doFill )
+    string histsBaseName;
+
+    if ( vetoBGO ) histsBaseName = "GsBGOVetoVsEx_";
+    else histsBaseName = "GsVsEx_";
+    TH2F* gsVsExtot = ( TH2F* ) histsMap[ ( string ) ( histsBaseName + "tot" )].first;
+
+    if ( siData_->isBarrel ) histsBaseName += "SX3";
+    else histsBaseName += "QQQ5";
+
+    if ( siData_->isUpstream ) histsBaseName += "U";
+    else histsBaseName += "D";
+    TH2F* gsVsExU = ( TH2F* ) histsMap[ ( string ) ( histsBaseName + "_tot" )].first;
+
+    string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), sector );
+    TH2F* gsVsExSector = ( TH2F* ) histsMap[histsSectorName].first;
+
+    if ( doFill && siData_->isUpstream )
     {
-        if ( siData_->isBarrel )
-        {
-            if ( siData_->isUpstream )
-            {
-                hGsVsEx_SX3U[sector]->Fill ( exEn, gsEn );
-            }
-            else
-            {
+        gsVsExSector->Fill ( exEn, gsEn );
 
-            }
-        }
-        else
+        if ( !CheckHistState ( gsVsExU, gamData_ ) )
         {
-            if ( siData_->isUpstream )
-            {
-                hGsVsEx_QQQ5U[sector]->Fill ( exEn, gsEn );
-            }
-            else
-            {
-
-            }
+            gsVsExU->Fill ( exEn, gsEn );
+            AddToHistState ( gsVsExU, gamData_ );
         }
+
+        if ( !CheckHistState ( gsVsExtot, gamData_ ) )
+        {
+            gsVsExtot->Fill ( exEn, gsEn );
+            AddToHistState ( gsVsExtot, gamData_ );
+        }
+
+        filled = true;
     }
 
+    return filled;
 }
 
 // ------------- Time difference between GammaSphere and ORRUBA ----------- //
@@ -530,10 +634,10 @@ TH1F* dTGsQQQ5D[4];
 TH1F* dTGsQQQ5U[4];
 
 
-TH1F* dTGsNoBGOSX3D[12];
-TH1F* dTGsNoBGOSX3U[12];
-TH1F* dTGsNoBGOQQQ5D[4];
-TH1F* dTGsNoBGOQQQ5U[4];
+TH1F* dTGsBGOVetoSX3D[12];
+TH1F* dTGsBGOVetoSX3U[12];
+TH1F* dTGsBGOVetoQQQ5D[4];
+TH1F* dTGsBGOVetoQQQ5U[4];
 
 void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, int minX = -500, int maxX = 500 )
 {
@@ -541,11 +645,11 @@ void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, int minX = -500, int maxX
     {
         dTGsSX3U[i] = MakeNewHist ( Form ( "dT_GS_SX3U%d", i ), Form ( "dT GS SX3 U%d", i ), nBinsX, minX, maxX );
 
-        dTGsSX3D[i] = MakeNewHist ( Form ( "dT GS SX3D%d", i ), Form ( "dT GS SX3 D%d", i ), nBinsX, minX, maxX );
+        dTGsSX3D[i] = MakeNewHist ( Form ( "dT_GS_SX3D%d", i ), Form ( "dT GS SX3 D%d", i ), nBinsX, minX, maxX );
 
-        dTGsNoBGOSX3U[i] = MakeNewHist ( Form ( "dT_GS_NoBGO SX3U%d", i ), Form ( "dT GS No BGO SX3 U%d", i ), nBinsX, minX, maxX );
+        dTGsBGOVetoSX3U[i] = MakeNewHist ( Form ( "dT_GS_BGOVeto_SX3U%d", i ), Form ( "dT GS No BGO SX3 U%d", i ), nBinsX, minX, maxX );
 
-        dTGsNoBGOSX3D[i] = MakeNewHist ( Form ( "dT_GS_NoBGO_SX3D%d", i ), Form ( "dT GS No BGO SX3 D%d", i ), nBinsX, minX, maxX );
+        dTGsBGOVetoSX3D[i] = MakeNewHist ( Form ( "dT_GS_BGOVeto_SX3D%d", i ), Form ( "dT GS No BGO SX3 D%d", i ), nBinsX, minX, maxX );
     }
 
     for ( int i = 0; i < 4; i++ )
@@ -554,15 +658,17 @@ void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, int minX = -500, int maxX
 
         dTGsQQQ5D[i] = MakeNewHist ( Form ( "dT_GS_QQQ5D%d", i ), Form ( "dT GS QQQ5 D%d", i ), nBinsX, minX, maxX );
 
-        dTGsNoBGOQQQ5U[i] = MakeNewHist ( Form ( "dT_GS_NoBGO QQQ5U%d", i ), Form ( "dT GS No BGO QQQ5 U%d", i ), nBinsX, minX, maxX );
+        dTGsBGOVetoQQQ5U[i] = MakeNewHist ( Form ( "dT_GS_BGOVeto_QQQ5U%d", i ), Form ( "dT GS No BGO QQQ5 U%d", i ), nBinsX, minX, maxX );
 
-        dTGsNoBGOQQQ5D[i] = MakeNewHist ( Form ( "dT_GS_NoBGO QQQ5D%d", i ), Form ( "dT GS No BGO QQQ5 D%d", i ), nBinsX, minX, maxX );
+        dTGsBGOVetoQQQ5D[i] = MakeNewHist ( Form ( "dT_GS_BGOVeto_QQQ5D%d", i ), Form ( "dT GS No BGO QQQ5 D%d", i ), nBinsX, minX, maxX );
     }
 }
 
-void FilldTGammaORRUBA ( SiDataBase* siData_, GamData* gamData_ )
+bool FilldTGammaORRUBA ( SiDataBase* siData_, GamData* gamData_, bool vetoBGO = false )
 {
-    if ( gamData_->type == 2 ) return;
+    bool filled = false;
+
+    if ( gamData_->type == 2 ) return false;
 
     unsigned long long int orrubaTs = siData_->TimestampMaxLayer ( 1, false );
 
@@ -570,215 +676,153 @@ void FilldTGammaORRUBA ( SiDataBase* siData_, GamData* gamData_ )
 
     unsigned long long int gsTs = gamData_->time;
 
-    if ( siData_->isBarrel )
-    {
-        if ( siData_->isUpstream )
-        {
-            dTGsSX3U[sector]->Fill ( gsTs - orrubaTs );
-        }
-        else
-        {
-            dTGsSX3D[sector]->Fill ( gsTs - orrubaTs );
-        }
-    }
-    else
-    {
-        if ( siData_->isUpstream )
-        {
-            dTGsQQQ5U[sector]->Fill ( gsTs - orrubaTs );
-        }
-        else
-        {
-            dTGsQQQ5D[sector]->Fill ( gsTs - orrubaTs );
-        }
-    }
+    string histsBaseName = "dT_GS_";
 
+    if ( vetoBGO ) histsBaseName += "BGOVeto_";
 
-    return;
-}
+    if ( siData_->isBarrel ) histsBaseName += "SX3";
+    else histsBaseName += "QQQ5";
 
+    if ( siData_->isUpstream ) histsBaseName += "U";
+    else histsBaseName += "D";
 
-void FilldTNoBGOGammaORRUBA ( SiDataBase* siData_, GamData* gamData_ )
-{
-    unsigned long long int orrubaTs = siData_->TimestampMaxLayer ( 1, false );
+    string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), sector );
+    TH1F* dThist = ( TH1F* ) histsMap[histsSectorName].first;
 
-    int sector = siData_->sector;
+    dThist->Fill ( gsTs - orrubaTs );
 
-    unsigned long long int gsTs = gamData_->time;
+    filled = true;
 
-    if ( siData_->isBarrel )
-    {
-        if ( siData_->isUpstream )
-        {
-            dTGsNoBGOSX3U[sector]->Fill ( gsTs - orrubaTs );
-        }
-        else
-        {
-            dTGsNoBGOSX3D[sector]->Fill ( gsTs - orrubaTs );
-        }
-    }
-    else
-    {
-        if ( siData_->isUpstream )
-        {
-            dTGsNoBGOQQQ5U[sector]->Fill ( gsTs - orrubaTs );
-        }
-        else
-        {
-            dTGsNoBGOQQQ5D[sector]->Fill ( gsTs - orrubaTs );
-        }
-    }
-
-
-    return;
+    return filled;
 }
 
 // -------------------- GammaSphere gated by ORRUBA ------------------------ //
 
 TH1F* gsGatedSX3U[12];
-std::pair<TH1F*,bool> gsGatedSX3U_analog;
-std::pair<TH1F*,bool> gsGatedSX3U_digital;
+TH1F* gsGatedSX3U_tot;
+TH1F* gsGatedSX3U_analog;
+TH1F* gsGatedSX3U_digital;
 
 TH1F* gsGatedSX3D[12];
-std::pair<TH1F*,bool> gsGatedSX3D_analog;
-std::pair<TH1F*,bool> gsGatedSX3D_digital;
+TH1F* gsGatedSX3D_tot;
+TH1F* gsGatedSX3D_analog;
+TH1F* gsGatedSX3D_digital;
 
 TH1F* gsGatedQQQ5U[4];
-std::pair<TH1F*,bool> gsGatedQQQ5U_analog;
-std::pair<TH1F*,bool> gsGatedQQQ5U_digital;
+TH1F* gsGatedQQQ5U_tot;
+TH1F* gsGatedQQQ5U_analog;
+TH1F* gsGatedQQQ5U_digital;
 
 TH1F* gsGatedQQQ5D[4];
-std::pair<TH1F*,bool> gsGatedQQQ5D_analog;
-std::pair<TH1F*,bool> gsGatedQQQ5D_digital;
+TH1F* gsGatedQQQ5D_tot;
+TH1F* gsGatedQQQ5D_analog;
+TH1F* gsGatedQQQ5D_digital;
 
+TH1F* gsBGOVetoGatedSX3U[12];
+TH1F* gsBGOVetoGatedSX3U_tot;
+TH1F* gsBGOVetoGatedSX3U_analog;
+TH1F* gsBGOVetoGatedSX3U_digital;
 
-TH1F* gsNoBGOGatedSX3U[12];
-std::pair<TH1F*,bool> gsNoBGOGatedSX3U_tot;
-std::pair<TH1F*,bool> gsNoBGOGatedSX3U_analog;
-std::pair<TH1F*,bool> gsNoBGOGatedSX3U_digital;
+TH1F* gsBGOVetoGatedSX3D[12];
+TH1F* gsBGOVetoGatedSX3D_tot;
+TH1F* gsBGOVetoGatedSX3D_analog;
+TH1F* gsBGOVetoGatedSX3D_digital;
 
-TH1F* gsNoBGOGatedSX3D[12];
-std::pair<TH1F*,bool> gsNoBGOGatedSX3D_tot;
-std::pair<TH1F*,bool> gsNoBGOGatedSX3D_analog;
-std::pair<TH1F*,bool> gsNoBGOGatedSX3D_digital;
+TH1F* gsBGOVetoGatedQQQ5U[4];
+TH1F* gsBGOVetoGatedQQQ5U_tot;
+TH1F* gsBGOVetoGatedQQQ5U_analog;
+TH1F* gsBGOVetoGatedQQQ5U_digital;
 
-TH1F* gsNoBGOGatedQQQ5U[4];
-std::pair<TH1F*,bool> gsNoBGOGatedQQQ5U_tot;
-std::pair<TH1F*,bool> gsNoBGOGatedQQQ5U_analog;
-std::pair<TH1F*,bool> gsNoBGOGatedQQQ5U_digital;
+TH1F* gsBGOVetoGatedQQQ5D[4];
+TH1F* gsBGOVetoGatedQQQ5D_tot;
+TH1F* gsBGOVetoGatedQQQ5D_analog;
+TH1F* gsBGOVetoGatedQQQ5D_digital;
 
-TH1F* gsNoBGOGatedQQQ5D[4];
-std::pair<TH1F*,bool> gsNoBGOGatedQQQ5D_tot;
-std::pair<TH1F*,bool> gsNoBGOGatedQQQ5D_analog;
-std::pair<TH1F*,bool> gsNoBGOGatedQQQ5D_digital;
-
-void ResetGsHistsState()
-{
-    gsGatedSX3U_analog.second = false;
-    gsGatedSX3U_digital.second = false;
-
-    gsGatedSX3D_analog.second = false;
-    gsGatedSX3D_digital.second = false;
-
-    gsGatedQQQ5U_analog.second = false;
-    gsGatedQQQ5U_digital.second = false;
-
-    gsGatedQQQ5D_analog.second = false;
-    gsGatedQQQ5D_digital.second = false;
-
-    gsNoBGOGatedSX3U_tot.second = false;
-    gsNoBGOGatedSX3U_analog.second = false;
-    gsNoBGOGatedSX3U_digital.second = false;
-
-    gsNoBGOGatedSX3D_tot.second = false;
-    gsNoBGOGatedSX3D_analog.second = false;
-    gsNoBGOGatedSX3D_digital.second = false;
-
-    gsNoBGOGatedQQQ5U_tot.second = false;
-    gsNoBGOGatedQQQ5U_analog.second = false;
-    gsNoBGOGatedQQQ5U_digital.second = false;
-
-    gsNoBGOGatedQQQ5D_tot.second = false;
-    gsNoBGOGatedQQQ5D_analog.second = false;
-    gsNoBGOGatedQQQ5D_digital.second = false;
-}
+TH1F* gsBGOVetoNoTimeGate;
 
 void InitGsGateORRUBAHists ( unsigned int nBinsX = 5000, int minX = 0, int maxX = 5000 )
 {
-    ResetGsHistsState();
-
     for ( int i = 0; i < 12; i++ )
     {
         gsGatedSX3U[i] = MakeNewHist ( Form ( "Gs_Gates_SX3U%d", i ), Form ( "GammaSphere Gates SX3 U%d", i ), nBinsX, minX, maxX );
     }
 
-    gsGatedSX3U_analog.first = MakeNewHist ( "Gs_GatesSX3U_Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX );
-    gsGatedSX3U_digital.first = MakeNewHist ( "Gs_Gates_SX3U_Digital ", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX );
+    gsGatedSX3U_tot = MakeNewHist ( "Gs_Gates_SX3U", "GammaSphere Gates SX3 Upstream", nBinsX, minX, maxX, true );
+    gsGatedSX3U_analog = MakeNewHist ( "Gs_Gates_SX3U_Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX, true );
+    gsGatedSX3U_digital = MakeNewHist ( "Gs_Gates_SX3U_Digital", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX, true );
 
     for ( int i = 0; i < 12; i++ )
     {
         gsGatedSX3D[i] = MakeNewHist ( Form ( "Gs_Gates_SX3D%d", i ), Form ( "GammaSphere Gates SX3 D%d", i ), nBinsX, minX, maxX );
     }
 
-    gsGatedSX3D_analog.first = MakeNewHist ( "Gs_Gates_SX3D_Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX );
-    gsGatedSX3D_digital.first = MakeNewHist ( "Gs_Gates_SX3D_Digital ", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX );
+    gsGatedSX3D_tot = MakeNewHist ( "Gs_Gates_SX3D", "GammaSphere Gates SX3 Downstream", nBinsX, minX, maxX, true );
+    gsGatedSX3D_analog = MakeNewHist ( "Gs_Gates_SX3D_Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX, true );
+    gsGatedSX3D_digital = MakeNewHist ( "Gs_Gates_SX3D_Digital", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX, true );
 
     for ( int i = 0; i < 4; i++ )
     {
         gsGatedQQQ5U[i] = MakeNewHist ( Form ( "Gs_Gates_QQQ5U%d", i ), Form ( "GammaSphere Gates QQQ5 U%d", i ), nBinsX, minX, maxX );
     }
 
-    gsGatedQQQ5U_analog.first = MakeNewHist ( "Gs_Gates_QQQ5U_Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX );
-    gsGatedQQQ5U_digital.first = MakeNewHist ( "Gs_Gates_QQQ5U_Digital ", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX );
+    gsGatedQQQ5U_tot = MakeNewHist ( "Gs_Gates_QQQ5U", "GammaSphere Gates QQQ5 Upstream", nBinsX, minX, maxX, true );
+    gsGatedQQQ5U_analog = MakeNewHist ( "Gs_Gates_QQQ5U_Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX, true );
+    gsGatedQQQ5U_digital = MakeNewHist ( "Gs_Gates_QQQ5U_Digital", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX, true );
 
     for ( int i = 0; i < 4; i++ )
     {
         gsGatedQQQ5D[i] = MakeNewHist ( Form ( "Gs_Gates_QQQ5D%d", i ), Form ( "GammaSphere Gates QQQ5 D%d", i ), nBinsX, minX, maxX );
     }
 
-    gsGatedQQQ5D_analog.first = MakeNewHist ( "Gs_Gates_QQQ5D_Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX );
-    gsGatedQQQ5D_digital.first = MakeNewHist ( "Gs_Gates_QQQ5D_Digital ", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX );
+    gsGatedQQQ5D_tot = MakeNewHist ( "Gs_Gates_QQQ5D", "GammaSphere Gates QQQ5 Downstream", nBinsX, minX, maxX, true );
+    gsGatedQQQ5D_analog = MakeNewHist ( "Gs_Gates_QQQ5D_Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX, true );
+    gsGatedQQQ5D_digital = MakeNewHist ( "Gs_Gates_QQQ5D_Digital", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX, true );
 
 
     for ( int i = 0; i < 12; i++ )
     {
-        gsNoBGOGatedSX3U[i] = MakeNewHist ( Form ( "Gs_NoBGO_Gates_SX3U%d", i ), Form ( "GammaSphere No BGO Gates SX3 U%d", i ), nBinsX, minX, maxX );
+        gsBGOVetoGatedSX3U[i] = MakeNewHist ( Form ( "Gs_BGOVeto_Gates_SX3U%d", i ), Form ( "GammaSphere BGO Veto SX3 U%d", i ), nBinsX, minX, maxX );
     }
 
-    gsNoBGOGatedSX3U_tot.first = MakeNewHist ( "Gs_NoBGO_Gates_SX3U", "GammaSphere No BGO Gates SX3 Upstream", nBinsX, minX, maxX );
-    gsNoBGOGatedSX3U_analog.first = MakeNewHist ( "Gs_NoBGO_Gates_SX3U_Analog", "GammaSphere No BGO Gates SX3 Upstream Analog", nBinsX, minX, maxX );
-    gsNoBGOGatedSX3U_digital.first = MakeNewHist ( "Gs_NoBGO_Gates_SX3U_Digital ", "GammaSphere No BGO Gates SX3 Upstream Digital", nBinsX, minX, maxX );
+    gsBGOVetoGatedSX3U_tot = MakeNewHist ( "Gs_BGOVeto_Gates_SX3U", "GammaSphere BGO Veto SX3 Upstream", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedSX3U_analog = MakeNewHist ( "Gs_BGOVeto_Gates_SX3U_Analog", "GammaSphere BGO Veto SX3 Upstream Analog", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedSX3U_digital = MakeNewHist ( "Gs_BGOVeto_Gates_SX3U_Digital", "GammaSphere BGO Veto SX3 Upstream Digital", nBinsX, minX, maxX, true );
 
     for ( int i = 0; i < 12; i++ )
     {
-        gsNoBGOGatedSX3D[i] = MakeNewHist ( Form ( "Gs_NoBGO_Gates_SX3D%d", i ), Form ( "GammaSphere No BGO Gates SX3 D%d", i ), nBinsX, minX, maxX );
+        gsBGOVetoGatedSX3D[i] = MakeNewHist ( Form ( "Gs_BGOVeto_Gates_SX3D%d", i ), Form ( "GammaSphere BGO Veto SX3 D%d", i ), nBinsX, minX, maxX );
     }
 
-    gsNoBGOGatedSX3D_tot.first = MakeNewHist ( "Gs_NoBGO_Gates_SX3D", "GammaSphere No BGO Gates SX3 Downstream", nBinsX, minX, maxX );
-    gsNoBGOGatedSX3D_analog.first = MakeNewHist ( "Gs_NoBGO_Gates_SX3D_Analog", "GammaSphere No BGO Gates SX3 Downstream Analog", nBinsX, minX, maxX );
-    gsNoBGOGatedSX3D_digital.first = MakeNewHist ( "Gs_NoBGO_Gates_SX3D_Digital ", "GammaSphere No BGO Gates SX3 Downstream Digital", nBinsX, minX, maxX );
+    gsBGOVetoGatedSX3D_tot = MakeNewHist ( "Gs_BGOVeto_Gates_SX3D", "GammaSphere BGO Veto SX3 Downstream", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedSX3D_analog = MakeNewHist ( "Gs_BGOVeto_Gates_SX3D_Analog", "GammaSphere BGO Veto SX3 Downstream Analog", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedSX3D_digital = MakeNewHist ( "Gs_BGOVeto_Gates_SX3D_Digital", "GammaSphere BGO Veto SX3 Downstream Digital", nBinsX, minX, maxX, true );
 
     for ( int i = 0; i < 4; i++ )
     {
-        gsNoBGOGatedQQQ5U[i] = MakeNewHist ( Form ( "Gs_NoBGO_Gates_QQQ5U%d", i ), Form ( "GammaSphere No BGO Gates QQQ5 U%d", i ), nBinsX, minX, maxX );
+        gsBGOVetoGatedQQQ5U[i] = MakeNewHist ( Form ( "Gs_BGOVeto_Gates_QQQ5U%d", i ), Form ( "GammaSphere BGO Veto QQQ5 U%d", i ), nBinsX, minX, maxX );
     }
 
-    gsNoBGOGatedQQQ5U_tot.first = MakeNewHist ( "Gs_NoBGO_Gates_QQQ5U", "GammaSphere No BGO Gates QQQ5 Upstream", nBinsX, minX, maxX );
-    gsNoBGOGatedQQQ5U_analog.first = MakeNewHist ( "Gs_NoBGO_Gates_QQQ5U_Analog", "GammaSphere No BGO Gates QQQ5 Upstream Analog", nBinsX, minX, maxX );
-    gsNoBGOGatedQQQ5U_digital.first = MakeNewHist ( "Gs_NoBGO_Gates_QQQ5U_Digital ", "GammaSphere No BGO Gates QQQ5 Upstream Digital", nBinsX, minX, maxX );
+    gsBGOVetoGatedQQQ5U_tot = MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5U", "GammaSphere BGO Veto QQQ5 Upstream", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedQQQ5U_analog = MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5U_Analog", "GammaSphere BGO Veto QQQ5 Upstream Analog", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedQQQ5U_digital = MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5U_Digital", "GammaSphere BGO Veto QQQ5 Upstream Digital", nBinsX, minX, maxX, true );
 
     for ( int i = 0; i < 4; i++ )
     {
-        gsNoBGOGatedQQQ5D[i] = MakeNewHist ( Form("Gs_NoBGO_Gates_QQQ5D%d", i), Form("GammaSphere No BGO Gates QQQ5 D%d", i), nBinsX, minX, maxX );
+        gsBGOVetoGatedQQQ5D[i] = MakeNewHist ( Form ( "Gs_BGOVeto_Gates_QQQ5D%d", i ), Form ( "GammaSphere BGO Veto QQQ5 D%d", i ), nBinsX, minX, maxX );
     }
 
-    gsNoBGOGatedQQQ5D_tot.first = MakeNewHist ( "Gs_NoBGO_Gates_QQQ5D", "GammaSphere No BGO Gates QQQ5 Downstream", nBinsX, minX, maxX );
-    gsNoBGOGatedQQQ5D_analog.first = MakeNewHist ( "Gs_NoBGO_Gates_QQQ5D_Analog", "GammaSphere No BGO Gates QQQ5 Downstream Analog", nBinsX, minX, maxX );
-    gsNoBGOGatedQQQ5D_digital.first = MakeNewHist ( "Gs_NoBGO_Gates_QQQ5D_Digital ", "GammaSphere No BGO Gates QQQ5 Downstream Digital", nBinsX, minX, maxX );
+    gsBGOVetoGatedQQQ5D_tot = MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5D", "GammaSphere BGO Veto QQQ5 Downstream", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedQQQ5D_analog = MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5D_Analog", "GammaSphere BGO Veto QQQ5 Downstream Analog", nBinsX, minX, maxX, true );
+    gsBGOVetoGatedQQQ5D_digital = MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5D_Digital", "GammaSphere BGO Veto QQQ5 Downstream Digital", nBinsX, minX, maxX, true );
+
+
+    gsBGOVetoNoTimeGate = MakeNewHist ( "Gs_NoTS_BGOVeto_Gates_QQQ5U", "GammaSphere No Timestamp gates, BGO Veto QQQ5 Downstream Digital", nBinsX, minX, maxX, true );
 }
 
-bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_ )
+bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_, bool vetoBGO = false )
 {
+    bool filled = false;
+
     unsigned long long int orrubaTs = siData_->TimestampMaxLayer ( 1, false );
 
     int sector = siData_->sector;
@@ -788,8 +832,6 @@ bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_ )
     double gsEn = ( double ) gamData_->en/3.;
     double siEn = siData_->ESumLayer ( 1, false );
 
-    bool filled = false;
-
     bool isDigital = OrrubaIsDigital ( siData_ );
 
     bool timestampOK = OrrubaGsGoodTs ( siData_, gamData_ );
@@ -798,240 +840,41 @@ bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_ )
 
     bool energyOK = OrrubaEnergyThr ( siData_ );
 
-    if ( sectorOK && timestampOK && energyOK )
-//     if ( timestampOK && energyOK )
-//     if ( timestampOK )
-    {
-        if ( siData_->isBarrel )
-        {
-            if ( siData_->isUpstream )
-            {
-                gsGatedSX3U[sector]->Fill ( gsEn );
+    string histsBaseName;
 
-                if ( sector > 0 && sector < 7 )
-                {
-                    if ( !gsGatedSX3U_digital.second )
-                    {
-                        gsGatedSX3U_digital.second = true;
-                        gsGatedSX3U_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsGatedSX3U_analog.second )
-                    {
-                        gsGatedSX3U_analog.second = true;
-                        gsGatedSX3U_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-            else
-            {
-                gsGatedSX3D[sector]->Fill ( gsEn );
+    if ( vetoBGO ) histsBaseName = "Gs_BGOVeto_Gates_";
+    else histsBaseName = "Gs_Gates_";
 
-                if ( sector > 0 && sector < 7 )
-                {
-                    if ( !gsGatedSX3D_digital.second )
-                    {
-                        gsGatedSX3D_digital.second = true;
-                        gsGatedSX3D_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsGatedSX3D_analog.second )
-                    {
-                        gsGatedSX3D_analog.second = true;
-                        gsGatedSX3D_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
+    if ( siData_->isBarrel ) histsBaseName += "SX3";
+    else histsBaseName += "QQQ5";
 
-//                 filled = true;
-        }
-        else
-        {
-            if ( siData_->isUpstream )
-            {
-                gsGatedQQQ5U[sector]->Fill ( gsEn );
+    if ( siData_->isUpstream ) histsBaseName += "U";
+    else histsBaseName += "D";
+    TH1F* gsTot = ( TH1F* ) histsMap[histsBaseName].first;
 
-                if ( sector == 0 || sector == 1 )
-                {
-                    if ( !gsGatedQQQ5U_digital.second )
-                    {
-                        gsGatedQQQ5U_digital.second = true;
-                        gsGatedQQQ5U_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsGatedQQQ5U_analog.second )
-                    {
-                        gsGatedQQQ5U_analog.second = true;
-                        gsGatedQQQ5U_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-            else
-            {
-                gsGatedQQQ5D[sector]->Fill ( gsEn );
+    string histsAorDName = histsBaseName + ( isDigital ? "_Digital" : "_Analog" );
+    TH1F* gsDorA = ( TH1F* ) histsMap[histsAorDName].first;
 
-                if ( sector == 2 || sector == 3 )
-                {
-                    if ( !gsGatedQQQ5D_digital.second )
-                    {
-                        gsGatedQQQ5D_digital.second = true;
-                        gsGatedQQQ5D_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsGatedQQQ5D_analog.second )
-                    {
-                        gsGatedQQQ5D_analog.second = true;
-                        gsGatedQQQ5D_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-
-//                 filled = true;
-        }
-    }
-
-    return filled;
-}
-
-bool FillGsNoBGOGateORRUBA ( SiDataBase* siData_, GamData* gamData_ )
-{
-    unsigned long long int orrubaTs = siData_->TimestampMaxLayer ( 1, false );
-
-    int sector = siData_->sector;
-
-    unsigned long long int gsTs = gamData_->time;
-
-    double gsEn = ( double ) gamData_->en/3.;
-    double siEn = siData_->ESumLayer ( 1, false );
-
-    bool filled = false;
-
-    bool isDigital = OrrubaIsDigital ( siData_ );
-
-    bool timestampOK = OrrubaGsGoodTs ( siData_, gamData_ );
-
-    bool sectorOK = OrrubaGoodSector ( siData_ );
-
-    bool energyOK = OrrubaEnergyThr ( siData_ );
+    string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), sector );
+    TH1F* gsSector = ( TH1F* ) histsMap[histsSectorName].first;
 
     if ( sectorOK && timestampOK && energyOK )
-//     if ( timestampOK && energyOK )
-//     if ( timestampOK )
     {
-        if ( siData_->isBarrel )
+        gsSector->Fill ( gsEn );
+
+        if ( !CheckHistState ( gsDorA, gamData_ ) )
         {
-            if ( siData_->isUpstream )
-            {
-                gsNoBGOGatedSX3U[sector]->Fill ( gsEn );
-
-                gsNoBGOGatedSX3U_tot.second = true;
-                gsNoBGOGatedSX3U_tot.first->Fill ( gsEn );
-
-                if ( sector > 0 && sector < 7 )
-                {
-                    if ( !gsNoBGOGatedSX3U_digital.second )
-                    {
-                        gsNoBGOGatedSX3U_digital.second = true;
-                        gsNoBGOGatedSX3U_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsNoBGOGatedSX3U_analog.second )
-                    {
-                        gsNoBGOGatedSX3U_analog.second = true;
-                        gsNoBGOGatedSX3U_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-            else
-            {
-                gsNoBGOGatedSX3D[sector]->Fill ( gsEn );
-
-                gsNoBGOGatedSX3D_tot.second = true;
-                gsNoBGOGatedSX3D_tot.first->Fill ( gsEn );
-
-                if ( sector > 0 && sector < 7 )
-                {
-                    if ( !gsNoBGOGatedSX3D_digital.second )
-                    {
-                        gsNoBGOGatedSX3D_digital.second = true;
-                        gsNoBGOGatedSX3D_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsNoBGOGatedSX3D_analog.second )
-                    {
-                        gsNoBGOGatedSX3D_analog.second = true;
-                        gsNoBGOGatedSX3D_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-
-//                 filled = true;
+            gsDorA->Fill ( gsEn );
+            AddToHistState ( gsDorA, gamData_ );
         }
-        else
+
+        if ( !CheckHistState ( gsTot, gamData_ ) )
         {
-            if ( siData_->isUpstream )
-            {
-                gsNoBGOGatedQQQ5U[sector]->Fill ( gsEn );
-
-                gsNoBGOGatedQQQ5U_tot.second = true;
-                gsNoBGOGatedQQQ5U_tot.first->Fill ( gsEn );
-
-                if ( sector == 0 || sector == 1 )
-                {
-                    if ( !gsNoBGOGatedQQQ5U_digital.second )
-                    {
-                        gsNoBGOGatedQQQ5U_digital.second = true;
-                        gsNoBGOGatedQQQ5U_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsNoBGOGatedQQQ5U_analog.second )
-                    {
-                        gsNoBGOGatedQQQ5U_analog.second = true;
-                        gsNoBGOGatedQQQ5U_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-            else
-            {
-                gsNoBGOGatedQQQ5D[sector]->Fill ( gsEn );
-
-                gsNoBGOGatedQQQ5D_tot.second = true;
-                gsNoBGOGatedQQQ5D_tot.first->Fill ( gsEn );
-
-                if ( sector == 2 || sector == 3 )
-                {
-                    if ( !gsNoBGOGatedQQQ5D_digital.second )
-                    {
-                        gsNoBGOGatedQQQ5D_digital.second = true;
-                        gsNoBGOGatedQQQ5D_digital.first->Fill ( gsEn );
-                    }
-                }
-                else
-                {
-                    if ( !gsNoBGOGatedQQQ5D_analog.second )
-                    {
-                        gsNoBGOGatedQQQ5D_analog.second = true;
-                        gsNoBGOGatedQQQ5D_analog.first->Fill ( gsEn );
-                    }
-                }
-            }
-
-//                 filled = true;
+            gsTot->Fill ( gsEn );
+            AddToHistState ( gsTot, gamData_ );
         }
+
+        filled = true;
     }
 
     return filled;
@@ -1044,6 +887,8 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
     std::vector<SiDataBase>* siData = new std::vector<SiDataBase>();
     std::vector<GamData>* gamData = new std::vector<GamData>();
 
+    std::vector<bool> filledGam, filledGamBGOVeto;
+
     uChain->SetBranchAddress ( "si", &siData );
     uChain->SetBranchAddress ( "gam", &gamData );
 
@@ -1051,6 +896,8 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
     InitGsGateORRUBAHists();
     InitEvsAHist ( 1800, 0, 180, 1000, 0, 10 );
     InitQvalHist ( 800, -20, 20, 5000, 0, 5000 );
+
+    PrintHistsMapContent();
 
     eventNbr = 0;
 
@@ -1069,7 +916,7 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
 
         uChain->GetEntry ( eventNbr );
 
-        ResetGsHistsState();
+        ResetHistsStates();
 
         for ( unsigned int i = 0; i < siData->size(); i++ )
         {
@@ -1083,8 +930,6 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
             unsigned long long int orrubaTs = siData->at ( i ).TimestampMaxLayer ( 1, false );
 
             double siEn = siData->at ( i ).ESumLayer ( 1, false );
-
-            bool filled = false;
 
             bool isDigital = OrrubaIsDigital ( & ( siData->at ( i ) ) );
 
@@ -1109,13 +954,13 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
 
                 int gamType = gamData->at ( j ).type;
 
-                FillGsVsExHist ( & ( gamData->at ( j ) ), & ( siData->at ( i ) ), massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
+                FillGsVsExHist ( & ( gamData->at ( j ) ), & ( siData->at ( i ) ),false, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
 
                 if ( gamData->at ( j ).type == 1 )
                 {
-                    FilldTGammaORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ) );
+                    FilldTGammaORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), false );
 
-                    FillGsGateORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ) );
+                    FillGsGateORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), false );
                 }
                 else noBGO = false;
             }
@@ -1124,17 +969,12 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
             {
                 for ( unsigned int j = 0; j < gamData->size(); j++ )
                 {
-                    FilldTNoBGOGammaORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ) );
+                    FilldTGammaORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), true );
 
-                    FillGsNoBGOGateORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ) );
+                    FillGsGateORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), true );
                 }
             }
         }
-
-//         for ( unsigned int j = 0; j < std::min ( gamData->size(), siData->size() ); j++ )
-//         {
-//             FillGsGateORRUBA ( & ( siData->at ( j ) ), & ( gamData->at ( j ) ) );
-//         }
 
         eventNbr++;
     }
@@ -1143,6 +983,7 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
 
     return;
 }
+
 
 
 

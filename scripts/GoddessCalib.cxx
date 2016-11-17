@@ -440,7 +440,7 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         TGTextEntry* tE;
         TGCheckButton* cB;
 
-        string treeName, sectorsStr;
+        string treeName, sectorsStr, configName;
         unsigned long long int nentries;
         int nBinsX, nBinsY;
         float binMinX, binMaxX,binMinY, binMaxY;
@@ -475,6 +475,9 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Sectors IF" ) );
         sectorsStr = tE->GetText();
 
+        tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Config File IF" ) );
+        configName = tE->GetText();
+
         cB = dynamic_cast<TGCheckButton*> ( FindFrameByName ( mf, "Is Upstream CB" ) );
         isUS = cB->GetState();
 
@@ -486,7 +489,7 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
 
         if ( nentries == 0 || nentries > tree->GetEntries() ) nentries = tree->GetEntries();
 
-        GoddessCalib::sinstance()->DrawPosCalHistBatch ( tree, isUS, nentries, nBinsX, binMinX, binMaxX, nBinsY, binMinY, binMaxY, "", DecodeSectorsString ( sectorsStr ) );
+        GoddessCalib::sinstance()->DrawPosCalHistBatch ( tree, isUS, nentries, nBinsX, binMinX, binMaxX, nBinsY, binMinY, binMaxY, "", DecodeSectorsString ( sectorsStr ), configName );
     }
 }
 
@@ -584,7 +587,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         plotPosCalMF->AddFrame ( secondFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 0, 0 ) );
 
         TGCompositeFrame* thirdFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
-        thirdFrame->SetLayoutManager ( new TGMatrixLayout ( thirdFrame, 2, 2, 5, 5 ) );
+        thirdFrame->SetLayoutManager ( new TGRowLayout ( thirdFrame, 10 ) );
         thirdFrame->SetBackgroundColor ( bcol );
 
         TGLabel* sectorsLabel = new TGLabel ( thirdFrame, "Sectors to treat \ne.g. : \"1, 4-8, 10\"" );
@@ -596,15 +599,36 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         thirdFrame->AddFrame ( sectorsLabel );
         thirdFrame->AddFrame ( sectorsIF );
 
-        TGTextButton* processButton = new TGTextButton ( thirdFrame, "Process", "GoddessCalib::ValidatePlotPosCalGraphs()" );
+        plotPosCalMF->AddFrame ( thirdFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 10, 0 ) );
+
+        TGCompositeFrame* fourthFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
+        fourthFrame->SetLayoutManager ( new TGRowLayout ( fourthFrame, 10 ) );
+        fourthFrame->SetBackgroundColor ( bcol );
+
+        TGLabel* configFileLabel = new TGLabel ( fourthFrame, "Config File to use: " );
+        configFileLabel->SetBackgroundColor ( bcol );
+        TGTextEntry* configFileIF = new TGTextEntry ( fourthFrame );
+        configFileIF->SetName ( "Config File IF" );
+        configFileIF->SetAlignment ( kTextRight );
+
+        fourthFrame->AddFrame ( configFileLabel );
+        fourthFrame->AddFrame ( configFileIF );
+
+        plotPosCalMF->AddFrame ( fourthFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 10, 0 ) );
+
+        TGCompositeFrame* fifthFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
+        fifthFrame->SetLayoutManager ( new TGRowLayout ( fifthFrame, 10 ) );
+        fifthFrame->SetBackgroundColor ( bcol );
+
+        TGTextButton* processButton = new TGTextButton ( fifthFrame, "Process", "GoddessCalib::ValidatePlotPosCalGraphs()" );
         processButton->SetBackgroundColor ( bcol );
-        TGTextButton* cancelButton = new TGTextButton ( thirdFrame, "Cancel", "GoddessCalib::FindWindowByName(\"Plot Position Calibration Graphs\")->UnmapWindow();" );
+        TGTextButton* cancelButton = new TGTextButton ( fifthFrame, "Cancel", "GoddessCalib::FindWindowByName(\"Plot Position Calibration Graphs\")->UnmapWindow();" );
         cancelButton->SetBackgroundColor ( bcol );
 
-        thirdFrame->AddFrame ( processButton );
-        thirdFrame->AddFrame ( cancelButton );
+        fifthFrame->AddFrame ( processButton );
+        fifthFrame->AddFrame ( cancelButton );
 
-        plotPosCalMF->AddFrame ( thirdFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 0, 0 ) );
+        plotPosCalMF->AddFrame ( fifthFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 10, 0 ) );
 
         plotPosCalMF->MapSubwindows();
         plotPosCalMF->Resize ( plotPosCalMF->GetDefaultSize() );
@@ -832,6 +856,74 @@ void GoddessCalib::StartSX3EnCalib ( string detectorType, double refEnergy1 )
     alphaEnIF->SetText ( Form ( "%.3f", refEnergy1 ) );
 }
 
+void GoddessCalib::ReadConfigCalPars ( string configFileName )
+{
+    std::ifstream config;
+    config.open ( configFileName.c_str(), std::ios::in );
+
+    if ( !config.is_open() )
+    {
+        cerr << "Failed to open file: " << configFileName << " ...\n";
+        return;
+    }
+
+    string readLine, dummy, detType, detID, lineID, stripType;
+    int stripNbr;
+    float offset, slope;
+    std::istringstream iss;
+
+    while ( std::getline ( config, readLine ) )
+    {
+        if ( readLine.empty() || readLine == "\n" ) continue;
+
+        iss.clear();
+        iss.str ( readLine );
+
+        if ( readLine.find ( "QQQ5" ) != string::npos || readLine.find ( "superX3" ) != string::npos )
+        {
+            iss >> detType >> dummy >> detID;
+
+            detID = detID.substr ( 0, detID.find ( "-" ) );
+
+            if ( detType == "superX3" ) detType = "SuperX3";
+        }
+        else
+        {
+            iss >> lineID;
+
+            if ( lineID == "enCal" )
+            {
+                iss >> stripType >> stripNbr;
+
+                if ( detType == "QQQ5" )
+                {
+                    if ( stripType == "p" ) stripType = "front";
+                    else stripType = "back";
+                }
+                else if ( detType == "SuperX3" )
+                {
+                    if ( stripType == "resStrip" ) stripType = "front";
+                    else if ( stripType == "n" ) stripType = "back";
+                    else
+                    {
+                        if ( stripNbr == 0 || stripNbr == 2 || stripNbr == 5 || stripNbr == 7 ) stripType = "near";
+                        else stripType = "far";
+                    }
+                }
+
+                iss >> offset >> slope;
+
+                string detKey = detType + " " + detID + " " + stripType + " " + Form ( "%d", stripNbr );
+                string parKey;
+
+                configCalPars[detKey] = std::make_pair ( offset, slope );
+            }
+        }
+    }
+
+    return;
+}
+
 void GoddessCalib::InitializeCalMapKey ( string mapKey, unsigned short strip )
 {
     auto itr = resStripsCalMap.find ( mapKey );
@@ -971,9 +1063,9 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
     calRes->at ( 1 ) = yIntersect;
     calRes->at ( 2 ) = nearCorrFactor;
 
-    if ( negLine != nullptr && calRes->at ( 0 ) != -100 && calRes->at ( 1 ) != -100 )
+    if ( negLine != nullptr && calRes->at ( 0 ) != -100 && calRes->at ( 1 ) != -100 && calRes->at ( 2 ) != -100 )
     {
-        energyCalCoeff = refEnergy1 / ( ( negLine->GetX1() - calRes->at ( 1 ) ) * ( -slopeNeg ) + negLine->GetY1()  - calRes->at ( 2 ) );
+        energyCalCoeff = refEnergy1 / ( negLine->GetX1() * calRes->at ( 2 ) - calRes->at ( 0 ) + negLine->GetY1() - calRes->at ( 1 ) );
     }
 
     energyCalCoeff = ( energyCalCoeff == -100 ? calRes->at ( 3 ) : energyCalCoeff );
@@ -1529,7 +1621,8 @@ TGraph* GoddessCalib::DrawPosCalGraph ( TTree* tree, bool isUpstream_, int nentr
     return newGraph;
 }
 
-TH2F* GoddessCalib::DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, unsigned short strip_ )
+TH2F* GoddessCalib::DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
+                                     string drawOpts, unsigned short sector_, unsigned short strip_, string configFileName )
 {
     string hname = Form ( "hPosCal_sector%s%d_strip%d", isUpstream_ ? "U" : "D", sector_, strip_ );
 
@@ -1545,13 +1638,13 @@ TH2F* GoddessCalib::DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries
 }
 
 std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
-        int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_ )
+        int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName )
 {
-    return DrawPosCalHistBatch ( tree, isUpstream_, nentries,nbinsX,binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_ );
+    return DrawPosCalHistBatch ( tree, isUpstream_, nentries,nbinsX,binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_, configFileName );
 }
 
 std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
-        int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts, vector< unsigned short > sectorsList )
+        int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts, vector< unsigned short > sectorsList, string configFileName )
 {
     string isUpstreamID = isUpstream_ ? "U" : "D";
 
@@ -1573,6 +1666,13 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool is
     tree->SetBranchAddress ( "si", &siDataVect );
 
     if ( nentries > tree->GetEntries() || nentries == 0 ) nentries = tree->GetEntries();
+
+    if ( !configFileName.empty() )
+    {
+        ReadConfigCalPars ( configFileName );
+    }
+
+    string qqq5Ids[4] = {"A", "B", "C", "D"};
 
     for ( int i = 0; i < nentries; i++ )
     {
@@ -1601,10 +1701,61 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool is
 
                 if ( sect == -1 ) continue;
 
-                for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
+                if ( configFileName.empty() )
                 {
-                    TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )];
-                    hh->Fill ( ( siData.E1.en.p[k] - siData.E1.en.n[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
+                    for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
+                    {
+                        TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )];
+                        hh->Fill ( ( siData.E1.en.p[k] - siData.E1.en.n[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
+                    }
+                }
+                else
+                {
+                    string detID = siData.isUpstream ? "U" : "D";
+
+                    string detKey = Form ( "SuperX3 %s%d", detID.c_str(), siData.sector );
+
+                    for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
+                    {
+                        int strip = siData.E1.strip.p[k];
+
+                        float offNear, slopeNear, offFar, slopeFar, enCalPar;
+
+                        string calParKey = detKey + " front " + Form ( "%d", strip );
+
+                        enCalPar = configCalPars[calParKey].second;
+
+                        int nearContact, farContact;
+
+                        if ( strip >= 0 && strip < 2 )
+                        {
+                            nearContact = strip*2;
+                            farContact = nearContact+1;
+                        }
+                        else if ( strip >= 2 )
+                        {
+                            nearContact = strip*2+1;
+                            farContact = nearContact-1;
+                        }
+
+                        calParKey = detKey + " near " + Form ( "%d", nearContact );
+
+                        offNear = configCalPars[calParKey].first;
+                        slopeNear = configCalPars[calParKey].second;
+
+                        calParKey = detKey + " far " + Form ( "%d", farContact );
+
+                        offFar = configCalPars[calParKey].first;
+                        slopeFar = configCalPars[calParKey].second;
+
+                        float nearCalEn = siData.E1.en.p[k] * slopeNear - offNear ;
+                        float farCalEn = siData.E1.en.n[k] * slopeFar - offFar;
+
+                        float totCalEn = ( nearCalEn + farCalEn ) * enCalPar;
+
+                        TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, strip )];
+                        hh->Fill ( ( nearCalEn - farCalEn ) / ( nearCalEn + farCalEn ), totCalEn );
+                    }
                 }
             }
         }
@@ -2034,6 +2185,174 @@ TH2F* hQval_vs_strip_QQQ5UB_mod;
 TH2F* hQval_vs_strip_QQQ5UC_mod;
 TH2F* hQval_vs_strip_QQQ5UD_mod;
 
+void GoddessCalib::LoadInternalCalib ( string fileName )
+{
+    std::ifstream input ( fileName.c_str(), std::ios_base::in );
+
+    if ( !input.is_open() )
+    {
+        cerr << "Unable to open file: " << fileName << "\n";
+
+        return;
+    }
+
+    string dump;
+
+    string readWord1, sectorID, readWord2, readWord3;
+
+    std::istringstream readLine;
+
+    std::getline ( input, dump );
+
+    readLine.str ( dump );
+
+    readLine >> readWord1 >> sectorID >> readWord2 >> readWord3;
+
+    if ( readWord1 != "QQQ5" || readWord2 != "Internal" || readWord3 != "Calib" )
+    {
+        cerr << "File used as an input doesn't have the proper format (check out the template)...\n";
+
+        return;
+    }
+
+    string mapID = "QQQ5 " + sectorID;
+
+    vector<double> newCoeffs;
+
+    for ( int i = 0; i < 32; i++ )
+    {
+        newCoeffs.push_back ( 100 );
+    }
+
+    while ( std::getline ( input, dump ) )
+    {
+        if ( dump.empty() || dump.find_first_of ( "0123456789" ) == string::npos ) continue;
+
+        double coeff;
+        int stripNbr;
+
+        readLine.clear();
+
+        readLine.str ( dump );
+        readLine >> stripNbr >> coeff;
+
+//         cout << "Read: " << stripNbr << "    " << coeff << "\n";
+
+        if ( stripNbr >= 0 && stripNbr <= 31 ) newCoeffs[stripNbr] = coeff;
+        else
+        {
+            cerr << "Warning: strip number " << stripNbr << " doesn't exists!\n";
+        }
+    }
+
+    endcapsStripsCalMap[mapID] = newCoeffs;
+
+    return;
+}
+
+float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
+{
+    std::ifstream input;
+    input.open ( inputName.c_str(), std::ios::in );
+
+    if ( !input.is_open() )
+    {
+        cerr << "Failed to open file: " << inputName << " ...\n";
+        return 0.0;
+    }
+
+    map<float, double> gsMap, firstExMap;
+    map<float, double>* buffMap;
+
+    string readLine;
+    std::istringstream iss;
+
+    float angle;
+    double crossSection;
+
+    while ( std::getline ( input, readLine ) )
+    {
+        if ( readLine.empty() ) continue;
+
+        if ( readLine.find ( "Ground State" ) != string::npos )
+        {
+            buffMap = &gsMap;
+            continue;
+        }
+        else if ( readLine.find ( "First Excited State" ) != string::npos )
+        {
+            buffMap = &firstExMap;
+            continue;
+        }
+
+        if ( readLine.find_first_of ( "0123456789" ) == string::npos ) continue;
+
+        iss.clear();
+        iss.str ( readLine );
+
+        iss >> angle >> crossSection;
+
+//         cout << angle << "    /    " << crossSection << "\n";
+
+        ( *buffMap ) [angle] = crossSection;
+    }
+
+    TGraph* gsGraph = new TGraph ( gsMap.size() );
+
+    int counter = 0;
+
+    for ( auto itr = gsMap.begin(); itr != gsMap.end(); itr++ )
+    {
+        gsGraph->SetPoint ( counter, itr->first, itr->second );
+
+        counter++;
+    }
+
+    TGraph* fstExGraph = new TGraph ( firstExMap.size() );
+
+    counter = 0;
+
+    for ( auto itr = firstExMap.begin(); itr != firstExMap.end(); itr++ )
+    {
+        fstExGraph->SetPoint ( counter, itr->first, itr->second );
+
+        counter++;
+    }
+
+//     gsGraph->Draw ( "AP" );
+//     fstExGraph->Draw ( "same" );
+
+    auto gsMinIndexItr = gsMap.upper_bound ( minAngle );
+    gsMinIndexItr--;
+
+    auto gsMaxIndexItr = gsMap.upper_bound ( maxAngle );
+    gsMaxIndexItr--;
+
+    int gsMinIndex = std::distance ( gsMap.begin(), gsMinIndexItr );
+    int gsMaxIndex = std::distance ( gsMap.begin(), gsMaxIndexItr );
+
+    cout << "Integrating the Ground State TGraph between index " << gsMinIndex << " ( " << gsMinIndexItr->first << " ) and " << gsMaxIndex << " ( " << gsMaxIndexItr->first << " ) ...\n";
+
+    double gsIntegral = gsGraph->Integral ( gsMinIndex, gsMaxIndex );
+
+    auto fstExMinIndexItr = firstExMap.upper_bound ( minAngle );
+    fstExMinIndexItr--;
+
+    auto fstExMaxIndexItr = firstExMap.upper_bound ( maxAngle );
+    fstExMaxIndexItr--;
+
+    int fstExMinIndex = std::distance ( firstExMap.begin(), fstExMinIndexItr );
+    int fstExMaxIndex = std::distance ( firstExMap.begin(), fstExMaxIndexItr );
+
+    cout << "Integrating the First Excited State TGraph between index " << fstExMinIndex << " ( " << fstExMinIndexItr->first << " ) and " << fstExMaxIndex << " ( " << fstExMaxIndexItr->first << " ) ...\n";
+
+    double fstExIntegral = fstExGraph->Integral ( fstExMinIndex, fstExMaxIndex );
+
+    double ratio = fstExIntegral/gsIntegral;
+
+    return ratio;
+}
+
 TH1F* GoddessCalib::AddAllStrips ( vector<std::map<int, TH1F*>>* hists, int modCoeff_ )
 {
     TH1F* hSum = ( TH1F* ) ( hists->at ( 0 ) ) [modCoeff_]->Clone();
@@ -2095,14 +2414,20 @@ TH1F* GoddessCalib::AddAllStrips ( vector< std::map< int, TH1F* > >* hists, stri
     return AddAllStrips ( hists, *coeffMap );
 }
 
-TF1* GoddessCalib::FitQValGS ( TH1F* hist, float mean, float fwhm, float minBound, float maxBound )
+TF1* GoddessCalib::FitQValGS ( TH1F* hist, float mean, float fwhm, float peakRatio, float minBound, float maxBound )
 {
-    TF1* fitFunc = new TF1 ( "fitFunc", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [5],2 ) ) + [6] + [7] * x", -20, 20 );
+    TF1* fitFunc = new TF1 ( "fitFunc",
+                             "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + \
+                             [0]*[3] * TMath::Exp ( -pow ( x - ([1]-0.288),2 ) / pow ( 2 * [2],2 ) ) + \
+                             [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [6],2 ) ) + \
+                             [7] + [8] * x", -20, 20 );
 
     if ( minBound == 0 ) minBound = mean - 2 - fwhm;
     if ( maxBound == 0 ) maxBound = mean + fwhm*3;
 
-    fitFunc->SetParameters ( 10, mean, fwhm, 10, mean - 2, fwhm, 1, -0.1 );
+    fitFunc->SetParameters ( 10, mean, fwhm, 1, 10, mean - 2, fwhm, 1, -0.1 );
+
+    fitFunc->FixParameter ( 3, peakRatio );
 
     hist->Fit ( fitFunc, "Q", "", minBound, maxBound );
 
@@ -2332,7 +2657,7 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
     return;
 }
 
-vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode )
+vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode )
 {
     vector<double> finalMods;
 
@@ -2349,7 +2674,9 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
     // ---------------------
 
-    TF1* firstFitFunc = FitQValGS ( sum, peakPos, fwhm );
+    double peakRatio = GetRatioGSvsFirstEx ( crossSectionInput, 120, 160 );
+
+    TF1* firstFitFunc = FitQValGS ( sum, peakPos, fwhm, peakRatio, minBound, maxBound );
 
     double firstChi2, firstMagn, firstMean, firstSigma, firstIntegral, firstHistIntegral, firstOffset, firstSlope;
 
@@ -2417,7 +2744,7 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
             TH1F* testSum = AddAllStrips ( hists, testMods );
 
-            fitFunc = FitQValGS ( testSum, peakPos, fwhm, minBound, maxBound );
+            fitFunc = FitQValGS ( testSum, peakPos, fwhm, peakRatio, minBound, maxBound );
 
             magn = fitFunc->GetParameter ( 0 );
             mean = fitFunc->GetParameter ( 1 );
@@ -2484,71 +2811,6 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
     }
 
     return finalMods;
-}
-
-void GoddessCalib::LoadInternalCalib ( string fileName )
-{
-    std::ifstream input ( fileName.c_str(), std::ios_base::in );
-
-    if ( !input.is_open() )
-    {
-        cerr << "Unable to open file: " << fileName << "\n";
-
-        return;
-    }
-
-    string dump;
-
-    string readWord1, sectorID, readWord2, readWord3;
-
-    std::istringstream readLine;
-
-    std::getline ( input, dump );
-
-    readLine.str ( dump );
-
-    readLine >> readWord1 >> sectorID >> readWord2 >> readWord3;
-
-    if ( readWord1 != "QQQ5" || readWord2 != "Internal" || readWord3 != "Calib" )
-    {
-        cerr << "File used as an input doesn't have the proper format (check out the template)...\n";
-
-        return;
-    }
-
-    string mapID = "QQQ5 " + sectorID;
-
-    vector<double> newCoeffs;
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        newCoeffs.push_back ( 100 );
-    }
-
-    while ( std::getline ( input, dump ) )
-    {
-        if ( dump.empty() || dump.find_first_of ( "0123456789" ) == string::npos ) continue;
-
-        double coeff;
-        int stripNbr;
-
-        readLine.clear();
-
-        readLine.str ( dump );
-        readLine >> stripNbr >> coeff;
-
-//         cout << "Read: " << stripNbr << "    " << coeff << "\n";
-
-        if ( stripNbr >= 0 && stripNbr <= 31 ) newCoeffs[stripNbr] = coeff;
-        else
-        {
-            cerr << "Warning: strip number " << stripNbr << " doesn't exists!\n";
-        }
-    }
-
-    endcapsStripsCalMap[mapID] = newCoeffs;
-
-    return;
 }
 
 // --------------------------------------------- Display Help Functions ----------------------------- //

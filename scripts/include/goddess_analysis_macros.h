@@ -64,6 +64,7 @@
 #include <RQ_OBJECT.h>
 
 #include "GoddessStruct.h"
+#include "GoddessConfig.h"
 
 using std::map;
 using std::string;

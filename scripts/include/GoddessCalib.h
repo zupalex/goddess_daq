@@ -104,6 +104,9 @@ public:
         else return nullptr;
     }
 
+    map<string, std::pair<float, float>> configCalPars;
+    void ReadConfigCalPars ( string configFileName );
+
     map<string, map<unsigned short, vector<double>>> resStripsCalMap;
     map<string, vector<double>> endcapsStripsCalMap;
 
@@ -152,18 +155,18 @@ public:
 
     TH2F* DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries,
                            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
-                           unsigned short sector_, unsigned short strip_ );
+                           unsigned short sector_, unsigned short strip_, string configFileName );
 
     map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
-            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_ );
+            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName );
 
     map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
             int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts,
-            vector<unsigned short> sectorsList );
+            vector<unsigned short> sectorsList, string configFileName );
 
     template<typename First, typename... Rest> inline map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
-            First fstSector, Rest... otherSectors );
+            First fstSector, Rest... otherSectors, string configFileName );
 
     int GetPosCalEnBinMax ( TH2F* input, double threshold );
 
@@ -187,7 +190,7 @@ public:
 
     TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, string sector );
 
-    TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float minBound = 0, float maxBound = 0 );
+    TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0 );
 
     TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, int modCoeff_ = 100 );
 
@@ -203,7 +206,7 @@ public:
 
     void GenerateEnergyHistPerStrip ( TChain* chain );
 
-    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm,
+    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput,
                                         float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
                                         string betterFitMode = "chi2 < bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rawIntegral >= bestRawIntegral" );
 
@@ -312,18 +315,19 @@ template<typename T> void GoddessCalib::DrawPosCal ( TTree* tree, bool isUpstrea
 
 template<typename First, typename... Rest> map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
         int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
-        First fstSector, Rest... otherSectors )
+        First fstSector, Rest... otherSectors , string configFileName )
 {
     vector<unsigned short> sectorsList;
     sectorsList.clear();
 
     GetListOfSectorsToTreat<First, Rest...> ( &sectorsList, fstSector, otherSectors... );
 
-    return DrawPosCalHistBatch ( tree, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList );
+    return DrawPosCalHistBatch ( tree, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList, configFileName );
 }
 
 // ---------------------------------------- QQQ5 functions ----------------------------------------------- //
 
+float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle );
 
 template<typename First, typename... Rest> void GoddessCalib::GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest )
 {
