@@ -526,6 +526,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         nEntriesLabel->SetBackgroundColor ( bcol );
         TGNumberEntryField* nEntriesIF = new TGNumberEntryField ( firstFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
         nEntriesIF->SetName ( "Entries IF" );
+        nEntriesIF->SetNumber ( 0 );
 
         firstFrame->AddFrame ( nEntriesLabel );
         firstFrame->AddFrame ( nEntriesIF );
@@ -551,10 +552,13 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         TGNumberEntryField* nbinsXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
         TGDimension defDim = nbinsXIF->GetDefaultSize();
         nbinsXIF->SetName ( "NBinsX IF" );
+        nbinsXIF->SetNumber ( 200 );
         TGNumberEntryField* binMinXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMinXIF->SetName ( "BinMinX IF" );
+        binMinXIF->SetNumber ( -1 );
         TGNumberEntryField* binMaxXIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMaxXIF->SetName ( "BinMaxX IF" );
+        binMaxXIF->SetNumber ( 1 );
 
         nbinsXIF->Resize ( 100, defDim.fHeight );
         binMinXIF->Resize ( 100, defDim.fHeight );
@@ -570,10 +574,13 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
 
         TGNumberEntryField* nbinsYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber );
         nbinsYIF->SetName ( "NBinsY IF" );
+        nbinsYIF->SetNumber ( 500 );
         TGNumberEntryField* binMinYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMinYIF->SetName ( "BinMinY IF" );
+        binMinYIF->SetNumber ( 0 );
         TGNumberEntryField* binMaxYIF = new TGNumberEntryField ( secondFrame, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber );
         binMaxYIF->SetName ( "BinMaxY IF" );
+        binMaxYIF->SetNumber ( 10 );
 
         nbinsYIF->Resize ( 100, defDim.fHeight );
         binMinYIF->Resize ( 100, defDim.fHeight );
@@ -797,7 +804,7 @@ void GoddessCalib::OnClickGetStripsEdges()
         TGLabel* projWidthLabel = new TGLabel ( getStripsEdgesMF, "Proj. Width (bins):" );
         TGNumberEntryField* projWidthIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
         projWidthIF->SetName ( "Proj Width IF" );
-        projWidthIF->SetNumber ( 200 );
+        projWidthIF->SetNumber ( 20 );
 
         getStripsEdgesMF->AddFrame ( projWidthLabel );
         getStripsEdgesMF->AddFrame ( projWidthIF );
@@ -805,7 +812,7 @@ void GoddessCalib::OnClickGetStripsEdges()
         TGLabel* projThrLabel = new TGLabel ( getStripsEdgesMF, "Max Detection Threshold:" );
         TGNumberEntryField* projThrIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
         projThrIF->SetName ( "Proj Threshold IF" );
-        projThrIF->SetNumber ( 300 );
+        projThrIF->SetNumber ( 3.0 );
 
         getStripsEdgesMF->AddFrame ( projThrLabel );
         getStripsEdgesMF->AddFrame ( projThrIF );
@@ -1895,6 +1902,52 @@ TH1D* GoddessCalib::GetPosCalProjX ( TH2F* input, int projCenter, int projWidth 
     return proj;
 }
 
+Double_t flatTopGaussLeft ( Double_t *x, Double_t *par )
+{
+    Double_t res = 0;
+
+    if ( x[0] > par[1] )
+    {
+        return par[3] * ( x[0] - par[1] ) + par[0];
+    }
+    else
+    {
+        return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
+    }
+}
+
+Double_t flatTopGaussRight ( Double_t *x, Double_t *par )
+{
+    Double_t res = 0;
+
+    if ( x[0] < par[1] )
+    {
+        return par[3] * ( x[0] - par[1] ) + par[0];
+    }
+    else
+    {
+        return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
+    }
+}
+
+Double_t flatTopGauss ( Double_t *x, Double_t *par )
+{
+    Double_t res = 0;
+
+    if ( x[0] < par[1] )
+    {
+        return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
+    }
+    else if ( x[0] > par[4] )
+    {
+        return par[3] * TMath::Exp ( -pow ( x[0] - par[4],2 ) / pow ( 2 * par[2],2 ) );
+    }
+    else
+    {
+        return ( par[3] - par[0] ) / ( par[4] - par[1] ) * ( x[0] - par[1] ) + ( par[0] );
+    }
+}
+
 TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth, double threshold )
 {
     int binMaxY = GetPosCalEnBinMax ( input, threshold );
@@ -1911,7 +1964,10 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth, double threshold )
     bool fellBelow20Perc = false;
     int binShoulder = -1;
 
-    int counterMax = projX->GetNbinsX() / 30;
+    int counterMax = projX->GetNbinsX() / 20;
+
+    int localMaxBin;
+    double localMaxContent;
 
     while ( startBin > projX->GetXaxis()->GetFirst() && binShoulder == -1 )
     {
@@ -1924,22 +1980,23 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth, double threshold )
 
         int counter = 0;
 
+        localMaxBin = startBin;
+        localMaxContent = startBinContent;
+
         while ( nextBin > projX->GetXaxis()->GetFirst() && counter < counterMax )
         {
+            if ( nextBinContent > localMaxContent )
+            {
+                localMaxBin = nextBin;
+                localMaxContent = nextBinContent;
+            }
+
             if ( nextBinContent < startBinContent*0.2 )
             {
                 fellBelow20Perc = true;
                 binShoulder = startBin;
                 break;
             }
-
-            if ( nextBinContent > prevBinContent )
-            {
-                if ( !foundIncrease ) foundIncrease = true;
-                else break;
-            }
-
-//             if ( nextBinContent > startBinContent ) break;
 
             prevBin = nextBin;
             prevBinContent = nextBinContent;
@@ -1956,13 +2013,15 @@ TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth, double threshold )
 
     cout << "Found the left shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
 
-    TF1* fitfunc = new TF1 ( Form ( "myfit_%s",input->GetName() ), "[0]*exp(-0.5*((x-[1])/[2])**2)", projX->GetBinCenter ( binShoulder - counterMax ), projX->GetBinCenter ( binShoulder ) );
+    TF1 *fitfunc = new TF1 ( Form ( "myfit_right_%s",input->GetName() ), flatTopGaussLeft, projX->GetBinCenter ( binShoulder - 2*counterMax ), projX->GetBinCenter ( binShoulder + counterMax ), 4 );
 
     if ( binShoulder != -1 )
     {
-        fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
-        fitfunc->FixParameter ( 1, projX->GetBinCenter ( binShoulder ) );
-        fitfunc->SetParameter ( 2, projX->GetBinCenter ( binShoulder ) - projX->GetBinCenter ( binShoulder - 1 ) );
+        fitfunc->SetParameter ( 0, localMaxContent );
+        fitfunc->SetParameter ( 1, projX->GetBinCenter ( localMaxBin ) );
+        fitfunc->SetParameter ( 2, 2*projX->GetBinWidth ( localMaxBin ) );
+
+        fitfunc->SetParameter ( 3, 0 );
 
         projX->Fit ( fitfunc, "QRMN" );
 
@@ -1998,7 +2057,10 @@ TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth, double threshold )
     bool fellBelow20Perc = false;
     int binShoulder = -1;
 
-    int counterMax = projX->GetNbinsX() / 30;
+    int counterMax = projX->GetNbinsX() / 20;
+
+    int localMaxBin;
+    double localMaxContent;
 
     while ( startBin < projX->GetXaxis()->GetLast() && binShoulder == -1 )
     {
@@ -2011,19 +2073,22 @@ TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth, double threshold )
 
         int counter = 0;
 
+        localMaxBin = startBin;
+        localMaxContent = startBinContent;
+
         while ( nextBin < projX->GetXaxis()->GetLast() && counter < counterMax )
         {
-            if ( nextBinContent < startBinContent*0.2 )
+            if ( nextBinContent > localMaxContent )
+            {
+                localMaxBin = nextBin;
+                localMaxContent = nextBinContent;
+            }
+
+            if ( nextBinContent < localMaxContent*0.2 )
             {
                 fellBelow20Perc = true;
                 binShoulder = startBin;
                 break;
-            }
-
-            if ( nextBinContent > prevBinContent )
-            {
-                if ( !foundIncrease ) foundIncrease = true;
-                else break;
             }
 
             prevBin = nextBin;
@@ -2041,15 +2106,15 @@ TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth, double threshold )
 
     cout << "Found the right shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
 
-    TF1* fitfunc = new TF1 ( Form ( "myfit_%s",input->GetName() ), "[0]*exp(-0.5*((x-[1])/[2])**2)", projX->GetBinCenter ( binShoulder ), projX->GetBinCenter ( binShoulder + counterMax ) );
+    TF1 *fitfunc = new TF1 ( Form ( "myfit_right_%s",input->GetName() ), flatTopGaussRight, projX->GetBinCenter ( binShoulder - counterMax ), projX->GetBinCenter ( binShoulder + 2*counterMax ), 4 );
 
     if ( binShoulder != -1 )
     {
-        fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
+        fitfunc->SetParameter ( 0, localMaxContent );
+        fitfunc->SetParameter ( 1, projX->GetBinCenter ( localMaxBin ) );
+        fitfunc->SetParameter ( 2, 2*projX->GetBinWidth ( localMaxBin ) );
 
-        fitfunc->FixParameter ( 0, projX->GetBinContent ( binShoulder ) );
-        fitfunc->FixParameter ( 1, projX->GetBinCenter ( binShoulder ) );
-        fitfunc->SetParameter ( 2, projX->GetBinCenter ( binShoulder ) - projX->GetBinCenter ( binShoulder - 1 ) );
+        fitfunc->SetParameter ( 3, 0 );
 
         projX->Fit ( fitfunc, "QRMN" );
 
@@ -2887,6 +2952,12 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+
+
+
+
+
+
 
 
 
