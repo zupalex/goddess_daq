@@ -172,8 +172,9 @@ public:
 
     TH1D* GetPosCalProjX ( TH2F* input, int projCenter, int projWidth );
 
-    TF1* FitLeftEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
-    TF1* FitRightEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
+//     TF1* FitLeftEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
+//     TF1* FitRightEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
+    TF1* FitEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool fitRight = true );
     void GetStripsEdges ( int projWidth = 200, double threshold = 250, bool drawResults = true );
     void GetStripsEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
     void GetStripsEdges ( TFile* input, int projWidth = 200, double threshold = 250, bool drawResults = true );

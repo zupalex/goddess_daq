@@ -113,7 +113,7 @@ template<typename THist, typename... Rest> void AddHists ( THist* h1, THist* h2,
     }
 }
 
-template<typename THist, typename... Rest> TH1F* DrawSum ( THist* h1, THist* h2, Rest... otherHists )
+template<typename THist, typename... Rest> THist* DrawSum ( THist* h1, THist* h2, Rest... otherHists )
 {
     if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
     {
