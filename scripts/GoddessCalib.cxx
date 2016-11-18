@@ -2173,7 +2173,7 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
         if ( binShoulder != -1 && ( nextBinContent-prevBinContent ) /prevBinContent <= 0.1 ) break;
 
-        if ( prevBinContent > maxContent/5. && ( nextBinContent-prevBinContent ) /prevBinContent > 0.1 )
+        if ( prevBinContent > maxContent/6. && ( nextBinContent-prevBinContent ) /prevBinContent > 0.1 )
         {
             binShoulder = nextBin;
         }
@@ -2184,7 +2184,7 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
         startBinContent = projX->GetBinContent ( startBin );
     }
 
-    cout << "Found the left shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
+    cout << "Found the " << (fitRight ? "left" : "right") << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
 
     TF1 *fitfunc = new TF1 ( Form ( "myfit_left_%s",input->GetName() ), (fitRight ? flatTopGaussRight : flatTopGaussLeft), projX->GetBinCenter ( binShoulder - 2*windowWidth ), projX->GetBinCenter ( binShoulder + windowWidth ), 4 );
 
@@ -2198,9 +2198,9 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
         projX->Fit ( fitfunc, "QRMN" );
 
-        float leftEdge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+        float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
 
-        cout << "Found the left strip edge at " << leftEdge << endl;
+        cout << "Found the " << (fitRight ? "left" : "right") << " strip edge at " << edge << endl;
 
         string hname = input->GetName();
         string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
@@ -2209,7 +2209,8 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
         InitializeCalMapKey ( calMapKey, stripNbr );
 
-        resStripsCalMap[calMapKey][stripNbr][4] = leftEdge;
+        if(fitRight) resStripsCalMap[calMapKey][stripNbr][5] = edge;
+	else resStripsCalMap[calMapKey][stripNbr][4] = edge;
     }
     return fitfunc;
 }
