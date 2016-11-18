@@ -1144,7 +1144,7 @@ bool GoddessCalib::DumpFileToResCalMap ( string fileName )
 
             InitializeCalMapKey ( detID, stripNbr );
 
-            cout << "Read the following values: " << xinter << " / " <<  yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge << " / " << pos_right_edge << endl;
+            cout << "Read the following values for strip #" << stripNbr << ": " << xinter << " / " <<  yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge << " / " << pos_right_edge << endl;
 
             vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
 
@@ -1177,13 +1177,10 @@ void GoddessCalib::WriteResCalResults ( string fileName, string mode )
     {
         outStream << "\n" << itr->first << "\n";
 
-        for ( unsigned short i = 0; i < 4; i++ )
+        for ( auto stripItr = itr->second.begin(); stripItr != itr->second.end(); stripItr++ )
         {
-            if ( itr->second.find ( i ) != itr->second.end() )
-            {
-                outStream << "Res. Strip #" << i << "   " << itr->second[i][0] << "   " << itr->second[i][1] << "   " << itr->second[i][2] << "   " << itr->second[i][3];
-                outStream << "   " << itr->second[i][4] << "   " << itr->second[i][5] << "\n";
-            }
+            outStream << "Res. Strip #" << stripItr->first << "   " << stripItr->second[0] << "   " << stripItr->second[1] << "   " << stripItr->second[2] << "   " << stripItr->second[3];
+            outStream << "   " << stripItr->second[4] << "   " << stripItr->second[5] << "\n";
         }
     }
 
@@ -2044,38 +2041,38 @@ Double_t flatTopGauss ( Double_t *x, Double_t *par )
 // TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth, double threshold )
 // {
 //     int binMaxY = GetPosCalEnBinMax ( input, threshold );
-// 
+//
 //     TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
-// 
+//
 //     int binMaxX = projX->GetMaximumBin();
-// 
+//
 //     double maxContent = projX->GetBinContent ( binMaxX );
-// 
+//
 //     int startBin = binMaxX;
 //     double startBinContent = maxContent;
-// 
+//
 //     bool fellBelow20Perc = false;
 //     int binShoulder = -1;
-// 
+//
 //     int counterMax = projX->GetNbinsX() / 20;
-// 
+//
 //     int localMaxBin;
 //     double localMaxContent;
-// 
+//
 //     while ( startBin < projX->GetXaxis()->GetLast() && binShoulder == -1 )
 //     {
 //         int prevBin = startBin;
 //         double prevBinContent = startBinContent;
-// 
+//
 //         int nextBin = startBin + 1;
 //         double nextBinContent = projX->GetBinContent ( nextBin );
 //         bool foundIncrease = false;
-// 
+//
 //         int counter = 0;
-// 
+//
 //         localMaxBin = startBin;
 //         localMaxContent = startBinContent;
-// 
+//
 //         while ( nextBin < projX->GetXaxis()->GetLast() && counter < counterMax )
 //         {
 //             if ( nextBinContent > localMaxContent )
@@ -2083,52 +2080,52 @@ Double_t flatTopGauss ( Double_t *x, Double_t *par )
 //                 localMaxBin = nextBin;
 //                 localMaxContent = nextBinContent;
 //             }
-// 
+//
 //             if ( nextBinContent < localMaxContent*0.2 )
 //             {
 //                 fellBelow20Perc = true;
 //                 binShoulder = startBin;
 //                 break;
 //             }
-// 
+//
 //             prevBin = nextBin;
 //             prevBinContent = nextBinContent;
-// 
+//
 //             nextBin++;
 //             nextBinContent = projX->GetBinContent ( nextBin );
-// 
+//
 //             counter++;
 //         }
-// 
+//
 //         startBin++;
 //         startBinContent = projX->GetBinContent ( startBin );
 //     }
-// 
+//
 //     cout << "Found the right shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
-// 
+//
 //     TF1 *fitfunc = new TF1 ( Form ( "myfit_right_%s",input->GetName() ), flatTopGaussRight, projX->GetBinCenter ( binShoulder - counterMax ), projX->GetBinCenter ( binShoulder + 2*counterMax ), 4 );
-// 
+//
 //     if ( binShoulder != -1 )
 //     {
 //         fitfunc->SetParameter ( 0, localMaxContent );
 //         fitfunc->SetParameter ( 1, projX->GetBinCenter ( localMaxBin ) );
 //         fitfunc->SetParameter ( 2, 2*projX->GetBinWidth ( localMaxBin ) );
-// 
+//
 //         fitfunc->SetParameter ( 3, 0 );
-// 
+//
 //         projX->Fit ( fitfunc, "QRMN" );
-// 
+//
 //         float rightEdge = fitfunc->GetParameter ( 1 ) + TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
-// 
+//
 //         cout << "Found the right strip edge at " << rightEdge << endl;
-// 
+//
 //         string hname = input->GetName();
 //         string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
-// 
+//
 //         int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
-// 
+//
 //         InitializeCalMapKey ( calMapKey, stripNbr );
-// 
+//
 //         resStripsCalMap[calMapKey][stripNbr][5] = rightEdge;
 //     }
 //     return fitfunc;
@@ -2139,28 +2136,28 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
     int binMaxY = GetPosCalEnBinMax ( input, threshold );
 
     TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
-    projX->GetXaxis()->SetRange(projX->GetXaxis()->GetFirst()+1, projX->GetXaxis()->GetLast()-1);
+    projX->GetXaxis()->SetRange ( projX->GetXaxis()->GetFirst() +1, projX->GetXaxis()->GetLast()-1 );
 
     int binMaxX = projX->GetMaximumBin();
 
     double maxContent = projX->GetBinContent ( binMaxX );
 
-    int startBin = fitRight ? (projX->GetXaxis()->GetLast() - 1) : (projX->GetXaxis()->GetFirst() + 1);
+    int startBin = fitRight ? ( projX->GetXaxis()->GetLast() - 1 ) : ( projX->GetXaxis()->GetFirst() + 1 );
     double startBinContent = maxContent;
-    
+
     int binShoulder = -1;
 
     int windowWidth = projX->GetNbinsX() / 20;
 
-    int localMaxBin = fitRight ? (projX->GetXaxis()->GetLast() - 1) : (projX->GetXaxis()->GetFirst() + 1);
+    int localMaxBin = fitRight ? ( projX->GetXaxis()->GetLast() - 1 ) : ( projX->GetXaxis()->GetFirst() + 1 );
     double localMaxContent = projX->GetBinContent ( localMaxBin );
-    
-    while ( fitRight ? (startBin > projX->GetXaxis()->GetFirst() + 1) : (startBin < projX->GetXaxis()->GetLast() - 1) )
+
+    while ( fitRight ? ( startBin > projX->GetXaxis()->GetFirst() + 1 ) : ( startBin < projX->GetXaxis()->GetLast() - 1 ) )
     {
         int prevBin = startBin;
         double prevBinContent = startBinContent;
 
-        int nextBin = fitRight ? (startBin - 1) : (startBin + 1);
+        int nextBin = fitRight ? ( startBin - 1 ) : ( startBin + 1 );
         double nextBinContent = projX->GetBinContent ( nextBin );
 
         int counter = 0;
@@ -2178,15 +2175,15 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
             binShoulder = nextBin;
         }
 
-        if( fitRight ) startBin--;
-	else startBin++;
-	
+        if ( fitRight ) startBin--;
+        else startBin++;
+
         startBinContent = projX->GetBinContent ( startBin );
     }
 
-    cout << "Found the " << (fitRight ? "left" : "right") << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
+    cout << "Found the " << ( fitRight ? "left" : "right" ) << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
 
-    TF1 *fitfunc = new TF1 ( Form ( "myfit_left_%s",input->GetName() ), (fitRight ? flatTopGaussRight : flatTopGaussLeft), projX->GetBinCenter ( binShoulder - 2*windowWidth ), projX->GetBinCenter ( binShoulder + windowWidth ), 4 );
+    TF1 *fitfunc = new TF1 ( Form ( "myfit_left_%s",input->GetName() ), ( fitRight ? flatTopGaussRight : flatTopGaussLeft ), projX->GetBinCenter ( binShoulder - 2*windowWidth ), projX->GetBinCenter ( binShoulder + windowWidth ), 4 );
 
     if ( binShoulder != -1 )
     {
@@ -2200,7 +2197,7 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
 
-        cout << "Found the " << (fitRight ? "left" : "right") << " strip edge at " << edge << endl;
+        cout << "Found the " << ( fitRight ? "left" : "right" ) << " strip edge at " << edge << endl;
 
         string hname = input->GetName();
         string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
@@ -2209,8 +2206,8 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
         InitializeCalMapKey ( calMapKey, stripNbr );
 
-        if(fitRight) resStripsCalMap[calMapKey][stripNbr][5] = edge;
-	else resStripsCalMap[calMapKey][stripNbr][4] = edge;
+        if ( fitRight ) resStripsCalMap[calMapKey][stripNbr][5] = edge;
+        else resStripsCalMap[calMapKey][stripNbr][4] = edge;
     }
     return fitfunc;
 }
@@ -2219,7 +2216,7 @@ void GoddessCalib::GetStripsEdges ( int projWidth, double threshold, bool drawRe
 {
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
-        cout << "Retreiving the edges of sector " << itr->first.substr ( 0, itr->first.find ( "_" ) ) << " strip #" << itr->first.substr ( itr->first.find ( "_" )+1 ) << " ..." << endl;
+        cout << "Retreiving the edges of sector " << itr->first.substr ( 0, itr->first.find ( "_" ) ) << " strip #" << itr->first.substr ( itr->first.find ( "_" ) +1 ) << " ..." << endl;
 
         TF1* lfit = FitEdges ( itr->second, projWidth, threshold, false );
         TF1* rfit = FitEdges ( itr->second, projWidth, threshold, true );
@@ -2243,7 +2240,7 @@ void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, double threshold
 {
     string hname = input->GetName();
 
-    cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" )+1 ) << " ..." << endl;
+    cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) +1 ) << " ..." << endl;
 
     TF1* lfit = FitEdges ( input, projWidth, threshold, false );
     TF1* rfit = FitEdges ( input, projWidth, threshold, true );

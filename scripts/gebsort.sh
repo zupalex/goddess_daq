@@ -102,7 +102,7 @@ COUNTER=$(($COUNTER + 1))
 	fi
 
 	NOCALIBFLAG="-nocalib $NOCALVAL"
-	echo "/!\\ will process the run without applying the calibration parameters in mode $NOCALVAL/!\\"
+	echo "/!\\ will process the run with the the calibration parameters set to mode $NOCALVAL/!\\"
 
     elif [ "$arg" != "${arg##sidetails=}" ]; then
 
