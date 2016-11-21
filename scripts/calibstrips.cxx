@@ -730,7 +730,7 @@ prompt2DHist:
 
     DoMyJob ( histToTreat, userWidth, userGaussNbr, userDraw, userWrite, userPeakEn, userThr, userUpperLimit, userIgnore );
 }
-
+/*
 std::map<unsigned short, std::pair<float, float>> GetCalibMap ( unsigned short fstCh, string inFileName )
 {
     std::map<unsigned short, std::pair<float, float>> calMap_;
@@ -858,415 +858,306 @@ void GetEnHistsPerStrip ( string fName, string treeName, string sectorsStr = "al
     }
 
     return GetEnHistsPerStrip ( data_, sectorsStr, stripsStr );
-}
-
-// *************************************************************************************************************************************** //
-
-vector<std::map<int, TH1F*>> hEn_QQQ5UA;
-vector<std::map<int, TH1F*>> hEn_QQQ5UB;
-vector<std::map<int, TH1F*>> hEn_QQQ5UC;
-vector<std::map<int, TH1F*>> hEn_QQQ5UD;
-
-vector<std::map<int, TH1F*>> hQVal_QQQ5UA;
-vector<std::map<int, TH1F*>> hQVal_QQQ5UB;
-vector<std::map<int, TH1F*>> hQVal_QQQ5UC;
-vector<std::map<int, TH1F*>> hQVal_QQQ5UD;
-
-TH2F* hEn_vs_strip_QQQ5UA;
-TH2F* hEn_vs_strip_QQQ5UB;
-TH2F* hEn_vs_strip_QQQ5UC;
-TH2F* hEn_vs_strip_QQQ5UD;
-
-TH2F* hQval_vs_strip_QQQ5UA;
-TH2F* hQval_vs_strip_QQQ5UB;
-TH2F* hQval_vs_strip_QQQ5UC;
-TH2F* hQval_vs_strip_QQQ5UD;
-
-TH2F* hEn_vs_strip_QQQ5UA_mod;
-TH2F* hEn_vs_strip_QQQ5UB_mod;
-TH2F* hEn_vs_strip_QQQ5UC_mod;
-TH2F* hEn_vs_strip_QQQ5UD_mod;
-
-TH2F* hQval_vs_strip_QQQ5UA_mod;
-TH2F* hQval_vs_strip_QQQ5UB_mod;
-TH2F* hQval_vs_strip_QQQ5UC_mod;
-TH2F* hQval_vs_strip_QQQ5UD_mod;
-
-const int minMod = 40;
-const int maxMod = 160;
-
-TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeff_ = 100 )
-{
-    TH1F* hSum = ( TH1F* ) hists[0][modCoeff_]->Clone();
-
-    for ( int i = 1; i < 32; i++ )
-    {
-        hSum->Add ( hists[i][modCoeff_] );
-    }
-
-    return hSum;
-}
-
-TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeffs[32] )
-{
-    TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
-
-    for ( int i = 1; i < 32; i++ )
-    {
-        hSum->Add ( hists[i][modCoeffs[i]] );
-    }
-
-    return hSum;
-}
-
-TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, vector<int> modCoeffs )
-{
-    TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
-
-    for ( int i = 1; i < 32; i++ )
-    {
-        hSum->Add ( hists[i][modCoeffs[i]] );
-    }
-
-    return hSum;
-}
-
-TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float minBound = 0, float maxBound = 0 )
-{
-    TF1* fitFunc = new TF1 ( "fitFunc", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [5],2 ) ) + [6] + [7] * x", -20, 20 );
-
-    if ( minBound == 0 ) minBound = mean - 2 - fwhm;
-    if ( maxBound == 0 ) maxBound = mean + fwhm*3;
-
-    fitFunc->SetParameters ( 10, mean, fwhm, 10, mean - 2, fwhm, 1, -0.1 );
-
-    hist->Fit ( fitFunc, "Q", "", minBound, maxBound );
-
-    return fitFunc;
-}
-
-TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeff_ = 100 )
-{
-    dest->Reset();
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        unsigned int nBins = src[i][modCoeff_]->GetNbinsX();
-
-        for ( unsigned int j = 0; j < nBins; j++ )
-        {
-            dest->Fill ( i, src[i][modCoeff_]->GetBinCenter ( j ), src[i][modCoeff_]->GetBinContent ( j ) );
-        }
-    }
-
-    return dest;
-}
-
-TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeffs[32] )
-{
-    dest->Reset();
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
-
-        for ( unsigned int j = 0; j < nBins; j++ )
-        {
-            dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
-        }
-    }
-
-    return dest;
-}
-
-TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, vector<int> modCoeffs )
-{
-    dest->Clear();
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
-
-        for ( unsigned int j = 0; j < nBins; j++ )
-        {
-            dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
-        }
-    }
-
-    return dest;
-}
-
-void InitSiEnergySpectra ( unsigned int nBins, int binMin, int binMax )
-{
-    for ( int i = 0; i < 32; i++ )
-    {
-        float modCoeff = minMod;
-
-        std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
-
-        while ( modCoeff <= maxMod )
-        {
-            newMapEntryA[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-            newMapEntryB[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-            newMapEntryC[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-            newMapEntryD[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-
-            modCoeff += 1;
-        }
-
-        hEn_QQQ5UA.push_back ( newMapEntryA );
-        hEn_QQQ5UB.push_back ( newMapEntryB );
-        hEn_QQQ5UC.push_back ( newMapEntryC );
-        hEn_QQQ5UD.push_back ( newMapEntryD );
-    }
-
-    hEn_vs_strip_QQQ5UA = new TH2F ( "hEn_vs_strip_QQQ5UA", "Si Energy vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
-    hEn_vs_strip_QQQ5UB = new TH2F ( "hEn_vs_strip_QQQ5UB", "Si Energy vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
-    hEn_vs_strip_QQQ5UC = new TH2F ( "hEn_vs_strip_QQQ5UC", "Si Energy vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
-    hEn_vs_strip_QQQ5UD = new TH2F ( "hEn_vs_strip_QQQ5UD", "Si Energy vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
-
-    hEn_vs_strip_QQQ5UA_mod = new TH2F ( "hEn_vs_strip_QQQ5UA_mod", "Si Energy vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
-    hEn_vs_strip_QQQ5UB_mod = new TH2F ( "hEn_vs_strip_QQQ5UB_mod", "Si Energy vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
-    hEn_vs_strip_QQQ5UC_mod = new TH2F ( "hEn_vs_strip_QQQ5UC_mod", "Si Energy vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
-    hEn_vs_strip_QQQ5UD_mod = new TH2F ( "hEn_vs_strip_QQQ5UD_mod", "Si Energy vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
-
-    return;
-}
-
-void InitQValSpectra ( unsigned int nBins, int binMin, int binMax )
-{
-    for ( int i = 0; i < 32; i++ )
-    {
-        float modCoeff = minMod;
-
-        std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
-
-        while ( modCoeff <= maxMod )
-        {
-            newMapEntryA[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-            newMapEntryB[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-            newMapEntryC[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-            newMapEntryD[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-
-            modCoeff += 1;
-        }
-
-        hQVal_QQQ5UA.push_back ( newMapEntryA );
-        hQVal_QQQ5UB.push_back ( newMapEntryB );
-        hQVal_QQQ5UC.push_back ( newMapEntryC );
-        hQVal_QQQ5UD.push_back ( newMapEntryD );
-    }
-
-    hQval_vs_strip_QQQ5UA = new TH2F ( "hQval_vs_strip_QQQ5UA", "Q-Value vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
-    hQval_vs_strip_QQQ5UB = new TH2F ( "hQval_vs_strip_QQQ5UB", "Q-Value vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
-    hQval_vs_strip_QQQ5UC = new TH2F ( "hQval_vs_strip_QQQ5UC", "Q-Value vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
-    hQval_vs_strip_QQQ5UD = new TH2F ( "hQval_vs_strip_QQQ5UD", "Q-Value vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
-
-    hQval_vs_strip_QQQ5UA_mod = new TH2F ( "hQval_vs_strip_QQQ5UA_mod", "Q-Value vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
-    hQval_vs_strip_QQQ5UB_mod = new TH2F ( "hQval_vs_strip_QQQ5UB_mod", "Q-Value vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
-    hQval_vs_strip_QQQ5UC_mod = new TH2F ( "hQval_vs_strip_QQQ5UC_mod", "Q-Value vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
-    hQval_vs_strip_QQQ5UD_mod = new TH2F ( "hQval_vs_strip_QQQ5UD_mod", "Q-Value vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
-
-    return;
-}
-
-void GenerateEnergyHistPerStrip ( TChain* chain )
-{
-    InitSiEnergySpectra ( 200, 0, 10 );
-    InitQValSpectra ( 500,-15,10 );
-
-    vector<SiDataBase>* siData = new vector<SiDataBase>;
-
-    chain->SetBranchAddress ( "si", &siData );
-
-    float massBeam = 134.;
-    float beamEk = 1337;
-    float massTarget = 2.;
-    float massRecoil = 135.;
-    float massEjec = 1.;
-    float qValGsGs = 4.1;
-
-    vector<std::map<int, TH1F*>>* hQValPerSector[4];
-
-    hQValPerSector[0] = &hQVal_QQQ5UA;
-    hQValPerSector[1] = &hQVal_QQQ5UB;
-    hQValPerSector[2] = &hQVal_QQQ5UC;
-    hQValPerSector[3] = &hQVal_QQQ5UD;
-
-    vector<std::map<int, TH1F*>>* hEnPerSector[4];
-
-    hEnPerSector[0] = &hEn_QQQ5UA;
-    hEnPerSector[1] = &hEn_QQQ5UB;
-    hEnPerSector[2] = &hEn_QQQ5UC;
-    hEnPerSector[3] = &hEn_QQQ5UD;
-
-    float angle, qval, exEn, modCoeff;
-    int sector, strip, mult;
-    double siEn, newEn, newQval;
-
-    for ( long long int i = 0; i < chain->GetEntries(); i++ )
-    {
-        if ( i%10000 == 0 )
-        {
-            cout << "Treated " << std::setw ( 9 ) << i << " / " << std::setw ( 9 ) << chain->GetEntries();
-            cout << " ( " << std::setw ( 5 ) << std::fixed << std::setprecision ( 2 ) << ( float ) i/chain->GetEntries() *100. << "% )\r" << std::flush;
-        }
-
-        chain->GetEntry ( i );
-
-        for ( unsigned int j = 0; j < siData->size(); j++ )
-        {
-            angle = siData->at ( j ).Angle ( 1 );
-//             qval = siData->at ( j ).QValue ( massBeam, beamEk, massTarget, massEjec );
-
-//             exEn = -qval + qValGsGs;
-
-            sector = siData->at ( j ).sector;
-            strip = siData->at ( j ).StripMaxLayer ( 1, false );
-            mult = siData->at ( j ).MultLayer ( 1, false );
-
-            siEn = siData->at ( j ).ESumLayer ( 1, false );
-
-            if ( angle != 0 && siEn > 0 && mult == 1 )
-            {
-                if ( siData->at ( j ).isUpstream && !siData->at ( j ).isBarrel )
-                {
-                    modCoeff = minMod;
-
-                    while ( modCoeff <= maxMod )
-                    {
-                        newEn = siEn* ( modCoeff/100. );
-
-                        newQval = ( 1+massEjec/massRecoil ) * ( newEn ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
-                                  - 2 * TMath::Sqrt ( massBeam*massEjec* ( newEn ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle * TMath::Pi() / 180. );
-
-                        ( hEnPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newEn );
-
-                        ( hQValPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newQval );
-
-                        modCoeff += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    cout << "\n";
-
-    GetQvalVsStrip ( hQVal_QQQ5UA, hQval_vs_strip_QQQ5UA );
-    GetQvalVsStrip ( hQVal_QQQ5UB, hQval_vs_strip_QQQ5UB );
-    GetQvalVsStrip ( hQVal_QQQ5UC, hQval_vs_strip_QQQ5UC );
-    GetQvalVsStrip ( hQVal_QQQ5UD, hQval_vs_strip_QQQ5UD );
-
-    return;
-}
-
-template<typename First, typename... Rest> void GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest )
-{
-    GoddessAnalysis* gA = new GoddessAnalysis();
-
-    gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
-
-    TChain* uChain = gA->userChain;
-
-    GenerateEnergyHistPerStrip ( uChain );
-}
-
-vector<int> AdjustQValSpectrum ( vector<std::map<int, TH1F*>> hists, float peakPos, float fwhm, float minBound = 0, int maxBound = 0, int minMod_ = minMod, int maxMod_ = maxMod,
-                                 string chi2Mode = "x < y", string sigmaMode = "x <= y", string magnMode = "x => y", string integralMode = "x >= y" )
-{
-    vector<int> bestMods;
-
-    int testMods[32];
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        bestMods.push_back ( 100 );
-    }
-
-    TH1F* sum = AddAllStrips ( hists, bestMods );
-
-    sum->Draw();
-
-    TF1* bestFitFunc = FitQValGS ( sum, peakPos, fwhm );
-
-    double bestChi2, bestMagn, bestMean, bestSigma, bestIntegral;
-
-    bestMagn = bestFitFunc->GetParameter ( 0 );
-    bestMean = bestFitFunc->GetParameter ( 1 );
-    bestSigma = bestFitFunc->GetParameter ( 2 );
-
-    bestChi2 = bestFitFunc->GetChisquare();
-    
-    bestIntegral = bestMagn * TMath::Sqrt(2*TMath::Pi()) * bestSigma;
-
-    TF1* fitFunc;
-
-    double chi2, magn, mean, sigma, integral;
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        for ( int j = 0; j < 32; j++ )
-        {
-            testMods[j] = bestMods[j];
-        }
-
-        int modCoeff = minMod_;
-
-        while ( modCoeff <= maxMod_ )
-        {
-            testMods[i] = modCoeff;
-
-            TH1F* testSum = AddAllStrips ( hists, testMods );
-
-            fitFunc = FitQValGS ( testSum, peakPos, fwhm, minBound, maxBound );
-
-            magn = fitFunc->GetParameter ( 0 );
-            mean = fitFunc->GetParameter ( 1 );
-            sigma = fitFunc->GetParameter ( 2 );
-
-            chi2 = fitFunc->GetChisquare();
-
-	    integral = magn * TMath::Sqrt(2*TMath::Pi()) * sigma;
-
-            bool betterFit = false;
-
-            bool chi2Cond = !chi2Mode.empty() ? StringFormulaComparator<double> ( chi2Mode, chi2, bestChi2 ) : true;
-            bool sigmaCond = !sigmaMode.empty() ? StringFormulaComparator<double> ( sigmaMode, sigma, bestSigma ) : true;
-            bool magnCond = !magnMode.empty() ? StringFormulaComparator<double> ( magnMode, magn, bestMagn ) : true;
-	    bool integralCond = !integralMode.empty() ? StringFormulaComparator<double> ( integralMode, integral, bestIntegral ) : true;
-
-            betterFit = chi2Cond && sigmaCond && magnCond;
-
-            if ( betterFit )
-            {
-                bestFitFunc = ( TF1* ) fitFunc->Clone();
-
-                bestMagn = magn;
-                bestMean = mean;
-                bestSigma = sigma;
-
-                bestChi2 = chi2;
-		
-		bestIntegral = integral;
-
-                bestMods[i] = modCoeff;
-            }
-
-            modCoeff++;
-        }
-    }
-
-    cout << "\n{ ";
-
-    for ( int i = 0; i < 32; i++ )
-    {
-        cout << i << ": " << bestMods[i];
-        if ( i < 31 ) cout << ", ";
-    }
-
-    cout << " }\n";
-
-    return bestMods;
-}
-
+}*/
+
+// // *************************************************************************************************************************************** //
+// 
+// vector<std::map<int, TH1F*>> hEn_QQQ5UA;
+// vector<std::map<int, TH1F*>> hEn_QQQ5UB;
+// vector<std::map<int, TH1F*>> hEn_QQQ5UC;
+// vector<std::map<int, TH1F*>> hEn_QQQ5UD;
+// 
+// vector<std::map<int, TH1F*>> hQVal_QQQ5UA;
+// vector<std::map<int, TH1F*>> hQVal_QQQ5UB;
+// vector<std::map<int, TH1F*>> hQVal_QQQ5UC;
+// vector<std::map<int, TH1F*>> hQVal_QQQ5UD;
+// 
+// TH2F* hEn_vs_strip_QQQ5UA;
+// TH2F* hEn_vs_strip_QQQ5UB;
+// TH2F* hEn_vs_strip_QQQ5UC;
+// TH2F* hEn_vs_strip_QQQ5UD;
+// 
+// TH2F* hQval_vs_strip_QQQ5UA;
+// TH2F* hQval_vs_strip_QQQ5UB;
+// TH2F* hQval_vs_strip_QQQ5UC;
+// TH2F* hQval_vs_strip_QQQ5UD;
+// 
+// TH2F* hEn_vs_strip_QQQ5UA_mod;
+// TH2F* hEn_vs_strip_QQQ5UB_mod;
+// TH2F* hEn_vs_strip_QQQ5UC_mod;
+// TH2F* hEn_vs_strip_QQQ5UD_mod;
+// 
+// TH2F* hQval_vs_strip_QQQ5UA_mod;
+// TH2F* hQval_vs_strip_QQQ5UB_mod;
+// TH2F* hQval_vs_strip_QQQ5UC_mod;
+// TH2F* hQval_vs_strip_QQQ5UD_mod;
+// 
+// const int minMod = 40;
+// const int maxMod = 160;
+// 
+// TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeff_ = 100 )
+// {
+//     TH1F* hSum = ( TH1F* ) hists[0][modCoeff_]->Clone();
+// 
+//     for ( int i = 1; i < 32; i++ )
+//     {
+//         hSum->Add ( hists[i][modCoeff_] );
+//     }
+// 
+//     return hSum;
+// }
+// 
+// TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeffs[32] )
+// {
+//     TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
+// 
+//     for ( int i = 1; i < 32; i++ )
+//     {
+//         hSum->Add ( hists[i][modCoeffs[i]] );
+//     }
+// 
+//     return hSum;
+// }
+// 
+// TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, vector<int> modCoeffs )
+// {
+//     TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
+// 
+//     for ( int i = 1; i < 32; i++ )
+//     {
+//         hSum->Add ( hists[i][modCoeffs[i]] );
+//     }
+// 
+//     return hSum;
+// }
+// 
+// TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float minBound = 0, float maxBound = 0 )
+// {
+//     TF1* fitFunc = new TF1 ( "fitFunc", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [5],2 ) ) + [6] + [7] * x", -20, 20 );
+// 
+//     if ( minBound == 0 ) minBound = mean - 2 - fwhm;
+//     if ( maxBound == 0 ) maxBound = mean + fwhm*3;
+// 
+//     fitFunc->SetParameters ( 10, mean, fwhm, 10, mean - 2, fwhm, 1, -0.1 );
+// 
+//     hist->Fit ( fitFunc, "Q", "", minBound, maxBound );
+// 
+//     return fitFunc;
+// }
+// 
+// TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeff_ = 100 )
+// {
+//     dest->Reset();
+// 
+//     for ( int i = 0; i < 32; i++ )
+//     {
+//         unsigned int nBins = src[i][modCoeff_]->GetNbinsX();
+// 
+//         for ( unsigned int j = 0; j < nBins; j++ )
+//         {
+//             dest->Fill ( i, src[i][modCoeff_]->GetBinCenter ( j ), src[i][modCoeff_]->GetBinContent ( j ) );
+//         }
+//     }
+// 
+//     return dest;
+// }
+// 
+// TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeffs[32] )
+// {
+//     dest->Reset();
+// 
+//     for ( int i = 0; i < 32; i++ )
+//     {
+//         unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
+// 
+//         for ( unsigned int j = 0; j < nBins; j++ )
+//         {
+//             dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
+//         }
+//     }
+// 
+//     return dest;
+// }
+// 
+// TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, vector<int> modCoeffs )
+// {
+//     dest->Clear();
+// 
+//     for ( int i = 0; i < 32; i++ )
+//     {
+//         unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
+// 
+//         for ( unsigned int j = 0; j < nBins; j++ )
+//         {
+//             dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
+//         }
+//     }
+// 
+//     return dest;
+// }
+// 
+// void InitSiEnergySpectra ( unsigned int nBins, int binMin, int binMax )
+// {
+//     for ( int i = 0; i < 32; i++ )
+//     {
+//         float modCoeff = minMod;
+// 
+//         std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
+// 
+//         while ( modCoeff <= maxMod )
+//         {
+//             newMapEntryA[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+//             newMapEntryB[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+//             newMapEntryC[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+//             newMapEntryD[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+// 
+//             modCoeff += 1;
+//         }
+// 
+//         hEn_QQQ5UA.push_back ( newMapEntryA );
+//         hEn_QQQ5UB.push_back ( newMapEntryB );
+//         hEn_QQQ5UC.push_back ( newMapEntryC );
+//         hEn_QQQ5UD.push_back ( newMapEntryD );
+//     }
+// 
+//     hEn_vs_strip_QQQ5UA = new TH2F ( "hEn_vs_strip_QQQ5UA", "Si Energy vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
+//     hEn_vs_strip_QQQ5UB = new TH2F ( "hEn_vs_strip_QQQ5UB", "Si Energy vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
+//     hEn_vs_strip_QQQ5UC = new TH2F ( "hEn_vs_strip_QQQ5UC", "Si Energy vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
+//     hEn_vs_strip_QQQ5UD = new TH2F ( "hEn_vs_strip_QQQ5UD", "Si Energy vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
+// 
+//     hEn_vs_strip_QQQ5UA_mod = new TH2F ( "hEn_vs_strip_QQQ5UA_mod", "Si Energy vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
+//     hEn_vs_strip_QQQ5UB_mod = new TH2F ( "hEn_vs_strip_QQQ5UB_mod", "Si Energy vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
+//     hEn_vs_strip_QQQ5UC_mod = new TH2F ( "hEn_vs_strip_QQQ5UC_mod", "Si Energy vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
+//     hEn_vs_strip_QQQ5UD_mod = new TH2F ( "hEn_vs_strip_QQQ5UD_mod", "Si Energy vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
+// 
+//     return;
+// }
+// 
+// void InitQValSpectra ( unsigned int nBins, int binMin, int binMax )
+// {
+//     for ( int i = 0; i < 32; i++ )
+//     {
+//         float modCoeff = minMod;
+// 
+//         std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
+// 
+//         while ( modCoeff <= maxMod )
+//         {
+//             newMapEntryA[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+//             newMapEntryB[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+//             newMapEntryC[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+//             newMapEntryD[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
+// 
+//             modCoeff += 1;
+//         }
+// 
+//         hQVal_QQQ5UA.push_back ( newMapEntryA );
+//         hQVal_QQQ5UB.push_back ( newMapEntryB );
+//         hQVal_QQQ5UC.push_back ( newMapEntryC );
+//         hQVal_QQQ5UD.push_back ( newMapEntryD );
+//     }
+// 
+//     hQval_vs_strip_QQQ5UA = new TH2F ( "hQval_vs_strip_QQQ5UA", "Q-Value vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
+//     hQval_vs_strip_QQQ5UB = new TH2F ( "hQval_vs_strip_QQQ5UB", "Q-Value vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
+//     hQval_vs_strip_QQQ5UC = new TH2F ( "hQval_vs_strip_QQQ5UC", "Q-Value vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
+//     hQval_vs_strip_QQQ5UD = new TH2F ( "hQval_vs_strip_QQQ5UD", "Q-Value vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
+// 
+//     hQval_vs_strip_QQQ5UA_mod = new TH2F ( "hQval_vs_strip_QQQ5UA_mod", "Q-Value vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
+//     hQval_vs_strip_QQQ5UB_mod = new TH2F ( "hQval_vs_strip_QQQ5UB_mod", "Q-Value vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
+//     hQval_vs_strip_QQQ5UC_mod = new TH2F ( "hQval_vs_strip_QQQ5UC_mod", "Q-Value vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
+//     hQval_vs_strip_QQQ5UD_mod = new TH2F ( "hQval_vs_strip_QQQ5UD_mod", "Q-Value vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
+// 
+//     return;
+// }
+// 
+// void GenerateEnergyHistPerStrip ( TChain* chain )
+// {
+//     InitSiEnergySpectra ( 200, 0, 10 );
+//     InitQValSpectra ( 500,-15,10 );
+// 
+//     vector<SiDataBase>* siData = new vector<SiDataBase>;
+// 
+//     chain->SetBranchAddress ( "si", &siData );
+// 
+//     float massBeam = 134.;
+//     float beamEk = 1337;
+//     float massTarget = 2.;
+//     float massRecoil = 135.;
+//     float massEjec = 1.;
+//     float qValGsGs = 4.1;
+// 
+//     vector<std::map<int, TH1F*>>* hQValPerSector[4];
+// 
+//     hQValPerSector[0] = &hQVal_QQQ5UA;
+//     hQValPerSector[1] = &hQVal_QQQ5UB;
+//     hQValPerSector[2] = &hQVal_QQQ5UC;
+//     hQValPerSector[3] = &hQVal_QQQ5UD;
+// 
+//     vector<std::map<int, TH1F*>>* hEnPerSector[4];
+// 
+//     hEnPerSector[0] = &hEn_QQQ5UA;
+//     hEnPerSector[1] = &hEn_QQQ5UB;
+//     hEnPerSector[2] = &hEn_QQQ5UC;
+//     hEnPerSector[3] = &hEn_QQQ5UD;
+// 
+//     float angle, qval, exEn, modCoeff;
+//     int sector, strip, mult;
+//     double siEn, newEn, newQval;
+// 
+//     for ( long long int i = 0; i < chain->GetEntries(); i++ )
+//     {
+//         if ( i%10000 == 0 )
+//         {
+//             cout << "Treated " << std::setw ( 9 ) << i << " / " << std::setw ( 9 ) << chain->GetEntries();
+//             cout << " ( " << std::setw ( 5 ) << std::fixed << std::setprecision ( 2 ) << ( float ) i/chain->GetEntries() *100. << "% )\r" << std::flush;
+//         }
+// 
+//         chain->GetEntry ( i );
+// 
+//         for ( unsigned int j = 0; j < siData->size(); j++ )
+//         {
+//             angle = siData->at ( j ).Angle ( 1 );
+// //             qval = siData->at ( j ).QValue ( massBeam, beamEk, massTarget, massEjec );
+// 
+// //             exEn = -qval + qValGsGs;
+// 
+//             sector = siData->at ( j ).sector;
+//             strip = siData->at ( j ).StripMaxLayer ( 1, false );
+//             mult = siData->at ( j ).MultLayer ( 1, false );
+// 
+//             siEn = siData->at ( j ).ESumLayer ( 1, false );
+// 
+//             if ( angle != 0 && siEn > 0 && mult == 1 )
+//             {
+//                 if ( siData->at ( j ).isUpstream && !siData->at ( j ).isBarrel )
+//                 {
+//                     modCoeff = minMod;
+// 
+//                     while ( modCoeff <= maxMod )
+//                     {
+//                         newEn = siEn* ( modCoeff/100. );
+// 
+//                         newQval = ( 1+massEjec/massRecoil ) * ( newEn ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
+//                                   - 2 * TMath::Sqrt ( massBeam*massEjec* ( newEn ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle * TMath::Pi() / 180. );
+// 
+//                         ( hEnPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newEn );
+// 
+//                         ( hQValPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newQval );
+// 
+//                         modCoeff += 1;
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// 
+//     cout << "\n";
+// 
+//     GetQvalVsStrip ( hQVal_QQQ5UA, hQval_vs_strip_QQQ5UA );
+//     GetQvalVsStrip ( hQVal_QQQ5UB, hQval_vs_strip_QQQ5UB );
+//     GetQvalVsStrip ( hQVal_QQQ5UC, hQval_vs_strip_QQQ5UC );
+//     GetQvalVsStrip ( hQVal_QQQ5UD, hQval_vs_strip_QQQ5UD );
+// 
+//     return;
+// }
+// 

@@ -88,6 +88,9 @@ public:
     static void OnClickGetStripsEdges();
     static void ValidateGetStripsEdges();
 
+    static void OnClickAddToChain();
+    static void OnClickResetChain();
+
     TGMainFrame* GetControlFrame()
     {
         return controlFrame;
@@ -103,6 +106,15 @@ public:
         if ( tryCast != NULL ) return FindFrameByName ( tryCast, frameName );
         else return nullptr;
     }
+
+    string calTreeName;
+    TChain* calChain;
+    void AddFileToChain ( TFile* file );
+    void AddFileToChain ( string fileName );
+    void ResetChain();
+
+    string outFileName;
+    string GetAutoOutFileName ( string baseName );
 
     map<string, std::pair<float, float>> configCalPars;
     void ReadConfigCalPars ( string configFileName );
@@ -136,35 +148,35 @@ public:
     bool UpdateParamsInConf ( string configFile, string detType, bool invertContactMidDet = true, string mode = "protected" );
     static void PopupInputfield ( TGWindow* pWin, short textSize, string label, TGLayoutHints* layHints, bool isEditable );
 
-    TH2F* PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short sector, unsigned short strip, string conditions );
+    TH2F* PlotSX3ResStripCalGraph ( TChain* chain, string varToPlot, unsigned short sector, unsigned short strip, string conditions );
 
-    TH2F* PlotSX3ResStripCalGraph ( TTree* tree, bool isUpstream, unsigned short sector, unsigned short strip );
+    TH2F* PlotSX3ResStripCalGraph ( TChain* chain, bool isUpstream, unsigned short sector, unsigned short strip );
 
-    template<typename T> inline void PlotSX3ResStripsCalGraphs ( TTree* tree, string varToPlot, string conditions, T sector );
+    template<typename T> inline void PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, T sector );
 
-    template<typename First, typename... Rest> inline void PlotSX3ResStripsCalGraphs ( TTree* tree, string varToPlot, string conditions, First fstSector, Rest... otherSectors );
+    template<typename First, typename... Rest> inline void PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, First fstSector, Rest... otherSectors );
 
-    template<typename First, typename... Rest> inline void PlotSX3ResStripsCalGraphs ( TTree* tree, bool isUpstream, First fstSector, Rest... otherSectors );
+    template<typename First, typename... Rest> inline void PlotSX3ResStripsCalGraphs ( TChain* chain, bool isUpstream, First fstSector, Rest... otherSectors );
 
-    void PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nentries, bool isUpstream_, vector<unsigned short> sectorsList );
-    template<typename FirstSector, typename... VarArgs> inline void PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors );
+    void PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, long int nentries, bool isUpstream_, vector<unsigned short> sectorsList );
+    template<typename FirstSector, typename... VarArgs> inline void PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors );
 
-    TGraph* DrawPosCalGraph ( TTree* tree, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ );
+    TGraph* DrawPosCalGraph ( TChain* chain, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ );
 
-    template<typename T> inline void DrawPosCal ( TTree* tree, bool isUpstream_, unsigned short sector_, unsigned short strip_, int nentries, T* drawResult );
+    template<typename T> inline void DrawPosCal ( TChain* chain, bool isUpstream_, unsigned short sector_, unsigned short strip_, int nentries, T* drawResult );
 
-    TH2F* DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries,
+    TH2F* DrawPosCalHist ( TChain* chain, bool isUpstream_, int nentries,
                            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
                            unsigned short sector_, unsigned short strip_, string configFileName );
 
-    map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+    map<string, TH2F*> DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName );
 
-    map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+    map<string, TH2F*> DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
             int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts,
             vector<unsigned short> sectorsList, string configFileName );
 
-    template<typename First, typename... Rest> inline map<string, TH2F*> DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+    template<typename First, typename... Rest> inline map<string, TH2F*> DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
             First fstSector, Rest... otherSectors, string configFileName );
 
@@ -179,7 +191,7 @@ public:
     void GetStripsEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
     void GetStripsEdges ( TFile* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
 
-    void WritePosCalHistsToFile ( TTree* tree, string fileName );
+    void WritePosCalHistsToFile ( TChain* chain, string fileName );
 
     // ---------------------- QQQ5 stuffs -------------------------------- //
 
@@ -220,25 +232,25 @@ public:
 
 extern GoddessCalib* gC;
 
-template<typename T> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TTree* tree, string varToPlot, string conditions, T sector )
+template<typename T> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, T sector )
 {
-    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 0, conditions );
-    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 1, conditions );
-    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 2, conditions );
-    PlotSX3ResStripCalGraph ( tree, varToPlot, sector, 3, conditions );
+    PlotSX3ResStripCalGraph ( chain, varToPlot, sector, 0, conditions );
+    PlotSX3ResStripCalGraph ( chain, varToPlot, sector, 1, conditions );
+    PlotSX3ResStripCalGraph ( chain, varToPlot, sector, 2, conditions );
+    PlotSX3ResStripCalGraph ( chain, varToPlot, sector, 3, conditions );
 
     return;
 }
 
-template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TTree* tree, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
+template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
 {
     if ( std::is_same<decltype ( fstSector ), int>::value  || ( unsigned short ) fstSector < 0 )
     {
-        PlotSX3ResStripsCalGraphs<unsigned short> ( tree, varToPlot, conditions, fstSector );
+        PlotSX3ResStripsCalGraphs<unsigned short> ( chain, varToPlot, conditions, fstSector );
 
         if ( sizeof... ( otherSectors ) > 0 )
         {
-            PlotSX3ResStripsCalGraphs ( tree, varToPlot, conditions, otherSectors... );
+            PlotSX3ResStripsCalGraphs ( chain, varToPlot, conditions, otherSectors... );
         }
     }
     else
@@ -249,37 +261,37 @@ template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResS
     return;
 }
 
-template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TTree* tree, bool isUpstream, First fstSector, Rest... otherSectors )
+template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, bool isUpstream, First fstSector, Rest... otherSectors )
 {
     string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream" ;
     string cond = "si.isBarrel && " + upstreamCond;
 
-    PlotSX3ResStripsCalGraphs<First, Rest...> ( tree, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
+    PlotSX3ResStripsCalGraphs<First, Rest...> ( chain, "si.E1.en.n:si.E1.en.p", cond, fstSector, otherSectors... );
 
     return;
 }
 
-template<typename FirstSector, typename... VarArgs> inline void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
+template<typename FirstSector, typename... VarArgs> inline void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
 {
     vector<unsigned short> sectorsList;
 
     GetListOfSectorsToTreat<FirstSector, VarArgs...> ( &sectorsList, fstSector, sectors... );
 
-    PlotSX3ResStripsCalGraphsFromTree ( tree, nentries, isUpstream_, sectorsList );
+    PlotSX3ResStripsCalGraphsFromTree ( chain, nentries, isUpstream_, sectorsList );
 }
 
-template<typename T> void GoddessCalib::DrawPosCal ( TTree* tree, bool isUpstream_, unsigned short sector_, unsigned short strip_, int nentries, T* drawResult )
+template<typename T> void GoddessCalib::DrawPosCal ( TChain* chain, bool isUpstream_, unsigned short sector_, unsigned short strip_, int nentries, T* drawResult )
 {
     vector<SiDataDetailed>* siDataVect = new vector<SiDataDetailed>();
     siDataVect->clear();
 
-    tree->SetBranchAddress ( "si", &siDataVect );
+    chain->SetBranchAddress ( "si", &siDataVect );
 
-    if ( nentries > tree->GetEntries() || nentries == 0 ) nentries = tree->GetEntries();
+    if ( nentries > chain->GetEntries() || nentries == 0 ) nentries = chain->GetEntries();
 
     for ( int i = 0; i < nentries; i++ )
     {
-        tree->GetEntry ( i );
+        chain->GetEntry ( i );
 
         if ( i%10000 == 0 ) cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << " % )\r" << std::flush;
 
@@ -314,7 +326,7 @@ template<typename T> void GoddessCalib::DrawPosCal ( TTree* tree, bool isUpstrea
     cout << endl;
 }
 
-template<typename First, typename... Rest> map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+template<typename First, typename... Rest> map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
         int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
         First fstSector, Rest... otherSectors , string configFileName )
 {
@@ -323,7 +335,7 @@ template<typename First, typename... Rest> map<string, TH2F*> GoddessCalib::Draw
 
     GetListOfSectorsToTreat<First, Rest...> ( &sectorsList, fstSector, otherSectors... );
 
-    return DrawPosCalHistBatch ( tree, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList, configFileName );
+    return DrawPosCalHistBatch ( chain, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sectorsList, configFileName );
 }
 
 // ---------------------------------------- QQQ5 functions ----------------------------------------------- //

@@ -20,7 +20,6 @@ void MacLibrariesLoader ( string myPath )
     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
-
 }
 
 void StartCalibGODDESSDets()

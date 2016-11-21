@@ -5,6 +5,8 @@ GoddessCalib* gC;
 
 GoddessCalib::GoddessCalib() : GoddessAnalysis()
 {
+    calChain = nullptr;
+
     controlFrame = new TGMainFrame ( gClient->GetRoot(),200,200 );
     controlFrame->SetWindowName ( "Control Frame" );
     controlFrame->SetName ( "Control Frame" );
@@ -23,7 +25,44 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
     sSX3CB->SetName ( "Start SuperX3 Calib" );
     sSX3CB->SetFont ( "-*-helvetica-medium-r-*-*-20-*-*-*-*-*-iso8859-1" );
 
-    vertFrame->AddFrame ( sSX3CB, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 100, 100, 20, 20 ) );
+    vertFrame->AddFrame ( sSX3CB, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 100, 100, 20, 30 ) );
+
+    // ------ Adding the input field for the name of the tree used in the user TChain ------ //
+
+    TGHorizontalFrame* subTreeNameFrame = new TGHorizontalFrame ( vertFrame, 200, 400 );
+    subTreeNameFrame->SetName ( "SubTreeNameFrame" );
+    subTreeNameFrame->SetBackgroundColor ( 0x4d004d );
+
+    TGLabel* tNLabel = new TGLabel ( subTreeNameFrame, "Tree Name:" );
+    tNLabel->SetBackgroundColor ( 0x4d004d );
+    tNLabel->SetTextColor ( 0xffffff );
+
+    TGTextEntry* treeNameIF = new TGTextEntry ( subTreeNameFrame );
+    treeNameIF->SetName ( "ChainTreeNameIF" );
+    treeNameIF->Resize ( 130, 22 );
+    treeNameIF->SetText ( "god" );
+
+    subTreeNameFrame->AddFrame ( tNLabel, new TGLayoutHints ( kLHintsCenterX, 20, 2, 0, 0 ) );
+    subTreeNameFrame->AddFrame ( treeNameIF, new TGLayoutHints ( kLHintsCenterX, 2, 20, 0, 0 ) );
+
+    vertFrame->AddFrame ( subTreeNameFrame, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 0, 10 ) );
+
+    // ------ Adding the button to add a file to the user TChain ------ //
+
+    TGHorizontalFrame* subChainFrame = new TGHorizontalFrame ( vertFrame, 200, 400 );
+    subChainFrame->SetName ( "SubChainFrame" );
+    subChainFrame->SetBackgroundColor ( 0x4d004d );
+
+    TGTextButton* aFTC = new TGTextButton ( subChainFrame, "Add current file to TChain", "GoddessCalib::OnClickAddToChain()" );
+    aFTC->SetName ( "Add current file to chain" );
+
+    TGTextButton* resetC = new TGTextButton ( subChainFrame, "Reset TChain", "GoddessCalib::OnClickResetChain()" );
+    resetC->SetName ( "Reset TChain" );
+
+    subChainFrame->AddFrame ( aFTC, new TGLayoutHints ( kLHintsCenterX, 20, 25, 0, 0 ) );
+    subChainFrame->AddFrame ( resetC, new TGLayoutHints ( kLHintsCenterX, 25, 20, 0, 0 ) );
+
+    vertFrame->AddFrame ( subChainFrame, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 0, 30 ) );
 
     // ------ Adding the first horizontal subframe for plotting the calib graphs ------ //
 
@@ -251,6 +290,60 @@ void GoddessCalib::PopupInputfield ( TGWindow* pWin, short textSize, string labe
     return;
 }
 
+string GoddessCalib::GetAutoOutFileName ( string baseName )
+{
+    string currPath = ( string ) gSystem->pwd();
+
+//     string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
+
+    string rootFileName = baseName;
+
+    if ( calChain != nullptr )
+    {
+        if ( calChain->GetNtrees() == 1 )
+        {
+            string treeFName = calChain->GetFile()->GetName();
+
+            std::size_t begRunName = treeFName.find ( "run" );
+            std::size_t endRunName = treeFName.find ( "_", begRunName );
+
+            if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName ) + ".root";
+            else rootFileName += "_" + treeFName;
+        }
+        else if ( calChain->GetNtrees() >= 2 ) rootFileName += "_chain.root";
+    }
+
+    else
+    {
+        auto lOK = gDirectory->GetListOfKeys();
+
+        if ( lOK != nullptr && lOK->GetSize() > 0 )
+        {
+            for ( int i = 0; i < lOK->GetSize(); i++ )
+            {
+//                 cout << lOK->At ( i )->GetName() << endl;
+
+                TTree* testTree = ( TTree* ) lOK->At ( i );
+
+                if ( testTree != nullptr )
+                {
+                    string treeFName = gDirectory->GetName();
+
+                    std::size_t begRunName = treeFName.find ( "run" );
+                    std::size_t endRunName = treeFName.find ( "_", begRunName );
+
+                    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName ) + ".root";
+                    else rootFileName += "_" + treeFName;
+                }
+            }
+        }
+    }
+
+    outFileName = rootFileName;
+
+    return rootFileName;
+}
+
 void GoddessCalib::ValidateParamsButtons ( string mode )
 {
     TGWindow* paramsWin = FindWindowByName ( Form ( "%s Parameters", mode.c_str() ) );
@@ -342,7 +435,7 @@ void GoddessCalib::ValidatePlotEnCalGraphs()
         TGTextEntry* tE;
         TGCheckButton* cB;
 
-        string treeName, entriesStr, sectorsStr;
+        string treeName, entriesStr, sectorsStr, outFName;
         bool isUS;
 
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Tree Name IF" ) );
@@ -354,18 +447,46 @@ void GoddessCalib::ValidatePlotEnCalGraphs()
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Sectors IF" ) );
         sectorsStr = tE->GetText();
 
+        tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "OutFile Name IF" ) );
+        outFName = tE->GetText();
+
+        if ( !outFName.empty() )
+        {
+            GoddessCalib::sinstance()->outFileName =  outFName;
+        }
+
         cB = dynamic_cast<TGCheckButton*> ( FindFrameByName ( mf, "Is Upstream CB" ) );
         isUS = cB->GetState();
 
-        TTree* tree = ( TTree* ) gDirectory->Get ( treeName.c_str() );
+        TChain* chain = GoddessCalib::sinstance()->calChain;
 
-        if ( tree == NULL ) return;
+        if ( chain == NULL )
+        {
+            auto lOK = gDirectory->GetListOfKeys();
+
+            if ( lOK->GetSize() > 0 )
+            {
+                for ( int i = 0; i < lOK->GetSize(); i++ )
+                {
+                    TTree* testTree = ( TTree* ) lOK->At ( i );
+
+                    if ( testTree != nullptr )
+                    {
+                        GoddessCalib::sinstance()->calTreeName = testTree->GetName();
+                        GoddessCalib::sinstance()->AddFileToChain ( gDirectory->GetName() );
+                        chain = GoddessCalib::sinstance()->calChain;
+                    }
+                }
+            }
+        }
+
+        if ( chain == NULL ) return;
 
         long long int nentries = stoul ( entriesStr );
 
-        if ( nentries == 0 || nentries > tree->GetEntries() ) nentries = tree->GetEntries();
+        if ( nentries == 0 || nentries > chain->GetEntries() ) nentries = chain->GetEntries();
 
-        GoddessCalib::sinstance()->PlotSX3ResStripsCalGraphsFromTree ( tree, nentries, isUS, DecodeSectorsString ( sectorsStr ) );
+        GoddessCalib::sinstance()->PlotSX3ResStripsCalGraphsFromTree ( chain, nentries, isUS, DecodeSectorsString ( sectorsStr ) );
     }
 }
 
@@ -375,17 +496,20 @@ void GoddessCalib::OnClickPlotEnCalGraphs()
 
     if ( plotEnCalWin == NULL )
     {
+        string outFName = GoddessCalib::sinstance()->GetAutoOutFileName ( "Resistive_Strips_EnCal_Graphs" );
+
         TGMainFrame* plotEnCalMF = new TGMainFrame ( gClient->GetRoot(),100, 200 );
         plotEnCalMF->SetName ( "Plot Energy Calibration Graphs" );
         plotEnCalMF->SetWindowName ( "Plot Energy Calibration Graphs" );
 
-        TGMatrixLayout* mLay = new TGMatrixLayout ( plotEnCalMF, 5, 2, 10, 10 );
+        TGMatrixLayout* mLay = new TGMatrixLayout ( plotEnCalMF, 6, 2, 10, 10 );
         plotEnCalMF->SetLayoutManager ( mLay );
 
         TGLabel* treeNameLabel = new TGLabel ( plotEnCalMF, "Tree Name:" );
         TGTextEntry* treeNameIF = new TGTextEntry ( plotEnCalMF );
         treeNameIF->SetName ( "Tree Name IF" );
         treeNameIF->SetAlignment ( kTextRight );
+        treeNameIF->SetText ( "sorted" );
 
         plotEnCalMF->AddFrame ( treeNameLabel );
         plotEnCalMF->AddFrame ( treeNameIF );
@@ -412,6 +536,17 @@ void GoddessCalib::OnClickPlotEnCalGraphs()
         plotEnCalMF->AddFrame ( sectorsLabel );
         plotEnCalMF->AddFrame ( sectorsIF );
 
+        TGLabel* outFileLabel = new TGLabel ( plotEnCalMF, "Output File Name:" );
+        TGTextEntry* outFileIF = new TGTextEntry ( plotEnCalMF );
+        TGDimension defDim = outFileIF->GetDefaultSize();
+        outFileIF->SetName ( "OutFile Name IF" );
+        outFileIF->SetAlignment ( kTextRight );
+        outFileIF->Resize ( 300, defDim.fHeight );
+        outFileIF->SetText ( outFName.c_str() );
+
+        plotEnCalMF->AddFrame ( outFileLabel );
+        plotEnCalMF->AddFrame ( outFileIF );
+
         TGTextButton* processButton = new TGTextButton ( plotEnCalMF, "Process", "GoddessCalib::ValidatePlotEnCalGraphs()" );
         TGTextButton* cancelButton = new TGTextButton ( plotEnCalMF, "Cancel", "GoddessCalib::FindWindowByName(\"Plot Energy Calibration Graphs\")->UnmapWindow();" );
 
@@ -426,6 +561,11 @@ void GoddessCalib::OnClickPlotEnCalGraphs()
     {
         plotEnCalWin->MapSubwindows();
         plotEnCalWin->MapWindow();
+
+        string outFName = GoddessCalib::sinstance()->GetAutoOutFileName ( "Resistive_Strips_EnCal_Graphs" );
+        TGTextEntry* tE;
+        tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( plotEnCalWin, "OutFile Name IF" ) );
+        tE->SetText ( outFName.c_str() );
     }
 }
 
@@ -440,7 +580,7 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         TGTextEntry* tE;
         TGCheckButton* cB;
 
-        string treeName, sectorsStr, configName;
+        string treeName, sectorsStr, configName, outFName;
         unsigned long long int nentries;
         int nBinsX, nBinsY;
         float binMinX, binMaxX,binMinY, binMaxY;
@@ -478,18 +618,46 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "Config File IF" ) );
         configName = tE->GetText();
 
+        tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "OutFile Name IF" ) );
+        outFName = tE->GetText();
+
+        if ( !outFName.empty() )
+        {
+            GoddessCalib::sinstance()->outFileName =  outFName;
+        }
+
         cB = dynamic_cast<TGCheckButton*> ( FindFrameByName ( mf, "Is Upstream CB" ) );
         isUS = cB->GetState();
 
         DecodeSectorsString ( sectorsStr );
 
-        TTree* tree = ( TTree* ) gDirectory->Get ( treeName.c_str() );
+        TChain* chain = GoddessCalib::sinstance()->calChain;
 
-        if ( tree == NULL ) return;
+        if ( chain == NULL )
+        {
+            auto lOK = gDirectory->GetListOfKeys();
 
-        if ( nentries == 0 || nentries > tree->GetEntries() ) nentries = tree->GetEntries();
+            if ( lOK->GetSize() > 0 )
+            {
+                for ( int i = 0; i < lOK->GetSize(); i++ )
+                {
+                    TTree* testTree = ( TTree* ) lOK->At ( i );
 
-        GoddessCalib::sinstance()->DrawPosCalHistBatch ( tree, isUS, nentries, nBinsX, binMinX, binMaxX, nBinsY, binMinY, binMaxY, "", DecodeSectorsString ( sectorsStr ), configName );
+                    if ( testTree != nullptr )
+                    {
+                        GoddessCalib::sinstance()->calTreeName = testTree->GetName();
+                        GoddessCalib::sinstance()->AddFileToChain ( gDirectory->GetName() );
+                        chain = GoddessCalib::sinstance()->calChain;
+                    }
+                }
+            }
+        }
+
+        if ( chain == NULL ) return;
+
+        if ( nentries == 0 || nentries > chain->GetEntries() ) nentries = chain->GetEntries();
+
+        GoddessCalib::sinstance()->DrawPosCalHistBatch ( chain, isUS, nentries, nBinsX, binMinX, binMaxX, nBinsY, binMinY, binMaxY, "", DecodeSectorsString ( sectorsStr ), configName );
     }
 }
 
@@ -499,6 +667,8 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
 
     if ( plotPosCalWin == NULL )
     {
+        string outFName = GoddessCalib::sinstance()->GetAutoOutFileName ( "Resistive_Strips_PosCal_Graphs" );
+
         Pixel_t bcol = 0xb3d1ff;
 
         TGMainFrame* plotPosCalMF = new TGMainFrame ( gClient->GetRoot(),100, 200 );
@@ -518,6 +688,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         TGTextEntry* treeNameIF = new TGTextEntry ( firstFrame );
         treeNameIF->SetName ( "Tree Name IF" );
         treeNameIF->SetAlignment ( kTextRight );
+        treeNameIF->SetText ( "sorted" );
 
         firstFrame->AddFrame ( treeNameLabel );
         firstFrame->AddFrame ( treeNameIF );
@@ -617,11 +788,29 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         TGTextEntry* configFileIF = new TGTextEntry ( fourthFrame );
         configFileIF->SetName ( "Config File IF" );
         configFileIF->SetAlignment ( kTextRight );
+        configFileIF->Resize ( 300, defDim.fHeight );
 
         fourthFrame->AddFrame ( configFileLabel );
         fourthFrame->AddFrame ( configFileIF );
 
         plotPosCalMF->AddFrame ( fourthFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 10, 0 ) );
+
+        TGCompositeFrame* outFileFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
+        outFileFrame->SetLayoutManager ( new TGRowLayout ( outFileFrame, 10 ) );
+        outFileFrame->SetBackgroundColor ( bcol );
+
+        TGLabel* outFileLabel = new TGLabel ( outFileFrame, "Output File Name:" );
+        outFileLabel->SetBackgroundColor ( bcol );
+        TGTextEntry* outFileIF = new TGTextEntry ( outFileFrame );
+        outFileIF->SetName ( "OutFile Name IF" );
+        outFileIF->SetAlignment ( kTextRight );
+        outFileIF->Resize ( 300, defDim.fHeight );
+        outFileIF->SetText ( outFName.c_str() );
+
+        outFileFrame->AddFrame ( outFileLabel );
+        outFileFrame->AddFrame ( outFileIF );
+
+        plotPosCalMF->AddFrame ( outFileFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 20, 0 ) );
 
         TGCompositeFrame* fifthFrame = new TGCompositeFrame ( plotPosCalMF, 100, 100 );
         fifthFrame->SetLayoutManager ( new TGRowLayout ( fifthFrame, 10 ) );
@@ -635,7 +824,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         fifthFrame->AddFrame ( processButton );
         fifthFrame->AddFrame ( cancelButton );
 
-        plotPosCalMF->AddFrame ( fifthFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 10, 0 ) );
+        plotPosCalMF->AddFrame ( fifthFrame, new TGLayoutHints ( kLHintsCenterX, 0, 0, 20, 0 ) );
 
         plotPosCalMF->MapSubwindows();
         plotPosCalMF->Resize ( plotPosCalMF->GetDefaultSize() );
@@ -645,6 +834,11 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
     {
         plotPosCalWin->MapSubwindows();
         plotPosCalWin->MapWindow();
+
+        string outFName = GoddessCalib::sinstance()->GetAutoOutFileName ( "Resistive_Strips_EnCal_Graphs" );
+        TGTextEntry* tE;
+        tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( plotPosCalWin, "OutFile Name IF" ) );
+        tE->SetText ( outFName.c_str() );
     }
 }
 
@@ -861,6 +1055,77 @@ void GoddessCalib::StartSX3EnCalib ( string detectorType, double refEnergy1 )
     TGNumberEntryField* alphaEnIF = ( TGNumberEntryField* ) FindWindowByName ( "alphaEn1IF" );
 
     alphaEnIF->SetText ( Form ( "%.3f", refEnergy1 ) );
+}
+
+void GoddessCalib::OnClickAddToChain()
+{
+    TGMainFrame* mf = ( TGMainFrame* ) GoddessCalib::sinstance()->s_instance->GetControlFrame();
+
+    TGTextEntry* tE;
+
+    string treeName;
+
+    tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( mf, "ChainTreeNameIF" ) );
+    treeName = tE->GetText();
+
+    GoddessCalib::sinstance()->calTreeName = treeName;
+
+    auto lOK = gDirectory->GetListOfKeys();
+
+    if ( lOK->GetSize() > 0 )
+    {
+        for ( int i = 0; i < lOK->GetSize(); i++ )
+        {
+            TTree* testTree = ( TTree* ) lOK->At ( i );
+
+            if ( testTree != nullptr )
+            {
+                if ( testTree->GetName() == GoddessCalib::sinstance()->calTreeName )
+                {
+                    string currentFileName = gDirectory->GetName();
+
+                    return GoddessCalib::sinstance()->AddFileToChain ( currentFileName );
+                }
+            }
+        }
+    }
+    else
+    {
+        cerr << "gDirectory is empty!! Nothing to add to the TChain... \n";
+        return;
+    }
+
+    cerr << "No matching tree has been found in the current active file...\n";
+    return;
+}
+
+void GoddessCalib::OnClickResetChain()
+{
+    GoddessCalib::sinstance()->ResetChain();
+    return;
+}
+
+void GoddessCalib::AddFileToChain ( string fileName )
+{
+    if ( calChain == nullptr ) calChain = new TChain ( calTreeName.c_str(), calTreeName.c_str() );
+
+    calChain->Add ( fileName.c_str() );
+
+    return;
+}
+
+void GoddessCalib::AddFileToChain ( TFile* file )
+{
+    string fileName = file->GetName();
+
+    return AddFileToChain ( fileName );
+}
+
+void GoddessCalib::ResetChain()
+{
+    calChain = nullptr;
+
+    return;
 }
 
 void GoddessCalib::ReadConfigCalPars ( string configFileName )
@@ -1401,9 +1666,9 @@ bool GoddessCalib::UpdateParamsInConf ( string configFile, string detType, bool 
     return true;
 }
 
-TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
+TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TChain* chain, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
 {
-    cout<<"button pushed"<<endl;
+//     cout<<"button pushed"<<endl;
 
     std::size_t upStreamCondPos = conditions.find ( "si.isUpstream" );
 
@@ -1419,7 +1684,7 @@ TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, uns
 
     cout << "Plotting sector #" << sector << " strip #" << strip << "..." << endl;
 
-    tree->Draw ( Form ( "%s", varToPlot.c_str() ), Form ( "%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip ), "colz" );
+    chain->Draw ( Form ( "%s", varToPlot.c_str() ), Form ( "%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip ), "colz" );
 
     int binnum;
     int starthere;
@@ -1448,19 +1713,7 @@ TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, uns
     TH2Fplot->SetName ( gName.c_str() );
     TH2Fplot->SetTitle ( gName.c_str() );
 
-    string currPath = ( string ) gSystem->pwd();
-
-    string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
-
-    string treeFName = tree->GetCurrentFile()->GetName();
-
-    std::size_t begRunName = treeFName.find ( "run" );
-    std::size_t endRunName = treeFName.find ( "_", begRunName );
-
-    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
-    else rootFileName += treeFName;
-
-    TFile* f = new TFile ( rootFileName.c_str(), "update" );
+    TFile* f = new TFile ( outFileName.c_str(), "update" );
 
     if ( f->FindKey ( gName.c_str() ) != nullptr || f->FindObject ( gName.c_str() ) != nullptr )
     {
@@ -1479,7 +1732,7 @@ TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, string varToPlot, uns
     return TH2Fplot;
 }
 
-void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nentries, bool isUpstream_, vector< unsigned short > sectorsList )
+void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, long int nentries, bool isUpstream_, vector< unsigned short > sectorsList )
 {
     cout << sectorsList.size() << " sectors will be treated..." << endl;
 
@@ -1523,7 +1776,7 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
         }
     }
 
-    if ( nentries == 0 || nentries > tree->GetEntries() ) nentries = tree->GetEntries();
+    if ( nentries == 0 || nentries > chain->GetEntries() ) nentries = chain->GetEntries();
 
     cout << nentries << " entries will be treated" <<endl;
 
@@ -1532,13 +1785,13 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
 
     cout << "Preparing the readout of the tree..." << endl;
 
-    tree->SetBranchAddress ( "si", &siInfo );
+    chain->SetBranchAddress ( "si", &siInfo );
 
     //     cout << "Linked the \"si\" branch to a SiDataDetailed object..." << endl;
 
     for ( int i = 0; i < nentries; i++ )
     {
-        tree->GetEntry ( i );
+        chain->GetEntry ( i );
 
         if ( i%10000 == 0 ) cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << "% )\r" << std::flush;
 
@@ -1577,19 +1830,7 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
 
     cout << endl;
 
-    string currPath = ( string ) gSystem->pwd();
-
-    string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
-
-    string treeFName = tree->GetCurrentFile()->GetName();
-
-    std::size_t begRunName = treeFName.find ( "run" );
-    std::size_t endRunName = treeFName.find ( "_", begRunName );
-
-    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
-    else rootFileName += treeFName;
-
-    TFile* f = new TFile ( rootFileName.c_str(), "update" );
+    TFile* f = new TFile ( outFileName.c_str(), "update" );
 
     f->cd();
 
@@ -1614,18 +1855,18 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TTree* tree, long int nen
     return;
 }
 
-TGraph* GoddessCalib::DrawPosCalGraph ( TTree* tree, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ )
+TGraph* GoddessCalib::DrawPosCalGraph ( TChain* chain, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ )
 {
     TGraph* newGraph = new TGraph();
 
-    DrawPosCal ( tree, isUpstream_, sector_,strip_, nentries, newGraph );
+    DrawPosCal ( chain, isUpstream_, sector_,strip_, nentries, newGraph );
 
     newGraph->Draw ( "AP" );
 
     return newGraph;
 }
 
-TH2F* GoddessCalib::DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
+TH2F* GoddessCalib::DrawPosCalHist ( TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
                                      string drawOpts, unsigned short sector_, unsigned short strip_, string configFileName )
 {
     string hname = Form ( "hPosCal_sector%s%d_strip%d", isUpstream_ ? "U" : "D", sector_, strip_ );
@@ -1634,20 +1875,20 @@ TH2F* GoddessCalib::DrawPosCalHist ( TTree* tree, bool isUpstream_, int nentries
     string hKey = Form ( "%s%d_%d", isUpstreamID.c_str(), sector_, strip_ );
     resStripsPosCalGraphsMap[hKey.c_str()] = new TH2F ( hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY );
 
-    DrawPosCal ( tree, isUpstream_, sector_,strip_, nentries, resStripsPosCalGraphsMap[hKey.c_str()] );
+    DrawPosCal ( chain, isUpstream_, sector_,strip_, nentries, resStripsPosCalGraphsMap[hKey.c_str()] );
 
     resStripsPosCalGraphsMap[hKey.c_str()]->Draw ( drawOpts.c_str() );
 
     return resStripsPosCalGraphsMap[hKey.c_str()];
 }
 
-std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
         int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName )
 {
-    return DrawPosCalHistBatch ( tree, isUpstream_, nentries,nbinsX,binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_, configFileName );
+    return DrawPosCalHistBatch ( chain, isUpstream_, nentries,nbinsX,binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_, configFileName );
 }
 
-std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool isUpstream_, int nentries,
+std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
         int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts, vector< unsigned short > sectorsList, string configFileName )
 {
     string isUpstreamID = isUpstream_ ? "U" : "D";
@@ -1667,9 +1908,9 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool is
     vector<SiDataDetailed>* siDataVect = new vector<SiDataDetailed>();
     siDataVect->clear();
 
-    tree->SetBranchAddress ( "si", &siDataVect );
+    chain->SetBranchAddress ( "si", &siDataVect );
 
-    if ( nentries > tree->GetEntries() || nentries == 0 ) nentries = tree->GetEntries();
+    if ( nentries > chain->GetEntries() || nentries == 0 ) nentries = chain->GetEntries();
 
     if ( !configFileName.empty() )
     {
@@ -1680,7 +1921,7 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool is
 
     for ( int i = 0; i < nentries; i++ )
     {
-        tree->GetEntry ( i );
+        chain->GetEntry ( i );
 
         if ( i%10000 == 0 ) cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << " % )\r" << std::flush;
 
@@ -1767,7 +2008,7 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TTree* tree, bool is
 
     cout << endl;
 
-    WritePosCalHistsToFile ( tree, "Resistive_Strips_PosCal_Hists" );
+    WritePosCalHistsToFile ( chain, "Resistive_Strips_PosCal_Hists" );
 
     return resStripsPosCalGraphsMap;
 }
@@ -1802,21 +2043,9 @@ void GoddessCalib::DrawSX3PosCalHist ( bool isUpstream, short unsigned int secto
         cerr << "This graph has not been generated yet!" << endl;
 }
 
-void GoddessCalib::WritePosCalHistsToFile ( TTree* tree, string fileName )
+void GoddessCalib::WritePosCalHistsToFile ( TChain* chain, string fileName )
 {
-    string currPath = ( string ) gSystem->pwd();
-
-    string rootFileName = currPath + "/" + fileName + "_";
-
-    string treeFName = tree->GetCurrentFile()->GetName();
-
-    std::size_t begRunName = treeFName.find ( "run" );
-    std::size_t endRunName = treeFName.find ( "_", begRunName );
-
-    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += treeFName.substr ( begRunName, endRunName ) + ".root";
-    else rootFileName += treeFName;
-
-    TFile* f = new TFile ( rootFileName.c_str(), "update" );
+    TFile* f = new TFile ( outFileName.c_str(), "update" );
 
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
@@ -2958,34 +3187,34 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
 // --------------------------------------------- Display Help Functions ----------------------------- //
 
-TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TTree* tree, bool isUpstream, unsigned short sector, unsigned short strip )
+TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TChain* chain, bool isUpstream, unsigned short sector, unsigned short strip )
 {
     string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream" ;
     string cond = "si.isBarrel && " + upstreamCond;
 
-    return PlotSX3ResStripCalGraph ( tree, "si.E1.en.n:si.E1.en.p", sector, strip, cond );
+    return PlotSX3ResStripCalGraph ( chain, "si.E1.en.n:si.E1.en.p", sector, strip, cond );
 }
 
 void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree()
 {
     cout << "To generate the graphs for several sectors without drawing them (MUCH faster), call" << endl;
-    cout << "PlotSX3ResStripsCalGraphsFromTree(TTree* tree, bool isUpstream, int nentries, int sector1, int sector2, int sector3, int ....)" << endl;
+    cout << "PlotSX3ResStripsCalGraphsFromTree(TChain* chain, bool isUpstream, int nentries, int sector1, int sector2, int sector3, int ....)" << endl;
     cout << "where \"nenteries\" controls the number of entries to treat (0 == all the entries)" << endl;
 }
 
 void GoddessCalib::PlotSX3ResStripsCalGraphs()
 {
     cout << "To plot several sectors in a row, call" << endl;
-    cout << "PlotSX3ResStripsCalGraphs(TTree* tree, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << endl;
+    cout << "PlotSX3ResStripsCalGraphs(TChain* chain, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << endl;
     cout << endl;
     cout << "You can also change what to plot and specify the conditions by hand by calling" << endl;
-    cout << "PlotSX3ResStripsCalGraphs(TTree* tree, string \"what to plot\", string conditions, sector1, sector2, sector3, ....)" << endl;
+    cout << "PlotSX3ResStripsCalGraphs(TChain* chain, string \"what to plot\", string conditions, sector1, sector2, sector3, ....)" << endl;
 }
 
 void GoddessCalib::Help()
 {
     cout << "To plot the Enear vs Efar graph for strip X of sector Y, call" << endl;
-    cout << "PlotSX3ResStripCalGraph(TTree* tree, bool isUpstream, int sector1, int strip)" << endl;
+    cout << "PlotSX3ResStripCalGraph(TChain* chain, bool isUpstream, int sector1, int strip)" << endl;
     cout << endl;
     PlotSX3ResStripsCalGraphs();
     cout << endl;
