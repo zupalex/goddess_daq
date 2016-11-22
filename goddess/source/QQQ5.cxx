@@ -37,13 +37,18 @@ void QQQ5::ConstructBins()
 
     float firstStripWidth = 2.55;
 
-    TVector3 firstStripOffset ( 0, 25.2 - firstStripWidth/2., 0 ); // everything in mm
+    TVector3 firstStripOffset ( 0, 25.2 + firstStripWidth/2., 0 ); // everything in mm
 
     TVector3 prevStripRefDetCenter = firstStripOffset;
 
-    for ( int i = 0; i < 32; i++ )
+    pStripCenterPos[0] = detPos.GetTVector3() + firstStripOffset;
+
+    for ( int i = 1; i < 32; i++ )
     {
-        TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, firstStripWidth - i * 0.05, 0 );
+        float prevStripWidth = firstStripWidth - ( i-1 ) * 0.05;
+        float currStripWidth = firstStripWidth - i * 0.05;
+
+        TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, ( prevStripWidth + currStripWidth ) / 2., 0 );
         prevStripRefDetCenter = pStPosRefDetCenter;
 
         pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
@@ -147,7 +152,7 @@ TVector3 QQQ5::GetEventPosition ( int pStripHit, int nStripHit, float eNear, flo
 {
     TVector3 interactionPos = pStripCenterPos[pStripHit];
 
-    if(nStripHit >= 0) interactionPos.SetPhi ( interactionPos.Phi() - 3./16. * TMath::Pi() + nStripHit/8. * TMath::Pi() );
+    if ( nStripHit >= 0 ) interactionPos.SetPhi ( interactionPos.Phi() - 3./16. * TMath::Pi() + nStripHit/8. * TMath::Pi() );
 
     return interactionPos;
 }

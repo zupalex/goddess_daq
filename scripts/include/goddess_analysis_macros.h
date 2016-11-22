@@ -63,6 +63,7 @@
 #include <TRootEmbeddedCanvas.h>
 #include <RQ_OBJECT.h>
 
+#include "SolidVector.h"
 #include "GoddessStruct.h"
 
 using std::map;

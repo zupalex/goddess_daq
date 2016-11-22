@@ -781,6 +781,86 @@ inline bool StringFormulaComparator ( string compStr )
     return StringFormulaComparator<double> ( compStr );
 }
 
+// -------------------- User Analysis Macros Stuffs --------------------------------------- //
+
+extern GoddessAnalysis* gA;
+
+extern std::map<string, std::pair<TObject*, std::vector<GamData*>>> histsMap;
+extern std::vector<string> specialHists;
+
+inline void LoadTrees()
+{
+    std::cout << "To initialize the chain of runs, type:\n   LoadTrees( (string) treeName, (string) fileName1, (string) fileName2, (string) ... )\n\n";
+}
+
+template<typename First, typename... Rest> void LoadTrees ( string treeName, First fileName1, Rest... fileNameRest )
+{
+    gA = new GoddessAnalysis();
+
+    gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
+}
+
+void ResetHistsStates ( bool all = false );
+
+bool CheckHistState ( string histName, GamData* gD );
+
+bool CheckHistState ( TObject* hist, GamData* gD );
+
+void AddToHistState ( string histName, GamData* gD );
+
+void AddToHistState ( TObject* hist, GamData* gD );
+
+template<typename THist> void AddHists ( THist* h1, THist* h2 )
+{
+    if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
+    {
+        h1->Add ( h2 );
+    }
+}
+
+void AddHists ( TH1F* h1, TH1F* h2 );
+
+void AddHists ( TH2F* h1, TH2F* h2 );
+
+template<typename THist, typename... Rest> void AddHists ( THist* h1, THist* h2, Rest... otherHists )
+{
+    if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
+    {
+        AddHists ( h1, h2 );
+        AddHists ( h1, otherHists... );
+    }
+}
+
+template<typename THist, typename... Rest> THist* DrawSum ( THist* h1, THist* h2, Rest... otherHists )
+{
+    if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
+    {
+        THist* hSum = ( THist* ) h1->Clone();
+
+        AddHists ( hSum, h2, otherHists... );
+
+        hSum->Draw();
+
+        return hSum;
+    }
+    else return nullptr;
+}
+
+TH1F* DrawSum ( TH1F* h1, TH1F* h2, bool cloneFirst = true, bool doDraw = true );
+
+TH1F* DrawSum ( TH1F** hists, string toSum );
+
+TH2F* DrawSum ( TH2F** hists, string toSum );
+
+TH1F* DrawSum ( TH1F** hists );
+
+void PrintProgress ( long long int maxEvents_, long long int currEvt );
+
+void PrintHistsMapContent();
+
+TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, bool addToSpecialList = false );
+
+TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, bool addToSpecialList = false );
 
 
 #endif

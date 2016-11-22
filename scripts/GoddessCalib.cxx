@@ -81,33 +81,30 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
 
     vertFrame->AddFrame ( subHorzFrame1, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 0, 20 ) );
 
-    // ------ Adding the button to read existing calib parameters from file ------ //
-
-    TGTextButton* dCPB = new TGTextButton ( vertFrame, "Reload Prev. Cal. Params", "GoddessCalib::OnClickParamsButtons(\"Reload\")" );
-    dCPB->SetName ( "Reload Prev. Cal. Params" );
-
-    vertFrame->AddFrame ( dCPB, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 100, 100, 10, 20 ) );
-
     // ------ Adding the second horizontal subframe for writing and updating the calib parameters ------ //
 
     TGHorizontalFrame* subHorzFrame2 = new TGHorizontalFrame ( vertFrame, 200, 400 );
     subHorzFrame2->SetName ( "SubHorizontalFrame2" );
     subHorzFrame2->SetBackgroundColor ( 0x4d004d );
 
+    TGTextButton* dCPB = new TGTextButton ( subHorzFrame2, "Reload Prev. Cal. Params", "GoddessCalib::OnClickParamsButtons(\"Reload\")" );
+    dCPB->SetName ( "Reload Prev. Cal. Params" );
+
     TGTextButton* wCPB = new TGTextButton ( subHorzFrame2, "Write New Cal. Params", "GoddessCalib::OnClickParamsButtons(\"Write\")" );
     wCPB->SetName ( "Write New Cal. Params" );
 
-    TGTextButton* uCFB = new TGTextButton ( subHorzFrame2, "Update Goddess Config File", "GoddessCalib::OnClickUpdateConf()" );
-    uCFB->SetName ( "Update Goddess Config File" );
-
+    subHorzFrame2->AddFrame ( dCPB, new TGLayoutHints ( kLHintsCenterX, 20, 25, 0, 0 ) );
     subHorzFrame2->AddFrame ( wCPB, new TGLayoutHints ( kLHintsCenterX, 20, 25, 0, 0 ) );
-    subHorzFrame2->AddFrame ( uCFB, new TGLayoutHints ( kLHintsCenterX, 25, 20, 0, 0 ) );
 
     vertFrame->AddFrame ( subHorzFrame2, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 20, 10 ) );
 
     // ------ Adding text input field for the config file name ------ //
 
-    PopupInputfield ( vertFrame, 12, "Config Full Name", new TGLayoutHints ( kLHintsRight, 0, 20, 0, 20 ), false );
+    TGTextButton* uCFB = new TGTextButton ( vertFrame, "Update Goddess Config File", "GoddessCalib::OnClickUpdateConf()" );
+    uCFB->SetName ( "Update Goddess Config File" );
+    vertFrame->AddFrame ( uCFB, new TGLayoutHints ( kLHintsCenterX | kLHintsTop, 0, 0, 40, 0 ) );
+
+    PopupInputfield ( vertFrame, 400, 0, 12, "Config Full Name", new TGLayoutHints ( kLHintsCenterX, 15, 15, 0, 20 ), false );
 
     // ------ Adding the button to retreive the info from the TLines ------ //
 
@@ -246,7 +243,7 @@ TGFrame* GoddessCalib::FindFrameByName ( TGCompositeFrame* pFrame, string frameN
     return nullptr;
 }
 
-void GoddessCalib::PopupInputfield ( TGWindow* pWin, short textSize, string label, TGLayoutHints* layHints, bool isEditable )
+void GoddessCalib::PopupInputfield ( TGWindow* pWin, float width_, float heigth_, short textSize, string label, TGLayoutHints* layHints, bool isEditable )
 {
     TGGroupFrame* newGroup = new TGGroupFrame ( pWin, label.c_str(), kVerticalFrame );
     newGroup->SetTitlePos ( TGGroupFrame::kLeft );
@@ -254,7 +251,16 @@ void GoddessCalib::PopupInputfield ( TGWindow* pWin, short textSize, string labe
     newGroup->SetTextColor ( 0xffffff );
 
     TGTextEntry* newTextEntry = new TGTextEntry ( newGroup );
+    TGDimension defDim = newTextEntry->GetDefaultSize();
     newTextEntry->SetName ( label.c_str() );
+
+    float newWidth = width_;
+    float newHeigth = heigth_;
+
+    if ( newWidth == 0 ) newWidth = defDim.fWidth;
+    if ( newHeigth == 0 ) newHeigth = defDim.fHeight;
+
+    newTextEntry->Resize ( newWidth, newHeigth );
 
     newTextEntry->SetFont ( Form ( "-*-helvetica-medium-r-*-*-%d-*-*-*-*-*-iso8859-1", textSize ) );
 
@@ -1084,7 +1090,13 @@ void GoddessCalib::OnClickAddToChain()
                 {
                     string currentFileName = gDirectory->GetName();
 
-                    return GoddessCalib::sinstance()->AddFileToChain ( currentFileName );
+                    GoddessCalib::sinstance()->AddFileToChain ( currentFileName );
+
+                    cout << "Successfully added " << currentFileName << " to the TChain. New TChain content:\n";
+
+                    GoddessCalib::sinstance()->calChain->ls();
+
+                    return;
                 }
             }
         }
@@ -1142,6 +1154,7 @@ void GoddessCalib::ReadConfigCalPars ( string configFileName )
     string readLine, dummy, detType, detID, lineID, stripType;
     int stripNbr;
     float offset, slope;
+    float leftEdge, rightEdge;
     std::istringstream iss;
 
     while ( std::getline ( config, readLine ) )
@@ -1180,15 +1193,25 @@ void GoddessCalib::ReadConfigCalPars ( string configFileName )
                     {
                         if ( stripNbr == 0 || stripNbr == 2 || stripNbr == 5 || stripNbr == 7 ) stripType = "near";
                         else stripType = "far";
+
+                        stripNbr /= 2;
                     }
                 }
 
                 iss >> offset >> slope;
 
                 string detKey = detType + " " + detID + " " + stripType + " " + Form ( "%d", stripNbr );
-                string parKey;
 
                 configCalPars[detKey] = std::make_pair ( offset, slope );
+            }
+
+            else if ( lineID == "posCal" )
+            {
+                iss >> stripType >> stripNbr >> leftEdge >> rightEdge;
+
+                string detKey = detType + " " + detID + " position " + Form ( "%d", stripNbr );
+
+                configCalPars[detKey] = std::make_pair ( leftEdge, rightEdge );
             }
         }
     }
@@ -1970,25 +1993,12 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool 
 
                         enCalPar = configCalPars[calParKey].second;
 
-                        int nearContact, farContact;
-
-                        if ( strip >= 0 && strip < 2 )
-                        {
-                            nearContact = strip*2;
-                            farContact = nearContact+1;
-                        }
-                        else if ( strip >= 2 )
-                        {
-                            nearContact = strip*2+1;
-                            farContact = nearContact-1;
-                        }
-
-                        calParKey = detKey + " near " + Form ( "%d", nearContact );
+                        calParKey = detKey + " near " + Form ( "%d", strip );
 
                         offNear = configCalPars[calParKey].first;
                         slopeNear = configCalPars[calParKey].second;
 
-                        calParKey = detKey + " far " + Form ( "%d", farContact );
+                        calParKey = detKey + " far " + Form ( "%d", strip );
 
                         offFar = configCalPars[calParKey].first;
                         slopeFar = configCalPars[calParKey].second;
@@ -3185,6 +3195,266 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
     return finalMods;
 }
 
+// -------------------------------- Position Reconstruction ----------------------------------------- //
+
+void GoddessCalib::PrintOutStripsPositions ( )
+{
+    cout << "QQQ5 Upstream Strips Positions:\n";
+
+    for ( int sect = 0; sect < 4; sect++ )
+    {
+        cout << " ** Sector " << sect << " **\n";
+
+        for ( int st = 0; st < 32; st++ )
+        {
+            cout << "   -> Strip " << st << " : ( " << orrubaStripsPos[1][0][sect][st].X() << " , " <<  orrubaStripsPos[1][0][sect][st].Y() << " , " << orrubaStripsPos[1][0][sect][st].Z() << " )\n";
+        }
+    }
+
+    cout << "\n\nSuperX3 Upstream Strips Positions:\n";
+
+    for ( int sect = 0; sect < 12; sect++ )
+    {
+        cout << " ** Sector " << sect << " **\n";
+
+        for ( int st = 0; st < 4; st++ )
+        {
+            cout << "   -> Strip " << st << " : ( " << orrubaStripsPos[1][1][sect][st].X() << " , " <<  orrubaStripsPos[1][1][sect][st].Y() << " , " << orrubaStripsPos[1][1][sect][st].Z() << " )\n";
+        }
+    }
+
+    return;
+}
+
+void GoddessCalib::FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ )
+{
+    float barrelRadius = 3.750 * 25.4; //mm
+    float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
+    float sX3ActiveLength = 75.; //mm
+    float sX3NearFrame = 3.0; //mm
+
+    TVector3 zAxis ( 0,0,1 );
+
+    for ( int i = 0; i < 12; i++ )
+    {
+        float barrelDet_spacing = 4.8;
+
+        TVector3 barrelDet_offset ( sX3OffX, sX3OffY, sX3OffZ );
+
+        TVector3 refSX3D_sect0 ( 0 + barrelDet_offset.X(), barrelRadius + barrelDet_offset.Y(), sX3ActiveLength/2. + barrelDet_offset.Z() );
+
+        float SX3_width = 40.3; //mm
+        float SX3_length = 75.; //mm
+
+        for ( int j = 0; j < 4; j++ )
+        {
+            orrubaStripsPos[0][1][i][j].SetXYZ ( 0,0,1 );
+            orrubaStripsPos[1][1][i][j].SetXYZ ( 0,0,1 );
+
+            orrubaStripsPos[0][1][i][j].SetTheta ( refSX3D_sect0.Angle ( zAxis ) );
+            orrubaStripsPos[1][1][i][j].SetTheta ( TMath::Pi() - refSX3D_sect0.Angle ( zAxis ) );
+
+            orrubaStripsPos[0][1][i][j].SetPhi ( TMath::PiOver2() + i / 12. * TMath::TwoPi() );
+            orrubaStripsPos[1][1][i][j].SetPhi ( TMath::PiOver2() + i / 12. * TMath::TwoPi() );
+
+            orrubaStripsPos[0][1][i][j].SetMag ( refSX3D_sect0.Mag() );
+            orrubaStripsPos[1][1][i][j].SetMag ( refSX3D_sect0.Mag() );
+
+            orrubaStripsPos[0][1][i][j].SetRotationZ ( i / 12. * TMath::TwoPi() );
+            orrubaStripsPos[1][1][i][j].SetRotationZ ( i / 12. * TMath::TwoPi() );
+
+            TVector3 pStPosRefDetCenter ( ( ( 3./8. ) * SX3_width ) - ( j * SX3_width/4. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
+
+            pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + orrubaStripsPos[0][1][i][j].RotZ() );
+
+            orrubaStripsPos[0][1][i][j] += pStPosRefDetCenter;
+            orrubaStripsPos[1][1][i][j] += pStPosRefDetCenter;
+        }
+    }
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        float QQQ5_spacing = 4.0;
+
+        TVector3 QQQ5DA_orig_offset ( qqq5OffX, qqq5OffY, QQQ5OffZ ); // everything in mm
+
+        TVector3 refQQQ5D_sectA = QQQ5DA_orig_offset;
+
+        float QQQ5_active_length = 56.8; // mm
+
+        float firstStripWidth = 2.55;
+
+        TVector3 firstStripOffset ( 0, 25.2 + firstStripWidth/2., 0 ); // everything in mm
+
+        TVector3 prevStripRefDetCenter = firstStripOffset;
+
+        orrubaStripsPos[0][0][i][0] += firstStripOffset;
+        orrubaStripsPos[1][0][i][0] += firstStripOffset;
+
+        for ( int j = 1; j < 32; j++ )
+        {
+            orrubaStripsPos[0][0][i][j].SetXYZ ( 0,0,1 );
+            orrubaStripsPos[1][0][i][j].SetXYZ ( 0,0,1 );
+
+            orrubaStripsPos[0][0][i][j].SetTheta ( refQQQ5D_sectA.Angle ( zAxis ) );
+            orrubaStripsPos[1][0][i][j].SetTheta ( TMath::Pi() - refQQQ5D_sectA.Angle ( zAxis ) );
+
+            orrubaStripsPos[0][0][i][j].SetPhi ( TMath::PiOver2() + i * TMath::PiOver2() );
+            orrubaStripsPos[1][0][i][j].SetPhi ( TMath::PiOver2() + i * TMath::PiOver2() );
+
+            orrubaStripsPos[0][0][i][j].SetMag ( refQQQ5D_sectA.Mag() );
+            orrubaStripsPos[1][0][i][j].SetMag ( refQQQ5D_sectA.Mag() );
+
+            orrubaStripsPos[0][0][i][j].SetRotationZ ( i * TMath::PiOver2() );
+            orrubaStripsPos[1][0][i][j].SetRotationZ ( i * TMath::PiOver2() );
+
+            float prevStripWidth = firstStripWidth - ( j-1 ) * 0.05;
+            float currStripWidth = firstStripWidth - j * 0.05;
+
+            TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, ( prevStripWidth + currStripWidth ) / 2., 0 );
+            prevStripRefDetCenter = pStPosRefDetCenter;
+
+            pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + orrubaStripsPos[0][0][i][j].RotZ() );
+
+            orrubaStripsPos[0][0][i][j] += pStPosRefDetCenter;
+            orrubaStripsPos[1][0][i][j] += pStPosRefDetCenter;
+        }
+    }
+
+    return;
+}
+
+TVector3 GoddessCalib::GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ )
+{
+    TVector3 hitPos;
+
+    if ( isBarrel_ == 0 )
+    {
+        hitPos = orrubaStripsPos[isUpstream_][0][sector_][strip_].GetTVector3();
+    }
+    else if ( isBarrel_ == 1 )
+    {
+        float SX3_length = 75.; // mm
+
+        string detKey = Form ( "SuperX3 %s%d position %d", ( isUpstream_ ? "U" : "D" ), sector_, strip_ );
+
+        float recenter = configCalPars[detKey].second - abs ( configCalPars[detKey].second - configCalPars[detKey].first ) / 2.;
+
+        float normalize = configCalPars[detKey].second - configCalPars[detKey].first;
+
+        normalize = normalize == 0 ? 1 : normalize;
+
+        float zRes = ( ( ( eNear_ - eFar_ ) / ( eNear_ + eFar_ ) )  - recenter ) / normalize;
+
+        TVector3 zResPos ( 0, 0, zRes * SX3_length );
+
+        TVector3 interactionPos = orrubaStripsPos[isUpstream_][1][sector_][strip_].GetTVector3() + zResPos;
+
+        return interactionPos;
+    }
+
+    return hitPos;
+}
+
+TH1F* hQval_NewGeom[2][2][12];
+
+void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, long long int nEntries, float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ, string configFileName )
+{
+    FillStripsPositionsArray ( qqq5OffX, qqq5OffY, QQQ5OffZ, sX3OffX, sX3OffY, sX3OffZ );
+
+    ReadConfigCalPars ( configFileName );
+
+    for ( int up = 0; up < 2; up++ )
+    {
+        for ( int bar = 0; bar < 2; bar++ )
+        {
+            for ( int i = 0; i < 12; i++ )
+            {
+                hQval_NewGeom[up][bar][i] = new TH1F ( Form ( "QVal_new_geom_%s%s%d", ( up ? "U" : "D" ), ( bar ? "SX3" : "QQQ5" ), i ),
+                                                       Form ( "Q-Value new geom %s %s%d", ( up ? "U" : "D" ), ( bar ? "SX3" : "QQQ5" ), i ),
+                                                       800, -20, 20 );
+            }
+        }
+    }
+
+    TVector3 targetPos ( 0, 0, 0 );
+
+    TVector3 beamDir ( 0, 0, 1 );
+
+    float massBeam = calibBeamMass;
+    float beamEk = calibBeamEk;
+    float massTarget = calibBeamMass;
+    float massRecoil = calibRecoilMass;
+    float massEjec = calibEjecMass;
+    float qValGsGs = calibQvalGsGs;
+
+    vector<SiDataDetailed>* vectSiData = new vector<SiDataDetailed>;
+
+    chain->SetBranchAddress ( "si", &vectSiData );
+
+    if ( nEntries <= 0 ) nEntries = chain->GetEntries();
+
+    for ( long long int ev = 0; ev < nEntries; ev++ )
+    {
+        if ( ev%100000 == 0 )
+        {
+            cout << "Entry " << std::setw ( 15 ) << ev << " / " << nEntries;
+            cout<< " ( " << std::fixed << std::setprecision ( 2 )  << std::setw ( 6 ) << ( ( float ) ev/nEntries ) * 100. << " % )\r" << std::flush;
+        }
+
+        chain->GetEntry ( ev );
+
+        if ( vectSiData->size() > 0 )
+        {
+            for ( unsigned int i = 0; i < vectSiData->size(); i++ )
+            {
+                SiDataDetailed siData = vectSiData->at ( i );
+
+                if ( true /*siData.MultLayer ( 1,false ) == 1*/ )
+                {
+                    int isUpstream = ( int ) siData.isUpstream;
+                    int isBarrel = ( int ) siData.isBarrel;
+
+                    int sector = siData.sector;
+                    int strip = siData.StripMaxLayer ( 1,false );
+                    float energy = siData.ESumLayer ( 1,false );
+
+                    float enear = 0.0, efar = 0.0;
+
+                    if ( energy > 0.0 )
+                    {
+                        if ( isBarrel == 1 )
+                        {
+                            if ( siData.E1.en.p.size() > 0 && siData.E1.en.n.size() > 0 && siData.E1.strip.n[0] == -1 )
+                            {
+                                enear = siData.E1.en.p[0];
+                                efar = siData.E1.en.n[0];
+                            }
+                            else continue;
+                        }
+
+                        TVector3 hitPos = GetFinalHitPosition ( isUpstream, isBarrel, sector, strip, enear, efar );
+
+                        float angle = (hitPos-targetPos).Angle ( beamDir );
+
+                        if ( angle != 0 )
+                        {
+                            float qval = ( 1+massEjec/massRecoil ) * ( energy ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
+                                         - 2 * TMath::Sqrt ( massBeam*massEjec* ( energy ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle );
+
+                            hQval_NewGeom[isUpstream][isBarrel][sector]->Fill ( qval );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    cout << "\n\n";
+
+    return;
+}
+
 // --------------------------------------------- Display Help Functions ----------------------------- //
 
 TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TChain* chain, bool isUpstream, unsigned short sector, unsigned short strip )
@@ -3259,6 +3529,8 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+
+
 
 
 

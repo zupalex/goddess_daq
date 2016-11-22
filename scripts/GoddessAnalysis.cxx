@@ -769,6 +769,200 @@ ClassImp ( GoddessAnalysis )
 
 
 
+// ----------------- User Analysis Macros Stuffs ------------------------- //
 
+std::map<string, std::pair<TObject*, std::vector<GamData*>>> histsMap;
+std::vector<string> specialHists;
 
+void ResetHistsStates ( bool all )
+{
+    if ( all )
+    {
+        for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
+        {
+            ( itr->second ).second.clear();
+        }
+    }
 
+    else
+    {
+        for ( unsigned int i = 0; i < specialHists.size(); i++ )
+        {
+            histsMap[specialHists[i]].second.clear();
+        }
+    }
+}
+
+bool CheckHistState ( string histName, GamData* gD )
+{
+    return ( std::find ( histsMap[histName].second.begin(), histsMap[histName].second.end(), gD ) != histsMap[histName].second.end() );
+}
+
+bool CheckHistState ( TObject* hist, GamData* gD )
+{
+    string histName = ( string ) hist->GetName();
+
+    return CheckHistState ( histName, gD );
+}
+
+void AddToHistState ( string histName, GamData* gD )
+{
+    histsMap[histName].second.push_back ( gD );
+
+    return;
+}
+
+void AddToHistState ( TObject* hist, GamData* gD )
+{
+    string histName = ( string ) hist->GetName();
+
+    AddToHistState ( histName, gD );
+
+    return;
+}
+
+void AddHists ( TH1F* h1, TH1F* h2 )
+{
+    AddHists<TH1F> ( h1, h2 );
+}
+
+void AddHists ( TH2F* h1, TH2F* h2 )
+{
+    AddHists<TH2F> ( h1, h2 );
+}
+
+TH1F* DrawSum ( TH1F* h1, TH1F* h2, bool cloneFirst, bool doDraw )
+{
+    TH1F* hSum;
+
+    if ( cloneFirst )
+    {
+        hSum = ( TH1F* ) h1->Clone();
+    }
+    else
+    {
+        hSum = h1;
+    }
+
+    hSum->Add ( h2,1 );
+
+    if ( doDraw ) hSum->Draw();
+
+    return hSum;
+}
+
+TH1F* DrawSum ( TH1F** hists, string toSum )
+{
+    std::vector<unsigned short> listOfHists = DecodeSectorsString ( toSum, false );
+
+    TH1F* hSum;
+
+    if ( listOfHists.size() > 0 )
+    {
+        hSum = ( TH1F* ) hists[listOfHists[0]]->Clone();
+
+        for ( unsigned int i = 1; i < listOfHists.size(); i++ )
+        {
+            hSum->Add ( hists[listOfHists[i]], 1 );
+        }
+
+        hSum->Draw();
+
+        return hSum;
+    }
+
+    return nullptr;
+}
+
+TH2F* DrawSum ( TH2F** hists, string toSum )
+{
+    std::vector<unsigned short> listOfHists = DecodeSectorsString ( toSum, false );
+
+    TH2F* hSum;
+
+    if ( listOfHists.size() > 0 )
+    {
+        hSum = ( TH2F* ) hists[listOfHists[0]]->Clone();
+
+        for ( unsigned int i = 1; i < listOfHists.size(); i++ )
+        {
+            hSum->Add ( hists[listOfHists[i]], 1 );
+        }
+
+        hSum->Draw ( "colz" );
+
+        return hSum;
+    }
+
+    return nullptr;
+}
+
+TH1F* DrawSum ( TH1F** hists )
+{
+    if ( *hists != nullptr )
+    {
+        TH1F* hSum = dynamic_cast<TH1F*> ( *hists );
+
+        if ( hSum != nullptr )
+        {
+            int counter = 1;
+
+            while ( * ( hists+counter ) != nullptr )
+            {
+                TH1F* hAdd = dynamic_cast<TH1F*> ( * ( hists+counter ) );
+
+                if ( hAdd != nullptr )
+                {
+                    hSum->Add ( hAdd );
+                }
+
+                counter++;
+            }
+
+            return hSum;
+        }
+    }
+
+    return nullptr;
+}
+
+void PrintProgress ( long long int maxEvents_, long long int currEvt )
+{
+    if ( currEvt % 10000 == 0 )
+    {
+        std::cout << "Treated " << std::setw ( 11 ) << currEvt << " / " << std::setw ( 11 ) << std::left << maxEvents_;
+        std::cout << " ( " << std::setw ( 5 ) << std::setprecision ( 2 ) << std::fixed << ( float ) currEvt/maxEvents_ * 100. << " % )\r" << std::flush;
+    }
+}
+
+void PrintHistsMapContent()
+{
+    std::cout << "List of Histograms: \n\n";
+
+    for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
+    {
+        std::cout << "-> " << itr->first << "\n";
+    }
+
+    return;
+}
+
+TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, bool addToSpecialList )
+{
+    TH1F* newHist = new TH1F ( name.c_str(), title.c_str(), nBinsX, minX, maxX );
+    histsMap[name] = std::make_pair ( newHist, * ( new std::vector<GamData*> ) );
+
+    if ( addToSpecialList ) specialHists.push_back ( name );
+
+    return newHist;
+}
+
+TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, bool addToSpecialList )
+{
+    TH2F* newHist = new TH2F ( name.c_str(), title.c_str(), nBinsX, minX, maxX, nBinsY, minY, maxY );
+    histsMap[name] = std::make_pair ( newHist, * ( new std::vector<GamData*> ) );
+
+    if ( addToSpecialList ) specialHists.push_back ( name );
+
+    return newHist;
+}

@@ -36,6 +36,8 @@ extern TH2F* hQval_vs_strip_QQQ5UB_mod;
 extern TH2F* hQval_vs_strip_QQQ5UC_mod;
 extern TH2F* hQval_vs_strip_QQQ5UD_mod;
 
+extern TH1F* hQval_NewGeom[2][2][12];
+
 extern float calibBeamEk, calibBeamMass, calibRecoilMass, calibEjecMass, calibTargetMass, calibQvalGsGs;
 
 inline void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1337., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 )
@@ -119,6 +121,13 @@ public:
     map<string, std::pair<float, float>> configCalPars;
     void ReadConfigCalPars ( string configFileName );
 
+    SolidVector orrubaStripsPos[2][2][12][32];
+
+    void PrintOutStripsPositions ( );
+    void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
+    TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
+    void GetQValWithNewGeometry ( TChain* chain, long long int nEntries, float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ, string configFileName );
+
     map<string, map<unsigned short, vector<double>>> resStripsCalMap;
     map<string, vector<double>> endcapsStripsCalMap;
 
@@ -146,7 +155,7 @@ public:
     void WriteResCalResults ( string fileName = "Resistive_Strips_Calib_Params.txt", string mode = "update" );
 
     bool UpdateParamsInConf ( string configFile, string detType, bool invertContactMidDet = true, string mode = "protected" );
-    static void PopupInputfield ( TGWindow* pWin, short textSize, string label, TGLayoutHints* layHints, bool isEditable );
+    static void PopupInputfield ( TGWindow* pWin, float width_, float heigth_, short textSize, string label, TGLayoutHints* layHints, bool isEditable );
 
     TH2F* PlotSX3ResStripCalGraph ( TChain* chain, string varToPlot, unsigned short sector, unsigned short strip, string conditions );
 

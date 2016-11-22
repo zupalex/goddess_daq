@@ -859,7 +859,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 
         TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
 
-        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, sX3ActiveLength + sX3NearFrame ) + QQQ5DA_orig_offset;
+        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, halfBarrelLength ) + QQQ5DA_orig_offset;
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refQQQ5D_sectA.Angle ( zAxis ) ) : refQQQ5D_sectA.Angle ( zAxis ) );

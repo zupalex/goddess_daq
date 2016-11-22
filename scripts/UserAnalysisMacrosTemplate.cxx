@@ -1,4 +1,4 @@
-// UserAnalysisTemplate version 161117 //
+// UserAnalysisTemplate version 161122 //
 
 #include "GoddessAnalysis.h"
 #include <sys/times.h>
@@ -8,261 +8,14 @@ using std::string;
 
 //******************************************************************************************//
 //******************************************************************************************//
-// --------- Initialization and Utilities. Should not be touched -------------------------- //
-// --------- User functions should be defined in the next section ------------------------- //
+// ------------------------- Initialization and Utilities --------------------------------- //
 //******************************************************************************************//
 //******************************************************************************************//
 
-
-GoddessAnalysis* gA = 0;
-
-TChain* uChain = 0;
+GoddessAnalysis* gA;
 
 std::map<string, std::pair<TObject*, std::vector<GamData*>>> histsMap;
 std::vector<string> specialHists;
-
-unsigned long long int eventNbr = 0;
-unsigned long long int totEvents = 0;
-
-void LoadTrees()
-{
-    std::cout << "To initialize the chain of runs, type:\n   LoadTrees( (string) treeName, (string) fileName1, (string) fileName2, (string) ... )\n\n";
-}
-
-template<typename First, typename... Rest> void LoadTrees ( string treeName, First fileName1, Rest... fileNameRest )
-{
-    gA = new GoddessAnalysis();
-
-    gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
-
-    uChain = gA->userChain;
-    totEvents = uChain->GetEntries();
-}
-
-void ResetHistsStates ( bool all = false )
-{
-    if ( all )
-    {
-        for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
-        {
-            ( itr->second ).second.clear();
-        }
-    }
-
-    else
-    {
-        for ( unsigned int i = 0; i < specialHists.size(); i++ )
-        {
-            histsMap[specialHists[i]].second.clear();
-        }
-    }
-}
-
-bool CheckHistState ( string histName, GamData* gD )
-{
-    return ( std::find ( histsMap[histName].second.begin(), histsMap[histName].second.end(), gD ) != histsMap[histName].second.end() );
-}
-
-bool CheckHistState ( TObject* hist, GamData* gD )
-{
-    string histName = ( string ) hist->GetName();
-
-    return CheckHistState ( histName, gD );
-}
-
-void AddToHistState ( string histName, GamData* gD )
-{
-    histsMap[histName].second.push_back ( gD );
-
-    return;
-}
-
-void AddToHistState ( TObject* hist, GamData* gD )
-{
-    string histName = ( string ) hist->GetName();
-
-    AddToHistState ( histName, gD );
-
-    return;
-}
-
-template<typename THist> void AddHists ( THist* h1, THist* h2 )
-{
-    if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
-    {
-        h1->Add ( h2 );
-    }
-}
-
-void AddHists ( TH1F* h1, TH1F* h2 )
-{
-    AddHists<TH1F> ( h1, h2 );
-}
-
-void AddHists ( TH2F* h1, TH2F* h2 )
-{
-    AddHists<TH2F> ( h1, h2 );
-}
-
-template<typename THist, typename... Rest> void AddHists ( THist* h1, THist* h2, Rest... otherHists )
-{
-    if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
-    {
-        AddHists ( h1, h2 );
-        AddHists ( h1, otherHists... );
-    }
-}
-
-template<typename THist, typename... Rest> THist* DrawSum ( THist* h1, THist* h2, Rest... otherHists )
-{
-    if ( std::is_same<THist, TH1F>::value || std::is_same<THist, TH2F>::value )
-    {
-        THist* hSum = ( THist* ) h1->Clone();
-
-        AddHists ( hSum, h2, otherHists... );
-
-        hSum->Draw();
-
-        return hSum;
-    }
-    else return nullptr;
-}
-
-TH1F* DrawSum ( TH1F* h1, TH1F* h2, bool cloneFirst = true, bool doDraw = true )
-{
-    TH1F* hSum;
-
-    if ( cloneFirst )
-    {
-        hSum = ( TH1F* ) h1->Clone();
-    }
-    else
-    {
-        hSum = h1;
-    }
-
-    hSum->Add ( h2,1 );
-
-    if ( doDraw ) hSum->Draw();
-
-    return hSum;
-}
-
-TH1F* DrawSum ( TH1F** hists, string toSum )
-{
-    std::vector<unsigned short> listOfHists = DecodeSectorsString ( toSum, false );
-
-    TH1F* hSum;
-
-    if ( listOfHists.size() > 0 )
-    {
-        hSum = ( TH1F* ) hists[listOfHists[0]]->Clone();
-
-        for ( unsigned int i = 1; i < listOfHists.size(); i++ )
-        {
-            hSum->Add ( hists[listOfHists[i]], 1 );
-        }
-
-        hSum->Draw();
-
-        return hSum;
-    }
-
-    return nullptr;
-}
-
-TH2F* DrawSum ( TH2F** hists, string toSum )
-{
-    std::vector<unsigned short> listOfHists = DecodeSectorsString ( toSum, false );
-
-    TH2F* hSum;
-
-    if ( listOfHists.size() > 0 )
-    {
-        hSum = ( TH2F* ) hists[listOfHists[0]]->Clone();
-
-        for ( unsigned int i = 1; i < listOfHists.size(); i++ )
-        {
-            hSum->Add ( hists[listOfHists[i]], 1 );
-        }
-
-        hSum->Draw ( "colz" );
-
-        return hSum;
-    }
-
-    return nullptr;
-}
-
-TH1F* DrawSum ( TH1F** hists )
-{
-    if ( *hists != nullptr )
-    {
-        TH1F* hSum = dynamic_cast<TH1F*> ( *hists );
-
-        if ( hSum != nullptr )
-        {
-            int counter = 1;
-
-            while ( * ( hists+counter ) != nullptr )
-            {
-                TH1F* hAdd = dynamic_cast<TH1F*> ( * ( hists+counter ) );
-
-                if ( hAdd != nullptr )
-                {
-                    hSum->Add ( hAdd );
-                }
-
-                counter++;
-            }
-
-            return hSum;
-        }
-    }
-
-    return nullptr;
-}
-
-void PrintProgress ( unsigned long long int maxEvents_ )
-{
-    if ( eventNbr % 10000 == 0 )
-    {
-        std::cout << "Treated " << std::setw ( 11 ) << eventNbr << " / " << std::setw ( 11 ) << std::left << maxEvents_;
-        std::cout << " ( " << std::setw ( 5 ) << std::setprecision ( 2 ) << std::fixed << ( float ) eventNbr/maxEvents_ * 100. << " % )\r" << std::flush;
-    }
-}
-
-void PrintHistsMapContent()
-{
-    std::cout << "List of Histograms: \n\n";
-
-    for ( auto itr = histsMap.begin(); itr != histsMap.end(); itr++ )
-    {
-        std::cout << "-> " << itr->first << "\n";
-    }
-
-    return;
-}
-
-TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, bool addToSpecialList = false )
-{
-    TH1F* newHist = new TH1F ( name.c_str(), title.c_str(), nBinsX, minX, maxX );
-    histsMap[name] = std::make_pair ( newHist, * ( new std::vector<GamData*> ) );
-
-    if ( addToSpecialList ) specialHists.push_back ( name );
-
-    return newHist;
-}
-
-TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, bool addToSpecialList = false )
-{
-    TH2F* newHist = new TH2F ( name.c_str(), title.c_str(), nBinsX, minX, maxX, nBinsY, minY, maxY );
-    histsMap[name] = std::make_pair ( newHist, * ( new std::vector<GamData*> ) );
-
-    if ( addToSpecialList ) specialHists.push_back ( name );
-
-    return newHist;
-}
 
 // ----------- Handles the writing to a TFile ---------------------- //
 
@@ -353,7 +106,7 @@ bool OrrubaEnergyThr ( SiDataBase* siData_ )
 //******************************************************************************************//
 //******************************************************************************************//
 // ------------------------- Write your macros here --------------------------------------- //
-// ----------------- Use the variable uChain to process your root files ------------------- //
+// -------------- Use the variable gA->userChain to process your root files --------------- //
 //******************************************************************************************//
 //******************************************************************************************//
 
@@ -882,24 +635,41 @@ bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_, bool vetoBGO = f
 
 // --------- Put here the functions you want to be processed ---------------- //
 
-void FillUserHists ( unsigned long long int maxEvents = 0 )
+void FillUserHists ( long long int maxEvents = 0 )
 {
-    std::vector<SiDataBase>* siData = new std::vector<SiDataBase>();
-    std::vector<GamData>* gamData = new std::vector<GamData>();
+    TChain* uChain = gA->userChain;
 
-    std::vector<bool> filledGam, filledGamBGOVeto;
+    cout << "the chain contains " << uChain->GetEntries() << "entries...\n";
 
-    uChain->SetBranchAddress ( "si", &siData );
-    uChain->SetBranchAddress ( "gam", &gamData );
+    std::vector<SiDataBase>* vectSiData = new std::vector<SiDataBase>;
+    std::vector<SiDataDetailed>* vectSiDataD = new vector<SiDataDetailed>;
+
+    std::vector<GamData>* vectGamData = new std::vector<GamData>();
+
+    if ( uChain->SetBranchAddress ( "si", &vectSiData ) == -1 )
+    {
+        vectSiData = nullptr;
+        cout << "Trying vector<SiDataDetailed>* for the silicon branch instead...\n";
+
+        if ( uChain->SetBranchAddress ( "si", &vectSiDataD ) == -1 )
+        {
+            cerr << "si branch is not recognized!\n";
+            return;
+        }
+
+        cout << "vector<SiDataDetailed>* matches the silicon branch. Processing...\n";
+    }
+
+    uChain->SetBranchAddress ( "gam", &vectGamData );
 
     InitdTGsORRUBAHists();
     InitGsGateORRUBAHists();
     InitEvsAHist ( 1800, 0, 180, 1000, 0, 10 );
     InitQvalHist ( 800, -20, 20, 5000, 0, 5000 );
 
-    PrintHistsMapContent();
+//     PrintHistsMapContent();
 
-    eventNbr = 0;
+    int eventNbr = 0;
 
     float massBeam = 134.;
     float beamEk = 1337;
@@ -908,70 +678,78 @@ void FillUserHists ( unsigned long long int maxEvents = 0 )
     float massEjec = 1.;
     float qValGsGs = 4.1;
 
-    if ( maxEvents <= 0 || maxEvents > totEvents ) maxEvents = totEvents;
+    if ( maxEvents <= 0 || maxEvents > uChain->GetEntries() ) maxEvents = uChain->GetEntries();
 
     while ( eventNbr < maxEvents )
     {
-        PrintProgress ( maxEvents );
+        PrintProgress ( maxEvents, eventNbr );
 
         uChain->GetEntry ( eventNbr );
 
         ResetHistsStates();
 
-        for ( unsigned int i = 0; i < siData->size(); i++ )
+        unsigned int vectSiSize = ( vectSiData != nullptr ) ? vectSiData->size() : vectSiDataD->size();
+
+        for ( unsigned int i = 0; i < vectSiSize; i++ )
         {
-            float angle = siData->at ( i ).Angle ( 1 );
-            float qval = siData->at ( i ).QValue ( massBeam, beamEk, massTarget, massEjec, massRecoil );
+            SiDataBase siData = ( vectSiData != nullptr ) ? vectSiData->at ( i ) : vectSiDataD->at ( i );
+
+            float angle = siData.Angle ( 1 );
+            float qval = siData.QValue ( massBeam, beamEk, massTarget, massEjec, massRecoil );
 
             float ex = -qval + qValGsGs;
 
-            unsigned int sector = siData->at ( i ).sector;
+            unsigned int sector = siData.sector;
 
-            unsigned long long int orrubaTs = siData->at ( i ).TimestampMaxLayer ( 1, false );
+            unsigned long long int orrubaTs = siData.TimestampMaxLayer ( 1, false );
 
-            double siEn = siData->at ( i ).ESumLayer ( 1, false );
+            double siEn = siData.ESumLayer ( 1, false );
 
-            bool isDigital = OrrubaIsDigital ( & ( siData->at ( i ) ) );
+            bool isDigital = OrrubaIsDigital ( &siData );
 
-            bool sectorOK = OrrubaGoodSector ( & ( siData->at ( i ) ) );
+            bool sectorOK = OrrubaGoodSector ( &siData );
 
-            bool energyOK = OrrubaEnergyThr ( & ( siData->at ( i ) ) );
+            bool energyOK = OrrubaEnergyThr ( &siData );
 
-            FillEvsAHist ( & ( siData->at ( i ) ) );
-            FillQvalHist ( & ( siData->at ( i ) ), massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
+            FillEvsAHist ( &siData );
+            FillQvalHist ( &siData, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
 
             bool noBGO = true;
 
-            for ( unsigned int j = 0; j < gamData->size(); j++ )
+            for ( unsigned int j = 0; j < vectGamData->size(); j++ )
             {
-                unsigned long long int gsTs = gamData->at ( j ).time;
+                GamData gamData = vectGamData->at ( j );
 
-                double gsEn = ( double ) gamData->at ( j ).en/3.;
+                unsigned long long int gsTs = gamData.time;
 
-                bool timestampOK = OrrubaGsGoodTs ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ) );
+                double gsEn = ( double ) gamData.en/3.;
+
+                bool timestampOK = OrrubaGsGoodTs ( &siData, &gamData );
 
                 bool doFill = timestampOK && sectorOK && energyOK;
 
-                int gamType = gamData->at ( j ).type;
+                int gamType = gamData.type;
 
-                FillGsVsExHist ( & ( gamData->at ( j ) ), & ( siData->at ( i ) ),false, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
+                FillGsVsExHist ( &gamData, &siData,false, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
 
-                if ( gamData->at ( j ).type == 1 )
+                if ( gamData.type == 1 )
                 {
-                    FilldTGammaORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), false );
+                    FilldTGammaORRUBA ( &siData, &gamData, false );
 
-                    FillGsGateORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), false );
+                    FillGsGateORRUBA ( &siData, &gamData, false );
                 }
                 else noBGO = false;
             }
 
             if ( noBGO )
             {
-                for ( unsigned int j = 0; j < gamData->size(); j++ )
+                for ( unsigned int j = 0; j < vectGamData->size(); j++ )
                 {
-                    FilldTGammaORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), true );
+                    GamData gamData = vectGamData->at ( j );
 
-                    FillGsGateORRUBA ( & ( siData->at ( i ) ), & ( gamData->at ( j ) ), true );
+                    FilldTGammaORRUBA ( &siData, &gamData, true );
+
+                    FillGsGateORRUBA ( &siData, &gamData, true );
                 }
             }
         }

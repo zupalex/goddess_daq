@@ -195,13 +195,17 @@ TVector3 SiDataBase::PosE2() const
 
 float SiDataBase::Angle ( short unsigned int layer ) const
 {
+    TVector3 targetPos ( 0, 0, 0 );
+
+    TVector3 beamDir ( 0, 0, 1 );
+
     if ( pos.size() > 0 && stripMax.size() >= pos.size() )
     {
         for ( unsigned short i = 0; i < pos.size(); i++ )
         {
             if ( stripMax[i] >= ( layer*100 )  && stripMax[i] < ( layer*100 ) + 100 )
             {
-                return pos[i].Angle ( TVector3 ( 0, 0, 1 ) ) * 180. / TMath::Pi();
+                return ( pos[i]-targetPos ).Angle ( beamDir ) * 180. / TMath::Pi();
             }
         }
     }
@@ -224,7 +228,7 @@ float SiDataBase::QValue ( float massBeam, float kBeam, float massTarget, float 
         if ( labAngle != 0 )
         {
             float mbeam = massBeam * amu;  // MeV
-            float mrecoil = (massRecoil == 0.0 ? ( massBeam + massTarget - massEjec ) * amu : massRecoil); // MeV
+            float mrecoil = ( massRecoil == 0.0 ? ( massBeam + massTarget - massEjec ) * amu : massRecoil ); // MeV
 
             float mejec = massEjec * amu;
 
