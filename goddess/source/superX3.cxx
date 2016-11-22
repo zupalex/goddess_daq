@@ -276,12 +276,12 @@ TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, 
 {
     float SX3_length = 75.; // mm
 
-    float recenter = parPosCal[pStripHit].at ( 1 ) - abs(parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 )) / 2.;
-    
+    float recenter = ( parPosCal[pStripHit].at ( 1 ) + parPosCal[pStripHit].at ( 0 ) ) / 2.;
+
     float normalize = parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 );
-    
-    normalize = normalize == 0 ? 1 : normalize;
-    
+
+    normalize = (normalize < 0.01) ? 1 : normalize;
+
     float zRes = ( ( ( eNear - eFar ) / ( eNear + eFar ) )  - recenter ) / normalize;
 
     TVector3 zResPos ( 0, 0, zRes * SX3_length );

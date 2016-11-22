@@ -126,7 +126,10 @@ public:
     void PrintOutStripsPositions ( );
     void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
     TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
-    void GetQValWithNewGeometry ( TChain* chain, long long int nEntries, float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ, string configFileName );
+    void GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
+                                  float qqq5OffX, float qqq5OffY, float QQQ5OffZ,
+                                  float sX3OffX, float sX3OffY, float sX3OffZ,
+                                  float targetPosX, float targetPosY, float targetPosZ );
 
     map<string, map<unsigned short, vector<double>>> resStripsCalMap;
     map<string, vector<double>> endcapsStripsCalMap;

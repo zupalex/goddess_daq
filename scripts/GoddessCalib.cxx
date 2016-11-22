@@ -3358,7 +3358,10 @@ TVector3 GoddessCalib::GetFinalHitPosition ( int isUpstream_, int isBarrel_, int
 
 TH1F* hQval_NewGeom[2][2][12];
 
-void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, long long int nEntries, float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ, string configFileName )
+void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
+        float qqq5OffX, float qqq5OffY, float QQQ5OffZ,
+        float sX3OffX, float sX3OffY, float sX3OffZ,
+        float targetPosX, float targetPosY, float targetPosZ )
 {
     FillStripsPositionsArray ( qqq5OffX, qqq5OffY, QQQ5OffZ, sX3OffX, sX3OffY, sX3OffZ );
 
@@ -3377,7 +3380,7 @@ void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, long long int nEntrie
         }
     }
 
-    TVector3 targetPos ( 0, 0, 0 );
+    TVector3 targetPos ( targetPosX, targetPosY, targetPosZ );
 
     TVector3 beamDir ( 0, 0, 1 );
 
@@ -3435,7 +3438,7 @@ void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, long long int nEntrie
 
                         TVector3 hitPos = GetFinalHitPosition ( isUpstream, isBarrel, sector, strip, enear, efar );
 
-                        float angle = (hitPos-targetPos).Angle ( beamDir );
+                        float angle = ( hitPos-targetPos ).Angle ( beamDir );
 
                         if ( angle != 0 )
                         {
