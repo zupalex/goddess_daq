@@ -3250,7 +3250,7 @@ TVector3 GoddessCalib::GetFinalHitPosition ( int isUpstream_, int isBarrel_, int
 
         string detKey = Form ( "SuperX3 %s%d position %d", ( isUpstream_ ? "U" : "D" ), sector_, strip_ );
 
-        float recenter = configCalPars[detKey].second - abs ( configCalPars[detKey].second - configCalPars[detKey].first ) / 2.;
+        float recenter = ( configCalPars[detKey].second + configCalPars[detKey].first ) / 2.;
 
         float normalize = configCalPars[detKey].second - configCalPars[detKey].first;
 
