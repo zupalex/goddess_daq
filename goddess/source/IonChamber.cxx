@@ -59,6 +59,8 @@ void IonChamber::Clear()
  */
 void IonChamber::SetRawValue ( unsigned int channel, bool scintType, unsigned int rawValue, int ignThr )
 {
+    ( void ) ignThr; // to prevent useless warning about this variable not being used currently...
+
     if ( !scintType && channel < anodeRaw.size() )
     {
         anodeRaw.at ( channel ) = rawValue;

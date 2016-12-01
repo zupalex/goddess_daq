@@ -36,20 +36,6 @@ extern TH2F* hQval_vs_strip_QQQ5UB_mod;
 extern TH2F* hQval_vs_strip_QQQ5UC_mod;
 extern TH2F* hQval_vs_strip_QQQ5UD_mod;
 
-extern TH1F* hQval_NewGeom[2][2][12];
-
-extern float calibBeamEk, calibBeamMass, calibRecoilMass, calibEjecMass, calibTargetMass, calibQvalGsGs;
-
-inline void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1337., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 )
-{
-    calibBeamEk = beamEk_;
-    calibBeamMass = beamMass_;
-    calibTargetMass = targetMass_;
-    calibEjecMass = ejecMass_;
-    calibRecoilMass = recoilMass_;
-    calibQvalGsGs = qValGsGs_;
-}
-
 class GoddessCalib : public GoddessAnalysis
 {
 private:
@@ -62,6 +48,8 @@ private:
 public:
     virtual ~GoddessCalib();
 
+    // ****************** Singleton stuffs ******************************* //
+
     static GoddessCalib* sinstance()
     {
         return s_instance;
@@ -71,6 +59,8 @@ public:
 
     static GoddessCalib* StartCalib();
     static void StartSX3EnCalib ( string detectorType = "SuperX3", double refEnergy1 = 5.813 );
+
+    // ****************** User Interface Interactions ******************** //
 
     string currDetType;
     double currRefEn1;
@@ -93,6 +83,8 @@ public:
     static void OnClickAddToChain();
     static void OnClickResetChain();
 
+    // ****************** user Interface Utilities ********************** //
+
     TGMainFrame* GetControlFrame()
     {
         return controlFrame;
@@ -109,6 +101,8 @@ public:
         else return nullptr;
     }
 
+    // ****************** Calibration Base ************************* //
+
     string calTreeName;
     TChain* calChain;
     void AddFileToChain ( TFile* file );
@@ -123,19 +117,33 @@ public:
 
     SolidVector orrubaStripsPos[2][2][12][32];
 
+    // ******************* Geometry Utilities ************************** //
+
+    map<string, TH1F*> hQval_NewGeom;
+
+    vector<float> lastQQQ5Offsets, lastSX3Offsets;
+
     void PrintOutStripsPositions ( );
     void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
     TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
     void GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
                                   float qqq5OffX, float qqq5OffY, float QQQ5OffZ,
                                   float sX3OffX, float sX3OffY, float sX3OffZ,
-                                  float targetPosX, float targetPosY, float targetPosZ );
+                                  int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ );
+    string DrawQValNewGeom ( string histName );
+    void GetBestParameters ( float mean = 4.1, float fwhm = 0.5, string detType = "", string inFileName = "", string betterFitMode = "sigma < bestSigma && chi2 < bestChi2" );
+    TF1* FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ );
+    void WriteNewGeomGraphs ( string outFileName = "" );
+    void ReloadNewGeomGraphs ( string outFileName );
+
+    // ******************** Calibration Utilities ********************** //
 
     map<string, map<unsigned short, vector<double>>> resStripsCalMap;
     map<string, vector<double>> endcapsStripsCalMap;
 
     map<string, TH2F*> resStripsEnCalGraphsMap;
     map<string, TH2F*> resStripsPosCalGraphsMap;
+    map<string, TGraph*> enShiftVsPosGraphs;
 
     void InitializeCalMapKey ( string mapKey, unsigned short strip );
 
@@ -179,7 +187,7 @@ public:
 
     TH2F* DrawPosCalHist ( TChain* chain, bool isUpstream_, int nentries,
                            int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
-                           unsigned short sector_, unsigned short strip_, string configFileName );
+                           unsigned short sector_, unsigned short strip_ );
 
     map<string, TH2F*> DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName );
@@ -195,15 +203,15 @@ public:
     int GetPosCalEnBinMax ( TH2F* input, double threshold );
 
     TH1D* GetPosCalProjX ( TH2F* input, int projCenter, int projWidth );
+    TH1D* GetPosCalProjY ( TH2F* input, int projCenter, int projWidth );
 
-//     TF1* FitLeftEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
-//     TF1* FitRightEdge ( TH2F* input, int projWidth = 200, double threshold = 250 );
     TF1* FitEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool fitRight = true );
-    void GetStripsEdges ( int projWidth = 200, double threshold = 250, bool drawResults = true );
-    void GetStripsEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
-    void GetStripsEdges ( TFile* input, int projWidth = 200, double threshold = 250, bool drawResults = true );
+    TGraph* GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos );
+    void GetStripsEdges ( int projWidth = 200, double threshold = 250, double peakPos = 5.813, bool drawResults = true );
+    void GetStripsEdges ( TH2F* input, int projWidth = 200, double threshold = 250, double peakPos = 5.813, bool drawResults = true );
+    void GetStripsEdges ( TFile* input, int projWidth = 200, double threshold = 250, double peakPos = 5.813, bool drawResults = true );
 
-    void WritePosCalHistsToFile ( TChain* chain, string fileName );
+    void WritePosCalHistsToFile ( );
 
     // ---------------------- QQQ5 stuffs -------------------------------- //
 
@@ -215,7 +223,7 @@ public:
 
     TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, string sector );
 
-    TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0 );
+    TF1* FitQValGS ( TH1F* hist, vector<float> mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0 );
 
     TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, int modCoeff_ = 100 );
 
@@ -356,8 +364,6 @@ float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle );
 
 template<typename First, typename... Rest> void GoddessCalib::GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest )
 {
-    GoddessAnalysis* gA = new GoddessAnalysis();
-
     gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
 
     TChain* uChain = gA->userChain;

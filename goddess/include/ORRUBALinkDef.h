@@ -5,6 +5,9 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
+#pragma link C++ class GoddessConfig+;
+#pragma link C++ class SolidVector+;
+
 #pragma link C++ class Detector+;
 #pragma link C++ class siDet+;
 #pragma link C++ class orrubaDet+;

@@ -3,20 +3,24 @@
 
 #include "goddess_analysis_macros.h"
 
-std::vector<unsigned short> DecodeSectorsString ( std::string sectorsString, bool verbose = false );
+vector<unsigned short> DecodeSectorsString ( string sectorsString, bool verbose = false );
 
-std::vector<std::string> DecodeTags ( std::string tagsStr );
+vector<string> DecodeTags ( string tagsStr );
 
-std::vector<std::string> GetDirContent ( std::string dirName = "./", std::string fileExt = "", std::string mustHaveAll = "", std::string cantHaveAny = "", std::string mustHaveOneOf = "", std::string startWith = "" );
+vector<string> GetDirContent ( string dirName = "./", string fileExt = "", string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "" );
 
-std::vector<std::string> DecodeFilesToTreat ( std::string filesStr );
+vector<string> DecodeFilesToTreat ( string filesStr );
+
+vector<string> SplitString ( string toSplit, string splitter );
+
+string FindAndReplaceInString ( string input, string toReplace, string substitute, unsigned int nTimes = 0, int startIndex = 0 );
 
 class GoddessAnalysis : public TObject, public TQObject
 {
 private:
-    std::string defaultTreeName1;
-    std::string defaultTreeName2;
-    std::string defaultFileName;
+    string defaultTreeName1;
+    string defaultTreeName2;
+    string defaultFileName;
 
 public:
     GoddessAnalysis();
@@ -24,76 +28,94 @@ public:
 
     // ---------------- General useful functions -------------------------- //
 
-    template<typename T> static void DisplayMapKeys ( std::map<std::string, T> map_ );
-    inline static void DisplayMapKeys ( std::map<std::string, float> map_ );
+    template<typename T> static void DisplayMapKeys ( std::map<string, T> map_ );
+    inline static void DisplayMapKeys ( std::map<string, float> map_ );
 
     inline static int DecodeStripNumber ( int st_ );
 
-    template<typename T> static void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, T sector );
+    template<typename T> static void GetListOfSectorsToTreat ( vector<unsigned short>* sectorsList, T sector );
 
-    template<typename First, typename... Rest> static void GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors );
+    template<typename First, typename... Rest> static void GetListOfSectorsToTreat ( vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors );
 
     template<typename First, typename... Rest> TH2F* DrawEnergyVsAngleSX3 ( TChain* chain, int nentries,
-            std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts, bool isUpstream_, std::string strips,
+            string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, bool isUpstream_, string strips,
             First fstSector, Rest... otherSectors );
 
     TH2F* DrawEnergyVsAngleSX3 ( TChain* chain, int nentries,
-                                 std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts, bool isUpstream_, std::string strips,
+                                 string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, bool isUpstream_, string strips,
                                  unsigned short sector );
 
-    std::vector<unsigned short> GetStripsListToTreat ( std::string strips );
+    vector<unsigned short> GetStripsListToTreat ( string strips );
 
     // ------------------ For the check mapping tool ------------------------ //
 
-    GoddessAnalysis ( std::string filename );
-    GoddessAnalysis ( std::string filename, std::string treename, std::string treename2 );
+    GoddessAnalysis ( string filename );
+    GoddessAnalysis ( string filename, string treename, string treename2 );
 
-    void SetDefaultFileAndTrees ( std::string fileName, std::string treeName1, std::string treeName2 );
+    void SetDefaultFileAndTrees ( string fileName, string treeName1, string treeName2 );
 
-    void CheckMapping ( std::string filename, std::string treename, std::string treename2, unsigned short channel1, unsigned short channel2, bool Digital, std::string DetectorID );
+    void CheckMapping ( string filename, string treename, string treename2, unsigned short channel1, unsigned short channel2, bool Digital, string DetectorID );
 
-    void CheckMapping ( unsigned short channel1, unsigned short channel2, bool Digital, std::string DetectorID );
+    void CheckMapping ( unsigned short channel1, unsigned short channel2, bool Digital, string DetectorID );
+
+    // ****************** Reaction parameters *************************** //
+
+    float beamEk;
+    float beamMass;
+    float targetMass;
+    float ejecMass;
+    float recoilMass;
+    float qvalGsGs;
+
+    void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1338., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 );
+    void SetBeamParameters ( float beamMass_ = 134., float beamEk_ = 1338. );
+    void SetBeamEk ( float beamEk_ = 1338. );
+    void SetBeamMass ( float beamMass_ = 134. );
+    void SetTargetMass ( float targetMass_ = 2. );
+    void SetEjectileMass ( float ejecMass_ = 1. );
+    void SetRecoilMass ( float recoilMass_ = 135. );
+    void SetQvalueGsToGs ( float qvalGsGs_ = 4.1 );
 
     // ------------------ For the User Macros ------------------------------- //
 
     TChain* userChain;
     TTree* userTree;
 
-    void AddFileToTreat ( TFile* inFile, std::string treeName );
-    void AddFileToTreat ( std::string inFile, std::string treeName );
-    void AddFileToTreat ( std::vector<std::string> inFile, std::string treeName );
+    void AddFileToTreat ( TFile* inFile, string treeName );
+    void AddFileToTreat ( string inFile, string treeName );
+    void AddFileToTreat ( vector<string> inFile, string treeName );
 
-    template<typename T> void InitUserAnalysis ( std::string treeName, T inFile1 );
-    template<typename First, typename... Rest> void InitUserAnalysis ( std::string treeName, First inFile1, Rest... inFileRest );
+    template<typename T> void InitUserAnalysis ( string treeName, T inFile1 );
+    template<typename First, typename... Rest> void InitUserAnalysis ( string treeName, First inFile1, Rest... inFileRest );
 
     ClassDef ( GoddessAnalysis, 1 )
 };
 
-template<typename T> void GoddessAnalysis::InitUserAnalysis ( std::string treeName, T inFile1 )
+template<typename T> void GoddessAnalysis::InitUserAnalysis ( string treeName, T inFile1 )
 {
-    AddFileToTreat ( ( std::string ) inFile1, treeName );
+    AddFileToTreat ( ( string ) inFile1, treeName );
 }
 
-template<typename First, typename... Rest> void GoddessAnalysis::InitUserAnalysis ( std::string treeName, First inFile1, Rest... inFileRest )
+template<typename First, typename... Rest> void GoddessAnalysis::InitUserAnalysis ( string treeName, First inFile1, Rest... inFileRest )
 {
-    InitUserAnalysis<std::string> ( treeName, inFile1 );
+    InitUserAnalysis<string> ( treeName, inFile1 );
 
     InitUserAnalysis ( treeName, inFileRest... );
 }
 
-template<typename T> void GoddessAnalysis::DisplayMapKeys ( std::map<std::string, T> map_ )
+template<typename T> void GoddessAnalysis::DisplayMapKeys ( std::map<string, T> map_ )
 {
     for ( auto itr = map_.begin(); itr != map_.end(); itr++ )
     {
-        std::cout << itr->first << std::endl;
+        cout << itr->first << endl;
     }
 }
 
-inline void GoddessAnalysis::DisplayMapKeys ( std::map<std::string, float> map_ )
+inline void GoddessAnalysis::DisplayMapKeys ( std::map<string, float> map_ )
 {
     for ( auto itr = map_.begin(); itr != map_.end(); itr++ )
     {
-        std::cout << itr->first << std::endl;
+        cout << itr->first << endl;
     }
 }
 
@@ -102,14 +124,14 @@ inline int GoddessAnalysis::DecodeStripNumber ( int st_ )
     return st_%100;
 }
 
-template<typename T> void GoddessAnalysis::GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, T sector )
+template<typename T> void GoddessAnalysis::GetListOfSectorsToTreat ( vector<unsigned short>* sectorsList, T sector )
 {
-    std::cout << "adding " << sector << " to the list of sectors to treat..." << std::endl;
+    cout << "adding " << sector << " to the list of sectors to treat..." << endl;
 
     sectorsList->push_back ( sector );
 }
 
-template<typename First, typename... Rest> void GoddessAnalysis::GetListOfSectorsToTreat ( std::vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors )
+template<typename First, typename... Rest> void GoddessAnalysis::GetListOfSectorsToTreat ( vector<unsigned short>* sectorsList, First fstSector, Rest... otherSectors )
 {
     GetListOfSectorsToTreat<unsigned short> ( sectorsList, fstSector );
 
@@ -117,17 +139,17 @@ template<typename First, typename... Rest> void GoddessAnalysis::GetListOfSector
 }
 
 template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAngleSX3 ( TChain* chain, int nentries,
-        std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts, bool isUpstream_, std::string strips,
+        string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, bool isUpstream_, string strips,
         First fstSector, Rest... otherSectors )
 {
-    std::vector<unsigned short> sectorsList;
+    vector<unsigned short> sectorsList;
     sectorsList.clear();
 
     GetListOfSectorsToTreat<First, Rest...> ( &sectorsList, fstSector, otherSectors... );
 
-    std::vector<unsigned short> stripsList = GetStripsListToTreat ( strips );
+    vector<unsigned short> stripsList = GetStripsListToTreat ( strips );
 
-    std::vector<SiDataBase>* siDataVect = new std::vector<SiDataBase>();
+    vector<SiDataBase>* siDataVect = new vector<SiDataBase>();
     siDataVect->clear();
 
     chain->SetBranchAddress ( "si", &siDataVect );
@@ -136,13 +158,13 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
 
     TH2F* hist = new TH2F ( hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY );
 
-    std::cout << std::endl;
+    cout << endl;
 
     for ( int i = 0; i < nentries; i++ )
     {
         chain->GetEntry ( i );
 
-        if ( i%10000 == 0 ) std::cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << " % )\r" << std::flush;
+        if ( i%10000 == 0 ) cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << " % )\r" << std::flush;
 
         if ( siDataVect->size() == 0 ) continue;
 
@@ -185,7 +207,7 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
 
     hist->Draw ( drawOpts.c_str() );
 
-    std::cout << std::endl;
+    cout << endl;
 
     return hist;
 }
@@ -467,9 +489,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         double val1 = memItr->second;
 
 //         cout << "Current operation to process is: " << val1 << opItr->second << val2 << "\n";
-
-        int opNumber = ( int ) std::distance ( operators.begin(), opItr );
-
+//         int opNumber = ( int ) std::distance ( operators.begin(), opItr );
 //         cout << "Operator number: " << opNumber << " @ pos " << opItr->first << "\n";
 
         if ( opItr->second == '*' ) subRes = val1 * val2;
@@ -785,12 +805,12 @@ inline bool StringFormulaComparator ( string compStr )
 
 extern GoddessAnalysis* gA;
 
-extern std::map<string, std::pair<TObject*, std::vector<GamData*>>> histsMap;
-extern std::vector<string> specialHists;
+extern std::map<string, std::pair<TObject*, vector<GamData*>>> histsMap;
+extern vector<string> specialHists;
 
 inline void LoadTrees()
 {
-    std::cout << "To initialize the chain of runs, type:\n   LoadTrees( (string) treeName, (string) fileName1, (string) fileName2, (string) ... )\n\n";
+    cout << "To initialize the chain of runs, type:\n   LoadTrees( (string) treeName, (string) fileName1, (string) fileName2, (string) ... )\n\n";
 }
 
 template<typename First, typename... Rest> void LoadTrees ( string treeName, First fileName1, Rest... fileNameRest )

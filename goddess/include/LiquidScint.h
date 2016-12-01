@@ -14,24 +14,28 @@ private:
 
 public:
     LiquidScint();
-    LiquidScint(std::string desc);
+    LiquidScint ( std::string desc );
     virtual ~LiquidScint();
     static const unsigned short numChannels = 3;
 
     ///Return the number of channels of the type specified.
-    int GetNumChannels(bool secondary = false) {
+    int GetNumChannels ( bool secondary = false )
+    {
+        ( void ) secondary; // to prevent useless warning about this variable not being used currently...
         return numChannels;
     };
 
     ///Set the raw energy of the channel.
-    virtual void SetRawValue(unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignThr);
+    virtual void SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignThr );
     ///Set the timestamp for the channel.
-    virtual void SetTimeStamp(unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp);
+    virtual void SetTimeStamp ( unsigned int detectorChannel, bool secondaryType, unsigned long long timestamp );
 
-    void SetDescription(std::string desc) {
+    void SetDescription ( std::string desc )
+    {
         description = desc;
     };
-    std::string GetDescription() {
+    std::string GetDescription()
+    {
         return description;
     };
 
@@ -43,7 +47,7 @@ public:
 
 
     /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef(LiquidScint, 1);
+    ClassDef ( LiquidScint, 1 );
     /// \endcond
 };
 

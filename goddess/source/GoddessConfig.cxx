@@ -840,7 +840,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
     //Compute position for barrel detectors.
     if ( type == "superX3" || type == "BB10" )
     {
-        float barrelDet_spacing = 4.8;
+        float barrelDet_spacing = 4.8; // mm
 
         TVector3 barrelDet_offset ( 0.0, 0.0 + ( depth-1 ) * barrelDet_spacing, sX3NearFrame );
 
@@ -855,7 +855,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
     }
     else if ( type == "QQQ5" )
     {
-        float QQQ5_spacing = 4.0;
+        float QQQ5_spacing = 4.0; // mm
 
         TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
 
@@ -870,3 +870,5 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 
     return pos;
 }
+
+ClassImp ( GoddessConfig )

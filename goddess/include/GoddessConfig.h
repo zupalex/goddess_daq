@@ -42,7 +42,7 @@ public:
     ///Default constructor.
     GoddessConfig ( std::string positionFile, std::string configFile );
     ///Default destructor.
-    ~GoddessConfig();
+    virtual ~GoddessConfig();
 
     ///Gets the detector and contact number for the specified digitizer channel.
     Detector *SetRawValue ( short daqType, short digitizerCh, unsigned int rawValue, int ignThr, unsigned long long timestamp = 0 );
@@ -54,20 +54,28 @@ public:
     SolidVector GetPosVector ( const std::string type, const short sector, const short depth, const bool upStream );
 
     ///Get a vector of all registered SuperX3s.
-    TClonesArray *GetSuperX3s() {
+    TClonesArray *GetSuperX3s()
+    {
         return superX3s;
     }
     ///Get a vector of all registered BB10s.
-    TClonesArray *GetBB10s() {
+    TClonesArray *GetBB10s()
+    {
         return bb10s;
     }
     ///Get a vector of all registered QQQ5s.
-    TClonesArray *GetQQQ5s() {
+    TClonesArray *GetQQQ5s()
+    {
         return qqq5s;
     }
-    std::vector<LiquidScint *> GetLiquidScints() {
+    std::vector<LiquidScint *> GetLiquidScints()
+    {
         return liquidScints;
     }
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( GoddessConfig, 1 );
+    /// \endcond
 
 };
 

@@ -270,6 +270,56 @@ std::vector<std::string> DecodeFilesToTreat ( std::string filesStr )
     return files;
 }
 
+vector< string > SplitString ( string toSplit, string splitter )
+{
+    std::size_t startPos = 0;
+    std::size_t comaPos = toSplit.find ( splitter.c_str() );
+
+    vector<string> splitString;
+    splitString.clear();
+
+    while ( comaPos != string::npos )
+    {
+        splitString.push_back ( toSplit.substr ( startPos, comaPos- startPos ) );
+
+        startPos = comaPos+splitter.length();
+        comaPos = toSplit.find ( splitter.c_str(), startPos );
+    }
+
+    splitString.push_back ( toSplit.substr ( startPos ) );
+
+    return splitString;
+}
+
+string FindAndReplaceInString ( string input, string toReplace, string substitute, unsigned int nTimes, int startIndex )
+{
+    int repSize = toReplace.length();
+
+    vector<std::size_t> foundPosList;
+
+    std::size_t foundPos = input.find ( toReplace.c_str() );
+
+    while ( foundPos != string::npos )
+    {
+        foundPosList.push_back ( foundPos );
+
+        foundPos = input.find ( toReplace.c_str(), foundPos+1 );
+    }
+
+    if ( nTimes == 0 ) nTimes = foundPosList.size();
+
+    nTimes = std::min ( nTimes, ( unsigned int ) ( foundPosList.size()-startIndex ) );
+
+    string newString = input;
+
+    for ( unsigned int i = startIndex; i < startIndex+nTimes; i++ )
+    {
+        newString.replace ( foundPosList[i], repSize, substitute );
+    }
+
+    return newString;
+}
+
 GoddessAnalysis::GoddessAnalysis()
 {
     defaultTreeName1 = "raw";
@@ -329,6 +379,52 @@ std::vector<unsigned short> GoddessAnalysis::GetStripsListToTreat ( std::string 
     }
 
     return stripsList;
+}
+
+void GoddessAnalysis::SetReacParameters ( float beamMass_, float beamEk_, float targetMass_, float ejecMass_, float recoilMass_, float qValGsGs_ )
+{
+    beamEk = beamEk_;
+    beamMass = beamMass_;
+    targetMass = targetMass_;
+    ejecMass = ejecMass_;
+    recoilMass = recoilMass_;
+    qvalGsGs = qValGsGs_;
+}
+
+void GoddessAnalysis::SetBeamParameters ( float beamMass_, float beamEk_ )
+{
+    beamEk = beamEk_;
+    beamMass = beamMass_;
+}
+
+void GoddessAnalysis::SetBeamEk ( float beamEk_ )
+{
+    beamEk = beamEk_;
+}
+
+void GoddessAnalysis::SetBeamMass ( float beamMass_ )
+{
+    beamMass = beamMass_;
+}
+
+void GoddessAnalysis::SetEjectileMass ( float ejecMass_ )
+{
+    ejecMass = ejecMass_;
+}
+
+void GoddessAnalysis::SetQvalueGsToGs ( float qvalGsGs_ )
+{
+    qvalGsGs = qvalGsGs_;
+}
+
+void GoddessAnalysis::SetRecoilMass ( float recoilMass_ )
+{
+    recoilMass = recoilMass_;
+}
+
+void GoddessAnalysis::SetTargetMass ( float targetMass_ )
+{
+    targetMass = targetMass_;
 }
 
 TH2F* GoddessAnalysis::DrawEnergyVsAngleSX3 ( TChain* chain, int nentries, std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,

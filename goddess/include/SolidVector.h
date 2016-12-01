@@ -37,6 +37,10 @@ public:
     {
      return TVector3(X(), Y(), Z());   
     }
+    
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( SolidVector, 1 );
+    /// \endcond
 };
 
 #endif

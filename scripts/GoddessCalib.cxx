@@ -359,7 +359,6 @@ void GoddessCalib::ValidateParamsButtons ( string mode )
         TGMainFrame* mf = ( TGMainFrame* ) paramsWin->GetMainFrame();
 
         TGTextEntry* tE;
-        TGCheckButton* cB;
 
         string fileName;
 
@@ -587,7 +586,7 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
         TGCheckButton* cB;
 
         string treeName, sectorsStr, configName, outFName;
-        unsigned long long int nentries;
+        long long int nentries;
         int nBinsX, nBinsY;
         float binMinX, binMaxX,binMinY, binMaxY;
         bool isUS;
@@ -973,6 +972,10 @@ void GoddessCalib::ValidateGetStripsEdges()
 
     cout << "Opened file: " << input->GetName() << "\n";
 
+    TGNumberEntryField* alphaEn1IF = ( TGNumberEntryField* ) FindFrameByName ( GoddessCalib::sinstance()->s_instance->GetControlFrame(), "alphaEn1IF" );
+
+    double alphaEn1 = alphaEn1IF->GetNumber();
+
     TGWindow* prompt = FindWindowByName ( "Get Strips Edges" );
 
     TGCheckButton* drawResCB = ( TGCheckButton* ) FindFrameByName ( prompt, "Draw Results CB" );
@@ -984,7 +987,7 @@ void GoddessCalib::ValidateGetStripsEdges()
     double thr_ = projThrIF->GetNumber();
     bool doDraw = drawResCB->GetState();
 
-    GoddessCalib::sinstance()->GetStripsEdges ( input, projWidth_, thr_, doDraw );
+    GoddessCalib::sinstance()->GetStripsEdges ( input, projWidth_, thr_, alphaEn1,  doDraw );
 
     return;
 }
@@ -1472,6 +1475,56 @@ void GoddessCalib::WriteResCalResults ( string fileName, string mode )
         }
     }
 
+    auto time_now = std::chrono::system_clock::now();
+
+    auto ctime_now = std::chrono::system_clock::to_time_t ( time_now );
+
+    string timeAndDate = std::ctime ( &ctime_now );
+
+    std::size_t spacePos, charPos;
+
+    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v" );
+
+    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
+    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+
+    string month = timeAndDate.substr ( charPos, spacePos - charPos );
+
+    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
+    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+
+    string dayNum = timeAndDate.substr ( charPos, spacePos - charPos );
+
+    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
+    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+
+    string timeOfDay = timeAndDate.substr ( charPos, spacePos - charPos );
+    timeOfDay = FindAndReplaceInString ( timeOfDay, ":", "_" );
+
+    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
+    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+
+    string year = timeAndDate.substr ( charPos, spacePos - charPos );
+
+//     string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + "_at_" + timeOfDay + ".root";
+    string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + ".root";
+
+    TFile* grFile = new TFile ( graphFileName.c_str(), "update" );
+
+    grFile->cd();
+
+    for ( auto itr = enShiftVsPosGraphs.begin(); itr != enShiftVsPosGraphs.end(); itr++ )
+    {
+        if ( grFile->FindObjectAny ( itr->first.c_str() ) != nullptr )
+        {
+            grFile->Delete ( itr->first.c_str() );
+        }
+
+        itr->second->Write();
+    }
+
+    grFile->Close();
+
     return;
 }
 
@@ -1890,7 +1943,7 @@ TGraph* GoddessCalib::DrawPosCalGraph ( TChain* chain, bool isUpstream_, int nen
 }
 
 TH2F* GoddessCalib::DrawPosCalHist ( TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
-                                     string drawOpts, unsigned short sector_, unsigned short strip_, string configFileName )
+                                     string drawOpts, unsigned short sector_, unsigned short strip_ )
 {
     string hname = Form ( "hPosCal_sector%s%d_strip%d", isUpstream_ ? "U" : "D", sector_, strip_ );
 
@@ -1914,6 +1967,8 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool 
 std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
         int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts, vector< unsigned short > sectorsList, string configFileName )
 {
+    drawOpts = ""; // to avoid useless warning about that variable not being used for the moment...
+
     string isUpstreamID = isUpstream_ ? "U" : "D";
 
     for ( unsigned short i = 0; i < sectorsList.size(); i++ )
@@ -1940,7 +1995,7 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool 
         ReadConfigCalPars ( configFileName );
     }
 
-    string qqq5Ids[4] = {"A", "B", "C", "D"};
+//     string qqq5Ids[4] = {"A", "B", "C", "D"};
 
     for ( int i = 0; i < nentries; i++ )
     {
@@ -2018,7 +2073,7 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool 
 
     cout << endl;
 
-    WritePosCalHistsToFile ( chain, "Resistive_Strips_PosCal_Hists" );
+    WritePosCalHistsToFile ( );
 
     return resStripsPosCalGraphsMap;
 }
@@ -2053,7 +2108,7 @@ void GoddessCalib::DrawSX3PosCalHist ( bool isUpstream, short unsigned int secto
         cerr << "This graph has not been generated yet!" << endl;
 }
 
-void GoddessCalib::WritePosCalHistsToFile ( TChain* chain, string fileName )
+void GoddessCalib::WritePosCalHistsToFile ( )
 {
     TFile* f = new TFile ( outFileName.c_str(), "update" );
 
@@ -2121,7 +2176,7 @@ int GoddessCalib::GetPosCalEnBinMax ( TH2F* input, double threshold )
 
     TH1D* proj = input->ProjectionY ( ( ( string ) "projY_" + input->GetName() ).c_str(), fstBin, lstBin );
 
-    proj->GetXaxis()->SetRange ( ( int ) ( threshold / proj->GetXaxis()->GetBinWidth ( 0 ) ), proj->GetXaxis()->GetLast() );
+    proj->GetXaxis()->SetRangeUser ( threshold, proj->GetBinCenter ( proj->GetXaxis()->GetLast() ) );
 
     binMax = proj->GetMaximumBin();
 
@@ -2138,10 +2193,16 @@ TH1D* GoddessCalib::GetPosCalProjX ( TH2F* input, int projCenter, int projWidth 
     return proj;
 }
 
+TH1D* GoddessCalib::GetPosCalProjY ( TH2F* input, int projCenter, int projWidth )
+{
+    TH1D* proj = input->ProjectionY ( ( ( string ) "projY_" + input->GetName() ).c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
+
+    return proj;
+}
+
+
 Double_t flatTopGaussLeft ( Double_t *x, Double_t *par )
 {
-    Double_t res = 0;
-
     if ( x[0] > par[1] )
     {
         return par[3] * ( x[0] - par[1] ) + par[0];
@@ -2154,8 +2215,6 @@ Double_t flatTopGaussLeft ( Double_t *x, Double_t *par )
 
 Double_t flatTopGaussRight ( Double_t *x, Double_t *par )
 {
-    Double_t res = 0;
-
     if ( x[0] < par[1] )
     {
         return par[3] * ( x[0] - par[1] ) + par[0];
@@ -2168,8 +2227,6 @@ Double_t flatTopGaussRight ( Double_t *x, Double_t *par )
 
 Double_t flatTopGauss ( Double_t *x, Double_t *par )
 {
-    Double_t res = 0;
-
     if ( x[0] < par[1] )
     {
         return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
@@ -2183,192 +2240,6 @@ Double_t flatTopGauss ( Double_t *x, Double_t *par )
         return ( par[3] - par[0] ) / ( par[4] - par[1] ) * ( x[0] - par[1] ) + ( par[0] );
     }
 }
-
-// TF1* GoddessCalib::FitLeftEdge ( TH2F* input, int projWidth, double threshold )
-// {
-//     int binMaxY = GetPosCalEnBinMax ( input, threshold );
-//
-//     TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
-//
-//     int binMaxX = projX->GetMaximumBin();
-//
-//     double maxContent = projX->GetBinContent ( binMaxX );
-//
-//     int startBin = binMaxX;
-//     double startBinContent = maxContent;
-//
-//     bool fellBelow20Perc = false;
-//     int binShoulder = -1;
-//
-//     int counterMax = projX->GetNbinsX() / 20;
-//
-//     int localMaxBin;
-//     double localMaxContent;
-//
-//     while ( startBin > projX->GetXaxis()->GetFirst() && binShoulder == -1 )
-//     {
-//         int prevBin = startBin;
-//         double prevBinContent = startBinContent;
-//
-//         int nextBin = startBin - 1;
-//         double nextBinContent = projX->GetBinContent ( nextBin );
-//         bool foundIncrease = false;
-//
-//         int counter = 0;
-//
-//         localMaxBin = startBin;
-//         localMaxContent = startBinContent;
-//
-//         while ( nextBin > projX->GetXaxis()->GetFirst() && counter < counterMax )
-//         {
-//             if ( nextBinContent > localMaxContent )
-//             {
-//                 localMaxBin = nextBin;
-//                 localMaxContent = nextBinContent;
-//             }
-//
-//             if ( nextBinContent < startBinContent*0.2 )
-//             {
-//                 fellBelow20Perc = true;
-//                 binShoulder = startBin;
-//                 break;
-//             }
-//
-//             prevBin = nextBin;
-//             prevBinContent = nextBinContent;
-//
-//             nextBin--;
-//             nextBinContent = projX->GetBinContent ( nextBin );
-//
-//             counter++;
-//         }
-//
-//         startBin--;
-//         startBinContent = projX->GetBinContent ( startBin );
-//     }
-//
-//     cout << "Found the left shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
-//
-//     TF1 *fitfunc = new TF1 ( Form ( "myfit_right_%s",input->GetName() ), flatTopGaussLeft, projX->GetBinCenter ( binShoulder - 2*counterMax ), projX->GetBinCenter ( binShoulder + counterMax ), 4 );
-//
-//     if ( binShoulder != -1 )
-//     {
-//         fitfunc->SetParameter ( 0, localMaxContent );
-//         fitfunc->SetParameter ( 1, projX->GetBinCenter ( localMaxBin ) );
-//         fitfunc->SetParameter ( 2, 2*projX->GetBinWidth ( localMaxBin ) );
-//
-//         fitfunc->SetParameter ( 3, 0 );
-//
-//         projX->Fit ( fitfunc, "QRMN" );
-//
-//         float leftEdge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
-//
-//         cout << "Found the left strip edge at " << leftEdge << endl;
-//
-//         string hname = input->GetName();
-//         string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
-//
-//         int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
-//
-//         InitializeCalMapKey ( calMapKey, stripNbr );
-//
-//         resStripsCalMap[calMapKey][stripNbr][4] = leftEdge;
-//     }
-//     return fitfunc;
-// }
-
-// TF1* GoddessCalib::FitRightEdge ( TH2F* input, int projWidth, double threshold )
-// {
-//     int binMaxY = GetPosCalEnBinMax ( input, threshold );
-//
-//     TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
-//
-//     int binMaxX = projX->GetMaximumBin();
-//
-//     double maxContent = projX->GetBinContent ( binMaxX );
-//
-//     int startBin = binMaxX;
-//     double startBinContent = maxContent;
-//
-//     bool fellBelow20Perc = false;
-//     int binShoulder = -1;
-//
-//     int counterMax = projX->GetNbinsX() / 20;
-//
-//     int localMaxBin;
-//     double localMaxContent;
-//
-//     while ( startBin < projX->GetXaxis()->GetLast() && binShoulder == -1 )
-//     {
-//         int prevBin = startBin;
-//         double prevBinContent = startBinContent;
-//
-//         int nextBin = startBin + 1;
-//         double nextBinContent = projX->GetBinContent ( nextBin );
-//         bool foundIncrease = false;
-//
-//         int counter = 0;
-//
-//         localMaxBin = startBin;
-//         localMaxContent = startBinContent;
-//
-//         while ( nextBin < projX->GetXaxis()->GetLast() && counter < counterMax )
-//         {
-//             if ( nextBinContent > localMaxContent )
-//             {
-//                 localMaxBin = nextBin;
-//                 localMaxContent = nextBinContent;
-//             }
-//
-//             if ( nextBinContent < localMaxContent*0.2 )
-//             {
-//                 fellBelow20Perc = true;
-//                 binShoulder = startBin;
-//                 break;
-//             }
-//
-//             prevBin = nextBin;
-//             prevBinContent = nextBinContent;
-//
-//             nextBin++;
-//             nextBinContent = projX->GetBinContent ( nextBin );
-//
-//             counter++;
-//         }
-//
-//         startBin++;
-//         startBinContent = projX->GetBinContent ( startBin );
-//     }
-//
-//     cout << "Found the right shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
-//
-//     TF1 *fitfunc = new TF1 ( Form ( "myfit_right_%s",input->GetName() ), flatTopGaussRight, projX->GetBinCenter ( binShoulder - counterMax ), projX->GetBinCenter ( binShoulder + 2*counterMax ), 4 );
-//
-//     if ( binShoulder != -1 )
-//     {
-//         fitfunc->SetParameter ( 0, localMaxContent );
-//         fitfunc->SetParameter ( 1, projX->GetBinCenter ( localMaxBin ) );
-//         fitfunc->SetParameter ( 2, 2*projX->GetBinWidth ( localMaxBin ) );
-//
-//         fitfunc->SetParameter ( 3, 0 );
-//
-//         projX->Fit ( fitfunc, "QRMN" );
-//
-//         float rightEdge = fitfunc->GetParameter ( 1 ) + TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
-//
-//         cout << "Found the right strip edge at " << rightEdge << endl;
-//
-//         string hname = input->GetName();
-//         string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
-//
-//         int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
-//
-//         InitializeCalMapKey ( calMapKey, stripNbr );
-//
-//         resStripsCalMap[calMapKey][stripNbr][5] = rightEdge;
-//     }
-//     return fitfunc;
-// }
 
 TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool fitRight )
 {
@@ -2393,13 +2264,10 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
     while ( fitRight ? ( startBin > projX->GetXaxis()->GetFirst() + 1 ) : ( startBin < projX->GetXaxis()->GetLast() - 1 ) )
     {
-        int prevBin = startBin;
         double prevBinContent = startBinContent;
 
         int nextBin = fitRight ? ( startBin - 1 ) : ( startBin + 1 );
         double nextBinContent = projX->GetBinContent ( nextBin );
-
-        int counter = 0;
 
         if ( nextBinContent > localMaxContent )
         {
@@ -2451,31 +2319,33 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
     return fitfunc;
 }
 
-void GoddessCalib::GetStripsEdges ( int projWidth, double threshold, bool drawResults )
+TGraph* GoddessCalib::GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos )
 {
-    for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
+    string graphName = "SuperX3_" + ( string ) input->GetName();
+
+    enShiftVsPosGraphs[graphName] = new TGraph ( nPoints );
+
+    float projWidth = ( endPoint-startPoint ) / nPoints;
+
+    TH1D* projY = 0;
+
+    for ( int i = 0; i < nPoints; i++ )
     {
-        cout << "Retreiving the edges of sector " << itr->first.substr ( 0, itr->first.find ( "_" ) ) << " strip #" << itr->first.substr ( itr->first.find ( "_" ) +1 ) << " ..." << endl;
+        int projBin = input->GetXaxis()->FindBin ( startPoint + projWidth * ( i + 1/2. ) );
 
-        TF1* lfit = FitEdges ( itr->second, projWidth, threshold, false );
-        TF1* rfit = FitEdges ( itr->second, projWidth, threshold, true );
+        projY = GetPosCalProjY ( input, projBin, projY->FindBin ( startPoint + ( i+1 ) * projWidth ) - projY->FindBin ( startPoint + i * projWidth ) );
 
-        if ( drawResults )
-        {
-            TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", itr->first.c_str() ) );
+        projY->GetXaxis()->SetRangeUser ( threshold, projY->GetBinCenter ( projY->GetXaxis()->GetLast() ) );
 
-            newCanvas->cd();
+        int binMax = projY->GetMaximumBin();
 
-            GetPosCalProjX ( itr->second, GetPosCalEnBinMax ( itr->second, threshold ), projWidth )->Draw();
-            lfit->Draw ( "same" );
-            rfit->Draw ( "same" );
-        }
+        enShiftVsPosGraphs[graphName]->SetPoint ( i, startPoint + projWidth * ( i + 1/2. ), peakPos / projY->GetBinCenter ( binMax ) );
     }
 
-    return;
+    return enShiftVsPosGraphs[graphName];
 }
 
-void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, double threshold, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, double threshold, double peakPos, bool drawResults )
 {
     string hname = input->GetName();
 
@@ -2484,21 +2354,39 @@ void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, double threshold
     TF1* lfit = FitEdges ( input, projWidth, threshold, false );
     TF1* rfit = FitEdges ( input, projWidth, threshold, true );
 
+    TGraph* enShiftGraph = GetEnergyShiftVsPosition ( input, 25, lfit->GetParameter ( 1 ), rfit->GetParameter ( 1 ), threshold, peakPos );
+
     if ( drawResults )
     {
         TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", hname.c_str() ) );
 
-        newCanvas->cd();
+        newCanvas->Divide ( 2, 1 );
+
+        newCanvas->GetPad ( 1 )->cd();
 
         GetPosCalProjX ( input, GetPosCalEnBinMax ( input, threshold ), projWidth )->Draw();
         lfit->Draw ( "same" );
         rfit->Draw ( "same" );
+
+        newCanvas->GetPad ( 2 )->cd();
+
+        enShiftGraph->Draw ( "AP" );
     }
 
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshold, bool drawResults )
+void GoddessCalib::GetStripsEdges ( int projWidth, double threshold, double peakPos, bool drawResults )
+{
+    for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
+    {
+        GetStripsEdges ( itr->second, projWidth, threshold, peakPos, drawResults );
+    }
+
+    return;
+}
+
+void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshold, double peakPos, bool drawResults )
 {
     auto lOK = input->GetListOfKeys();
 
@@ -2512,21 +2400,7 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshol
 
             if ( ! ( hname[0] == 'U' || hname[0] == 'D' ) && ! ( hname.find ( "_" ) == 2 || hname.find ( "_" ) == 3 ) ) continue;
 
-            cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) ) << " ..." << endl;
-
-            TF1* lfit = FitEdges ( hist, projWidth, threshold, false );
-            TF1* rfit = FitEdges ( hist, projWidth, threshold, true );
-
-            if ( drawResults )
-            {
-                TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", hname.c_str() ) );
-
-                newCanvas->cd();
-
-                GetPosCalProjX ( hist, GetPosCalEnBinMax ( hist, threshold ), projWidth )->Draw();
-                lfit->Draw ( "same" );
-                rfit->Draw ( "same" );
-            }
+            GetStripsEdges ( hist, projWidth, threshold, peakPos, drawResults );
         }
     }
 
@@ -2534,8 +2408,6 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshol
 }
 
 // --------------------------------------------- QQQ5 functions ---------------------------------- //
-
-float calibBeamEk, calibBeamMass, calibRecoilMass, calibEjecMass, calibTargetMass, calibQvalGsGs;
 
 vector<std::map<int, TH1F*>> hEn_QQQ5UA;
 vector<std::map<int, TH1F*>> hEn_QQQ5UB;
@@ -2644,7 +2516,7 @@ float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
     }
 
     map<float, double> gsMap, firstExMap;
-    map<float, double>* buffMap;
+    map<float, double>* buffMap = 0;
 
     string readLine;
     std::istringstream iss;
@@ -2676,7 +2548,7 @@ float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
 
 //         cout << angle << "    /    " << crossSection << "\n";
 
-        ( *buffMap ) [angle] = crossSection;
+        if ( buffMap != nullptr ) ( *buffMap ) [angle] = crossSection;
     }
 
     TGraph* gsGraph = new TGraph ( gsMap.size() );
@@ -2796,22 +2668,68 @@ TH1F* GoddessCalib::AddAllStrips ( vector< std::map< int, TH1F* > >* hists, stri
     return AddAllStrips ( hists, *coeffMap );
 }
 
-TF1* GoddessCalib::FitQValGS ( TH1F* hist, float mean, float fwhm, float peakRatio, float minBound, float maxBound )
+TF1* GoddessCalib::FitQValGS ( TH1F* hist, vector<float> mean, float fwhm, float peakRatio, float minBound, float maxBound )
 {
-    TF1* fitFunc = new TF1 ( "fitFunc",
-                             "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + \
-                             [0]*[3] * TMath::Exp ( -pow ( x - ([1]-0.288),2 ) / pow ( 2 * [2],2 ) ) + \
-                             [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [6],2 ) ) + \
-                             [7] + [8] * x", -20, 20 );
+    if ( mean.size() == 0 ) return nullptr;
 
-    if ( minBound == 0 ) minBound = mean - 2 - fwhm;
-    if ( maxBound == 0 ) maxBound = mean + fwhm*3;
+    string funcFormula = "[0] + [1] * x + [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [3],2 ) ) + [4]*[2] * TMath::Exp ( -pow ( x - ([5]-0.288),2 ) / pow ( 2 * [3],2 ) )";
 
-    fitFunc->SetParameters ( 10, mean, fwhm, 1, 10, mean - 2, fwhm, 1, -0.1 );
+    float minMean = mean[0], maxMean = mean[0];
 
-    fitFunc->FixParameter ( 3, peakRatio );
+    if ( mean.size() > 0 )
+    {
+        for ( unsigned int i = 1; i < mean.size(); i++ )
+        {
+            if ( mean[i] < minMean ) minMean = mean[i];
+            else if ( mean[i] > maxMean ) maxMean = mean[i];
 
-    hist->Fit ( fitFunc, "Q", "", minBound, maxBound );
+            funcFormula += ( string ) Form ( " + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [3],2 ) )", 6 + ( i-1 ) * 2, 7 + ( i-1 ) * 2 );
+        }
+    }
+
+    TF1* fitFunc = new TF1 ( "fitFunc", funcFormula.c_str(), -20, 20 );
+
+    float fitMin, fitMax;
+
+    if ( minBound == 0 ) fitMin = minMean - fwhm;
+    else fitMin = minBound;
+
+    if ( maxBound == 0 ) fitMax = maxMean + fwhm*3;
+    else fitMax = maxBound;
+
+    fitFunc->FixParameter ( 2, peakRatio );
+
+    fitFunc->SetParameter ( 0, 1 );
+    fitFunc->SetParameter ( 1, 0.1 );
+
+    fitFunc->SetParameter ( 3, fwhm );
+
+    for ( unsigned int i = 0; i < mean.size(); i++ )
+    {
+        int parNum = 4 + 2*i;
+
+        fitFunc->SetParameter ( parNum, 10 );
+        fitFunc->SetParameter ( parNum+1, mean[i] );
+    }
+
+    hist->Fit ( fitFunc, "Q", "", fitMin, fitMax );
+
+    if ( minBound == 0 || maxBound == 0 )
+    {
+        minMean = fitFunc->GetParameter ( 5 + 2 * ( mean.size()-1 ) );
+        maxMean = fitFunc->GetParameter ( 5 );
+
+        for ( unsigned int i = 0; i < mean.size(); i++ )
+        {
+            if ( minMean > fitFunc->GetParameter ( 5 + 2 * i ) ) minMean = fitFunc->GetParameter ( 5 + 2 * i );
+            else if ( maxMean < fitFunc->GetParameter ( 5 + 2 * i ) ) maxMean = fitFunc->GetParameter ( 5 + 2 * i );
+        }
+
+        fitMin = minBound == 0 ? ( minMean - 3 * fitFunc->GetParameter ( 3 ) ) : minBound;
+        fitMax = maxBound == 0 ? ( maxMean + 10 * fitFunc->GetParameter ( 3 ) ) : maxBound;
+
+        hist->Fit ( fitFunc, "Q", "", fitMin, fitMax );
+    }
 
     return fitFunc;
 }
@@ -2957,13 +2875,6 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
 
     chain->SetBranchAddress ( "si", &siData );
 
-    float massBeam = calibBeamMass;
-    float beamEk = calibBeamEk;
-    float massTarget = calibBeamMass;
-    float massRecoil = calibRecoilMass;
-    float massEjec = calibEjecMass;
-    float qValGsGs = calibQvalGsGs;
-
     vector<std::map<int, TH1F*>>* hQValPerSector[4];
 
     hQValPerSector[0] = &hQVal_QQQ5UA;
@@ -2978,7 +2889,7 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
     hEnPerSector[2] = &hEn_QQQ5UC;
     hEnPerSector[3] = &hEn_QQQ5UD;
 
-    float angle, qval, exEn, modCoeff;
+    float angle, modCoeff;
     int sector, strip, mult;
     double siEn, newEn, newQval;
 
@@ -3015,8 +2926,8 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
                     {
                         newEn = siEn* ( modCoeff/100. );
 
-                        newQval = ( 1+massEjec/massRecoil ) * ( newEn ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
-                                  - 2 * TMath::Sqrt ( massBeam*massEjec* ( newEn ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle * TMath::Pi() / 180. );
+                        newQval = ( 1+ejecMass/recoilMass ) * ( newEn ) - ( 1 - beamMass/recoilMass ) * ( beamEk )
+                                  - 2 * TMath::Sqrt ( beamMass*ejecMass* ( newEn ) * ( beamEk ) ) / recoilMass * TMath::Cos ( angle * TMath::Pi() / 180. );
 
                         ( hEnPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newEn );
 
@@ -3039,7 +2950,8 @@ void GoddessCalib::GenerateEnergyHistPerStrip ( TChain* chain )
     return;
 }
 
-vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput, float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode )
+vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput,
+        float minBound, float maxBound, int minModEndcaps_, int maxModEndcaps_, string betterFitMode )
 {
     vector<double> finalMods;
 
@@ -3058,16 +2970,16 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
     double peakRatio = GetRatioGSvsFirstEx ( crossSectionInput, 120, 160 );
 
-    TF1* firstFitFunc = FitQValGS ( sum, peakPos, fwhm, peakRatio, minBound, maxBound );
+    TF1* firstFitFunc = FitQValGS ( sum, {peakPos, peakPos-2}, fwhm, peakRatio, minBound, maxBound );
 
     double firstChi2, firstMagn, firstMean, firstSigma, firstIntegral, firstHistIntegral, firstOffset, firstSlope;
 
-    firstMagn = firstFitFunc->GetParameter ( 0 );
-    firstMean = firstFitFunc->GetParameter ( 1 );
-    firstSigma = firstFitFunc->GetParameter ( 2 );
+    firstMagn = firstFitFunc->GetParameter ( 4 );
+    firstMean = firstFitFunc->GetParameter ( 5 );
+    firstSigma = firstFitFunc->GetParameter ( 3 );
 
-    firstOffset = firstFitFunc->GetParameter ( 6 );
-    firstSlope = firstFitFunc->GetParameter ( 7 );
+    firstOffset = firstFitFunc->GetParameter ( 0 );
+    firstSlope = firstFitFunc->GetParameter ( 1 );
 
     firstChi2 = firstFitFunc->GetChisquare();
 
@@ -3126,14 +3038,14 @@ vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* 
 
             TH1F* testSum = AddAllStrips ( hists, testMods );
 
-            fitFunc = FitQValGS ( testSum, peakPos, fwhm, peakRatio, minBound, maxBound );
+            fitFunc = FitQValGS ( testSum, {peakPos, peakPos-2}, fwhm, peakRatio, minBound, maxBound );
 
-            magn = fitFunc->GetParameter ( 0 );
-            mean = fitFunc->GetParameter ( 1 );
-            sigma = fitFunc->GetParameter ( 2 );
+            magn = fitFunc->GetParameter ( 4 );
+            mean = fitFunc->GetParameter ( 5 );
+            sigma = fitFunc->GetParameter ( 3 );
 
-            offset = fitFunc->GetParameter ( 6 );
-            slope = fitFunc->GetParameter ( 7 );
+            offset = fitFunc->GetParameter ( 0 );
+            slope = fitFunc->GetParameter ( 1 );
 
             chi2 = fitFunc->GetChisquare();
 
@@ -3229,22 +3141,22 @@ void GoddessCalib::PrintOutStripsPositions ( )
 void GoddessCalib::FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ )
 {
     float barrelRadius = 3.750 * 25.4; //mm
-    float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
+//     float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
     float sX3ActiveLength = 75.; //mm
-    float sX3NearFrame = 3.0; //mm
+//     float sX3NearFrame = 3.0; //mm
 
     TVector3 zAxis ( 0,0,1 );
 
     for ( int i = 0; i < 12; i++ )
     {
-        float barrelDet_spacing = 4.8;
+//         float barrelDet_spacing = 4.8;
 
         TVector3 barrelDet_offset ( sX3OffX, sX3OffY, sX3OffZ );
 
         TVector3 refSX3D_sect0 ( 0 + barrelDet_offset.X(), barrelRadius + barrelDet_offset.Y(), sX3ActiveLength/2. + barrelDet_offset.Z() );
 
         float SX3_width = 40.3; //mm
-        float SX3_length = 75.; //mm
+//         float SX3_length = 75.; //mm
 
         for ( int j = 0; j < 4; j++ )
         {
@@ -3274,13 +3186,13 @@ void GoddessCalib::FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, fl
 
     for ( int i = 0; i < 4; i++ )
     {
-        float QQQ5_spacing = 4.0;
+//         float QQQ5_spacing = 4.0;
 
         TVector3 QQQ5DA_orig_offset ( qqq5OffX, qqq5OffY, QQQ5OffZ ); // everything in mm
 
         TVector3 refQQQ5D_sectA = QQQ5DA_orig_offset;
 
-        float QQQ5_active_length = 56.8; // mm
+//         float QQQ5_active_length = 56.8; // mm
 
         float firstStripWidth = 2.55;
 
@@ -3356,40 +3268,54 @@ TVector3 GoddessCalib::GetFinalHitPosition ( int isUpstream_, int isBarrel_, int
     return hitPos;
 }
 
-TH1F* hQval_NewGeom[2][2][12];
-
 void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
         float qqq5OffX, float qqq5OffY, float QQQ5OffZ,
         float sX3OffX, float sX3OffY, float sX3OffZ,
-        float targetPosX, float targetPosY, float targetPosZ )
+        int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ )
 {
+    lastQQQ5Offsets = {qqq5OffX, qqq5OffY, QQQ5OffZ};
+    lastSX3Offsets = {sX3OffX, sX3OffY, sX3OffZ};
+
     FillStripsPositionsArray ( qqq5OffX, qqq5OffY, QQQ5OffZ, sX3OffX, sX3OffY, sX3OffZ );
 
     ReadConfigCalPars ( configFileName );
+
+    TVector3 targetPos ( 0, 0, 0 );
+
+    TVector3 beamDir ( 0, 0, 1 );
+
+    char qqq5SectAliases[4] = {'A', 'B', 'C', 'D'};
 
     for ( int up = 0; up < 2; up++ )
     {
         for ( int bar = 0; bar < 2; bar++ )
         {
-            for ( int i = 0; i < 12; i++ )
+            int maxSector = ( bar ? 12 : 4 );
+
+            for ( int sect = 0; sect < maxSector; sect++ )
             {
-                hQval_NewGeom[up][bar][i] = new TH1F ( Form ( "QVal_new_geom_%s%s%d", ( up ? "U" : "D" ), ( bar ? "SX3" : "QQQ5" ), i ),
-                                                       Form ( "Q-Value new geom %s %s%d", ( up ? "U" : "D" ), ( bar ? "SX3" : "QQQ5" ), i ),
-                                                       800, -20, 20 );
+                for ( int modX = minModX; modX <= maxModX; modX++ )
+                {
+                    for ( int modY = minModY; modY <= maxModY; modY++ )
+                    {
+                        for ( int modZ = minModZ; modZ <= maxModZ; modZ++ )
+                        {
+                            string histKey;
+
+                            string sectorStr = bar ? Form ( "%d", sect ) : Form ( "%c", qqq5SectAliases[sect] );
+
+                            histKey = Form ( "QVal_new_geom_%s%s%s_%d_%d_%d", ( bar ? "SX3" : "QQQ5" ), ( up ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ );
+
+                            hQval_NewGeom[histKey] = new TH1F ( histKey.c_str(),
+                                                                Form ( "Q-Value new geom %s %s%s mod target X: %d, Y: %d, Z: %d",
+                                                                        ( bar ? "SX3" : "QQQ5" ), ( up ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ ),
+                                                                800, -20, 20 );
+                        }
+                    }
+                }
             }
         }
     }
-
-    TVector3 targetPos ( targetPosX, targetPosY, targetPosZ );
-
-    TVector3 beamDir ( 0, 0, 1 );
-
-    float massBeam = calibBeamMass;
-    float beamEk = calibBeamEk;
-    float massTarget = calibBeamMass;
-    float massRecoil = calibRecoilMass;
-    float massEjec = calibEjecMass;
-    float qValGsGs = calibQvalGsGs;
 
     vector<SiDataDetailed>* vectSiData = new vector<SiDataDetailed>;
 
@@ -3399,7 +3325,7 @@ void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName
 
     for ( long long int ev = 0; ev < nEntries; ev++ )
     {
-        if ( ev%100000 == 0 )
+        if ( ev%10000 == 0 )
         {
             cout << "Entry " << std::setw ( 15 ) << ev << " / " << nEntries;
             cout<< " ( " << std::fixed << std::setprecision ( 2 )  << std::setw ( 6 ) << ( ( float ) ev/nEntries ) * 100. << " % )\r" << std::flush;
@@ -3413,7 +3339,7 @@ void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName
             {
                 SiDataDetailed siData = vectSiData->at ( i );
 
-                if ( true /*siData.MultLayer ( 1,false ) == 1*/ )
+                if ( siData.MultLayer ( 1,false ) == 1 )
                 {
                     int isUpstream = ( int ) siData.isUpstream;
                     int isBarrel = ( int ) siData.isBarrel;
@@ -3438,14 +3364,31 @@ void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName
 
                         TVector3 hitPos = GetFinalHitPosition ( isUpstream, isBarrel, sector, strip, enear, efar );
 
-                        float angle = ( hitPos-targetPos ).Angle ( beamDir );
-
-                        if ( angle != 0 )
+                        for ( int modX = minModX; modX <= maxModX; modX++ )
                         {
-                            float qval = ( 1+massEjec/massRecoil ) * ( energy ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
-                                         - 2 * TMath::Sqrt ( massBeam*massEjec* ( energy ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle );
+                            for ( int modY = minModY; modY <= maxModY; modY++ )
+                            {
+                                for ( int modZ = minModZ; modZ <= maxModZ; modZ++ )
+                                {
+                                    targetPos = TVector3 ( modX, modY, modZ );
 
-                            hQval_NewGeom[isUpstream][isBarrel][sector]->Fill ( qval );
+                                    float angle = ( hitPos-targetPos ).Angle ( beamDir );
+
+                                    if ( angle != 0 )
+                                    {
+                                        float qval = ( 1+ejecMass/recoilMass ) * ( energy ) - ( 1 - beamMass/recoilMass ) * ( beamEk )
+                                                     - 2 * TMath::Sqrt ( beamMass*ejecMass* ( energy ) * ( beamEk ) ) / recoilMass * TMath::Cos ( angle );
+
+                                        string detKey;
+
+                                        string sectorStr = isBarrel ? Form ( "%d", sector ) : Form ( "%c", qqq5SectAliases[sector] );
+
+                                        detKey = Form ( "QVal_new_geom_%s%s%s_%d_%d_%d", ( isBarrel ? "SX3" : "QQQ5" ), ( isUpstream ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ );
+
+                                        hQval_NewGeom[detKey]->Fill ( qval );
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -3454,6 +3397,292 @@ void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName
     }
 
     cout << "\n\n";
+
+    return;
+}
+
+string GoddessCalib::DrawQValNewGeom ( string histName )
+{
+    string detType;
+
+    if ( histName.find ( "QQQ5" ) != string::npos ) detType = "QQQ5";
+    else if ( histName.find ( "SuperX3" ) != string::npos ) detType = "SX3";
+
+    std::size_t modPos = histName.find_first_of ( "(" );
+    std::size_t separatorPos = histName.find_first_of ( ",", modPos );
+
+    string modX, modY, modZ;
+
+    modX = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
+
+    modPos = separatorPos;
+    separatorPos = histName.find_first_of ( ",", modPos+1 );
+
+    modY = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
+
+    modPos = separatorPos;
+    separatorPos = histName.find_first_of ( ")", modPos+1 );
+
+    modZ = histName.substr ( modPos+1, separatorPos - ( modPos+1 ) );
+
+    std::size_t firstSpacePos = histName.find_first_of ( " " );
+    std::size_t lastSpacePos = histName.find_first_of ( " ", firstSpacePos+1 );
+
+    char isUp = histName[firstSpacePos+1];
+
+    string sector = histName.substr ( firstSpacePos+2, lastSpacePos - ( firstSpacePos+2 ) );
+
+    string detKey = Form ( "QVal_new_geom_%s%c%s_%s_%s_%s", detType.c_str(), isUp, sector.c_str(), modX.c_str(), modY.c_str(), modZ.c_str() );
+
+    if ( hQval_NewGeom.find ( detKey ) != hQval_NewGeom.end() )
+    {
+        hQval_NewGeom[detKey]->Draw();
+    }
+    else
+    {
+        TH1F* hist = dynamic_cast<TH1F*> ( gDirectory->FindObjectAny ( detKey.c_str() ) );
+
+        if ( hist != nullptr )
+        {
+            hQval_NewGeom[detKey] = hist;
+
+            hQval_NewGeom[detKey]->Draw();
+
+            return detKey;
+        }
+        else
+        {
+            cerr<< "Unable to find " << detKey << "\n";
+            cerr << "Histogram specified does not exist!!!\n";
+            cerr << "Valid histogram name examples:\n";
+            cerr << "    \"QQQ5 UB (1,2,1)\"";
+            cerr << "    \"SuperX3 U0 (0,3,2)\"\n";
+            cerr << "Where the last 3 numbers are the offsets applied to the target position\n";
+
+            return "";
+        }
+    }
+
+    return detKey;
+}
+
+void GoddessCalib::GetBestParameters ( float mean, float fwhm, string detType, string inFileName, string betterFitMode )
+{
+    vector<string> detFilters = SplitString ( detType, "," );
+
+    auto mapItr = hQval_NewGeom.begin();
+
+    TFile* inFile = 0;
+    TIterator* fileItr = 0;
+    TList* lOfKey = 0;
+
+    string bestX, bestY, bestZ, bestHistName;
+    float bestChi2 = 0, bestSigma = 0;
+
+    float newChi2, newSigma;
+
+    auto linkMap = MakeLinkMap ( "chi2 bestChi2 sigma bestSigma", newChi2, bestChi2, newSigma, bestSigma );
+
+    TH1F* hist = 0;
+
+    if ( inFileName.empty() ) hist = mapItr->second;
+    else
+    {
+        inFile = new TFile ( inFileName.c_str(),"read" );
+
+        lOfKey = inFile->GetListOfKeys();
+
+        if ( lOfKey != nullptr )
+        {
+            fileItr = lOfKey->MakeIterator();
+            TObject* obj = fileItr->Next();
+
+            hist = dynamic_cast<TH1F*> ( inFile->FindObjectAny ( obj->GetName() ) );
+        }
+    }
+
+    int nHists = inFileName.empty() ? hQval_NewGeom.size() : lOfKey->GetSize();
+    int counter = 0;
+
+    TF1* fitRes;
+
+    while ( hist != nullptr )
+    {
+        if ( counter%100 == 0 )
+        {
+            cout << "Treated " << std::setw ( 8 ) << counter << " / " << nHists << " ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 4 ) << ( float ) counter/nHists*100. << " % )\r" << std::flush;
+        }
+
+        counter++;
+
+        bool skip = true;
+
+        string histName = ( string ) hist->GetName();
+
+        if ( detFilters.size() > 0 )
+        {
+            for ( unsigned int i = 0; i < detFilters.size(); i++ )
+            {
+                if ( histName.find ( detFilters[i].c_str() ) != string::npos )
+                {
+                    skip = false;
+                    break;
+                }
+            }
+        }
+
+        if ( !skip )
+        {
+            fitRes = FitQValGS ( hist, {mean, mean-2}, fwhm, 0, 0, 0 );
+
+            newChi2 = fitRes->GetChisquare();
+            newSigma = fitRes->GetParameter ( 3 );
+
+            bool betterFit;
+
+            if ( bestChi2 == 0 ) betterFit = true;
+            else betterFit = StringFormulaComparator<float> ( betterFitMode, &linkMap );
+
+            if ( betterFit )
+            {
+                bestChi2 = newChi2;
+                bestSigma = newSigma;
+
+                bestHistName = histName;
+
+                std::size_t sepPos = histName.find_first_of ( "_", 14 );
+                std::size_t nextSepPos = histName.find_first_of ( "_", sepPos+1 );
+
+                bestX = histName.substr ( sepPos+1, nextSepPos - ( sepPos+1 ) );
+
+                sepPos = histName.find_first_of ( "_", nextSepPos+1 );
+                nextSepPos = histName.find_first_of ( "_", sepPos+1 );
+
+                bestY = histName.substr ( sepPos+1, nextSepPos - ( sepPos+1 ) );
+
+                sepPos = histName.find_first_of ( "_", nextSepPos+1 );
+
+                bestZ = histName.substr ( sepPos+1 );
+            }
+        }
+
+        if ( inFileName.empty() )
+        {
+            mapItr++;
+            if ( mapItr != hQval_NewGeom.end() ) hist = mapItr->second;
+            else hist = nullptr;
+        }
+        else
+        {
+            TObject* obj = fileItr->Next();
+
+            if ( obj != nullptr ) hist = dynamic_cast<TH1F*> ( inFile->FindObjectAny ( obj->GetName() ) );
+            else hist = nullptr;
+        }
+    }
+
+    cout << endl;
+
+    cout << "Target position yielding to the best fit: ( " << bestX << ", " << bestY << ", " << bestZ << " ) for hist " << bestHistName << "\n\n";
+}
+
+TF1* GoddessCalib::FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ )
+{
+    string histName = Form ( "%s (%d,%d,%d)", sectorStr.c_str(), targetX, targetY, targetZ );
+
+    string detKey = DrawQValNewGeom ( histName );
+
+    TF1* fitRes = FitQValGS ( hQval_NewGeom[detKey], {4.1, 2.0}, 0.5, 0, 0, 0 );
+
+    cout << endl;
+    cout << "Chi2: " << fitRes->GetChisquare() << endl;
+    cout << "Sigma: " << fitRes->GetParameter ( 3 ) << " MeV" << endl;
+    cout << "-------- Peak 1 --------" << endl;
+    cout << "Mean: " << fitRes->GetParameter ( 5 ) << " MeV" << endl;
+    cout << "-------- Peak 2 --------" << endl;
+    cout << "Mean: " << fitRes->GetParameter ( 7 ) << " MeV" << endl;
+    cout << endl;
+
+    return fitRes;
+}
+
+void GoddessCalib::ReloadNewGeomGraphs ( string inFileName )
+{
+    TFile* inFile = new TFile ( inFileName.c_str(), "read" );
+
+    if ( !inFile->IsOpen() )
+    {
+        cerr << "Failed to open file: " << inFileName;
+        return;
+    }
+
+    auto lOK = inFile->GetListOfKeys();
+
+    if ( lOK != nullptr && lOK->GetSize() > 0 )
+    {
+        cout << "The file contains " << lOK->GetSize() << " histograms...\n";
+        float doPrintoutAt = 0;
+
+        TIterator* itr = lOK->MakeIterator();
+
+        int counter = 0;
+        TObject* fileKey;
+
+        while ( ( fileKey = itr->Next() ) )
+        {
+            float progress = ( float ) counter/lOK->GetSize() * 100.;
+
+            if ( progress >= doPrintoutAt )
+            {
+                cout << "Loaded " << std::setw ( 8 ) << counter << " / " << lOK->GetSize();
+                cout << " ( " << std::setw ( 3 ) << ( int ) progress << " % )\r" << std::flush;
+
+                doPrintoutAt = progress;
+            }
+
+            if ( fileKey != nullptr )
+            {
+                string histKey = ( string ) fileKey->GetName();
+
+                hQval_NewGeom[histKey] = ( TH1F* ) inFile->FindObjectAny ( histKey.c_str() );
+            }
+
+            counter++;
+        }
+    }
+
+    cout << endl;
+
+    return;
+}
+
+void GoddessCalib::WriteNewGeomGraphs ( string outFName )
+{
+    if ( outFName.empty() )
+    {
+        outFName = Form ( "NewGeomHists_QQQ5_%0.2f_%0.2f_%0.2f_SX3_%0.2f_%0.2f_%0.2f.root",
+                          lastQQQ5Offsets[0], lastQQQ5Offsets[1], lastQQQ5Offsets[2], lastSX3Offsets[0], lastSX3Offsets[1], lastSX3Offsets[2] );
+    }
+
+    TFile* outf = new TFile ( outFName.c_str(), "recreate" );
+
+    if ( !outf->IsOpen() )
+    {
+        cerr << "Failed to open file: " << outFName;
+        return;
+    }
+
+    outf->cd();
+
+    auto itr = hQval_NewGeom.begin();
+
+    while ( itr != hQval_NewGeom.end() )
+    {
+        itr->second->Write();
+        itr++;
+    }
+
+    outf->Close();
 
     return;
 }
@@ -3532,6 +3761,8 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+
+
 
 
 

@@ -6,3 +6,4 @@ SolidVector::SolidVector(double x_, double y_, double z_, double rot_Z /*=0*/, d
 
 }
 
+ClassImp ( SolidVector )

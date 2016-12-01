@@ -30,7 +30,7 @@ BB10::BB10 ( std::string serial_Num, unsigned short sector_, unsigned short dept
 void BB10::ConstructBins()
 {
     float BB10_width = 40.3; //mm
-    float BB10_length = 75.; //mm
+//     float BB10_length = 75.; //mm
 
     for ( int i = 0; i < 8; i++ )
     {
@@ -72,6 +72,10 @@ void BB10::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
 
 TVector3 BB10::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
+    (void) nStripHit; // to prevent useless warning about this variable not being used currently...
+    (void) eNear; // to prevent useless warning about this variable not being used currently...
+    (void) eFar; // to prevent useless warning about this variable not being used currently...
+
     TVector3 interactionPos = pStripCenterPos[pStripHit];
 
     return interactionPos;

@@ -33,7 +33,7 @@ QQQ5::~QQQ5() {}
  */
 void QQQ5::ConstructBins()
 {
-    float QQQ5_active_length = 56.8; // mm
+//     float QQQ5_active_length = 56.8; // mm
 
     float firstStripWidth = 2.55;
 
@@ -150,6 +150,9 @@ void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
 
 TVector3 QQQ5::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
+    ( void ) eNear; // to prevent useless warning about this variable not being used currently...
+    ( void ) eFar; // to prevent useless warning about this variable not being used currently...
+
     TVector3 interactionPos = pStripCenterPos[pStripHit];
 
     if ( nStripHit >= 0 ) interactionPos.SetPhi ( interactionPos.Phi() - 3./16. * TMath::Pi() + nStripHit/8. * TMath::Pi() );

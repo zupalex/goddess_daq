@@ -48,7 +48,7 @@ int bread ( gzFile in, int *val, int *pos, int *buf, int *bufsiz )
 
     /* declarations */
 
-    int siz;
+    int siz = 0;
 
     /* read new buffer */
 
@@ -153,13 +153,13 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
                      ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ), bufEvent->gd->timestamp );
         }
 
-        printf ( "File #%i (%s): failed to read %lu bytes for header, got %i\n", inFile->fileNum, ( inFile->fileName ).c_str(), sizeof ( GEBDATA ), ( inFile->istream )->gcount() );
+        printf ( "File #%i (%s): failed to read %lu bytes for header, got %li\n", inFile->fileNum, ( inFile->fileName ).c_str(), sizeof ( GEBDATA ), ( inFile->istream )->gcount() );
 
         theMergeManager->RemoveFromInputList ( inFile->fileName );
 
         if ( inFile->istream->eof() )
         {
-            printf ( "The file %s has been removed from the list of files to treat... (files remaining: %d)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
+            printf ( "The file %s has been removed from the list of files to treat... (files remaining: %lu)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
             if ( printDebug ) std::cerr << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
         }
 
@@ -224,13 +224,13 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
 
         }
 
-        printf ( "File #%i (%s): failed to read %lu bytes for payload, got %i\n", inFile->fileNum, ( inFile->fileName ).c_str(), i1, ( inFile->istream )->gcount() );
+        printf ( "File #%i (%s): failed to read %i bytes for payload, got %lu\n", inFile->fileNum, ( inFile->fileName ).c_str(), i1, ( inFile->istream )->gcount() );
 
         theMergeManager->RemoveFromInputList ( inFile->fileName );
 
         if ( inFile->istream->eof() )
         {
-            printf ( "The file %s has been removed from the list of files to treat... (files remaining: %d)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
+            printf ( "The file %s has been removed from the list of files to treat... (files remaining: %lu)\n", ( inFile->fileName ).c_str(), theMergeManager->inData->size() );
             if ( printDebug ) std::cerr << "The file has been removed from the list of files to treat... (files remaining: " << theMergeManager->inData->size() << ")\n\n";
         }
 
@@ -284,7 +284,7 @@ int main ( int argc, char **argv )
     int maxNoEvents = 0, nPoolEvents = 0;
     FILE *fp;
     int i1, i2;
-    int st, nn, argcoffset = 0;
+    int nn, argcoffset = 0;
     float ehigain[NGE + 1], ehioffset[NGE + 1], r1;
     char str[STRLEN], str1[512];
     unsigned int seed = 0;
@@ -521,8 +521,8 @@ int main ( int argc, char **argv )
 #if(USEZLIB==0)
 
         std::ifstream* newIfstreamEntry = new std::ifstream;
-        ifstreamArray.push_back(newIfstreamEntry);
-        
+        ifstreamArray.push_back ( newIfstreamEntry );
+
         ifstreamArray[i]->open ( argv[nn], std::ios_base::in );
 
         ifstreamArray[i]->seekg ( 0, ifstreamArray[i]->end );
@@ -689,47 +689,47 @@ int main ( int argc, char **argv )
 
     unsigned long long int evCounter = 0;
 
-    unsigned int maxEventMapSize = 200;
+    static unsigned int maxEventMapSize = 200;
 
-    EVENT* EventsCA[maxEventMapSize+1];
+    std::vector<EVENT*> EventsCA;
 
     std::vector<unsigned int> unusedEventsCAKeys;
     unusedEventsCAKeys.clear();
 
-    std::vector<EVENT*>* evMapEntry[maxEventMapSize+1];
+    std::vector<std::vector<EVENT*>*> evMapEntry;
 
     for ( unsigned int i = 0; i < maxEventMapSize+1; i++ )
     {
-        EventsCA[i] = new EVENT();
+        EventsCA.push_back ( new EVENT() );
         EventsCA[i]->key = i;
 
-        evMapEntry[i] = new std::vector<EVENT*>;
+        evMapEntry.push_back ( new std::vector<EVENT*> );
 
         unusedEventsCAKeys.push_back ( i );
     }
 
-    EVENT* ofEventsCA[nfiles];
+    std::vector<EVENT*> ofEventsCA;
 
-    std::pair<InDataInfo*, EVENT*>* newOfEv[nfiles+1];
+    std::vector<std::pair<InDataInfo*, EVENT*>*> newOfEv;
 
-    std::vector<std::pair<InDataInfo*, EVENT*>*>* ofEvMapEntry[nfiles+1];
+    std::vector<std::vector<std::pair<InDataInfo*, EVENT*>*>*> ofEvMapEntry;
     std::vector<unsigned int> unusedOfEvMapEntries;
     unusedOfEvMapEntries.clear();
 
-    for ( unsigned int i = 0; i < nfiles+1; i++ )
+    for ( int i = 0; i < nfiles+1; i++ )
     {
-        ofEventsCA[i] = new EVENT();
+        ofEventsCA.push_back ( new EVENT() );
 
-        for ( int j = 0; j < maxEventMapSize+1; j++ )
+        for ( unsigned int j = 0; j < maxEventMapSize+1; j++ )
         {
             if ( ofEventsCA[i] == EventsCA[j] ) std::cerr << "WARNING!!!! The Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
             if ( ofEventsCA[i]->gd == EventsCA[j]->gd ) std::cerr << "WARNING!!!! The headers for Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
             if ( ofEventsCA[i]->payload == EventsCA[j]->payload ) std::cerr << "WARNING!!!! The payloads for Buffer Event #" << j << " and the Overflow Event #" << i << " have the same address somehow!!!!!!!!!!!!!!\n";
         }
 
-        newOfEv[i] = new std::pair<InDataInfo*, EVENT*>;
+        newOfEv.push_back ( new std::pair<InDataInfo*, EVENT*> );
 
-        ofEvMapEntry[i] = new std::vector<std::pair<InDataInfo*, EVENT*>*>;
+        ofEvMapEntry.push_back ( new std::vector<std::pair<InDataInfo*, EVENT*>*> );
 
         unusedOfEvMapEntries.push_back ( i );
     }
@@ -758,13 +758,13 @@ int main ( int argc, char **argv )
 //             printBytesCount = true;
 //             printDebug = true;
 //         }
-// 
+//
 //         if ( theMergeManager->loopCounter > 16133340 )
 //         {
 //             printProgress = true;
 //             printBytesCount = false;
 //             printDebug = false;
-// 
+//
 //             theMergeManager->goBackToTop = false;
 //         }
 
@@ -780,13 +780,13 @@ int main ( int argc, char **argv )
 
             unsigned long long int outSize = outData->tellp();
 
-            long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
+            unsigned long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
 
             if ( bytesDiff != 0 && prevBytesDiff != bytesDiff )
             {
                 std::cerr << "\n\n\n" << esc << "[31;1m/!\\WARNING/!\\ Loop #" << theMergeManager->loopCounter << " : Amount of bytes read differs from amount of bytes treated !!! (diff = " << bytesDiff << ")" << esc << "[0m\n\n\n";
 
-                printf ( "\n\n/!\\WARNING/!\\ Loop #%llu : Amount of bytes read differs from amount of bytes treated !!! (diff = %d)\n\n\n", theMergeManager->loopCounter, bytesDiff );
+                printf ( "\n\n/!\\WARNING/!\\ Loop #%llu : Amount of bytes read differs from amount of bytes treated !!! (diff = %llu)\n\n\n", theMergeManager->loopCounter, bytesDiff );
 
                 prevBytesDiff = bytesDiff;
 
@@ -857,7 +857,7 @@ int main ( int argc, char **argv )
         {
             for ( int i = 0; i < nfiles; i++ )
             {
-                for ( int j = 0; j < maxEventMapSize+1; j++ )
+                for ( unsigned int j = 0; j < maxEventMapSize+1; j++ )
                 {
                     if ( ofEventsCA[i] == EventsCA[j] )
                     {
@@ -1217,7 +1217,7 @@ int main ( int argc, char **argv )
                 bufEvtSize++;
             }
 
-            int iteration = bufEvtSize+1;
+            unsigned int iteration = bufEvtSize+1;
 
             while ( ts < nextTs && iteration <= maxEventMapSize )
             {
@@ -1449,7 +1449,7 @@ int main ( int argc, char **argv )
                 {
                     evCounter++;
 
-                    unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
+//                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
                     int evtLength = readItr->second->at ( m )->gd->length;
 
                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GEBDATA ) );

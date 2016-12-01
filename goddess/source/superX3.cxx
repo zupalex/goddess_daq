@@ -37,10 +37,13 @@ void superX3::ConstructBins()
 
     for ( int i = 0; i < 4; i++ )
     {
+        // We get the position of the strip center relative to the detector center assuming that the detector lies on the (X,Z) plane
         TVector3 pStPosRefDetCenter ( ( ( 3./8. ) * SX3_width ) - ( i * SX3_width/4. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
 
+        // We then rotate that vector by the detector rotation around the Z axis
         pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
 
+        // The final position fo the center of the strip is the vector giving the detector center to which we add the vector going from the detector center to the strip center
         pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
 
         TVector3 nStPosRefDetCenter ( 0, 0, ( ( 3./8. ) * SX3_length ) - ( i * SX3_length/4. ) ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive Z direction
@@ -274,13 +277,15 @@ int superX3::GetStrip ( int contact )
 
 TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
+    (void) nStripHit; // to prevent useless warning about this variable not being used currently...
+
     float SX3_length = 75.; // mm
 
     float recenter = ( parPosCal[pStripHit].at ( 1 ) + parPosCal[pStripHit].at ( 0 ) ) / 2.;
 
     float normalize = parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 );
 
-    normalize = (normalize < 0.01) ? 1 : normalize;
+    normalize = ( normalize < 0.01 ) ? 1 : normalize;
 
     float zRes = ( ( ( eNear - eFar ) / ( eNear + eFar ) )  - recenter ) / normalize;
 
