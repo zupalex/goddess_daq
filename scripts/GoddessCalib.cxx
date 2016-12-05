@@ -986,6 +986,8 @@ void GoddessCalib::ValidateGetStripsEdges()
 
     TGNumberEntryField* projMinIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Win Min IF" );
     TGNumberEntryField* projMaxIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Win Max IF" );
+    
+    TGNumberEntryField* shiftGrNPointsIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Shift Graph NPoints IF" );
 
     int projWidth_ = projWidthIF->GetNumber();
     double thr_ = projThrIF->GetNumber();
@@ -993,11 +995,13 @@ void GoddessCalib::ValidateGetStripsEdges()
     double projWinMin_ = projMinIF->GetNumber();
     double projWinMax_ = projMaxIF->GetNumber();
 
+    int shiftGrNPoints_ = shiftGrNPointsIF->GetNumber();
+    
     bool doDraw = drawResCB->GetState();
     string sectorsList = sectorsIF->GetText();
 
-    if ( projWidthIF->IsEnabled() && projThrIF->IsEnabled() ) GoddessCalib::sinstance()->GetStripsEdges ( input, sectorsList, projWidth_, thr_, alphaEn1, doDraw );
-    else if ( projMinIF->IsEnabled() && projMaxIF->IsEnabled() ) GoddessCalib::sinstance()->GetStripsEdges ( input, sectorsList, projWinMin_, projWinMax_, alphaEn1, thr_, doDraw );
+    if ( projWidthIF->IsEnabled() && projThrIF->IsEnabled() ) GoddessCalib::sinstance()->GetStripsEdges ( input, sectorsList, projWidth_, thr_, alphaEn1, shiftGrNPoints_, doDraw );
+    else if ( projMinIF->IsEnabled() && projMaxIF->IsEnabled() ) GoddessCalib::sinstance()->GetStripsEdges ( input, sectorsList, projWinMin_, projWinMax_, alphaEn1, thr_, shiftGrNPoints_, doDraw );
 
     return;
 }
@@ -1080,7 +1084,7 @@ void GoddessCalib::OnClickGetStripsEdges()
         getStripsEdgesMF->SetName ( "Get Strips Edges" );
         getStripsEdgesMF->SetWindowName ( "Get Strips Edges" );
 
-        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 8, 2, 5, 5 ) );
+        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 9, 2, 5, 5 ) );
 
         TGTextButton* autoModeButton = new TGTextButton ( getStripsEdgesMF, "Automatic Mode", "GoddessCalib::SetGSEAutoMode();" );
         TGTextButton* fixedWinMode = new TGTextButton ( getStripsEdgesMF, "Fixed Window Mode", "GoddessCalib::SetGSEFixedWinMode();" );
@@ -1129,6 +1133,16 @@ void GoddessCalib::OnClickGetStripsEdges()
 
         getStripsEdgesMF->AddFrame ( projMaxLabel );
         getStripsEdgesMF->AddFrame ( projMaxIF );
+
+        // ----------------------------------- //
+
+        TGLabel* shiftGrNPointsLabel = new TGLabel ( getStripsEdgesMF, "Energy shift vs. position correction :\n           number of points           " );
+        TGNumberEntryField* shiftGrNPointsIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
+        shiftGrNPointsIF->SetName ( "Shift Graph NPoints IF" );
+        shiftGrNPointsIF->SetNumber ( 60 );
+
+        getStripsEdgesMF->AddFrame ( shiftGrNPointsLabel );
+        getStripsEdgesMF->AddFrame ( shiftGrNPointsIF );
 
         // ----------------------------------- //
 
@@ -2691,7 +2705,7 @@ std::tuple<TGraph*,vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition
     return std::make_tuple ( enShiftVsPosGraphs[graphName], overlapCoords );
 }
 
-void GoddessCalib::GetStripsEdges ( TH2F* input, int projCenterBin, int projWidth, double peakPos, double threshold, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TH2F* input, int projCenterBin, int projWidth, double peakPos, double threshold, int shiftGrNPoints, bool drawResults )
 {
     string hname = input->GetName();
 
@@ -2703,7 +2717,7 @@ void GoddessCalib::GetStripsEdges ( TH2F* input, int projCenterBin, int projWidt
     float leftEdge = lfit->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( lfit->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
     float rightEdge = rfit->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( rfit->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
 
-    std::tuple<TGraph*, vector<vector<float>>> eShiftVsPosRes = GetEnergyShiftVsPosition ( input, 60, leftEdge, rightEdge, threshold, peakPos );
+    std::tuple<TGraph*, vector<vector<float>>> eShiftVsPosRes = GetEnergyShiftVsPosition ( input, shiftGrNPoints, leftEdge, rightEdge, threshold, peakPos );
 
     TGraph* enShiftGraph = std::get<0> ( eShiftVsPosRes );
     vector<vector<float>> overlapCoords = std::get<1> ( eShiftVsPosRes );
@@ -2791,17 +2805,17 @@ void GoddessCalib::GetStripsEdges ( TH2F* input, int projCenterBin, int projWidt
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( int projCenterBin, int projWidth, double peakPos, double threshold, bool drawResults )
+void GoddessCalib::GetStripsEdges ( int projCenterBin, int projWidth, double peakPos, double threshold, int shiftGrNPoints, bool drawResults )
 {
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
-        GetStripsEdges ( itr->second, projCenterBin, projWidth, peakPos, threshold, drawResults );
+        GetStripsEdges ( itr->second, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults );
     }
 
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, int shiftGrNPoints, bool drawResults )
 {
     vector<unsigned short> sectors = DecodeSectorsString ( sectorsList );
 
@@ -2827,14 +2841,14 @@ void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, double pro
 
             int projCenterBin = hist->GetYaxis()->FindBin ( projWinMin + ( projWinMax-projWinMin ) /2. );
 
-            GetStripsEdges ( hist, projCenterBin, projWidth, peakPos, threshold, drawResults );
+            GetStripsEdges ( hist, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults );
         }
     }
 
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, int projWidth, double threshold, double peakPos, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, int projWidth, double threshold, double peakPos, int shiftGrNPoints, bool drawResults )
 {
     vector<unsigned short> sectors = DecodeSectorsString ( sectorsList );
 
@@ -2856,7 +2870,7 @@ void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, int projWi
 
             int binMaxY = GetPosCalEnBinMax ( hist, threshold );
 
-            GetStripsEdges ( hist, binMaxY, projWidth, peakPos, threshold, drawResults );
+            GetStripsEdges ( hist, binMaxY, projWidth, peakPos, threshold, shiftGrNPoints, drawResults );
         }
     }
 
