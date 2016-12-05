@@ -275,9 +275,104 @@ int superX3::GetStrip ( int contact )
     return strip;
 }
 
+void superX3::SetEnShiftVsPosGraph ( std::string graphFileName )
+{
+//     std::cerr << "Setting Energy Shift vs. Pos graphs...\n";
+
+    for ( int i = 0; i < 4; i++ )
+    {
+        enShiftVsPosGraph[i] = nullptr;
+    }
+
+    if ( !graphFileName.empty() )
+    {
+        TFile* grFile = new TFile ( graphFileName.c_str(), "read" );
+
+        if ( !grFile->IsOpen() )
+        {
+//             std::cerr << "File Energy Shift vs.Position not found...\n";
+            return;
+        }
+
+        bool haveJumps = grFile->FindObjectAny ( "jumps" ) != nullptr;
+
+        for ( int i = 0; i < 4; i++ )
+        {
+            grFile->cd();
+
+            std::string detKey = Form ( "SuperX3_%c%d_%d", ( upStream ? 'U' : 'D' ), sector, i ) ;
+
+            if ( grFile->FindObjectAny ( detKey.c_str() ) != nullptr )
+            {
+//                 std::cerr << "Found a Energy shift vs. Position graph for Super X3 " << ( upStream ? 'U' : 'D' ) << sector << " strip # " << i << " ...\n";
+
+                enShiftVsPosGraph[i] = ( TGraph* ) ( grFile->FindObjectAny ( detKey.c_str() ) )->Clone();
+
+                if ( haveJumps )
+                {
+//                     std::cerr << "The file contains info relative to jumps...\n";
+
+                    std::string toFind = detKey + "_jump_at_";
+
+//                     std::cerr << "Searching for graphs containing the following string: " << toFind << std::endl;
+
+                    grFile->cd ( "/jumps" );
+
+                    auto lOK = gDirectory->GetListOfKeys();
+
+                    if ( lOK != nullptr )
+                    {
+                        TIterator* fItr = lOK->MakeIterator();
+                        TObject* itrObj = fItr->Next();
+
+                        while ( itrObj != nullptr )
+                        {
+                            TGraph* jumpsGr = dynamic_cast<TGraph*> ( grFile->FindObjectAny ( itrObj->GetName() ) );
+
+                            if ( jumpsGr != nullptr )
+                            {
+                                std::string jumpGrName = jumpsGr->GetName();
+
+//                                 std::cerr << "Found jump graph with name " << jumpGrName << std::endl;
+
+                                if ( jumpGrName.find ( toFind ) != std::string::npos )
+                                {
+                                    double xA, yA, xB, yB;
+
+                                    jumpsGr->GetPoint ( 0, xA, yA );
+                                    jumpsGr->GetPoint ( 1, xB, yB );
+
+                                    double slope = ( yB - yA ) / ( xB - xA );
+                                    double offset = ( xB * yA - xA * yB ) / ( xB - xA );
+
+                                    float jumpKey = std::stof ( jumpGrName.substr ( toFind.length() ) );
+
+//                                     std::cerr << "Found jumps info for that detector at position " << jumpKey << std::endl;
+
+                                    enJumpsCorrectionGraphs[i][jumpKey] = std::make_pair ( slope, offset );
+                                }
+                            }
+
+                            itrObj = fItr->Next();
+                        }
+                    }
+                }
+            }
+            else
+            {
+//                 std::cerr << "No Energy shift vs. Position graph has been found for Super X3 " << ( upStream ? 'U' : 'D' ) << sector << " ...\n";
+            }
+        }
+
+        grFile->Close();
+    }
+
+    return;
+}
+
 TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
-    (void) nStripHit; // to prevent useless warning about this variable not being used currently...
+    ( void ) nStripHit; // to prevent useless warning about this variable not being used currently...
 
     float SX3_length = 75.; // mm
 
@@ -298,5 +393,6 @@ TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, 
 
 
 ClassImp ( superX3 )
+
 
 

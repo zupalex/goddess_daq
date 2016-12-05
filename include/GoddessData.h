@@ -9,11 +9,6 @@
 #include "GoddessStruct.h"
 #include "SortManager.h"
 
-
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TTree.h"
-
 #include "GTMerge.h"
 #include "GEBSort.h"
 
@@ -22,16 +17,19 @@
 #include <map>
 #include <utility>
 
+double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det = nullptr, float enear = 0, float efar = 0 );
+
 class GoddessData
 {
 public:
-    GoddessData(std::string configFilename);
+    GoddessData ( std::string configFilename );
     ~GoddessData();
 
-    int Fill(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt);
+    int Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt );
 
 private:
-    struct GammaData {
+    struct GammaData
+    {
         float energy;
         unsigned long long timestamp;
     };
@@ -66,8 +64,8 @@ private:
     void InitBB10Hists();
     void InitGammaHists();
 
-    int FillTrees(std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt*/);
-    void FillHists(std::vector<DGSEVENT>* dgsEvts);
+    int FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt*/ );
+    void FillHists ( std::vector<DGSEVENT>* dgsEvts );
 
     ///Map of all fired detectors in an event keyed by position ID.
     std::map<std::string, Detector*> firedDets;

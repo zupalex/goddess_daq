@@ -1200,6 +1200,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     if ( !execParams->noHists ) execParams->histDir->cd();
     sup_agod();
     if ( !execParams->noHists ) execParams->histDir->cd();
+    gConfig = new GoddessConfig ( "goddess.position", ( string ) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile );
+    execParams->f1->cd();
     sup_god();
     if ( !execParams->noHists ) execParams->histDir->cd();
 //     //sup_phoswich ();

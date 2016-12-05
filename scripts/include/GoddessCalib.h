@@ -83,6 +83,9 @@ public:
     static void OnClickAddToChain();
     static void OnClickResetChain();
 
+    static void SetGSEAutoMode();
+    static void SetGSEFixedWinMode();
+
     // ****************** user Interface Utilities ********************** //
 
     TGMainFrame* GetControlFrame()
@@ -205,11 +208,14 @@ public:
     TH1D* GetPosCalProjX ( TH2F* input, int projCenter, int projWidth );
     TH1D* GetPosCalProjY ( TH2F* input, int projCenter, int projWidth );
 
-    TF1* FitEdges ( TH2F* input, int projWidth = 200, double threshold = 250, bool fitRight = true );
-    TGraph* GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos );
-    void GetStripsEdges ( int projWidth = 200, double threshold = 250, double peakPos = 5.813, bool drawResults = true );
-    void GetStripsEdges ( TH2F* input, int projWidth = 200, double threshold = 250, double peakPos = 5.813, bool drawResults = true );
-    void GetStripsEdges ( TFile* input, int projWidth = 200, double threshold = 250, double peakPos = 5.813, bool drawResults = true );
+    TF1* FitEdges ( TH2F* input, int projCenterBin, int projWidth, bool fitRight = true, bool getParams = true, bool quietMode = false );
+    std::tuple<TGraph*,vector<vector<float>>> GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos );
+    void GetStripsEdges ( int projCenterBin, int projWidth, double peakPos = 5.813, double threshold = 3.0, bool drawResults = true );
+    void GetStripsEdges ( TH2F* input, int projCenterBin, int projWidth, double peakPos = 5.813, double threshold = 3.0, bool drawResults = true );
+    void GetStripsEdges ( TFile* input, string sectorsList, double projWinMin = 5.5, double projWinMax = 6.2, double peakPos = 5.813, double threshold = 3.0, bool drawResults = true );
+    void GetStripsEdges ( TFile* input, string sectorsList, int projWidth, double threshold, double peakPos = 5.813, bool drawResults = true );
+
+    vector<float> GetOverlapPoints ( TH2F* input, float xMin, float xMax, double threshold, bool jumpUp = true, bool printDebug = false );
 
     void WritePosCalHistsToFile ( );
 

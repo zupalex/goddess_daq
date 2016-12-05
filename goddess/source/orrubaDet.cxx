@@ -47,7 +47,7 @@ void orrubaDet::SetPosID()
     }
 }
 
-void orrubaDet::SetDetector ( std::string serialNum_, unsigned short sector_, unsigned short depth_, bool upStream_, SolidVector position_ )
+void orrubaDet::SetDetector ( std::string serialNum_, unsigned short sector_, unsigned short depth_, bool upStream_, SolidVector position_, std::string enShiftVsPosFName )
 {
     serialNum = serialNum_;
     sector = sector_;
@@ -57,7 +57,7 @@ void orrubaDet::SetDetector ( std::string serialNum_, unsigned short sector_, un
 
     ConstructBins();
     SetPosID();
-
+    SetEnShiftVsPosGraph ( enShiftVsPosFName );
 }
 
 void orrubaDet::SetDAQType ( unsigned short daqtype_ )
@@ -70,4 +70,5 @@ void orrubaDet::SetDAQType ( unsigned short daqtype_ )
 
 
 ClassImp ( orrubaDet )
+
 

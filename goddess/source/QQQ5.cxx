@@ -148,6 +148,16 @@ void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ign
     */
 }
 
+void QQQ5::SetEnShiftVsPosGraph ( std::string graphFileName )
+{
+    if ( !graphFileName.empty() )
+    {
+        TFile* grFile = new TFile ( graphFileName.c_str(), "read" );
+
+        if ( !grFile->IsOpen() ) return;
+    }
+}
+
 TVector3 QQQ5::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
 {
     ( void ) eNear; // to prevent useless warning about this variable not being used currently...

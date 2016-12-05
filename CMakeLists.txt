@@ -66,3 +66,6 @@ install(FILES share/crmat.LINUX share/AGATA_crmat.dat share/dgscal.dat share/map
 
 file(GLOB GODDESS_CONF_FILES "share/*.config")
 install(FILES ${GODDESS_CONF_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+file(GLOB USERROOTFILES "share/*.root")
+install(FILES ${USERROOTFILES} DESTINATION ${CMAKE_INSTALL_PREFIX})

@@ -15,7 +15,7 @@ class GoddessConfig
 {
 private:
     ///Read the configuration file.
-    void ReadConfig ( std::string filename );
+    void ReadConfig ( std::string filename, std::string sx3EnAdjustFName = "", std::string qqq5EnAdjustFName = "" );
     ///Read the position configuration.
     void ReadPosition ( std::string filename );
     ///Read the config line for the ion chamber.
@@ -40,7 +40,7 @@ private:
 
 public:
     ///Default constructor.
-    GoddessConfig ( std::string positionFile, std::string configFile );
+    GoddessConfig ( std::string positionFile, std::string configFile, std::string sx3EnAdjustFName = "", std::string qqq5EnAdjustFName = ""  );
     ///Default destructor.
     virtual ~GoddessConfig();
 

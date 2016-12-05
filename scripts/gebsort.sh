@@ -10,7 +10,8 @@ ReturnError()
     echo ""
     echo "-> suffix=output_file_suffix will append the specified suffix at the end of the output rootfile name"
     echo "-> nevents=XXXX command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file" 
-    echo "-> config=config_file_name force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
+    echo "-> config=config_filename force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
+    echo "-> sx3enfix=filename enable the SX3 energies adjustment using the graphs provided in the file given as an input"
     echo "-> nocalib=mode handles the calibration level."
     echo "           mode==0 (default mode) will generate only the sorted AND calibrated tree."
     echo "           mode==1 will generate one tree sorted BUT NOT calibrated." 
@@ -54,6 +55,8 @@ CONFIGFILEARG=""
 
 USERFILTERDIR=""
 USERFILTERARG=""
+
+SX3ENADJUSTARG=""
 
 if [ "$1" = "default" ]; then
     INPUT_DIR="/mnt/hgfs/GODDESS_MERGED/merged"
@@ -152,6 +155,11 @@ COUNTER=$(($COUNTER + 1))
 	CONFIGFILEARG="-config ${arg##config=}"
 	echo "Forced use of the following config file: ${arg##config=}"
 	
+    elif [ "$arg" != "${arg##sx3enfix=}" ]; then
+
+	SX3ENADJUSTARG="-sx3enadjust ${arg##sx3enfix=}"
+	echo "SX3 energies will be corrected using ${arg##sx3enfix=}"
+	
     elif [ "$arg" != "${arg##suffix=}" ]; then
     
 	OUTPUTSUFFIX="${arg##suffix=}"
@@ -209,7 +217,10 @@ do
         USERFILTERARG="-userfilter $USERFILTERDIR/GEBMerged_run$RUN.gtd_000"
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
+    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
+    $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG \
+    -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
+    
     echo "GEBSort DONE at `date`"
     
     #tail -n 5 $OUTPUT_DIR/log/GEBSort_run$RUN.log

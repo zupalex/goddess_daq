@@ -3,6 +3,11 @@
 
 #include "siDet.h"
 #include "SolidVector.h"
+#include "TFile.h"
+#include "TGraph.h"
+#include "TString.h"
+#include "TList.h"
+#include "TIterator.h"
 
 ///A class to handle basic ORRUBA silicon detectors.
 /**This class builds on a basic siDet by adding detector position information and
@@ -86,10 +91,12 @@ public:
     ///Abstract definition of a funtion to get the vector containing resistive strip energy calibration polynomial parameters (implemented in SuperX3 class only).
 //     virtual std::vector<float>* GetResStripParCal() = 0;
 
+    virtual TVector3 GetPStripCenterPos ( int strip ) = 0;
+
     ///Abstract defintion of a function to get the position of an event on the detector.
     virtual TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar ) = 0;
 
-    void SetDetector ( std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position );
+    void SetDetector ( std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position, std::string enShiftVsPosFName );
     virtual void ConstructBins() = 0;
 
     void SetDAQType ( unsigned short daqtype );
@@ -97,6 +104,8 @@ public:
     {
         return daqtype;
     };
+
+    virtual void SetEnShiftVsPosGraph ( std::string graphFileName ) = 0;
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( orrubaDet, 1 );

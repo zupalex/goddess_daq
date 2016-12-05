@@ -18,6 +18,7 @@
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <math.h>
 
 #include "TROOT.h"
 #include "TSystem.h"
@@ -45,6 +46,7 @@
 #include "TFitResultPtr.h"
 #include "TButton.h"
 #include "TStyle.h"
+#include "TMarker.h"
 
 #include <TApplication.h>
 #include <TVirtualX.h>

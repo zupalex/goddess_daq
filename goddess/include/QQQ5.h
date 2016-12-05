@@ -71,9 +71,9 @@ public:
     ///Clear the stored values in this detector.
     void Clear();
 
-    TVector3* GetPStripCenterPos()
+    TVector3 GetPStripCenterPos ( int strip )
     {
-        return pStripCenterPos;
+        return pStripCenterPos[strip];
     }
 
     TVector3* GetNStripCenterPos()
@@ -133,7 +133,7 @@ public:
     };
 
     ///Return the computed event position.
-    TVector3 GetEventPosition(int pStripHit, int nStripHit, float eNear, float eFar);
+    TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar );
     ///Return a pair (strip#,energy)from the p type side.
     std::pair<int, float> GetPtypeEnergy()
     {
@@ -152,6 +152,8 @@ public:
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
+
+    virtual void SetEnShiftVsPosGraph ( std::string graphFileName );
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( QQQ5, 1 );

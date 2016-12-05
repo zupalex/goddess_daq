@@ -27,13 +27,17 @@
 #include "TH1.h"
 #include "TDirectory.h"
 
-#include "TH2.h"
+#include "TMath.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TTree.h"
+#include "TFile.h"
+#include "TGraph.h"
 #include "TObjArray.h"
 #include "TObject.h"
 #include "TKey.h"
 #include "TSystem.h"
 #include "TCutG.h"
-#include "TTree.h"
 
 #include "TMapFile.h"
 
@@ -42,6 +46,7 @@
 #include "veto_pos.h"
 // #include "ctk.h"
 
+#include "GoddessConfig.h"
 #include "GoddessStruct.h"
 #include "gdecomp.h"
 
@@ -87,15 +92,23 @@ public:
     virtual ~PARS();
 
     char ConfigFile[STRLEN];
+    
+    std::string sx3EnAdjustFile;
+    std::string qqq5EnAdjustFile;
+    
     short noCalib;
     bool noMapping;
     bool noHists;
     unsigned short ignoreThresholds;
     unsigned short siDetailLvl;
+    
     std::string userFilter;
     std::ofstream cleanedMerged;
+    
     char ROOTFile[STRLEN];
+    
     unsigned long long int nEvents;
+    
     char ROOTFileOption[STRLEN];
     char GTSortInputFile[STRLEN];
     int UseShareMemFile;
@@ -233,6 +246,7 @@ public:
     static SortManager* sinstance();
 
     PARS* execParams;
+    GoddessConfig* gConfig;
 
     std::ifstream inData;
     

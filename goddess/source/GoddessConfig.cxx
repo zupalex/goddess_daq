@@ -20,14 +20,14 @@
  *
  */
 
-GoddessConfig::GoddessConfig ( std::string positionFile, std::string configFile )
+GoddessConfig::GoddessConfig ( std::string positionFile, std::string configFile, std::string sx3EnAdjustFName, std::string qqq5EnAdjustFName )
 {
     superX3s = new TClonesArray ( "superX3", 0 );
     bb10s = new TClonesArray ( "BB10", 0 );
     qqq5s = new TClonesArray ( "QQQ5", 0 );
 
     ReadPosition ( positionFile );
-    ReadConfig ( configFile );
+    ReadConfig ( configFile, sx3EnAdjustFName , qqq5EnAdjustFName );
 }
 
 GoddessConfig::~GoddessConfig()
@@ -83,7 +83,7 @@ GoddessConfig::~GoddessConfig()
  *
  * \param[in] filename The configuration file to be read.
  */
-void GoddessConfig::ReadConfig ( std::string filename )
+void GoddessConfig::ReadConfig ( std::string filename, std::string sx3EnAdjustFName, std::string qqq5EnAdjustFName )
 {
     std::ifstream mapFile ( filename );
 
@@ -210,9 +210,13 @@ void GoddessConfig::ReadConfig ( std::string filename )
             std::cout << ", RotPhi: " << pos_.RotPhi() * TMath::RadToDeg() << "\n";
 
             //Construct object for the specified type.
+
+            std::string enAdjustFName = "";
+
             if ( detType == "superX3" )
             {
                 det = ( orrubaDet * ) superX3s->ConstructedAt ( superX3s->GetEntries() );
+                enAdjustFName = sx3EnAdjustFName;
             }
             else if ( detType == "BB10" )
             {
@@ -221,6 +225,7 @@ void GoddessConfig::ReadConfig ( std::string filename )
             else if ( detType == "QQQ5" )
             {
                 det = ( orrubaDet * ) qqq5s->ConstructedAt ( qqq5s->GetEntries() );
+                enAdjustFName = qqq5EnAdjustFName;
             }
             else
             {
@@ -229,7 +234,7 @@ void GoddessConfig::ReadConfig ( std::string filename )
                 break;
             }
 
-            det->SetDetector ( serialNum, sector, depth, upStream, pos_ );
+            det->SetDetector ( serialNum, sector, depth, upStream, pos_, enAdjustFName );
 
             if ( IsInsertable ( pTypeDaqType, pTypeDaqCh, det, det->GetNumChannels ( siDet::pType ) ) )
             {

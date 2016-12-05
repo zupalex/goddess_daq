@@ -793,7 +793,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         TGTextEntry* configFileIF = new TGTextEntry ( fourthFrame );
         configFileIF->SetName ( "Config File IF" );
         configFileIF->SetAlignment ( kTextRight );
-        configFileIF->Resize ( 300, defDim.fHeight );
+        configFileIF->Resize ( 500, defDim.fHeight );
 
         fourthFrame->AddFrame ( configFileLabel );
         fourthFrame->AddFrame ( configFileIF );
@@ -809,7 +809,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         TGTextEntry* outFileIF = new TGTextEntry ( outFileFrame );
         outFileIF->SetName ( "OutFile Name IF" );
         outFileIF->SetAlignment ( kTextRight );
-        outFileIF->Resize ( 300, defDim.fHeight );
+        outFileIF->Resize ( 500, defDim.fHeight );
         outFileIF->SetText ( outFName.c_str() );
 
         outFileFrame->AddFrame ( outFileLabel );
@@ -982,14 +982,92 @@ void GoddessCalib::ValidateGetStripsEdges()
     TGNumberEntryField* projWidthIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Width IF" );
     TGNumberEntryField* projThrIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Threshold IF" );
 
+    TGTextEntry* sectorsIF = ( TGTextEntry* ) FindFrameByName ( prompt, "Sectors GSE IF" );
+
+    TGNumberEntryField* projMinIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Win Min IF" );
+    TGNumberEntryField* projMaxIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Win Max IF" );
 
     int projWidth_ = projWidthIF->GetNumber();
     double thr_ = projThrIF->GetNumber();
-    bool doDraw = drawResCB->GetState();
 
-    GoddessCalib::sinstance()->GetStripsEdges ( input, projWidth_, thr_, alphaEn1,  doDraw );
+    double projWinMin_ = projMinIF->GetNumber();
+    double projWinMax_ = projMaxIF->GetNumber();
+
+    bool doDraw = drawResCB->GetState();
+    string sectorsList = sectorsIF->GetText();
+
+    if ( projWidthIF->IsEnabled() && projThrIF->IsEnabled() ) GoddessCalib::sinstance()->GetStripsEdges ( input, sectorsList, projWidth_, thr_, alphaEn1, doDraw );
+    else if ( projMinIF->IsEnabled() && projMaxIF->IsEnabled() ) GoddessCalib::sinstance()->GetStripsEdges ( input, sectorsList, projWinMin_, projWinMax_, alphaEn1, thr_, doDraw );
 
     return;
+}
+
+void GoddessCalib::SetGSEAutoMode()
+{
+    TGWindow* getStripsEdgesWin = FindWindowByName ( "Get Strips Edges" );
+
+    if ( getStripsEdgesWin != NULL )
+    {
+        TGNumberEntryField* projWidthIF = ( TGNumberEntryField* ) FindFrameByName ( getStripsEdgesWin, "Proj Width IF" );
+
+        TGNumberEntryField* projMinIF = ( TGNumberEntryField* ) FindFrameByName ( getStripsEdgesWin, "Proj Win Min IF" );
+        TGNumberEntryField* projMaxIF = ( TGNumberEntryField* ) FindFrameByName ( getStripsEdgesWin, "Proj Win Max IF" );
+
+        if ( projWidthIF != nullptr )
+        {
+            projWidthIF->SetState ( kTRUE );
+            projWidthIF->SetEnabled ( kTRUE );
+            projWidthIF->SetBackgroundColor ( 0xffffff );
+        }
+
+        if ( projMinIF != nullptr )
+        {
+            projMinIF->SetState ( kFALSE );
+            projMinIF->SetEnabled ( kFALSE );
+            projMinIF->SetBackgroundColor ( 0x424949 );
+        }
+
+        if ( projMaxIF != nullptr )
+        {
+            projMaxIF->SetState ( kFALSE );
+            projMaxIF->SetEnabled ( kFALSE );
+            projMaxIF->SetBackgroundColor ( 0x424949 );
+        }
+    }
+}
+
+void GoddessCalib::SetGSEFixedWinMode()
+{
+    TGWindow* getStripsEdgesWin = FindWindowByName ( "Get Strips Edges" );
+
+    if ( getStripsEdgesWin != NULL )
+    {
+        TGNumberEntryField* projWidthIF = ( TGNumberEntryField* ) FindFrameByName ( getStripsEdgesWin, "Proj Width IF" );
+
+        TGNumberEntryField* projMinIF = ( TGNumberEntryField* ) FindFrameByName ( getStripsEdgesWin, "Proj Win Min IF" );
+        TGNumberEntryField* projMaxIF = ( TGNumberEntryField* ) FindFrameByName ( getStripsEdgesWin, "Proj Win Max IF" );
+
+        if ( projWidthIF != nullptr )
+        {
+            projWidthIF->SetState ( kFALSE );
+            projWidthIF->SetEnabled ( kFALSE );
+            projWidthIF->SetBackgroundColor ( 0x424949 );
+        }
+
+        if ( projMinIF != nullptr )
+        {
+            projMinIF->SetState ( kTRUE );
+            projMinIF->SetEnabled ( kTRUE );
+            projMinIF->SetBackgroundColor ( 0xffffff );
+        }
+
+        if ( projMaxIF != nullptr )
+        {
+            projMaxIF->SetState ( kTRUE );
+            projMaxIF->SetEnabled ( kTRUE );
+            projMaxIF->SetBackgroundColor ( 0xffffff );
+        }
+    }
 }
 
 void GoddessCalib::OnClickGetStripsEdges()
@@ -1002,7 +1080,15 @@ void GoddessCalib::OnClickGetStripsEdges()
         getStripsEdgesMF->SetName ( "Get Strips Edges" );
         getStripsEdgesMF->SetWindowName ( "Get Strips Edges" );
 
-        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 4, 2, 5, 5 ) );
+        getStripsEdgesMF->SetLayoutManager ( new TGMatrixLayout ( getStripsEdgesMF, 8, 2, 5, 5 ) );
+
+        TGTextButton* autoModeButton = new TGTextButton ( getStripsEdgesMF, "Automatic Mode", "GoddessCalib::SetGSEAutoMode();" );
+        TGTextButton* fixedWinMode = new TGTextButton ( getStripsEdgesMF, "Fixed Window Mode", "GoddessCalib::SetGSEFixedWinMode();" );
+
+        getStripsEdgesMF->AddFrame ( autoModeButton );
+        getStripsEdgesMF->AddFrame ( fixedWinMode );
+
+        // ----------------------------------- //
 
         TGLabel* projWidthLabel = new TGLabel ( getStripsEdgesMF, "Proj. Width (bins):" );
         TGNumberEntryField* projWidthIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive );
@@ -1020,6 +1106,42 @@ void GoddessCalib::OnClickGetStripsEdges()
         getStripsEdgesMF->AddFrame ( projThrLabel );
         getStripsEdgesMF->AddFrame ( projThrIF );
 
+        // ----------------------------------- //
+
+        TGLabel* projMinLabel = new TGLabel ( getStripsEdgesMF, "Proj. Window Min:" );
+        TGNumberEntryField* projMinIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAPositive );
+        projMinIF->SetName ( "Proj Win Min IF" );
+        projMinIF->SetNumber ( 5.5 );
+        projMinIF->SetState ( kFALSE );
+        projMinIF->SetEnabled ( kFALSE );
+        projMinIF->SetBackgroundColor ( 0x424949 );
+
+        getStripsEdgesMF->AddFrame ( projMinLabel );
+        getStripsEdgesMF->AddFrame ( projMinIF );
+
+        TGLabel* projMaxLabel = new TGLabel ( getStripsEdgesMF, "Proj. Window Max:" );
+        TGNumberEntryField* projMaxIF = new TGNumberEntryField ( getStripsEdgesMF, -1, 0, TGNumberFormat::kNESReal, TGNumberFormat::kNEAPositive );
+        projMaxIF->SetName ( "Proj Win Max IF" );
+        projMaxIF->SetNumber ( 6.2 );
+        projMaxIF->SetState ( kFALSE );
+        projMaxIF->SetEnabled ( kFALSE );
+        projMaxIF->SetBackgroundColor ( 0x424949 );
+
+        getStripsEdgesMF->AddFrame ( projMaxLabel );
+        getStripsEdgesMF->AddFrame ( projMaxIF );
+
+        // ----------------------------------- //
+
+        TGLabel* sectorsLabel = new TGLabel ( getStripsEdgesMF, "Sectors to treat \ne.g. : \"1, 4-8, 10\"" );
+        TGTextEntry* sectorsGSEIF = new TGTextEntry ( getStripsEdgesMF );
+        sectorsGSEIF->SetName ( "Sectors GSE IF" );
+        sectorsGSEIF->SetAlignment ( kTextRight );
+
+        getStripsEdgesMF->AddFrame ( sectorsLabel );
+        getStripsEdgesMF->AddFrame ( sectorsGSEIF );
+
+        // ----------------------------------- //
+
         TGLabel* drawResultsLabel = new TGLabel ( getStripsEdgesMF, "Draw Results?" );
         TGCheckButton* drawResultsCB = new TGCheckButton ( getStripsEdgesMF );
         drawResultsCB->SetName ( "Draw Results CB" );
@@ -1027,6 +1149,8 @@ void GoddessCalib::OnClickGetStripsEdges()
 
         getStripsEdgesMF->AddFrame ( drawResultsLabel );
         getStripsEdgesMF->AddFrame ( drawResultsCB );
+
+        // ----------------------------------- //
 
         TGTextButton* processButton = new TGTextButton ( getStripsEdgesMF, "Process", "GoddessCalib::ValidateGetStripsEdges(); GoddessCalib::FindWindowByName(\"Get Strips Edges\")->UnmapWindow();" );
         TGTextButton* cancelButton = new TGTextButton ( getStripsEdgesMF, "Cancel", "GoddessCalib::FindWindowByName(\"Get Strips Edges\")->UnmapWindow();" );
@@ -1057,9 +1181,9 @@ void GoddessCalib::StartSX3EnCalib ( string detectorType, double refEnergy1 )
     gStyle->SetLineWidth ( 2 );
     gStyle->SetLineColor ( 2 );
 
-    gStyle->SetMarkerColor ( 4 );
-    gStyle->SetMarkerSize ( 2 );
-    gStyle->SetMarkerStyle ( 3 );
+//     gStyle->SetMarkerColor ( 4 );
+//     gStyle->SetMarkerSize ( 2 );
+//     gStyle->SetMarkerStyle ( 3 );
 
     TGNumberEntryField* alphaEnIF = ( TGNumberEntryField* ) FindWindowByName ( "alphaEn1IF" );
 
@@ -1511,16 +1635,28 @@ void GoddessCalib::WriteResCalResults ( string fileName, string mode )
 
     TFile* grFile = new TFile ( graphFileName.c_str(), "update" );
 
-    grFile->cd();
-
     for ( auto itr = enShiftVsPosGraphs.begin(); itr != enShiftVsPosGraphs.end(); itr++ )
     {
+        grFile->cd();
+
         if ( grFile->FindObjectAny ( itr->first.c_str() ) != nullptr )
         {
-            grFile->Delete ( itr->first.c_str() );
+            string toDelete = itr->first + ";*";
+
+            grFile->Delete ( toDelete.c_str() );
         }
 
-        itr->second->Write();
+        if ( !isnan ( itr->second->GetXaxis()->GetXmin() ) && !isnan ( itr->second->GetXaxis()->GetXmax() ) )
+        {
+            if ( itr->first.find ( "_jump_at_" ) != string::npos )
+            {
+                if ( grFile->FindObjectAny ( "jumps" ) == nullptr ) grFile->mkdir ( "jumps" );
+
+                grFile->cd ( "/jumps" );
+            }
+
+            itr->second->Write();
+        }
     }
 
     grFile->Close();
@@ -1869,7 +2005,11 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, long int n
     {
         chain->GetEntry ( i );
 
-        if ( i%10000 == 0 ) cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << "% )\r" << std::flush;
+        if ( i%10000 == 0 )
+        {
+            cout << "Treated " << std::setw ( 9 ) << i << " / " << nentries;
+            std::cout << " entries ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 5 ) << ( float ) i/nentries * 100. << "% )\r" << std::flush;
+        }
 
         if ( siInfo->size() == 0 ) continue;
 
@@ -2001,7 +2141,11 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool 
     {
         chain->GetEntry ( i );
 
-        if ( i%10000 == 0 ) cout << "Treated " << i << " / " << nentries << " entries ( " << ( ( float ) i ) / ( ( float ) nentries ) * 100. << " % )\r" << std::flush;
+        if ( i%10000 == 0 )
+        {
+            cout << "Treated " << std::setw ( 9 ) << i << " / " << nentries;
+            cout << " entries ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 5 ) << ( float ) i/nentries * 100. << " % )\r" << std::flush;
+        }
 
         if ( siDataVect->size() == 0 ) continue;
 
@@ -2188,14 +2332,22 @@ int GoddessCalib::GetPosCalEnBinMax ( TH2F* input, double threshold )
 
 TH1D* GoddessCalib::GetPosCalProjX ( TH2F* input, int projCenter, int projWidth )
 {
-    TH1D* proj = input->ProjectionX ( ( ( string ) "projX_" + input->GetName() ).c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
+    string projName = Form ( "projX_%s_%0.3f_%0.3f", input->GetName(), input->GetYaxis()->GetBinCenter ( projCenter - projWidth/2. ), input->GetYaxis()->GetBinCenter ( projCenter + projWidth/2. ) );
+    string projTitle = Form ( "projX %s [%0.3f to %0.3f]", input->GetName(), input->GetYaxis()->GetBinCenter ( projCenter - projWidth/2. ), input->GetYaxis()->GetBinCenter ( projCenter + projWidth/2. ) );
+
+    TH1D* proj = input->ProjectionX ( projName.c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
+    proj->SetTitle ( projTitle.c_str() );
 
     return proj;
 }
 
 TH1D* GoddessCalib::GetPosCalProjY ( TH2F* input, int projCenter, int projWidth )
 {
-    TH1D* proj = input->ProjectionY ( ( ( string ) "projY_" + input->GetName() ).c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
+    string projName = Form ( "projY_%s_%0.3f_%0.3f", input->GetName(), input->GetXaxis()->GetBinCenter ( projCenter - projWidth/2 ), input->GetXaxis()->GetBinCenter ( projCenter + projWidth/2 ) );
+    string projTitle = Form ( "projY %s [%0.3f to %0.3f]", input->GetName(), input->GetXaxis()->GetBinCenter ( projCenter - projWidth/2 ), input->GetXaxis()->GetBinCenter ( projCenter + projWidth/2 ) );
+
+    TH1D* proj = input->ProjectionY ( projName.c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
+    proj->SetTitle ( projTitle.c_str() );
 
     return proj;
 }
@@ -2241,11 +2393,9 @@ Double_t flatTopGauss ( Double_t *x, Double_t *par )
     }
 }
 
-TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool fitRight )
+TF1* GoddessCalib::FitEdges ( TH2F* input, int projCenterBin, int projWidth, bool fitRight, bool getParams, bool quietMode )
 {
-    int binMaxY = GetPosCalEnBinMax ( input, threshold );
-
-    TH1D* projX = GetPosCalProjX ( input, binMaxY, projWidth );
+    TH1D* projX = GetPosCalProjX ( input, projCenterBin, projWidth );
     projX->GetXaxis()->SetRange ( projX->GetXaxis()->GetFirst() +1, projX->GetXaxis()->GetLast()-1 );
 
     int binMaxX = projX->GetMaximumBin();
@@ -2288,7 +2438,7 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
         startBinContent = projX->GetBinContent ( startBin );
     }
 
-    cout << "Found the " << ( fitRight ? "left" : "right" ) << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
+    if ( !quietMode ) cout << "Found the " << ( fitRight ? "right" : "left" ) << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
 
     TF1 *fitfunc = new TF1 ( Form ( "myfit_left_%s",input->GetName() ), ( fitRight ? flatTopGaussRight : flatTopGaussLeft ), projX->GetBinCenter ( binShoulder - 2*windowWidth ), projX->GetBinCenter ( binShoulder + windowWidth ), 4 );
 
@@ -2304,90 +2454,357 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projWidth, double threshold, bool
 
         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
 
-        cout << "Found the " << ( fitRight ? "left" : "right" ) << " strip edge at " << edge << endl;
+        if ( !quietMode ) cout << "Found the " << ( fitRight ? "right" : "left" ) << " strip edge at " << edge << endl;
 
         string hname = input->GetName();
         string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
 
         int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
 
-        InitializeCalMapKey ( calMapKey, stripNbr );
+        if ( getParams )
+        {
+            InitializeCalMapKey ( calMapKey, stripNbr );
 
-        if ( fitRight ) resStripsCalMap[calMapKey][stripNbr][5] = edge;
-        else resStripsCalMap[calMapKey][stripNbr][4] = edge;
+            if ( fitRight ) resStripsCalMap[calMapKey][stripNbr][5] = edge;
+            else resStripsCalMap[calMapKey][stripNbr][4] = edge;
+        }
     }
     return fitfunc;
 }
 
-TGraph* GoddessCalib::GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos )
+vector< float > GoddessCalib::GetOverlapPoints ( TH2F* input, float xMin, float xMax, double threshold, bool jumpUp, bool printDebug )
 {
+    int xMinBin = input->GetXaxis()->FindBin ( xMin );
+    int xMaxBin = input->GetXaxis()->FindBin ( xMax );
+
+    int projWidthX = xMaxBin - xMinBin;
+
+    int projBinX = xMinBin + projWidthX/2;
+
+    TH1D* projY = GetPosCalProjY ( input, projBinX, projWidthX );
+
+    double lastBinCenter = projY->GetBinCenter ( projY->GetXaxis()->GetLast() );
+
+    projY->GetXaxis()->SetRangeUser ( threshold, lastBinCenter );
+
+    if ( printDebug )
+    {
+        TCanvas* c1 = new TCanvas();
+        c1->cd();
+        TH1D* h1 = ( TH1D* ) projY->Clone();
+        h1->Draw();
+    }
+
+    float binCenterMax1 = projY->GetBinCenter ( projY->GetMaximumBin() );
+
+    if ( printDebug ) cout << "Found first maximum at " << binCenterMax1 << "...\n";
+
+    TF1* simpleGauss = new TF1 ( "simpleGauss", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) )", threshold, lastBinCenter );
+
+    simpleGauss->SetParameters ( 10, binCenterMax1, 0.2 );
+
+    projY->Fit ( simpleGauss, "QRMN", "", binCenterMax1 - 0.5, binCenterMax1 + 0.5 );
+
+    float projYSigma = TMath::Abs ( simpleGauss->GetParameter ( 2 ) );
+
+    if ( printDebug )
+    {
+        cout << "Result of the fasty fit:\n";
+        cout << "Amplitude: " << simpleGauss->GetParameter ( 0 ) << endl;
+        cout << "Mean: " << simpleGauss->GetParameter ( 1 ) << endl;
+        cout << "Sigma: " << simpleGauss->GetParameter ( 2 ) << endl;
+    }
+
+    projY->GetXaxis()->SetRangeUser ( threshold, binCenterMax1 - 5*projYSigma );
+
+    if ( printDebug )
+    {
+        TCanvas* c2 = new TCanvas();
+        c2->cd();
+        TH1D* h2 = ( TH1D* ) projY->Clone();
+        h2->Draw();
+    }
+
+    float binCenterMaxLow = projY->GetBinCenter ( projY->GetMaximumBin() );
+    float binContentMaxLow = projY->GetBinContent ( projY->GetMaximumBin() );
+
+    if ( printDebug ) cout << "Found temporary max on the left of the first max at " << binCenterMaxLow << " ( content = " << binContentMaxLow << " )\n";
+
+    projY->GetXaxis()->SetRangeUser ( binCenterMax1 + 5*projYSigma, lastBinCenter );
+
+    if ( printDebug )
+    {
+        TCanvas* c3 = new TCanvas();
+        c3->cd();
+        TH1D* h3 = ( TH1D* ) projY->Clone();
+        h3->Draw();
+    }
+
+    float binCenterMaxHigh = projY->GetBinCenter ( projY->GetMaximumBin() );
+    float binContentMaxHigh = projY->GetBinContent ( projY->GetMaximumBin() );
+
+    if ( printDebug ) cout << "Found temporary max on the right of the first max at " << binCenterMaxHigh << " ( content = " << binContentMaxHigh << " )\n";
+
+    float binCenterMax2 = binCenterMaxLow;
+
+    if ( binContentMaxHigh > binContentMaxLow ) binCenterMax2 = binCenterMaxHigh;
+
+    float xleft, xright, yleft, yright; // left and right are referring to the edge detection and not the actual position in the plot
+
+    if ( jumpUp )
+    {
+        yleft = std::max ( binCenterMax1, binCenterMax2 );
+        yright = std::min ( binCenterMax1, binCenterMax2 );
+    }
+    else
+    {
+        yleft = std::min ( binCenterMax1, binCenterMax2 );
+        yright = std::max ( binCenterMax1, binCenterMax2 );
+    }
+
+    if ( printDebug ) cout << "Detected a jump from " << yright << " to " << yleft << " ...\n";
+
+    int projWidthY = 6*projYSigma / input->GetYaxis()->GetBinWidth ( 0 );
+
+    TF1* lfit = FitEdges ( input, input->GetYaxis()->FindBin ( yleft ), projWidthY, false, false, true );
+
+    if ( printDebug )
+    {
+        TCanvas* c4 = new TCanvas();
+        c4->cd();
+        TH1D* h4 = ( TH1D* ) GetPosCalProjX ( input, input->GetYaxis()->FindBin ( yleft ), projWidthY )->Clone();
+        h4->Draw();
+        lfit->Draw ( "same" );
+    }
+
+    TF1* rfit = FitEdges ( input, input->GetYaxis()->FindBin ( yright ), projWidthY, true, false, true );
+
+    if ( printDebug )
+    {
+        TCanvas* c5 = new TCanvas();
+        c5->cd();
+        TH1D* h5 = ( TH1D* ) GetPosCalProjX ( input, input->GetYaxis()->FindBin ( yright ), projWidthY )->Clone();
+        h5->Draw();
+        rfit->Draw ( "same" );
+    }
+
+    xleft = lfit->GetParameter ( 1 ) - 4*TMath::Abs ( lfit->GetParameter ( 2 ) );
+    xright = rfit->GetParameter ( 1 ) + 4*TMath::Abs ( rfit->GetParameter ( 2 ) );
+
+    if ( printDebug ) cout << "The jumping points are ( " << xright << " , " << yright << " ) and ( " << xleft << " , " << yleft << " )\n";
+
+    float eNear1, eFar1, eNear2, eFar2;
+
+    // Now we recover the Energy near and Energy Far corresponding to these 2 points to get the equation of the line separating the 2 regimes
+    // REMINDER:
+    // x = (Enear - Efar) / ( Enear + Efar) -------------- y = Enear + Efar
+    // so
+    // ===? (xy + y) / 2 = Enear
+    // ===> -(xy - y) / 2 = Efar
+
+    eNear1 = ( xleft * yleft + yleft ) / 2.;
+    eFar1 = - ( xleft * yleft - yleft ) / 2.;
+
+    eNear2 = ( xright * yright + yright ) / 2.;
+    eFar2 = - ( xright * yright - yright ) / 2.;
+
+    float eNearMin = std::min ( eNear1, eNear2 );
+    float eNearMax = std::max ( eNear1, eNear2 );
+
+    return {xright, yright, xleft, yleft, eNearMin, ( eNearMin == eNear1 ? eFar1 : eFar2 ), eNearMax, ( eNearMax == eNear1 ? eFar1 : eFar2 ) };
+}
+
+std::tuple<TGraph*,vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos )
+{
+    if ( input->GetEntries() == 0 ) return std::make_tuple<TGraph*,vector<vector<float>>> ( nullptr, {} );
+
     string graphName = "SuperX3_" + ( string ) input->GetName();
 
+    float lastBinCenter = input->GetYaxis()->GetBinCenter ( input->GetYaxis()->GetLast() );
+
     enShiftVsPosGraphs[graphName] = new TGraph ( nPoints );
+    enShiftVsPosGraphs[graphName]->SetName ( graphName.c_str() );
+    enShiftVsPosGraphs[graphName]->SetTitle ( Form ( "Energy Shift vs. Position for %s", graphName.c_str() ) );
 
     float projWidth = ( endPoint-startPoint ) / nPoints;
 
     TH1D* projY = 0;
 
+    float recenter = ( startPoint + endPoint ) / 2.;
+    float normalize = endPoint - startPoint;
+
+    vector<vector<float>> overlapCoords;
+    overlapCoords.clear();
+
+    vector<float> tempOC;
+    tempOC.clear();
+
     for ( int i = 0; i < nPoints; i++ )
     {
         int projBin = input->GetXaxis()->FindBin ( startPoint + projWidth * ( i + 1/2. ) );
 
-        projY = GetPosCalProjY ( input, projBin, projY->FindBin ( startPoint + ( i+1 ) * projWidth ) - projY->FindBin ( startPoint + i * projWidth ) );
+        projY = GetPosCalProjY ( input, projBin, projWidth );
 
-        projY->GetXaxis()->SetRangeUser ( threshold, projY->GetBinCenter ( projY->GetXaxis()->GetLast() ) );
+        projY->GetXaxis()->SetRangeUser ( threshold, lastBinCenter );
 
         int binMax = projY->GetMaximumBin();
 
-        enShiftVsPosGraphs[graphName]->SetPoint ( i, startPoint + projWidth * ( i + 1/2. ), peakPos / projY->GetBinCenter ( binMax ) );
+        float relPos = startPoint + projWidth * ( i + 1/2. );
+
+        float shiftCoeff = peakPos / projY->GetBinCenter ( binMax );
+
+        enShiftVsPosGraphs[graphName]->SetPoint ( i, ( relPos-recenter ) / normalize, shiftCoeff );
+
+        if ( i > 0 )
+        {
+            double prevX, prevY;
+
+            enShiftVsPosGraphs[graphName]->GetPoint ( i-1, prevX, prevY );
+
+            if ( shiftCoeff - prevY >= 0.1 ) tempOC = GetOverlapPoints ( input, relPos - 0.2, relPos + 0.2, threshold, false );
+            else if ( shiftCoeff - prevY <= -0.1 ) tempOC = GetOverlapPoints ( input, relPos - 0.2, relPos + 0.2, threshold, true );
+
+            if ( tempOC.size() > 0 )
+            {
+                tempOC.push_back ( ( tempOC[0]-recenter ) / normalize );
+                tempOC.push_back ( ( tempOC[2]-recenter ) / normalize );
+
+                string overlapGrName = graphName + ( string ) Form ( "_jump_at_%0.3f", tempOC[8] + 0.001 );
+
+                enShiftVsPosGraphs[overlapGrName] = new TGraph ( 2 );
+
+                enShiftVsPosGraphs[overlapGrName]->SetPoint ( 0, tempOC[4], tempOC[5] );
+                enShiftVsPosGraphs[overlapGrName]->SetPoint ( 1, tempOC[6], tempOC[7] );
+
+                enShiftVsPosGraphs[overlapGrName]->SetName ( overlapGrName.c_str() );
+                enShiftVsPosGraphs[overlapGrName]->SetTitle ( Form ( "Regime switch equation for %s", graphName.c_str() ) );
+
+                overlapCoords.push_back ( tempOC );
+
+                tempOC.clear();
+            }
+        }
     }
 
-    return enShiftVsPosGraphs[graphName];
+    if ( isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin() ) && isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax() ) ) return std::make_tuple<TGraph*,vector<vector<float>>> ( nullptr, {} );
+
+    return std::make_tuple ( enShiftVsPosGraphs[graphName], overlapCoords );
 }
 
-void GoddessCalib::GetStripsEdges ( TH2F* input, int projWidth, double threshold, double peakPos, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TH2F* input, int projCenterBin, int projWidth, double peakPos, double threshold, bool drawResults )
 {
     string hname = input->GetName();
 
     cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) +1 ) << " ..." << endl;
 
-    TF1* lfit = FitEdges ( input, projWidth, threshold, false );
-    TF1* rfit = FitEdges ( input, projWidth, threshold, true );
+    TF1* lfit = FitEdges ( input, projCenterBin, projWidth, false );
+    TF1* rfit = FitEdges ( input, projCenterBin, projWidth, true );
 
-    TGraph* enShiftGraph = GetEnergyShiftVsPosition ( input, 25, lfit->GetParameter ( 1 ), rfit->GetParameter ( 1 ), threshold, peakPos );
+    float leftEdge = lfit->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( lfit->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+    float rightEdge = rfit->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( rfit->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+
+    std::tuple<TGraph*, vector<vector<float>>> eShiftVsPosRes = GetEnergyShiftVsPosition ( input, 60, leftEdge, rightEdge, threshold, peakPos );
+
+    TGraph* enShiftGraph = std::get<0> ( eShiftVsPosRes );
+    vector<vector<float>> overlapCoords = std::get<1> ( eShiftVsPosRes );
 
     if ( drawResults )
     {
         TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", hname.c_str() ) );
 
-        newCanvas->Divide ( 2, 1 );
+        newCanvas->Divide ( 3, 1 );
 
         newCanvas->GetPad ( 1 )->cd();
 
-        GetPosCalProjX ( input, GetPosCalEnBinMax ( input, threshold ), projWidth )->Draw();
-        lfit->Draw ( "same" );
-        rfit->Draw ( "same" );
+        input->Draw ( "colz" );
 
         newCanvas->GetPad ( 2 )->cd();
 
-        enShiftGraph->Draw ( "AP" );
+        GetPosCalProjX ( input, projCenterBin, projWidth )->Draw();
+        lfit->Draw ( "same" );
+        rfit->Draw ( "same" );
+
+        if ( enShiftGraph != nullptr )
+        {
+            enShiftGraph->SetMarkerSize ( 2 );
+            enShiftGraph->SetMarkerColor ( 4 );
+            enShiftGraph->SetMarkerStyle ( 5 );
+
+            if ( overlapCoords.size() > 0 )
+            {
+                for ( unsigned int i = 0; i < overlapCoords.size(); i++ )
+                {
+                    newCanvas->GetPad ( 1 )->cd();
+
+                    TMarker* m1 = new TMarker();
+                    m1->SetMarkerStyle ( 3 );
+                    m1->SetMarkerSize ( 2 );
+                    m1->SetMarkerColor ( 2 );
+
+                    m1->SetX ( overlapCoords[i][0] );
+                    m1->SetY ( overlapCoords[i][1] );
+
+                    m1->Draw();
+
+                    TMarker* m2 = new TMarker();
+                    m2->SetMarkerStyle ( 3 );
+                    m2->SetMarkerSize ( 2 );
+                    m2->SetMarkerColor ( 2 );
+
+                    m2->SetX ( overlapCoords[i][2] );
+                    m2->SetY ( overlapCoords[i][3] );
+
+                    m2->Draw();
+
+                    cout << "*** Searching for points between " << std::min ( overlapCoords[i][8], overlapCoords[i][9] ) << " and " << std::max ( overlapCoords[i][8], overlapCoords[i][9] ) << " ***\n";
+
+                    int realPointNum = 0;
+
+                    for ( int j = 0; j < enShiftGraph->GetN(); j++ )
+                    {
+                        double pos, en;
+
+                        enShiftGraph->GetPoint ( j, pos, en );
+
+                        if ( pos >= std::min ( overlapCoords[i][8], overlapCoords[i][9] ) && pos <= std::max ( overlapCoords[i][8], overlapCoords[i][9] ) )
+                        {
+                            cout << "Removing point #" << realPointNum << " with coordinates ( " << pos << " , " << en << " )\n";
+
+                            enShiftGraph->RemovePoint ( j );
+
+                            j--;
+                        }
+
+                        realPointNum++;
+                    }
+
+                    cout << "**************************\n";
+                }
+            }
+
+            newCanvas->GetPad ( 3 )->cd();
+
+            enShiftGraph->Draw ( "ALP" );
+        }
     }
 
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( int projWidth, double threshold, double peakPos, bool drawResults )
+void GoddessCalib::GetStripsEdges ( int projCenterBin, int projWidth, double peakPos, double threshold, bool drawResults )
 {
     for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
     {
-        GetStripsEdges ( itr->second, projWidth, threshold, peakPos, drawResults );
+        GetStripsEdges ( itr->second, projCenterBin, projWidth, peakPos, threshold, drawResults );
     }
 
     return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshold, double peakPos, bool drawResults )
+void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, bool drawResults )
 {
+    vector<unsigned short> sectors = DecodeSectorsString ( sectorsList );
+
     auto lOK = input->GetListOfKeys();
 
     for ( int i = 0; i < lOK->GetSize(); i++ )
@@ -2400,7 +2817,46 @@ void GoddessCalib::GetStripsEdges ( TFile* input, int projWidth, double threshol
 
             if ( ! ( hname[0] == 'U' || hname[0] == 'D' ) && ! ( hname.find ( "_" ) == 2 || hname.find ( "_" ) == 3 ) ) continue;
 
-            GetStripsEdges ( hist, projWidth, threshold, peakPos, drawResults );
+            unsigned int sect = std::stoi ( hname.substr ( 1, hname.find_first_of ( "_" ) - 1 ) );
+
+            if ( std::find ( sectors.begin(), sectors.end(), sect ) == sectors.end() ) continue;
+
+            double binWidth = hist->GetYaxis()->GetBinWidth ( 0 );
+
+            int projWidth = ( projWinMax-projWinMin ) / binWidth;
+
+            int projCenterBin = hist->GetYaxis()->FindBin ( projWinMin + ( projWinMax-projWinMin ) /2. );
+
+            GetStripsEdges ( hist, projCenterBin, projWidth, peakPos, threshold, drawResults );
+        }
+    }
+
+    return;
+}
+
+void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, int projWidth, double threshold, double peakPos, bool drawResults )
+{
+    vector<unsigned short> sectors = DecodeSectorsString ( sectorsList );
+
+    auto lOK = input->GetListOfKeys();
+
+    for ( int i = 0; i < lOK->GetSize(); i++ )
+    {
+        TH2F* hist = dynamic_cast<TH2F*> ( input->Get ( lOK->At ( i )->GetName() ) );
+
+        if ( hist != nullptr )
+        {
+            string hname = hist->GetName();
+
+            if ( ! ( hname[0] == 'U' || hname[0] == 'D' ) && ! ( hname.find ( "_" ) == 2 || hname.find ( "_" ) == 3 ) ) continue;
+
+            unsigned int sect = std::stoi ( hname.substr ( 1, hname.find_first_of ( "_" ) - 1 ) );
+
+            if ( std::find ( sectors.begin(), sectors.end(), sect ) == sectors.end() ) continue;
+
+            int binMaxY = GetPosCalEnBinMax ( hist, threshold );
+
+            GetStripsEdges ( hist, binMaxY, projWidth, peakPos, threshold, drawResults );
         }
     }
 
@@ -3510,7 +3966,8 @@ void GoddessCalib::GetBestParameters ( float mean, float fwhm, string detType, s
     {
         if ( counter%100 == 0 )
         {
-            cout << "Treated " << std::setw ( 8 ) << counter << " / " << nHists << " ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 4 ) << ( float ) counter/nHists*100. << " % )\r" << std::flush;
+            cout << "Treated " << std::setw ( 8 ) << counter << " / " << nHists;
+            cout << " ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 4 ) << ( float ) counter/nHists*100. << " % )\r" << std::flush;
         }
 
         counter++;

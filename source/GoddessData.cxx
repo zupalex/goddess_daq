@@ -18,11 +18,86 @@
 #include <iostream>
 #include <fstream>
 
+double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det, float enear, float efar )
+{
+    superX3* sx3det = dynamic_cast<superX3*> ( det );
+
+    if ( gr != nullptr )
+    {
+        double* grX = gr->GetX();
+        double* grY = gr->GetY();
+
+        int low = -1, up = -1;
+
+        low = TMath::BinarySearch ( gr->GetN(), grX, toEval );
+
+        if ( low == -1 ) return grY[0];
+        else if ( grX[low] == toEval ) return grY[low];
+        else
+        {
+            if ( low == gr->GetN() - 1 ) return grY[low];
+
+            up = low+1;
+
+            if ( low != -1 && up != -1 )
+            {
+                if ( grX[low] == grX[up] ) return grY[low];
+                else
+                {
+                    if ( TMath::Abs ( grY[up] - grY[low] ) >= 0.1 && sx3det != nullptr )
+                    {
+// 		      std::cerr << "/**\\__/**\\__/**\\__/**\\__/**\\__/**\\__/**\\__/**\\__/**\\" << std::endl;
+//                         std::cerr << "Found a jump at relative position " << std::fixed << std::setprecision(3) << toEval;
+
+//                         bool jumpUp = grY[up] - grY[low] <= -0.1;
+
+                        std::string grName = gr->GetName();
+                        std::size_t findStrip = grName.find_last_of ( "_" );
+
+                        if ( findStrip != std::string::npos )
+                        {
+                            int stripNbr = std::stoi ( grName.substr ( findStrip+1 ) );
+
+//                             std::cerr << " for " << det->GetPosID() << " strip # " << stripNbr << std::endl;
+
+                            if ( sx3det->enJumpsCorrectionGraphs[stripNbr].size() > 0 )
+                            {
+//                                 std::cerr << "Equation for jumps are known for this strip:\n";
+
+                                auto itr = sx3det->enJumpsCorrectionGraphs[stripNbr].lower_bound ( toEval );
+
+                                if ( itr != sx3det->enJumpsCorrectionGraphs[stripNbr].end() )
+                                {
+                                    std::pair<float, float> jumpEq = itr->second;
+
+//                                     std::cerr << "y = " << jumpEq.first << " x + " << jumpEq.second << std::endl;
+//                                     if ( efar > enear * jumpEq.first + jumpEq.second ) std::cerr << "Enear = " << enear << "   /   Efar = " << efar << std::endl;
+
+                                    if ( efar < enear * jumpEq.first + jumpEq.second ) return grY[up];
+                                    else return grY[low];
+                                }
+                            }
+                        }
+                        else return 1.;
+
+//                         std::cerr << std::endl;
+                    }
+                    else return ( grY[up] + ( toEval - grX[up] ) * ( grY[low] - grY[up] ) / ( grX[low] - grX[up] ) );
+                }
+            }
+        }
+    }
+
+    return 1.;
+}
+
 GoddessData::GoddessData ( std::string configFilename )
 {
+    ( void ) configFilename; // to prevent useless warning about this variable not being used for the moment....
+
     PARS* Pars = SortManager::sinstance()->execParams;
 
-    config = new GoddessConfig ( "goddess.position", configFilename );
+    config = SortManager::sinstance()->gConfig;
 
     gamData = new std::vector<GamData>;
     siData = new std::vector<SiDataBase>;
@@ -984,13 +1059,27 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                             en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
                             en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
 
+                            std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
+
                             if ( writeDetails )
                             {
-                                eP->push_back ( en_near );
+                                if ( ( Pars->noCalib + nc ) % 2 == 0 )
+                                {
+                                    en_near = ( en_near - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
+                                    eP->push_back ( en_near );
+                                }
+                                else eP->push_back ( en_near );
+
 //                                 tsP->push_back ( tsPMap[nearStrip] );
                                 stripP->push_back ( st_ );
 
-                                eN->push_back ( en_far );
+                                if ( ( Pars->noCalib + nc ) % 2 == 0 )
+                                {
+                                    en_far = ( en_far - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
+                                    eN->push_back ( en_far );
+                                }
+                                else eN->push_back ( en_far );
+
 //                                 tsN->push_back ( tsPMap[farStrip] );
                                 stripN->push_back ( -1 );
                             }
@@ -1003,12 +1092,10 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                             {
                                 if ( ( Pars->noCalib + nc ) % 2 == 0 )
                                 {
-                                    std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
-
                                     enear_tot += en_near;
                                     efar_tot += en_far;
 
-                                    eSumP += ( en_ - resStripParCal[st_].at ( 0 ) ) * resStripParCal[st_].at ( 1 );
+                                    eSumP += en_;
 
                                     if ( en_ > enMax )
                                     {
@@ -1052,9 +1139,33 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     }
                 }
 
+                TVector3 eventPos ( 0, 0, 0 );
+
+                if ( stripMaxP >= 0 )
+                {
+                    eventPos = det->GetEventPosition ( stripMaxP, stripMaxN, enear_tot, efar_tot );
+                    datum->pos.push_back ( eventPos );
+                }
+
 //                 if ( *eSumP != 0.0 )
                 if ( eSumP > 0 )
                 {
+                    if ( eventPos != TVector3 ( 0, 0, 0 ) && dynamic_cast<superX3*> ( det ) != nullptr )
+                    {
+                        superX3* sx3det = ( superX3* ) det;
+                        TGraph* shiftGr = sx3det->enShiftVsPosGraph[stripMaxP];
+
+                        if ( shiftGr != nullptr )
+                        {
+                            double relPos = ( eventPos.Z() - det->GetPStripCenterPos ( stripMaxP ).Z() ) / 75.;
+
+                            double shiftCoeff = GoddessGraphEval ( shiftGr, relPos, det, enear_tot, efar_tot );
+//                             shiftCoeff = shiftGr->Eval ( ( eventPos.Z() - det->GetPStripCenterPos ( stripMaxP ).Z() ) / 75. );
+
+                            eSumP *= shiftCoeff;
+                        }
+                    }
+
                     datum->eSum.push_back ( eSumP );
                     datum->stripMax.push_back ( stripMaxP + 100*det->GetDepth() );
                     datum->timestampMax.push_back ( tsMaxP );
@@ -1069,16 +1180,11 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     datum->timestampMax.push_back ( tsMaxN );
                     datum->mult.push_back ( multN );
                 }
-
-                if ( stripMaxP >= 0 )
-                {
-                    datum->pos.push_back ( det->GetEventPosition ( stripMaxP, stripMaxN, enear_tot, efar_tot ) );
-                }
             }
         }
     }
 
-    //Loop over the DGS events
+//Loop over the DGS events
     for ( unsigned int dgsEvtNum = 0; dgsEvtNum < ( dgsEvts->size() ); dgsEvtNum++ )
     {
         // For the moment I do not want to fill the tree with gamma if there was nothing in ORRUBA
@@ -1120,7 +1226,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
         }
     }
 
-    //Deal with the ion chamber
+//Deal with the ion chamber
     if ( firedDets.find ( "ion" ) != firedDets.end() )
     {
         IonData datum;
@@ -1136,15 +1242,15 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
         }
     }
 
-    //Deal with the neutron detectors
+//Deal with the neutron detectors
     for ( auto lsItr = liquidScints.begin(); lsItr != liquidScints.end(); ++lsItr )
     {
         //UNCOMMENT THIS OR DO SOMETHING HERE WHEN WE WANT TO USE IT
         //LiquidScint *liqDet = lsItr->second;
     }
 
-    //if (!gamData->empty() && !siData->empty()) tree->Fill();
-    //std::cout << ionData->size() << '\n';
+//if (!gamData->empty() && !siData->empty()) tree->Fill();
+//std::cout << ionData->size() << '\n';
 
     SortManager::sinstance()->SetGamDets ( gamData );
     SortManager::sinstance()->SetSiDets ( siData );

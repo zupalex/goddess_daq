@@ -11,7 +11,7 @@ int main ( int argc, char** argv )
 
     SortManager* theSortManager = SortManager::sinstance();
     PARS* Pars = theSortManager->execParams;
-    
+
     int j, i, HaveChatFile = 0;
     char* p;
     char ChatFileName[STRLEN];
@@ -39,8 +39,13 @@ int main ( int argc, char** argv )
     Pars->userFilter = "";
     Pars->InputSrc = NOTDEF;
     Pars->HaveRootFileName = 0;
+
     strcpy ( Pars->ConfigFile, "Uninitialized" );
     sprintf ( Pars->ROOTFileOption, "UNDEFINED" );
+
+    Pars->sx3EnAdjustFile = "";
+    Pars->qqq5EnAdjustFile = "";
+
     Pars->GGMAX = 2000;
     Pars->ndetlimlo = 1;
     Pars->ndetlimhi = 8;
@@ -175,6 +180,18 @@ int main ( int argc, char** argv )
                 j++;
                 strcpy ( Pars->ConfigFile, argv[j++] );
                 printf ( "will read config file from: %s ...\n", Pars->ConfigFile );
+            }
+            else if ( ( p = strstr ( argv[j], "-sx3enadjust" ) ) != NULL )
+            {
+                j++;
+                Pars->sx3EnAdjustFile = (string) argv[j++];
+                printf ( "will apply a correction to the SX3 energies based on the following file: %s ...\n", Pars->sx3EnAdjustFile.c_str() );
+            }
+            else if ( ( p = strstr ( argv[j], "-qqq5enadjust" ) ) != NULL )
+            {
+                j++;
+                Pars->qqq5EnAdjustFile = (string) argv[j++];
+                printf ( "will apply a correction to the QQQ5 energies based on the following file: %s ...\n", Pars->qqq5EnAdjustFile.c_str() );
             }
             else if ( ( p = strstr ( argv[j], "-nocalib" ) ) != NULL )
             {

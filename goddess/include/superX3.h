@@ -98,9 +98,9 @@ public:
     ///Return the strip in which the specified contact is attached.
     static int GetStrip ( int contact );
 
-    TVector3* GetPStripCenterPos()
+    TVector3 GetPStripCenterPos ( int strip )
     {
-        return pStripCenterPos;
+        return pStripCenterPos[strip];
     }
 
     TVector3* GetNStripCenterPos()
@@ -183,7 +183,7 @@ public:
         return stripPosCal;
     };
     ///Return the computed event position.
-    TVector3 GetEventPosition(int pStripHit, int nStripHit, float eNear, float eFar);
+    TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar );
     ///Return the vector containing resistive strip energy calibration polynomial parameters.
     std::vector<float>* GetResStripParCal()
     {
@@ -223,6 +223,11 @@ public:
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
+
+    ///Graph giving the energy shift coefficient to apply as a function of the position interaction in the detector.
+    TGraph* enShiftVsPosGraph[4];
+    std::map<float, std::pair<float, float>> enJumpsCorrectionGraphs[4];
+    virtual void SetEnShiftVsPosGraph ( std::string graphFileName );
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( superX3, 1 );
