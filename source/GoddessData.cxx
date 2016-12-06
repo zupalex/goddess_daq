@@ -1061,24 +1061,20 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
                             std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
 
+                            if ( ( Pars->noCalib + nc ) % 2 == 0 )
+                            {
+                                en_near = ( en_near - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
+                                en_far = ( en_far - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
+                            }
+
                             if ( writeDetails )
                             {
-                                if ( ( Pars->noCalib + nc ) % 2 == 0 )
-                                {
-                                    en_near = ( en_near - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
-                                    eP->push_back ( en_near );
-                                }
-                                else eP->push_back ( en_near );
+                                eP->push_back ( en_near );
 
 //                                 tsP->push_back ( tsPMap[nearStrip] );
                                 stripP->push_back ( st_ );
 
-                                if ( ( Pars->noCalib + nc ) % 2 == 0 )
-                                {
-                                    en_far = ( en_far - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
-                                    eN->push_back ( en_far );
-                                }
-                                else eN->push_back ( en_far );
+                                eN->push_back ( en_far );
 
 //                                 tsN->push_back ( tsPMap[farStrip] );
                                 stripN->push_back ( -1 );

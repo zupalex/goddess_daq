@@ -3,6 +3,8 @@
 GoddessCalib* GoddessCalib::s_instance = 0;
 GoddessCalib* gC;
 
+char esc ( 27 );
+
 GoddessCalib::GoddessCalib() : GoddessAnalysis()
 {
     calChain = nullptr;
@@ -927,8 +929,8 @@ void GoddessCalib::OnClickGetLinesInfo ()
 
     if ( isUS_ == -1 || sect_ == -1 || strip_ == -1 )
     {
-        cerr << "The graph used do not fulfill the name requirement! Did you produce it with the GoddessCalib class built-in functions?\n";
-        cerr << "To get help with the energy calibration procedure, type GoddessCalib::EnCalibHelp()\n";
+        cerr << esc << "[38;2;255;0;0m" << "The graph used do not fulfill the title requirement! Did you produce it with the GoddessCalib class built-in functions?" << esc << "[0m \n";
+        cerr << esc << "[38;2;255;0;0m" << "To get help with the energy calibration procedure, type GoddessCalib::EnCalibHelp()" << esc << "[0m \n";
         return;
     }
 
@@ -986,7 +988,7 @@ void GoddessCalib::ValidateGetStripsEdges()
 
     TGNumberEntryField* projMinIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Win Min IF" );
     TGNumberEntryField* projMaxIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Proj Win Max IF" );
-    
+
     TGNumberEntryField* shiftGrNPointsIF = ( TGNumberEntryField* ) FindFrameByName ( prompt, "Shift Graph NPoints IF" );
 
     int projWidth_ = projWidthIF->GetNumber();
@@ -996,7 +998,7 @@ void GoddessCalib::ValidateGetStripsEdges()
     double projWinMax_ = projMaxIF->GetNumber();
 
     int shiftGrNPoints_ = shiftGrNPointsIF->GetNumber();
-    
+
     bool doDraw = drawResCB->GetState();
     string sectorsList = sectorsIF->GetText();
 

@@ -866,6 +866,28 @@ template<typename THist, typename... Rest> THist* DrawSum ( THist* h1, THist* h2
     else return nullptr;
 }
 
+inline TH1F* DrawSum ( TH1F* h1, TH1F* h2 )
+{
+  TH1F* hist = (TH1F*) h1->Clone();
+  
+  hist->Add(h2);
+  
+  hist->Draw();
+  
+  return hist;
+}
+
+inline TH2F* DrawSum ( TH2F* h1, TH2F* h2 )
+{
+  TH2F* hist = (TH2F*) h1->Clone();
+  
+  hist->Add(h2);
+  
+  hist->Draw("colz");
+  
+  return hist;
+}
+
 TH1F* DrawSum ( TH1F* h1, TH1F* h2, bool cloneFirst = true, bool doDraw = true );
 
 TH1F* DrawSum ( TH1F** hists, string toSum );

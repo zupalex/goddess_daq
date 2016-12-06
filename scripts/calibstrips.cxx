@@ -730,434 +730,186 @@ prompt2DHist:
 
     DoMyJob ( histToTreat, userWidth, userGaussNbr, userDraw, userWrite, userPeakEn, userThr, userUpperLimit, userIgnore );
 }
-/*
-std::map<unsigned short, std::pair<float, float>> GetCalibMap ( unsigned short fstCh, string inFileName )
+
+
+map<string, TH1F*> nSideCalGraphs;
+map<string, TH2F*> nSideCalGraphs2D;
+
+void GetBacksideEnCalPlots ( TTree* tree, long long int nentries = 0, long long firstEv = 0 )
 {
-    std::map<unsigned short, std::pair<float, float>> calMap_;
+    string qqq5Aliases = "ABCD";
 
-    ifstream fileToRead;
-    fileToRead.open ( inFileName.c_str() );
-
-    float p0Read, p1Read;
-
-    unsigned short ch = fstCh;
-
-    if ( fileToRead.is_open() )
+    for ( int sect = 0; sect < 4; sect++ )
     {
-        while ( !fileToRead.eof() )
+        for ( int strip = 0; strip < 4; strip++ )
         {
-            fileToRead >> p0Read >> p1Read;
+            string hkey = Form ( "QQQ5 U%c n%d", qqq5Aliases[sect], strip );
+            string hname = Form ( "QQQ5_U%c_n%d", qqq5Aliases[sect], strip );
 
-            cout << "Read " << ch << " ->" << p0Read << " / " << p1Read << std::endl;
-
-            calMap_[ch] = std::make_pair<float, float> ( ( float ) p0Read, ( float ) p1Read );
-
-            ch++;
-        }
-    }
-
-    fileToRead.close();
-
-    myCalMap = calMap_;
-
-    return calMap_;
-}
-
-// *************************************************************************************************************** //
-
-void GetEnHistsPerStrip ( TChain* data_, string sectorsStr = "all", string stripsStr = "all" )
-{
-    cout << "The following files will be treated:\n";
-
-    data_->ls();
-
-    vector<SiDataBase>* siData = new vector<SiDataBase>;
-
-    data_->SetBranchAddress ( "si", &siData );
-
-    vector<unsigned short> sectorsList, stripsList;
-
-    if ( sectorsStr == "all" ) sectorsList = {0, 1, 2, 3};
-    else sectorsList = DecodeSectorsString ( sectorsStr );
-
-
-    if ( stripsStr == "all" )
-    {
-        for ( int i = 0; i < 32; i++ ) stripsList.push_back ( i );
-    }
-    else stripsList = DecodeSectorsString ( stripsStr );
-
-    TH1F* hQQQ5En[4][32];
-
-    string QQQ5Str = "ABCD";
-
-    for ( int i = 0; i < 4; i++ )
-    {
-        for ( int j = 0; j < 32; j++ )
-        {
-            hQQQ5En[i][j] = new TH1F ( Form ( "hQQQ5En_U%c_s%d",QQQ5Str[i], j ), Form ( "QQQ5 U%c s%d Energy Histogram",QQQ5Str[i], j ), 500, 0, 10 );
-        }
-    }
-
-    for ( long long int i = 0; i < data_->GetEntries(); i++ )
-    {
-        if ( i%10000 == 0 )
-        {
-            cout << "Treated " << std::setw ( 9 ) << i << " / " << std::setw ( 9 ) << data_->GetEntries();
-            cout << " ( " << std::setw ( 5 ) << std::fixed << std::setprecision ( 2 ) << ( float ) i/data_->GetEntries() *100. << "% )\r" << std::flush;
+            if ( sect < 2 ) nSideCalGraphs[hkey] = new TH1F ( hname.c_str(), hkey.c_str(), 3000 , 0, 300000 );
+            else nSideCalGraphs[hkey] = new TH1F ( hname.c_str(), hkey.c_str(), 1000 , 0, 10000 );
         }
 
-        data_->GetEntry ( i );
+        string hkey = Form ( "QQQ5 U%c n", qqq5Aliases[sect] );
+        string hname = Form ( "QQQ5_U%c_n", qqq5Aliases[sect] );
 
-        for ( unsigned int j = 0; j < siData->size(); j++ )
+        if ( sect < 2 ) nSideCalGraphs2D[hkey] = new TH2F ( hname.c_str(), hkey.c_str(), 4, 0, 4, 3000 , 0, 300000 );
+        else nSideCalGraphs2D[hkey] = new TH2F ( hname.c_str(), hkey.c_str(), 4, 0, 4, 2000 , 0, 10000 );
+    }
+
+    for ( int sect = 0; sect < 12; sect++ )
+    {
+        for ( int strip = 0; strip < 4; strip++ )
         {
-            if ( siData->at ( j ).isUpstream && !siData->at ( j ).isBarrel &&  siData->at ( j ).MultLayer ( 1, false ) == 1 )
+            string hkey = Form ( "SuperX3 U%d n%d", sect, strip );
+            string hname = Form ( "SuperX3_U%d_n%d", sect, strip );
+
+            if ( sect > 0 && sect < 7 ) nSideCalGraphs[hkey] = new TH1F ( hname.c_str(), hkey.c_str(), 3000 , 0, 300000 );
+            else nSideCalGraphs[hkey] = new TH1F ( hname.c_str(), hkey.c_str(), 2000 , 0, 10000 );
+        }
+
+        string hkey = Form ( "SuperX3 U%d n", sect );
+        string hname = Form ( "SuperX3_U%d_n", sect );
+
+        if ( sect > 0 && sect < 7 ) nSideCalGraphs2D[hkey] = new TH2F ( hname.c_str(), hkey.c_str(), 4, 0, 4, 3000 , 0, 300000 );
+        else nSideCalGraphs2D[hkey] = new TH2F ( hname.c_str(), hkey.c_str(), 4, 0, 4, 2000 , 0, 10000 );
+    }
+
+    vector<SiDataDetailed>* siDataVect = new vector<SiDataDetailed>;
+
+    tree->SetBranchAddress ( "si", &siDataVect );
+
+    if ( firstEv > tree->GetEntries()-1 ) return;
+
+    if ( nentries == 0 || nentries + firstEv > tree->GetEntries() ) nentries = tree->GetEntries() - firstEv;
+
+    for ( long long int ev = firstEv; ev < nentries; ev++ )
+    {
+        if ( ev%10000 == 0 )
+        {
+            cout << "Events treated: " << std::setw ( 9 ) << ev-firstEv << " / " << nentries << " ( " << std::fixed << std::setprecision ( 2 ) << std::setw ( 6 ) << ( float ) ( ev-firstEv ) / nentries * 100. << " % )\r" << std::flush;
+        }
+
+        tree->GetEntry ( ev );
+
+        if ( siDataVect->size() > 0 )
+        {
+            for ( unsigned int i = 0; i < siDataVect->size(); i++ )
             {
-                int sector = siData->at ( j ).sector;
-                int strip = siData->at ( j ).StripMaxLayer ( 1, false );
+                SiDataDetailed siData = siDataVect->at ( i );
 
-//                 if ( std::find ( sectorsList.begin(), sectorsList.end(), sector ) != sectorsList.end()
-//                         && std::find ( stripsList.begin(), stripsList.end(), strip ) != stripsList.end() )
-//                 {
-//                     hQQQ5En[sector][strip]->Fill ( siData->at ( j ).ESumLayer ( 1, false ) );
-//                 }
+                bool isUpstream = siData.isUpstream;
+                bool isBarrel = siData.isBarrel;
+                int sector = siData.sector;
 
-                hQQQ5En[sector][strip]->Fill ( siData->at ( j ).ESumLayer ( 1, false ) );
+                if ( isUpstream && siData.E1.en.n.size() > 0 )
+                {
+                    for ( unsigned int j = 0; j < siData.E1.en.n.size(); j++ )
+                    {
+                        if ( siData.E1.strip.n[j] >= 0 )
+                        {
+                            string hkey;
+
+                            if ( isBarrel ) hkey = Form ( "SuperX3 U%d n", sector );
+                            else hkey = Form ( "QQQ5 U%c n", qqq5Aliases[sector] );
+
+                            nSideCalGraphs[Form ( "%s%d", hkey.c_str(), siData.E1.strip.n[j] )]->Fill ( siData.E1.en.n[j] );
+
+                            nSideCalGraphs2D[hkey]->Fill ( siData.E1.strip.n[j], siData.E1.en.n[j] );
+                        }
+                    }
+                }
             }
         }
     }
 
-    cout << "\n\n";
-
-    TFile* outFile = new TFile ( "QQQ5_Energy_per_strip.root", "recreate" );
-
-    outFile->cd();
-
-    for ( unsigned int i = 0; i < sectorsList.size(); i++ )
-    {
-        for ( unsigned int j = 0; j < stripsList.size(); j++ )
-        {
-            hQQQ5En[sectorsList[i]][stripsList[j]]->Write();
-        }
-    }
-
-    outFile->Close();
+    cout << endl;
 
     return;
 }
 
-void GetEnHistsPerStrip ( string fName, string treeName, string sectorsStr = "all", string stripsStr = "all" )
+void WriteBacksideGraphsToFile ( string fileName )
 {
-    TChain* data_ = new TChain ( treeName.c_str(), treeName.c_str() );
+    TFile* outf = new TFile ( fileName.c_str(), "recreate" );
 
-    vector<string> listOfFiles = DecodeFilesToTreat ( fName );
-
-    for ( unsigned int i = 0; i < listOfFiles.size(); i++ )
+    if ( !outf->IsOpen() )
     {
-        data_->Add ( listOfFiles[i].c_str() );
+        cerr << "Unabled to open file " << fileName << endl;
+        return;
     }
 
-    return GetEnHistsPerStrip ( data_, sectorsStr, stripsStr );
-}*/
+    for ( auto itr = nSideCalGraphs.begin(); itr != nSideCalGraphs.end(); itr++ )
+    {
+        itr->second->Write();
+    }
 
-// // *************************************************************************************************************************************** //
-// 
-// vector<std::map<int, TH1F*>> hEn_QQQ5UA;
-// vector<std::map<int, TH1F*>> hEn_QQQ5UB;
-// vector<std::map<int, TH1F*>> hEn_QQQ5UC;
-// vector<std::map<int, TH1F*>> hEn_QQQ5UD;
-// 
-// vector<std::map<int, TH1F*>> hQVal_QQQ5UA;
-// vector<std::map<int, TH1F*>> hQVal_QQQ5UB;
-// vector<std::map<int, TH1F*>> hQVal_QQQ5UC;
-// vector<std::map<int, TH1F*>> hQVal_QQQ5UD;
-// 
-// TH2F* hEn_vs_strip_QQQ5UA;
-// TH2F* hEn_vs_strip_QQQ5UB;
-// TH2F* hEn_vs_strip_QQQ5UC;
-// TH2F* hEn_vs_strip_QQQ5UD;
-// 
-// TH2F* hQval_vs_strip_QQQ5UA;
-// TH2F* hQval_vs_strip_QQQ5UB;
-// TH2F* hQval_vs_strip_QQQ5UC;
-// TH2F* hQval_vs_strip_QQQ5UD;
-// 
-// TH2F* hEn_vs_strip_QQQ5UA_mod;
-// TH2F* hEn_vs_strip_QQQ5UB_mod;
-// TH2F* hEn_vs_strip_QQQ5UC_mod;
-// TH2F* hEn_vs_strip_QQQ5UD_mod;
-// 
-// TH2F* hQval_vs_strip_QQQ5UA_mod;
-// TH2F* hQval_vs_strip_QQQ5UB_mod;
-// TH2F* hQval_vs_strip_QQQ5UC_mod;
-// TH2F* hQval_vs_strip_QQQ5UD_mod;
-// 
-// const int minMod = 40;
-// const int maxMod = 160;
-// 
-// TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeff_ = 100 )
-// {
-//     TH1F* hSum = ( TH1F* ) hists[0][modCoeff_]->Clone();
-// 
-//     for ( int i = 1; i < 32; i++ )
-//     {
-//         hSum->Add ( hists[i][modCoeff_] );
-//     }
-// 
-//     return hSum;
-// }
-// 
-// TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, int modCoeffs[32] )
-// {
-//     TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
-// 
-//     for ( int i = 1; i < 32; i++ )
-//     {
-//         hSum->Add ( hists[i][modCoeffs[i]] );
-//     }
-// 
-//     return hSum;
-// }
-// 
-// TH1F* AddAllStrips ( vector<std::map<int, TH1F*>> hists, vector<int> modCoeffs )
-// {
-//     TH1F* hSum = ( TH1F* ) hists[0][modCoeffs[0]]->Clone();
-// 
-//     for ( int i = 1; i < 32; i++ )
-//     {
-//         hSum->Add ( hists[i][modCoeffs[i]] );
-//     }
-// 
-//     return hSum;
-// }
-// 
-// TF1* FitQValGS ( TH1F* hist, float mean, float fwhm, float minBound = 0, float maxBound = 0 )
-// {
-//     TF1* fitFunc = new TF1 ( "fitFunc", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) ) + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [5],2 ) ) + [6] + [7] * x", -20, 20 );
-// 
-//     if ( minBound == 0 ) minBound = mean - 2 - fwhm;
-//     if ( maxBound == 0 ) maxBound = mean + fwhm*3;
-// 
-//     fitFunc->SetParameters ( 10, mean, fwhm, 10, mean - 2, fwhm, 1, -0.1 );
-// 
-//     hist->Fit ( fitFunc, "Q", "", minBound, maxBound );
-// 
-//     return fitFunc;
-// }
-// 
-// TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeff_ = 100 )
-// {
-//     dest->Reset();
-// 
-//     for ( int i = 0; i < 32; i++ )
-//     {
-//         unsigned int nBins = src[i][modCoeff_]->GetNbinsX();
-// 
-//         for ( unsigned int j = 0; j < nBins; j++ )
-//         {
-//             dest->Fill ( i, src[i][modCoeff_]->GetBinCenter ( j ), src[i][modCoeff_]->GetBinContent ( j ) );
-//         }
-//     }
-// 
-//     return dest;
-// }
-// 
-// TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, int modCoeffs[32] )
-// {
-//     dest->Reset();
-// 
-//     for ( int i = 0; i < 32; i++ )
-//     {
-//         unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
-// 
-//         for ( unsigned int j = 0; j < nBins; j++ )
-//         {
-//             dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
-//         }
-//     }
-// 
-//     return dest;
-// }
-// 
-// TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>> src, TH2F* dest, vector<int> modCoeffs )
-// {
-//     dest->Clear();
-// 
-//     for ( int i = 0; i < 32; i++ )
-//     {
-//         unsigned int nBins = src[i][modCoeffs[i]]->GetNbinsX();
-// 
-//         for ( unsigned int j = 0; j < nBins; j++ )
-//         {
-//             dest->Fill ( i, src[i][modCoeffs[i]]->GetBinCenter ( j ), src[i][modCoeffs[i]]->GetBinContent ( j ) );
-//         }
-//     }
-// 
-//     return dest;
-// }
-// 
-// void InitSiEnergySpectra ( unsigned int nBins, int binMin, int binMax )
-// {
-//     for ( int i = 0; i < 32; i++ )
-//     {
-//         float modCoeff = minMod;
-// 
-//         std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
-// 
-//         while ( modCoeff <= maxMod )
-//         {
-//             newMapEntryA[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-//             newMapEntryB[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-//             newMapEntryC[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-//             newMapEntryD[modCoeff] = new TH1F ( Form ( "hEn_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Si Energy QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-// 
-//             modCoeff += 1;
-//         }
-// 
-//         hEn_QQQ5UA.push_back ( newMapEntryA );
-//         hEn_QQQ5UB.push_back ( newMapEntryB );
-//         hEn_QQQ5UC.push_back ( newMapEntryC );
-//         hEn_QQQ5UD.push_back ( newMapEntryD );
-//     }
-// 
-//     hEn_vs_strip_QQQ5UA = new TH2F ( "hEn_vs_strip_QQQ5UA", "Si Energy vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
-//     hEn_vs_strip_QQQ5UB = new TH2F ( "hEn_vs_strip_QQQ5UB", "Si Energy vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
-//     hEn_vs_strip_QQQ5UC = new TH2F ( "hEn_vs_strip_QQQ5UC", "Si Energy vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
-//     hEn_vs_strip_QQQ5UD = new TH2F ( "hEn_vs_strip_QQQ5UD", "Si Energy vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
-// 
-//     hEn_vs_strip_QQQ5UA_mod = new TH2F ( "hEn_vs_strip_QQQ5UA_mod", "Si Energy vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
-//     hEn_vs_strip_QQQ5UB_mod = new TH2F ( "hEn_vs_strip_QQQ5UB_mod", "Si Energy vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
-//     hEn_vs_strip_QQQ5UC_mod = new TH2F ( "hEn_vs_strip_QQQ5UC_mod", "Si Energy vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
-//     hEn_vs_strip_QQQ5UD_mod = new TH2F ( "hEn_vs_strip_QQQ5UD_mod", "Si Energy vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
-// 
-//     return;
-// }
-// 
-// void InitQValSpectra ( unsigned int nBins, int binMin, int binMax )
-// {
-//     for ( int i = 0; i < 32; i++ )
-//     {
-//         float modCoeff = minMod;
-// 
-//         std::map<int, TH1F*> newMapEntryA, newMapEntryB, newMapEntryC, newMapEntryD;
-// 
-//         while ( modCoeff <= maxMod )
-//         {
-//             newMapEntryA[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UA_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UA strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-//             newMapEntryB[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UB_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UB strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-//             newMapEntryC[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UC_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UC strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-//             newMapEntryD[modCoeff] = new TH1F ( Form ( "hQVal_QQQ5_UD_s%d_mod%f", i, modCoeff ), Form ( "Q-Value QQQ5 UD strip #%d mod %f", i, modCoeff ), nBins, binMin, binMax );
-// 
-//             modCoeff += 1;
-//         }
-// 
-//         hQVal_QQQ5UA.push_back ( newMapEntryA );
-//         hQVal_QQQ5UB.push_back ( newMapEntryB );
-//         hQVal_QQQ5UC.push_back ( newMapEntryC );
-//         hQVal_QQQ5UD.push_back ( newMapEntryD );
-//     }
-// 
-//     hQval_vs_strip_QQQ5UA = new TH2F ( "hQval_vs_strip_QQQ5UA", "Q-Value vs. Strip# QQQ5 UA", 32, 0, 32, nBins, binMin, binMax );
-//     hQval_vs_strip_QQQ5UB = new TH2F ( "hQval_vs_strip_QQQ5UB", "Q-Value vs. Strip# QQQ5 UB", 32, 0, 32, nBins, binMin, binMax );
-//     hQval_vs_strip_QQQ5UC = new TH2F ( "hQval_vs_strip_QQQ5UC", "Q-Value vs. Strip# QQQ5 UC", 32, 0, 32, nBins, binMin, binMax );
-//     hQval_vs_strip_QQQ5UD = new TH2F ( "hQval_vs_strip_QQQ5UD", "Q-Value vs. Strip# QQQ5 UD", 32, 0, 32, nBins, binMin, binMax );
-// 
-//     hQval_vs_strip_QQQ5UA_mod = new TH2F ( "hQval_vs_strip_QQQ5UA_mod", "Q-Value vs. Strip# QQQ5 UA mod", 32, 0, 32, nBins, binMin, binMax );
-//     hQval_vs_strip_QQQ5UB_mod = new TH2F ( "hQval_vs_strip_QQQ5UB_mod", "Q-Value vs. Strip# QQQ5 UB mod", 32, 0, 32, nBins, binMin, binMax );
-//     hQval_vs_strip_QQQ5UC_mod = new TH2F ( "hQval_vs_strip_QQQ5UC_mod", "Q-Value vs. Strip# QQQ5 UC mod", 32, 0, 32, nBins, binMin, binMax );
-//     hQval_vs_strip_QQQ5UD_mod = new TH2F ( "hQval_vs_strip_QQQ5UD_mod", "Q-Value vs. Strip# QQQ5 UD mod", 32, 0, 32, nBins, binMin, binMax );
-// 
-//     return;
-// }
-// 
-// void GenerateEnergyHistPerStrip ( TChain* chain )
-// {
-//     InitSiEnergySpectra ( 200, 0, 10 );
-//     InitQValSpectra ( 500,-15,10 );
-// 
-//     vector<SiDataBase>* siData = new vector<SiDataBase>;
-// 
-//     chain->SetBranchAddress ( "si", &siData );
-// 
-//     float massBeam = 134.;
-//     float beamEk = 1337;
-//     float massTarget = 2.;
-//     float massRecoil = 135.;
-//     float massEjec = 1.;
-//     float qValGsGs = 4.1;
-// 
-//     vector<std::map<int, TH1F*>>* hQValPerSector[4];
-// 
-//     hQValPerSector[0] = &hQVal_QQQ5UA;
-//     hQValPerSector[1] = &hQVal_QQQ5UB;
-//     hQValPerSector[2] = &hQVal_QQQ5UC;
-//     hQValPerSector[3] = &hQVal_QQQ5UD;
-// 
-//     vector<std::map<int, TH1F*>>* hEnPerSector[4];
-// 
-//     hEnPerSector[0] = &hEn_QQQ5UA;
-//     hEnPerSector[1] = &hEn_QQQ5UB;
-//     hEnPerSector[2] = &hEn_QQQ5UC;
-//     hEnPerSector[3] = &hEn_QQQ5UD;
-// 
-//     float angle, qval, exEn, modCoeff;
-//     int sector, strip, mult;
-//     double siEn, newEn, newQval;
-// 
-//     for ( long long int i = 0; i < chain->GetEntries(); i++ )
-//     {
-//         if ( i%10000 == 0 )
-//         {
-//             cout << "Treated " << std::setw ( 9 ) << i << " / " << std::setw ( 9 ) << chain->GetEntries();
-//             cout << " ( " << std::setw ( 5 ) << std::fixed << std::setprecision ( 2 ) << ( float ) i/chain->GetEntries() *100. << "% )\r" << std::flush;
-//         }
-// 
-//         chain->GetEntry ( i );
-// 
-//         for ( unsigned int j = 0; j < siData->size(); j++ )
-//         {
-//             angle = siData->at ( j ).Angle ( 1 );
-// //             qval = siData->at ( j ).QValue ( massBeam, beamEk, massTarget, massEjec );
-// 
-// //             exEn = -qval + qValGsGs;
-// 
-//             sector = siData->at ( j ).sector;
-//             strip = siData->at ( j ).StripMaxLayer ( 1, false );
-//             mult = siData->at ( j ).MultLayer ( 1, false );
-// 
-//             siEn = siData->at ( j ).ESumLayer ( 1, false );
-// 
-//             if ( angle != 0 && siEn > 0 && mult == 1 )
-//             {
-//                 if ( siData->at ( j ).isUpstream && !siData->at ( j ).isBarrel )
-//                 {
-//                     modCoeff = minMod;
-// 
-//                     while ( modCoeff <= maxMod )
-//                     {
-//                         newEn = siEn* ( modCoeff/100. );
-// 
-//                         newQval = ( 1+massEjec/massRecoil ) * ( newEn ) - ( 1 - massBeam/massRecoil ) * ( beamEk )
-//                                   - 2 * TMath::Sqrt ( massBeam*massEjec* ( newEn ) * ( beamEk ) ) / massRecoil * TMath::Cos ( angle * TMath::Pi() / 180. );
-// 
-//                         ( hEnPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newEn );
-// 
-//                         ( hQValPerSector[sector]->at ( strip ) ) [modCoeff]->Fill ( newQval );
-// 
-//                         modCoeff += 1;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// 
-//     cout << "\n";
-// 
-//     GetQvalVsStrip ( hQVal_QQQ5UA, hQval_vs_strip_QQQ5UA );
-//     GetQvalVsStrip ( hQVal_QQQ5UB, hQval_vs_strip_QQQ5UB );
-//     GetQvalVsStrip ( hQVal_QQQ5UC, hQval_vs_strip_QQQ5UC );
-//     GetQvalVsStrip ( hQVal_QQQ5UD, hQval_vs_strip_QQQ5UD );
-// 
-//     return;
-// }
-// 
+    for ( auto itr = nSideCalGraphs2D.begin(); itr != nSideCalGraphs2D.end(); itr++ )
+    {
+        itr->second->Write();
+    }
+
+    outf->Close();
+
+    return;
+}
+
+TH2F* Get2DPlotsFrom1D ( TFile* inputf, string baseName )
+{
+    TIterator* fItr;
+
+    auto lOK = inputf->GetListOfKeys();
+
+    vector<TH1F*> histsToConvert;
+    histsToConvert.clear();
+
+    if ( lOK != nullptr )
+    {
+        fItr = lOK->MakeIterator();
+
+        TObject* obj = fItr->Next();
+
+        while ( obj != nullptr )
+        {
+            TH1F* hist = dynamic_cast<TH1F*> ( inputf->FindObjectAny ( obj->GetName() ) );
+
+            if ( hist != nullptr )
+            {
+                string histName = hist->GetName();
+
+                if ( histName.find ( baseName.c_str() ) != string::npos )
+                {
+                    cout << "Found " << histName << endl;
+
+                    histsToConvert.push_back ( ( TH1F* ) hist->Clone() );
+                }
+            }
+
+            obj = fItr->Next();
+        }
+    }
+
+    TH2F* converted = nullptr;
+
+    cout << histsToConvert.size() << " histograms to combine...\n";
+
+    if ( histsToConvert.size() > 0 )
+    {
+        int nBinsX = histsToConvert.size();
+        int nBinsY = histsToConvert[0]->GetXaxis()->GetNbins();
+
+        float binYMin = histsToConvert[0]->GetXaxis()->GetBinLowEdge ( histsToConvert[0]->GetXaxis()->GetFirst() );
+        float binYMax = histsToConvert[0]->GetXaxis()->GetBinUpEdge ( histsToConvert[0]->GetXaxis()->GetLast() );
+
+        converted = new TH2F ( Form ( "Energy_vs_Strip_%s", baseName.c_str() ), Form ( "Energy vs. Strip %s", baseName.c_str() ), nBinsX, 0, histsToConvert.size(), nBinsY, binYMin, binYMax );
+
+        for ( unsigned int i = 0; i < histsToConvert.size(); i++ )
+        {
+            for ( int bin = 0; bin < nBinsY; bin++ )
+            {
+                converted->Fill ( i, histsToConvert[i]->GetBinCenter ( bin ), histsToConvert[i]->GetBinContent ( bin ) );
+            }
+        }
+    }
+
+    return converted;
+}

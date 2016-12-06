@@ -837,7 +837,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
     static float barrelRadius = 3.750 * 25.4; //mm
     static float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
     static float sX3ActiveLength = 75.; //mm
-    static float sX3NearFrame = 3.0; //mm
+    static float sX3NearFrame = 4.0; //mm
     SolidVector pos ( 0.0, 0.0, 0.0 );
 
     TVector3 zAxis ( 0,0,1 );
@@ -864,7 +864,7 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
 
         TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
 
-        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, halfBarrelLength ) + QQQ5DA_orig_offset;
+        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, 100 ) + QQQ5DA_orig_offset;
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refQQQ5D_sectA.Angle ( zAxis ) ) : refQQQ5D_sectA.Angle ( zAxis ) );
