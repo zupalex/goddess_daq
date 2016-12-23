@@ -45,7 +45,11 @@ void BB10::ConstructBins()
 void BB10::Clear()
 {
     siDet::Clear();
-    enPtype = std::make_pair ( 0, 0.0 );
+
+    stripsP.clear();
+    enRawP.clear();
+    enCalP.clear();
+    timeP.clear();
 
     eventPos.SetXYZ ( 0, 0, 0 );
 }
@@ -62,12 +66,6 @@ void BB10::Clear()
 void BB10::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr )
 {
     siDet::SetRawValue ( contact, nType, rawValue, ignThr );
-
-    if ( !nType )
-    {
-        enPtype.first = contact;
-        enPtype.second += GetCalEnergy ( contact, nType );
-    }
 }
 
 void BB10::SetEnShiftVsPosGraph ( std::string graphFileName )
@@ -80,11 +78,153 @@ void BB10::SetEnShiftVsPosGraph ( std::string graphFileName )
     }
 }
 
-TVector3 BB10::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
+float BB10::GetEnSum ( bool nType, bool calibrated )
 {
-    ( void ) nStripHit; // to prevent useless warning about this variable not being used currently...
-    ( void ) eNear; // to prevent useless warning about this variable not being used currently...
-    ( void ) eFar; // to prevent useless warning about this variable not being used currently...
+    float enSum = 0.0;
+
+    std::vector<float>* toSum;
+
+    if ( !nType && calibrated ) toSum = &enCalP;
+    else if ( !nType && !calibrated ) toSum = &enRawP;
+    else return 0.0;
+
+    for ( unsigned int i = 0; i < ( *toSum ).size(); i++ )
+    {
+        enSum += toSum->at ( i );
+    }
+
+    return enSum;
+}
+
+void BB10::SortAndCalibrate ( bool doCalibrate )
+{
+    siDet::ValueMap enPMap;
+
+    enPMap = GetRawEn ( false );
+
+    siDet::TimeMap tsPMap;
+
+    tsPMap = GetTsMap ( false );
+
+    for ( auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr )
+    {
+        int st_ = stripItr->first;
+        float en_ = stripItr->second;
+
+        stripsP.push_back ( st_ );
+        enRawP.push_back ( en_ );
+        timeP.push_back ( tsPMap[st_] );
+
+        if ( doCalibrate )
+        {
+            std::vector<std::vector<float>> calPars = GetEnParCal ( false );
+
+            enCalP.push_back ( en_ * calPars[st_][1] + calPars[st_][0] );
+        }
+    }
+
+//     if ( doCalibrate )
+//     {
+//         siDet::ValueMap enCalPMap;
+//
+//         enCalPMap = GetCalEn ( false );
+//
+//         for ( auto stripItr = enCalPMap.begin(); stripItr != enCalPMap.end(); ++stripItr )
+//         {
+//             enCalP.push_back ( stripItr->second );
+//         }
+//     }
+}
+
+int BB10::GetContactMult()
+{
+    return enCalP.size();
+}
+
+int BB10::GetContactMult ( bool contactType )
+{
+    ( void ) contactType;
+
+    return enRawP.size();
+}
+
+std::vector< float > BB10::GetHitsInfo ( std::string info, std::vector<float>* dest )
+{
+    std::vector<float> request;
+
+    if ( info == "front energies raw" ) request = enRawP;
+    else if ( info == "front energies cal" ) request = enCalP;
+    else if ( info == "back energies raw" ) request.clear();
+    else if ( info == "back energies cal" ) request.clear();
+    else std::cerr << "WARNING in BB10::GetHitsInfo -> requested member " << info << " does not exist!\n";
+
+    if ( dest != nullptr ) *dest = request;
+
+    return request;
+}
+
+std::vector< int > BB10::GetHitsInfo ( std::string info, std::vector<int>* dest )
+{
+    std::vector<int> request;
+
+    if ( info == "front strips" ) request = stripsP;
+    else if ( info == "back strips" ) request.clear();
+    else std::cerr << "WARNING in BB10::GetHitsInfo -> requested member " << info << " does not exist!\n";
+
+    if ( dest != nullptr ) *dest = request;
+
+    return request;
+}
+
+std::vector< long long unsigned int > BB10::GetHitsInfo ( std::string info, std::vector<long long unsigned int>* dest )
+{
+    std::vector<long long unsigned int> request;
+
+    if ( info == "front timestamps" ) request = timeP;
+    else if ( info == "back timestamps" ) request.clear();
+    else std::cerr << "WARNING in BB10::GetHitsInfo -> requested member " << info << " does not exist!\n";
+
+    if ( dest != nullptr ) *dest = request;
+
+    return request;
+}
+
+void BB10::GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated )
+{
+    ( void ) stripMaxN;
+    ( void ) timeSampMaxN;
+
+    std::vector<float>* energiesP_;
+
+    if ( calibrated ) energiesP_ = &enCalP;
+    else energiesP_ = &enRawP;
+
+    float enMax = 0.0;
+
+    for ( unsigned int i = 0; i < energiesP_->size(); i++ )
+    {
+        if ( energiesP_->at ( i ) > enMax )
+        {
+            if ( stripMaxP != nullptr ) *stripMaxP = stripsP.at ( i );
+            enMax = energiesP_->at ( i );
+            if ( timeSampMaxP != nullptr ) *timeSampMaxP = timeP.at ( i );
+        }
+    }
+}
+
+int BB10::GetMultiplicity ( bool nType, bool calibrated )
+{
+    ( void ) nType;
+
+    if ( calibrated ) return enCalP.size();
+    else if ( !calibrated ) return enRawP.size();
+    else return 0;
+}
+
+TVector3 BB10::GetEventPosition ( bool calibrated )
+{
+    int pStripHit;
+    GetMaxHitInfo ( &pStripHit, nullptr, nullptr, nullptr, calibrated );
 
     TVector3 interactionPos = pStripCenterPos[pStripHit];
 

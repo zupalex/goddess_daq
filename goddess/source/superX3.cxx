@@ -56,7 +56,6 @@ void superX3::Clear()
 {
     siDet::Clear();
 
-    enCalPstrip.clear();
     stripPosRaw.clear();
     stripPosCal.clear();
     for ( int i = 0; i < 4; i++ )
@@ -64,9 +63,18 @@ void superX3::Clear()
         stripContactMult[i] = 0;
     }
 
-    enPtype = std::make_pair ( 0, 0.0 );
-    enNtype = std::make_pair ( 0, 0.0 );
-    enCal = 0;
+    stripsP.clear();
+    enNearRaw.clear();
+    enFarRaw.clear();
+    enNearCal.clear();
+    enFarCal.clear();
+    timeNear.clear();
+    timeFar.clear();
+
+    stripsN.clear();
+    enRawN.clear();
+    enCalN.clear();
+    timeN.clear();
 
     eventPos.SetXYZ ( 0, 0, 0 );
 }
@@ -110,12 +118,6 @@ void superX3::UpdatePosition ( int strip )
     }
 
     float stripEnergy = nearEnergy + farEnergy;
-
-    //Energy calibrations done here using parameters in front of enCal resStrip in goddess.config
-    float stripCalEnergy = ( stripEnergy - parStripEnCal[strip].at ( 0 ) ) * parStripEnCal[strip].at ( 1 );
-    enCalPstrip[strip] += stripCalEnergy;
-    enPtype.first = strip;
-    enPtype.second += stripCalEnergy;
 
     //Compute the resistive strip position by
     // Pos = (N - F) / E
@@ -236,37 +238,7 @@ void superX3::SetRawValue ( unsigned int contact, bool nType, int rawValue, int 
         return;
     }
 
-    //Call parent method to handle calibration.
-//     if ( nType ) siDet::SetRawValue ( contact, nType, rawValue, ignThr );
-//     else siDet::SetRawValue ( contact, nType, rawValue, 2 );
     siDet::SetRawValue ( contact, nType, rawValue, ignThr );
-
-//     if ( !nType ) UpdatePosition ( GetStrip ( contact ) );
-
-    /*
-    if ( nType )
-    {
-        //Set the energy value only if the multiplicity is 1.
-        enNtype.first = contact;
-        enNtype.second += GetCalEnergy ( contact, nType );
-        enCal += GetCalEnergy ( contact, nType );
-    }
-    else
-    {
-        //Determine which strip this contact is in.
-        int strip = GetStrip ( contact );
-        stripContactMult[strip]++;
-
-        //If more than one contact fired we can compute position and energy.
-        if ( stripContactMult[strip] > 1 )
-        {
-            UpdatePosition ( GetStrip ( contact ) );
-            //Store the energy only if the multiplicity is one.
-            //enPtype += enCalPstrip[strip];//this is filled in UpdatePosition
-            enCal += GetCalEnergy ( contact, nType );
-        }
-    }
-    */
 }
 
 int superX3::GetStrip ( int contact )
@@ -342,14 +314,20 @@ void superX3::SetEnShiftVsPosGraph ( std::string graphFileName )
                                     jumpsGr->GetPoint ( 0, xA, yA );
                                     jumpsGr->GetPoint ( 1, xB, yB );
 
-                                    double slope = ( yB - yA ) / ( xB - xA );
-                                    double offset = ( xB * yA - xA * yB ) / ( xB - xA );
+//                                     double slope = ( yB - yA ) / ( xB - xA );
+//                                     double offset = ( xB * yA - xA * yB ) / ( xB - xA );
 
                                     float jumpKey = std::stof ( jumpGrName.substr ( toFind.length() ) );
 
 //                                     std::cerr << "Found jumps info for that detector at position " << jumpKey << std::endl;
 
-                                    enJumpsCorrectionGraphs[i][jumpKey] = std::make_pair ( slope, offset );
+//                                     enJumpsCorrectionGraphs[i][jumpKey] = std::make_pair ( slope, offset );
+
+                                    TF1* fitf = new TF1 ( "linear func", "[0] * x + [1]", 0, 1000 );
+
+                                    jumpsGr->Fit ( fitf, "QRM", "" );
+
+                                    enJumpsCorrectionGraphs[i][jumpKey] = std::make_pair ( fitf->GetParameter ( 0 ), fitf->GetParameter ( 1 ) );
                                 }
                             }
 
@@ -370,9 +348,309 @@ void superX3::SetEnShiftVsPosGraph ( std::string graphFileName )
     return;
 }
 
-TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar )
+float superX3::GetNearEn ( bool calibrated )
 {
-    ( void ) nStripHit; // to prevent useless warning about this variable not being used currently...
+    std::vector<float>* energies;
+
+    if ( calibrated ) energies = &enNearCal;
+    else energies = &enNearRaw;
+
+    float near_en = 0.0;
+
+    for ( unsigned int i = 0; i < energies->size(); i++ )
+    {
+        near_en += energies->at ( i );
+    }
+
+    return near_en;
+}
+
+float superX3::GetFarEn ( bool calibrated )
+{
+    std::vector<float>* energies;
+
+    if ( calibrated ) energies = &enFarCal;
+    else energies = &enFarRaw;
+
+    float far_en = 0.0;
+
+    for ( unsigned int i = 0; i < energies->size(); i++ )
+    {
+        far_en += energies->at ( i );
+    }
+
+    return far_en;
+}
+
+std::vector< float > superX3::GetResEn ( bool calibrated )
+{
+    std::vector<float> resEn;
+    resEn.clear();
+
+    std::vector<float>* toSumNear = 0;
+    std::vector<float>* toSumFar = 0;
+
+    if ( calibrated )
+    {
+        toSumNear = &enNearCal;
+        toSumFar = &enFarCal;
+    }
+    else if ( !calibrated )
+    {
+        toSumNear = &enNearRaw;
+        toSumFar = &enFarRaw;
+    }
+
+    if ( toSumNear->size() == toSumFar->size() )
+    {
+        for ( unsigned int i = 0; i < ( *toSumNear ).size(); i++ )
+        {
+            resEn.push_back ( toSumNear->at ( i ) + toSumFar->at ( i ) );
+        }
+    }
+
+    return resEn;
+}
+
+float superX3::GetEnSum ( bool nType, bool calibrated )
+{
+    float enSum = 0;
+
+    std::vector<float>* toSum;
+
+    bool deletePtr = false;
+
+    if ( nType && calibrated ) toSum = &enCalN;
+    else if ( nType && !calibrated ) toSum = &enRawN;
+    else if ( !nType && calibrated )
+    {
+        toSum = new std::vector<float>;
+        *toSum = GetResEn ( true );
+        deletePtr = true;
+    }
+    else if ( !nType && !calibrated )
+    {
+        toSum = new std::vector<float>;
+        *toSum = GetResEn ( false );
+        deletePtr = true;
+    }
+    else return 0.0;
+
+
+    for ( unsigned int i = 0; i < ( *toSum ).size(); i++ )
+    {
+        enSum += toSum->at ( i );
+    }
+
+    if ( deletePtr ) delete ( toSum );
+
+    return enSum;
+}
+
+void superX3::SortAndCalibrate ( bool doCalibrate )
+{
+    siDet::ValueMap enPMap, enNMap;
+
+    siDet::TimeMap tsPMap, tsNMap;
+
+    tsPMap = GetTsMap ( false );
+    tsNMap = GetTsMap ( true );
+
+    std::vector<int> alreadyTreatedStrips;
+    alreadyTreatedStrips.clear();
+
+    enPMap = GetRawEn ( false );
+
+    for ( auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr )
+    {
+        int st_ = superX3::GetStrip ( stripItr->first );
+
+        if ( std::find ( alreadyTreatedStrips.begin(), alreadyTreatedStrips.end(), st_ ) != alreadyTreatedStrips.end() ) continue;
+
+        alreadyTreatedStrips.push_back ( st_ );
+
+        int nearStrip = superX3::GetNearContact ( st_ );
+        int farStrip = superX3::GetFarContact ( st_ );
+
+        float en_near = 0.0;
+        float en_far = 0.0;
+
+        auto nearItr = enPMap.find ( nearStrip );
+        auto farItr = enPMap.find ( farStrip );
+
+        en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
+        en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
+
+        if ( en_near > 0.0 && en_far > 0.0 )
+        {
+            stripsP.push_back ( st_ );
+            timeNear.push_back ( tsPMap[nearStrip] );
+            timeFar.push_back ( tsPMap[farStrip] );
+
+            enNearRaw.push_back ( en_near );
+            enFarRaw.push_back ( en_far );
+
+            if ( doCalibrate )
+            {
+                std::vector<std::vector<float>> calPars = GetEnParCal ( false );
+
+                en_near = en_near * calPars[nearStrip][1] - calPars[nearStrip][0];
+                en_far = en_far * calPars[farStrip][1] - calPars[farStrip][0];
+
+                std::vector<float>* resStripParCal = GetResStripParCal();
+
+                en_near = en_near * resStripParCal[st_].at ( 1 ) + resStripParCal[st_].at ( 0 ) / 2.;
+                en_far = en_far * resStripParCal[st_].at ( 1 ) + resStripParCal[st_].at ( 0 ) / 2.;
+
+                if ( en_near > 0.0 && en_far > 0.0 )
+                {
+                    enNearCal.push_back ( en_near );
+                    enFarCal.push_back ( en_far );
+                }
+            }
+        }
+    }
+
+    enNMap = GetRawEn ( true );
+
+    for ( auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr )
+    {
+        int st_ = stripItr->first;
+        float en_ = stripItr->second;
+
+        stripsN.push_back ( st_ );
+        enRawN.push_back ( en_ );
+        timeN.push_back ( tsNMap[st_] );
+
+        if ( doCalibrate )
+        {
+            std::vector<std::vector<float>> calPars = GetEnParCal ( true );
+
+            enCalN.push_back ( en_ * calPars[st_][1] + calPars[st_][0] );
+        }
+    }
+}
+
+int superX3::GetContactMult()
+{
+    return enNearCal.size() + enCalN.size();
+}
+
+int superX3::GetContactMult ( bool contactType )
+{
+    if ( contactType == siDet::nType ) return enCalN.size();
+    else return enNearCal.size();
+}
+
+std::vector< float > superX3::GetHitsInfo ( std::string info, std::vector<float>* dest )
+{
+    std::vector<float> request;
+
+    if ( info == "near energies raw" ) request = enNearRaw;
+    else if ( info == "far energies raw" ) request = enFarRaw;
+    else if ( info == "back energies raw" ) request = enRawN;
+    else if ( info == "near energies cal" ) request = enNearCal;
+    else if ( info == "far energies cal" ) request = enFarCal;
+    else if ( info == "back energies cal" ) request = enCalN;
+    else std::cerr << "WARNING in superX3::GetHitsInfo -> requested member " << info << " does not exist!\n";
+
+    if ( dest != nullptr ) *dest = request;
+
+    return request;
+}
+
+std::vector< int > superX3::GetHitsInfo ( std::string info, std::vector<int>* dest )
+{
+    std::vector<int> request;
+
+    if ( info == "front strips" ) request = stripsP;
+    else if ( info == "back strips" ) request = stripsN;
+    else std::cerr << "WARNING in superX3::GetHitsInfo -> requested member " << info << " does not exist!\n";
+
+    if ( dest != nullptr ) *dest = request;
+
+    return request;
+}
+
+std::vector< long long unsigned int > superX3::GetHitsInfo ( std::string info, std::vector< long long unsigned int >* dest )
+{
+    std::vector<long long unsigned int> request;
+
+    if ( info == "near timestamps" ) request = timeNear;
+    else if ( info == "far timestamps" ) request = timeFar;
+    else if ( info == "back timestamps" ) request = timeN;
+    else std::cerr << "WARNING in superX3::GetHitsInfo -> requested member " << info << " does not exist!\n";
+
+    if ( dest != nullptr ) *dest = request;
+
+    return request;
+}
+
+
+void superX3::GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated )
+{
+    std::vector<float>* energiesN_;
+    std::vector<float>* energiesNear_;
+    std::vector<float>* energiesFar_;
+
+    if ( calibrated )
+    {
+        energiesN_ = &enCalN;
+        energiesNear_ = &enNearCal;
+        energiesFar_ = &enFarCal;
+    }
+    else
+    {
+        energiesN_ = &enRawN;
+        energiesNear_ = &enNearRaw;
+        energiesFar_ = &enFarRaw;
+    }
+
+    float enMax = 0;
+
+
+
+    for ( unsigned int i = 0; i < energiesNear_->size(); i++ )
+    {
+        if ( energiesNear_->at ( i ) + energiesFar_->at ( i ) > enMax )
+        {
+            if ( stripMaxP != nullptr ) *stripMaxP = stripsP.at ( i );
+            enMax = energiesNear_->at ( i ) + energiesFar_->at ( i );
+            if ( timeSampMaxP != nullptr ) *timeSampMaxP = ( timeNear.at ( i ) + timeFar.at ( i ) ) /2.;
+        }
+    }
+
+    enMax = 0;
+
+    for ( unsigned int i = 0; i < energiesN_->size(); i++ )
+    {
+        if ( energiesN_->at ( i ) > enMax )
+        {
+            if ( stripMaxN != nullptr ) *stripMaxN = stripsN.at ( i );
+            enMax = energiesN_->at ( i );
+            if ( timeSampMaxN != nullptr ) *timeSampMaxN = timeN.at ( i );
+        }
+    }
+}
+
+int superX3::GetMultiplicity ( bool nType, bool calibrated )
+{
+    if ( nType && calibrated ) return enCalN.size();
+    else if ( nType && !calibrated ) return enRawN.size();
+    else if ( !nType && calibrated ) return enNearCal.size();
+    else if ( !nType && !calibrated ) return enNearRaw.size();
+    else return 0;
+}
+
+TVector3 superX3::GetEventPosition ( bool calibrated )
+{
+    int pStripHit, nStripHit;
+    GetMaxHitInfo ( &pStripHit, nullptr, &nStripHit, nullptr, calibrated );
+
+    float eNear, eFar;
+
+    eNear = GetNearEn ( calibrated );
+    eFar = GetFarEn ( calibrated );
 
     float SX3_length = 75.; // mm
 
@@ -384,6 +662,8 @@ TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, 
 
     float zRes = ( ( ( eNear - eFar ) / ( eNear + eFar ) )  - recenter ) / normalize;
 
+    if ( !upStream ) zRes *= -1;
+
     TVector3 zResPos ( 0, 0, zRes * SX3_length );
 
     TVector3 interactionPos = pStripCenterPos[pStripHit] + zResPos;
@@ -393,6 +673,7 @@ TVector3 superX3::GetEventPosition ( int pStripHit, int nStripHit, float eNear, 
 
 
 ClassImp ( superX3 )
+
 
 
 

@@ -67,9 +67,9 @@ public:
     float recoilMass;
     float qvalGsGs;
 
-    void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1338., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 );
-    void SetBeamParameters ( float beamMass_ = 134., float beamEk_ = 1338. );
-    void SetBeamEk ( float beamEk_ = 1338. );
+    void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1312., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 );
+    void SetBeamParameters ( float beamMass_ = 134., float beamEk_ = 1312. );
+    void SetBeamEk ( float beamEk_ = 1312. );
     void SetBeamMass ( float beamMass_ = 134. );
     void SetTargetMass ( float targetMass_ = 2. );
     void SetEjectileMass ( float ejecMass_ = 1. );

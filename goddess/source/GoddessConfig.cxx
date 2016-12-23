@@ -835,7 +835,7 @@ bool GoddessConfig::ParseID ( std::string id, short &sector, short &depth, bool 
 SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short depth, bool upStream )
 {
     static float barrelRadius = 3.750 * 25.4; //mm
-    static float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
+//     static float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
     static float sX3ActiveLength = 75.; //mm
     static float sX3NearFrame = 4.0; //mm
     SolidVector pos ( 0.0, 0.0, 0.0 );

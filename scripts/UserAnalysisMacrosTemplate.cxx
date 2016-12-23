@@ -79,7 +79,7 @@ bool OrrubaIsDigital ( SiDataBase* siData_ )
 bool OrrubaGoodSector ( SiDataBase* siData_ )
 {
     return ( !siData_->isBarrel )
-           || ( siData_->isBarrel && siData_->isUpstream && ( siData_->sector != 9 || siData_->sector != 10 ) )
+           || ( siData_->isBarrel && siData_->isUpstream && ( siData_->sector == 0 || siData_->sector == 11 ||  siData_->sector == 9 ) )
            || ( siData_->isBarrel && !siData_->isUpstream );
 }
 
@@ -99,7 +99,14 @@ bool OrrubaEnergyThr ( SiDataBase* siData_ )
     bool isDigital = OrrubaIsDigital ( siData_ );
 
     return ( !siData_->isUpstream && ( ( isDigital && siData_->ESumLayer ( 1,false ) > 5000 ) || ( !isDigital && siData_->ESumLayer ( 1,false ) > 500 ) ) )
-           || ( siData_->isUpstream && siData_->ESumLayer ( 1,false ) > 1.2 );
+           || ( siData_->isUpstream && (
+                    ( !siData_->isBarrel && siData_->ESumLayer ( 1,false ) > 1.2 )
+                    || ( siData_->isBarrel && (
+                             ( ( siData_->sector == 0 || siData_->sector == 11 ) && siData_->ESumLayer ( 1,false ) > 1.6 )
+                             || ( siData_->sector == 9 && siData_->ESumLayer ( 1,true ) > 1.7 ) )
+                       )
+                )
+              );
 }
 
 
@@ -114,36 +121,44 @@ bool OrrubaEnergyThr ( SiDataBase* siData_ )
 
 const int maxMult = 10;
 
-TH2F* hEvsA[maxMult];
-TH2F* hEvsA_SX3U_tot[maxMult];
-TH2F* hEvsA_QQQ5U_tot[maxMult];
-TH2F* hEvsA_SX3U[12][maxMult];
-TH2F* hEvsA_QQQ5U[4][maxMult];
+TH2F* hEvsA[2][maxMult];
+TH2F* hEvsA_SX3U_tot[2][maxMult];
+TH2F* hEvsA_QQQ5U_tot[2][maxMult];
+TH2F* hEvsA_SX3U[12][2][maxMult];
+TH2F* hEvsA_QQQ5U[4][2][maxMult];
 
 void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY )
 {
-    for ( int j = 0; j < maxMult; j++ )
-    {
-        hEvsA[j] = MakeNewHist ( Form ( "En_vs_Angle_mult%d", j ), Form ( "Energy vs. Angle mult %d", j ), nBinsX, minX, maxX, nBinsY, minY, maxY );
-
-        hEvsA_SX3U_tot[j] = MakeNewHist ( Form ( "En_vs_Angle_SX3_mult%d", j ), Form ( "Energy vs. Angle SX3 Upstream mult %d", j ), nBinsX, minX, maxX, nBinsY, minY, maxY );
-
-        hEvsA_QQQ5U_tot[j] = MakeNewHist ( Form ( "En_vs_Angle_QQQ5_mult%d", j ), Form ( "Energy vs. Angle QQQ5 mult %d", j ), 34, -1, 33, nBinsY, minY, maxY );
-    }
-
-    for ( int i = 0; i < 12; i++ )
+    for ( int i = 0; i < 2; i++ )
     {
         for ( int j = 0; j < maxMult; j++ )
         {
-            hEvsA_SX3U[i][j] = MakeNewHist ( Form ( "En_vs_Angle_SX3U%d_mult%d", i, j ), Form ( "Energy vs Angle SX3 U%d mult %d", i, j ), nBinsX, minX, maxX, nBinsY, minY, maxY );
+            hEvsA[i][j] = MakeNewHist ( Form ( "En_%s_vs_Angle_mult%d", i == 0 ? "front" : "back", j ),
+                                        Form ( "Energy %s vs. Angle mult %d", i == 0 ? "front" : "back", j ), nBinsX, minX, maxX, nBinsY, minY, maxY );
+
+            hEvsA_SX3U_tot[i][j] = MakeNewHist ( Form ( "En_%s_vs_Angle_SX3_mult%d", i == 0 ? "front" : "back", j ),
+                                                 Form ( "Energy %s vs. Angle SX3 Upstream mult %d", i == 0 ? "front" : "back", j ), nBinsX, minX, maxX, nBinsY, minY, maxY );
+
+            hEvsA_QQQ5U_tot[i][j] = MakeNewHist ( Form ( "En_%s_vs_Angle_QQQ5_mult%d", i == 0 ? "front" : "back", j ),
+                                                  Form ( "Energy %s vs. Angle QQQ5 mult %d", i == 0 ? "front" : "back", j ), 34, -1, 33, nBinsY, minY, maxY );
         }
-    }
 
-    for ( int i = 0; i < 4; i++ )
-    {
-        for ( int j = 0; j < maxMult; j++ )
+        for ( int j = 0; j < 12; j++ )
         {
-            hEvsA_QQQ5U[i][j] = MakeNewHist ( Form ( "En_vs_Angle_QQQ5U%d_mult%d", i, j ), Form ( "Energy vs Angle QQQ5 U%d mult %d", i, j ), 34, -1, 33, nBinsY, minY, maxY );
+            for ( int k = 0; k < maxMult; k++ )
+            {
+                hEvsA_SX3U[j][i][k] = MakeNewHist ( Form ( "En_%s_vs_Angle_SX3U%d_mult%d", i == 0 ? "front" : "back", j, k ),
+                                                    Form ( "Energy %s vs Angle SX3 U%d mult %d", i == 0 ? "front" : "back", j, k ), nBinsX, minX, maxX, nBinsY, minY, maxY );
+            }
+        }
+
+        for ( int j = 0; j < 4; j++ )
+        {
+            for ( int k = 0; k < maxMult; k++ )
+            {
+                hEvsA_QQQ5U[j][i][k] = MakeNewHist ( Form ( "En_%s_vs_Angle_QQQ5U%d_mult%d", i == 0 ? "front" : "back", j, k ),
+                                                     Form ( "Energy %s vs Angle QQQ5 U%d mult %d", i == 0 ? "front" : "back", j, k ), 34, -1, 33, nBinsY, minY, maxY );
+            }
         }
     }
 }
@@ -152,7 +167,8 @@ bool FillEvsAHist ( SiDataBase* siData_ )
 {
     bool filled = false;
 
-    float energy = siData_->ESumLayer ( 1, false );
+    float fEnergy = siData_->ESumLayer ( 1, false );
+    float bEnergy = siData_->ESumLayer ( 1, true );
     float angle = siData_->Angle ( 1 );
 
     int sector = siData_->sector;
@@ -160,23 +176,33 @@ bool FillEvsAHist ( SiDataBase* siData_ )
 
     int mult = siData_->MultLayer ( 1, false );
 
-    if ( energy > 0  && mult < 3 )
+    if ( mult < maxMult )
     {
-        if ( angle != 0 ) hEvsA[mult]->Fill ( angle, energy );
+        if ( angle != 0 )
+        {
+            if ( fEnergy > 0 ) hEvsA[0][mult]->Fill ( angle, fEnergy );
+            if ( bEnergy > 0 ) hEvsA[1][mult]->Fill ( angle, bEnergy );
+        }
 
         if ( siData_->isUpstream )
         {
             if ( angle != 0 && siData_->isBarrel )
             {
-                hEvsA_SX3U_tot[mult]->Fill ( angle, energy );
-                hEvsA_SX3U[sector][mult]->Fill ( angle, energy );
+                if ( fEnergy > 0 ) hEvsA_SX3U_tot[0][mult]->Fill ( angle, fEnergy );
+                if ( bEnergy > 0 ) hEvsA_SX3U_tot[1][mult]->Fill ( angle, bEnergy );
+
+                if ( fEnergy > 0 ) hEvsA_SX3U[sector][0][mult]->Fill ( angle, fEnergy );
+                if ( bEnergy > 0 ) hEvsA_SX3U[sector][1][mult]->Fill ( angle, bEnergy );
 
                 filled = true;
             }
             else
             {
-                hEvsA_QQQ5U_tot[mult]->Fill ( strip, energy );
-                hEvsA_QQQ5U[sector][mult]->Fill ( strip, energy );
+                if ( fEnergy > 0 ) hEvsA_QQQ5U_tot[0][mult]->Fill ( strip, fEnergy );
+                if ( bEnergy > 0 ) hEvsA_QQQ5U_tot[1][mult]->Fill ( strip, bEnergy );
+
+                if ( fEnergy > 0 ) hEvsA_QQQ5U[sector][0][mult]->Fill ( strip, fEnergy );
+                if ( bEnergy > 0 ) hEvsA_QQQ5U[sector][1][mult]->Fill ( strip, bEnergy );
 
                 filled = true;
             }
@@ -671,12 +697,12 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     int eventNbr = 0;
 
-    float massBeam = 134.;
-    float beamEk = 1337;
-    float massTarget = 2.;
-    float massRecoil = 135.;
-    float massEjec = 1.;
-    float qValGsGs = 4.1;
+    float massBeam = gA->beamMass;
+    float beamEk = gA->beamEk;
+    float massTarget = gA->targetMass;
+    float massRecoil = gA->recoilMass;
+    float massEjec = gA->ejecMass;
+    float qValGsGs = gA->qvalGsGs;
 
     if ( maxEvents <= 0 || maxEvents > uChain->GetEntries() ) maxEvents = uChain->GetEntries();
 
@@ -730,13 +756,13 @@ void FillUserHists ( long long int maxEvents = 0 )
 
                 int gamType = gamData.type;
 
-                FillGsVsExHist ( &gamData, &siData,false, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
-
                 if ( gamData.type == 1 )
                 {
                     FilldTGammaORRUBA ( &siData, &gamData, false );
 
                     FillGsGateORRUBA ( &siData, &gamData, false );
+
+                    FillGsVsExHist ( &gamData, &siData,false, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
                 }
                 else noBGO = false;
             }
@@ -750,6 +776,8 @@ void FillUserHists ( long long int maxEvents = 0 )
                     FilldTGammaORRUBA ( &siData, &gamData, true );
 
                     FillGsGateORRUBA ( &siData, &gamData, true );
+
+                    FillGsVsExHist ( &gamData, &siData,true, massBeam, massTarget, massRecoil, massEjec, beamEk, qValGsGs );
                 }
             }
         }

@@ -327,6 +327,8 @@ GoddessAnalysis::GoddessAnalysis()
 
     userTree = nullptr;
     userChain = nullptr;
+    
+    SetReacParameters();
 }
 
 GoddessAnalysis::GoddessAnalysis ( std::string filename ) : GoddessAnalysis()

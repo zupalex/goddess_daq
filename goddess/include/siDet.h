@@ -1,7 +1,6 @@
 #ifndef SIDET_H
 #define SIDET_H
 
-#include <map>
 #include "Detector.h"
 
 ///A class to handle basic silicon detectors.
@@ -24,18 +23,18 @@ private:
     unsigned short numNtype;
 
     ///Vector of raw energies for p type contacts.
-    ValueMap enRawP;
+    ValueMap enRawPMap;
     ///Vector of raw energies for n type contacts.
-    ValueMap enRawN;
+    ValueMap enRawNMap;
     ///Vector of calibrated energies for p type contacts.
-    ValueMap enCalP;
+    ValueMap enCalPMap;
     ///Vector of calibrated energies for n type contacts.
-    ValueMap enCalN;
+    ValueMap enCalNMap;
 
     ///Map of p-type contact timestamps.
-    TimeMap timeP;
+    TimeMap timePMap;
     ///Map of n-type contact timestamps.
-    TimeMap timeN;
+    TimeMap timeNMap;
 
     ///The calibration parameters for p type contacts
     std::vector<std::vector<float>> parEnCalP; //!
@@ -67,12 +66,22 @@ public:
     ///Set the timestamp for the channel.
     virtual void SetTimeStamp ( unsigned int contact, bool contactType, unsigned long long timestamp );
 
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true ) = 0;
+    virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true ) = 0;
+
+    virtual void SortAndCalibrate ( bool doCalibrate = true ) = 0;
+
+    virtual std::vector<float> GetHitsInfo ( std::string info, std::vector<float>* dest = nullptr ) = 0;
+    virtual std::vector<int> GetHitsInfo ( std::string info, std::vector<int>* dest = nullptr ) = 0;
+    virtual std::vector<long long unsigned int> GetHitsInfo ( std::string info, std::vector<long long unsigned int>* dest = nullptr ) = 0;
+    virtual int GetMultiplicity ( bool nType = false, bool calibrated = true ) = 0;
+
     ///Get the calibrated energy of the contact specified.
     float GetCalEnergy ( int contact, bool nType = false );
     ///Return the total number of fired contacts above theshold.
-    int GetContactMult();
+    virtual int GetContactMult() = 0;
     ///Return the number of fired contacts above threhsold for the specified type.
-    int GetContactMult ( bool contactType );
+    virtual int GetContactMult ( bool contactType ) = 0;
 
     ///Return the smallest timestamp.
     unsigned long long GetTimeStamp();
@@ -95,6 +104,8 @@ public:
     ValueMap GetCalEn ( bool nType );
 
     TimeMap GetTsMap ( bool nType );
+
+    std::vector<std::vector<float>> GetEnParCal ( bool nType = false );
 
     ///Get a map of the thresholds.
     std::vector<int> GetThresholds ( bool nType );

@@ -2,12 +2,6 @@
 #define ORRUBADET_H
 
 #include "siDet.h"
-#include "SolidVector.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TString.h"
-#include "TList.h"
-#include "TIterator.h"
 
 ///A class to handle basic ORRUBA silicon detectors.
 /**This class builds on a basic siDet by adding detector position information and
@@ -81,20 +75,12 @@ public:
         return sector;
     }
 
-
-    ///Abstract definition of a funtion to get the depositied energy of a strip.
-    virtual float GetEnergy() = 0;
-    ///Abstract definition of a funtion to get the strip number and depositied energy of a front strip.
-    virtual std::pair<int, float> GetPtypeEnergy() = 0;
-    ///Abstract definition of a funtion to get the strip number and depositied energy of a back strip.
-    virtual std::pair<int, float> GetNtypeEnergy() = 0;
-    ///Abstract definition of a funtion to get the vector containing resistive strip energy calibration polynomial parameters (implemented in SuperX3 class only).
-//     virtual std::vector<float>* GetResStripParCal() = 0;
+    virtual void SortAndCalibrate ( bool doCalibrate = true ) = 0;
 
     virtual TVector3 GetPStripCenterPos ( int strip ) = 0;
 
     ///Abstract defintion of a function to get the position of an event on the detector.
-    virtual TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar ) = 0;
+    virtual TVector3 GetEventPosition ( bool calibrated = true ) = 0;
 
     void SetDetector ( std::string serialNum, unsigned short sector, unsigned short depth, bool upStream, SolidVector position, std::string enShiftVsPosFName );
     virtual void ConstructBins() = 0;

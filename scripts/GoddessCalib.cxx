@@ -315,7 +315,7 @@ string GoddessCalib::GetAutoOutFileName ( string baseName )
             std::size_t begRunName = treeFName.find ( "run" );
             std::size_t endRunName = treeFName.find ( "_", begRunName );
 
-            if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName ) + ".root";
+            if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName-begRunName ) + ".root";
             else rootFileName += "_" + treeFName;
         }
         else if ( calChain->GetNtrees() >= 2 ) rootFileName += "_chain.root";
@@ -340,8 +340,10 @@ string GoddessCalib::GetAutoOutFileName ( string baseName )
                     std::size_t begRunName = treeFName.find ( "run" );
                     std::size_t endRunName = treeFName.find ( "_", begRunName );
 
-                    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName ) + ".root";
+                    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName-begRunName ) + ".root";
                     else rootFileName += "_" + treeFName;
+
+                    break;
                 }
             }
         }
@@ -477,7 +479,7 @@ void GoddessCalib::ValidatePlotEnCalGraphs()
                 {
                     TTree* testTree = ( TTree* ) lOK->At ( i );
 
-                    if ( testTree != nullptr )
+                    if ( testTree != nullptr &&  treeName == ( ( string ) testTree->GetName() ) )
                     {
                         GoddessCalib::sinstance()->calTreeName = testTree->GetName();
                         GoddessCalib::sinstance()->AddFileToChain ( gDirectory->GetName() );
@@ -842,7 +844,7 @@ void GoddessCalib::OnClickPlotPosCalGraphs()
         plotPosCalWin->MapSubwindows();
         plotPosCalWin->MapWindow();
 
-        string outFName = GoddessCalib::sinstance()->GetAutoOutFileName ( "Resistive_Strips_EnCal_Graphs" );
+        string outFName = GoddessCalib::sinstance()->GetAutoOutFileName ( "Resistive_Strips_PosCal_Graphs" );
         TGTextEntry* tE;
         tE = dynamic_cast<TGTextEntry*> ( FindFrameByName ( plotPosCalWin, "OutFile Name IF" ) );
         tE->SetText ( outFName.c_str() );

@@ -396,6 +396,8 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 {
     PARS* Pars = SortManager::sinstance()->execParams;
 
+    bool doCalibrate = ( Pars->noCalib ) % 2 == 0;
+
     //Map of channels to suppress, This occurs if they were not found in the map.
     static std::map<std::pair<short, short>, bool> suppressCh;
 
@@ -544,6 +546,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         orrubaDet* siDet = dynamic_cast<orrubaDet*> ( det );
         IonChamber* ionChamber_ = dynamic_cast<IonChamber*> ( det );
         LiquidScint* liquidScint_ = dynamic_cast<LiquidScint*> ( det );
+
         if ( siDet )
         {
             posID = siDet->GetPosID();
@@ -568,7 +571,10 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         firedDets[posID] = det;
     }
 
-    //FillHists(dgsEvts);
+    for ( auto detItr = siDets.begin(); detItr != siDets.end(); detItr++ )
+    {
+        detItr->second->SortAndCalibrate ( doCalibrate );
+    }
 
     int userFilterFlag = 0;
 
@@ -753,9 +759,9 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
                 unsigned short far = sx3->GetFarContact ( i );
                 if ( ( frontCalEn.find ( near ) != frontCalEn.end() ) && ( frontCalEn.find ( far ) != frontCalEn.end() ) )
                 {
-                    sX3posRaw_enCal[detPosID][i]->Fill ( sx3->GetStripPosRaw() [i], sx3->GetStripEnergies() [i] );
-                    sX3posCal_enCal[detPosID][i]->Fill ( sx3->GetStripPosCal() [i], sx3->GetStripEnergies() [i] );
-                    sX3nearFarCal[detPosID][i]->Fill ( sx3->GetNearCalEnergy() [i], sx3->GetFarCalEnergy() [i] );
+                    sX3posRaw_enCal[detPosID][i]->Fill ( sx3->GetStripPosRaw() [i], sx3->GetResEn ( true ) [i] );
+                    sX3posCal_enCal[detPosID][i]->Fill ( sx3->GetStripPosCal() [i], sx3->GetResEn ( true ) [i] );
+                    sX3nearFarCal[detPosID][i]->Fill ( sx3->enNearCal[i], sx3->enFarCal[i] );
                 }
             }
 
@@ -847,6 +853,9 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
         siMap.clear();
 
         bool writeDetails = false;
+
+        //Pars->noCalib + nc will range from 0 to 3 since nc can only be 0 if Pars->noCalib is 0 or 1, and can be 0 or 1 if Pars->noCalib is 2
+        bool doCalibrate = ( Pars->noCalib + nc ) % 2 == 0;
 
         if ( Pars->siDetailLvl == 2 || Pars->noCalib == 1  || ( Pars->noCalib == 2 && nc == 1 ) )
         {
@@ -985,161 +994,76 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                     }
                 }
 
-                //Retreive the <strip, energy> map for the front and back side. Get the raw map or calibrated map according to how GEBSort was run.
-                siDet::ValueMap enPMap, enNMap;
+                det->GetHitsInfo ( "front strips", stripP );
+                det->GetHitsInfo ( "back strips", stripN );
 
-                //Pars->noCalib + nc will range from 0 to 3 since nc can only be 0 if Pars->noCalib is 0 or 1, and can be 0 or 1 if Pars->noCalib is 2
-                if ( ( Pars->noCalib + nc ) % 2 == 0 )
+                det->GetHitsInfo ( "back timestamps", tsN );
+
+                if ( ! ( detType == "superX3" && det->GetDepth() == 1 ) )
                 {
-                    enPMap = det->GetCalEn ( false );
-                    enNMap = det->GetCalEn ( true );
+                    det->GetHitsInfo ( "front timestamps", tsP );
+
+                    if ( doCalibrate )
+                    {
+                        det->GetHitsInfo ( "front energies cal", eP );
+                        det->GetHitsInfo ( "back energies cal", eN );
+                    }
+                    else
+                    {
+                        det->GetHitsInfo ( "front energies raw", eP );
+                        det->GetHitsInfo ( "back energies raw", eN );
+                    }
                 }
                 else
                 {
-                    enPMap = det->GetRawEn ( false );
-                    enNMap = det->GetRawEn ( true );
-                }
+                    std::vector<int> dummyStripN;
 
-                siDet::TimeMap tsPMap, tsNMap;
+                    dummyStripN.resize ( stripP->size() );
+                    std::fill ( dummyStripN.begin(), dummyStripN.end(), -1 );
 
-                tsPMap = det->GetTsMap ( false );
-                tsNMap = det->GetTsMap ( true );
+                    stripN->insert ( stripN->begin(), dummyStripN.begin(), dummyStripN.end() );
 
-                if ( enPMap.size() > 0 )
-                {
-                    float enMax = 0.0;
-                    std::vector<int> alreadyTreatedStrips;
-                    alreadyTreatedStrips.clear();
+                    det->GetHitsInfo ( "near timestamps", tsP );
+                    std::vector<unsigned long long int> farTs;
+                    det->GetHitsInfo ( "far timestamps", &farTs );
 
-                    for ( auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr )
+                    tsN->insert ( tsN->begin(), farTs.begin(), farTs.end() );
+
+                    if ( doCalibrate )
                     {
-                        if ( ! ( detType == "superX3" && det->GetDepth() == 1 ) )
-                        {
-                            multP++;
+                        det->GetHitsInfo ( "near energies cal", eP );
+                        det->GetHitsInfo ( "far energies cal", eN );
 
-                            if ( writeDetails )
-                            {
-                                stripP->push_back ( stripItr->first );
-                                eP->push_back ( stripItr->second );
-//                                 tsP->push_back ( tsPMap[stripItr->first] );
-                                tsP->push_back ( 0 );
-                            }
+                        std::vector<float> backEn;
+                        det->GetHitsInfo ( "back energies cal", &backEn );
 
-                            if ( ( Pars->noCalib + nc ) % 2 == 0 )
-                            {
-                                eSumP += stripItr->second;
+                        eN->insert ( eN->end(), backEn.begin(), backEn.end() );
+                    }
+                    else
+                    {
+                        det->GetHitsInfo ( "near energies raw", eP );
+                        det->GetHitsInfo ( "far energies raw", eN );
 
-                                if ( stripItr->second > enMax )
-                                {
-                                    stripMaxP = stripItr->first;
-                                    enMax = stripItr->second;
-                                    tsMaxP = tsPMap[stripItr->first];
-                                }
-                            }
-                        }
-                        else
-                        {
-                            int st_ = superX3::GetStrip ( stripItr->first );
+                        std::vector<float> backEn;
+                        det->GetHitsInfo ( "back energies raw", &backEn );
 
-                            if ( std::find ( alreadyTreatedStrips.begin(), alreadyTreatedStrips.end(), st_ ) != alreadyTreatedStrips.end() ) continue;
-
-                            multP++;
-
-                            alreadyTreatedStrips.push_back ( st_ );
-
-                            int nearStrip = superX3::GetNearContact ( st_ );
-                            int farStrip = superX3::GetFarContact ( st_ );
-
-                            float en_near = 0.0;
-                            float en_far = 0.0;
-
-                            auto nearItr = enPMap.find ( nearStrip );
-                            auto farItr = enPMap.find ( farStrip );
-
-                            en_near = ( nearItr != enPMap.end() ) ? nearItr->second : 0.0;
-                            en_far = ( farItr != enPMap.end() ) ? farItr->second : 0.0;
-
-                            std::vector<float>* resStripParCal = ( ( superX3* ) det )->GetResStripParCal();
-
-                            if ( ( Pars->noCalib + nc ) % 2 == 0 )
-                            {
-                                en_near = ( en_near - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
-                                en_far = ( en_far - resStripParCal[st_].at ( 0 ) / 2. ) * resStripParCal[st_].at ( 1 );
-                            }
-
-                            if ( writeDetails )
-                            {
-                                eP->push_back ( en_near );
-
-//                                 tsP->push_back ( tsPMap[nearStrip] );
-                                stripP->push_back ( st_ );
-
-                                eN->push_back ( en_far );
-
-//                                 tsN->push_back ( tsPMap[farStrip] );
-                                stripN->push_back ( -1 );
-                            }
-
-                            float en_ = 0.0;
-
-                            if ( en_near > 0.0 && en_far > 0.0 ) en_ = en_near + en_far;
-
-                            if ( en_ > 0.0 )
-                            {
-                                if ( ( Pars->noCalib + nc ) % 2 == 0 )
-                                {
-                                    enear_tot += en_near;
-                                    efar_tot += en_far;
-
-                                    eSumP += en_;
-
-                                    if ( en_ > enMax )
-                                    {
-                                        stripMaxP = st_;
-                                        enMax = en_;
-                                        tsMaxP = ( tsPMap[nearStrip] + tsPMap[farStrip] ) / 2;
-                                    }
-                                }
-                            }
-                        }
+                        eN->insert ( eN->end(), backEn.begin(), backEn.end() );
                     }
                 }
 
-                if ( enNMap.size() > 0 )
-                {
-                    float enMax = 0.0;
+                eSumP = det->GetEnSum ( false, doCalibrate );
+                eSumN = det->GetEnSum ( true, doCalibrate );
 
-                    //Get the strips which fired and the energy deposites in each of them for the front side
-                    for ( auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr )
-                    {
-                        multN++;
+                det->GetMaxHitInfo ( &stripMaxP, &tsMaxP, &stripMaxN, &tsMaxN, doCalibrate );
 
-                        if ( writeDetails )
-                        {
-                            stripN->push_back ( stripItr->first );
-                            eN->push_back ( stripItr->second );
-//                             tsN->push_back ( tsNMap[stripItr->first] );
-                        }
-
-                        if ( ( Pars->noCalib + nc ) % 2 == 0 )
-                        {
-                            eSumN += stripItr->second;
-
-                            if ( stripItr->second > enMax )
-                            {
-                                stripMaxN = stripItr->first;
-                                enMax = stripItr->second;
-                                tsMaxN = tsNMap[stripItr->first];
-                            }
-                        }
-                    }
-                }
+                multP = det->GetMultiplicity ( false, doCalibrate );
+                multN = det->GetMultiplicity ( true, doCalibrate );
 
                 TVector3 eventPos ( 0, 0, 0 );
 
                 if ( stripMaxP >= 0 )
                 {
-                    eventPos = det->GetEventPosition ( stripMaxP, stripMaxN, enear_tot, efar_tot );
+                    eventPos = det->GetEventPosition ( doCalibrate );
                     datum->pos.push_back ( eventPos );
                 }
 
@@ -1278,6 +1202,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
     return uff;
 }
+
 
 
 

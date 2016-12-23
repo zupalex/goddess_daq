@@ -40,27 +40,15 @@ private:
     ///The bin edges along the phi axis in degrees.
     Float_t binsPolar[5]; //!
 
+    ///The absolute centers of the front side strips
     TVector3 pStripCenterPos[4];
+    ///The absolute center of the back side strips
     TVector3 nStripCenterPos[4];
-
-    ///Calibrated energy of p type strips.
-    siDet::ValueMap enCalPstrip;
-    ///Pair strip# and calibrated energy of the p type side.
-    std::pair<int, float> enPtype;
-    ///Pair strip# and calibrated energy of the n type side.
-    std::pair<int, float> enNtype;
-    ///The total deposited energy in the detector.
-    float enCal;
 
     ///Computed raw position of event.
     siDet::ValueMap stripPosRaw;
     ///Computed calibrated position of event.
     siDet::ValueMap stripPosCal;
-
-    ///NOT FILLED!! Computed calibrated energy of near contact
-    Float_t ncalEn[4];
-    ///NOT FILLED!! Computed calibrated energy of far contact
-    Float_t fcalEn[4];
 
     ///The number of contacts fired on a strip.
     int stripContactMult[4];
@@ -159,19 +147,21 @@ public:
         return binsPolar;
     };
 
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true );
+    std::vector<float> GetResEn ( bool calibrated = true );
+    float GetNearEn ( bool calibrated = true );
+    float GetFarEn ( bool calibrated = true );
+
+    virtual void SortAndCalibrate ( bool doCalibrate = true );
+
     ///Returns true if strip number is valid.
     bool ValidStrip ( int strip );
 
-    ///Return a map of the strips that fired with their energies.
-    siDet::ValueMap GetStripEnergies()
-    {
-        return enCalPstrip;
-    };
-    ///Get the number of strip that fired. (Requiring both contacts on a strip.)
-    unsigned int GetStripMultiplicity()
-    {
-        return enCalPstrip.size();
-    };
+    ///Return the total number of fired contacts above theshold.
+    virtual int GetContactMult();
+    ///Return the number of fired contacts above threhsold for the specified type.
+    virtual int GetContactMult ( bool contactType );
+
     ///Returns the ValueMap of the raw strips ranginf from -1 to +1.
     siDet::ValueMap GetStripPosRaw()
     {
@@ -183,43 +173,16 @@ public:
         return stripPosCal;
     };
     ///Return the computed event position.
-    TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar );
+    TVector3 GetEventPosition ( bool calibrated = true );
     ///Return the vector containing resistive strip energy calibration polynomial parameters.
     std::vector<float>* GetResStripParCal()
     {
         return parStripEnCal;
     }
-    ///Return a pair (strip#,energy) from the n type side.
-    std::pair<int, float> GetPtypeEnergy()
-    {
-        return enPtype;
-    };
-    ///Return a pair (strip#,energy) from the n type side.
-    std::pair<int, float> GetNtypeEnergy()
-    {
-        return enNtype;
-    };
-    ///Return the total energy deposited in the detector.
-    float GetEnergy()
-    {
-        return enCal;
-    };
     ///Return the contact for the near end of the strip.
     static unsigned short GetNearContact ( unsigned short strip );
     ///Return the contact for the far end of the strip.
     static unsigned short GetFarContact ( unsigned short strip );
-
-    /// -- Make new functions to be used in GoddessData to fill histograms
-    ///NOT FILLED!! Return the calibrated energy for the near end of the strip
-    float* GetNearCalEnergy()
-    {
-        return ncalEn;
-    };
-    ///NOT FILLED!! Return the calibrated energy for the far end of the strip
-    float* GetFarCalEnergy()
-    {
-        return fcalEn;
-    };
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
@@ -228,6 +191,25 @@ public:
     TGraph* enShiftVsPosGraph[4];
     std::map<float, std::pair<float, float>> enJumpsCorrectionGraphs[4];
     virtual void SetEnShiftVsPosGraph ( std::string graphFileName );
+
+    std::vector<int> stripsP;
+    std::vector<float> enNearRaw;
+    std::vector<float> enFarRaw;
+    std::vector<float> enNearCal;
+    std::vector<float> enFarCal;
+    std::vector<long long unsigned int> timeNear;
+    std::vector<long long unsigned int> timeFar;
+
+    std::vector<int> stripsN;
+    std::vector<float> enRawN;
+    std::vector<float> enCalN;
+    std::vector<long long unsigned int> timeN;
+
+    virtual std::vector<float> GetHitsInfo ( std::string info, std::vector<float>* dest = nullptr );
+    virtual std::vector<int> GetHitsInfo ( std::string info, std::vector<int>* dest = nullptr );
+    virtual std::vector<long long unsigned int> GetHitsInfo ( std::string info, std::vector<long long unsigned int>* dest = nullptr );
+    virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true );
+    virtual int GetMultiplicity ( bool nType = false, bool calibrated = true );
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( superX3, 1 );

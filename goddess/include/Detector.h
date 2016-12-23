@@ -1,7 +1,16 @@
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
+#include <map>
+
 #include "TObject.h"
+#include "SolidVector.h"
+#include "TFile.h"
+#include "TGraph.h"
+#include "TString.h"
+#include "TList.h"
+#include "TIterator.h"
+#include "TF1.h"
 
 ///Abstract class defining a detector.
 class Detector : public TObject

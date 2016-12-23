@@ -35,15 +35,10 @@ private:
     ///The bin center along the phi axis in degrees.
     Float_t binsPolarcenter[33]; //!
 
+    ///The absolute centers of the front side strips
     TVector3 pStripCenterPos[32];
+    ///The absolute centers of the back side strips
     TVector3 nStripCenterPos[4];
-
-    ///Pair strip# and calibrated energy of the p type side.
-    std::pair<int, float> enPtype;
-    ///Pair strip# and calibrated energy of the n type side.
-    std::pair<int, float> enNtype;
-    ///The total deposited energy in the detector.
-    float enCal;
 
     ///Computed raw position of event.
     float stripPosRaw[4];
@@ -132,28 +127,38 @@ public:
         return binsPolarcenter;
     };
 
+    ///Return the total number of fired contacts above theshold.
+    virtual int GetContactMult();
+    ///Return the number of fired contacts above threhsold for the specified type.
+    virtual int GetContactMult ( bool contactType );
+
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true );
+
+    virtual void SortAndCalibrate ( bool doCalibrate = true );
+
     ///Return the computed event position.
-    TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar );
-    ///Return a pair (strip#,energy)from the p type side.
-    std::pair<int, float> GetPtypeEnergy()
-    {
-        return enPtype;
-    };
-    ///Return a pair (strip#,energy) from the n type side.
-    std::pair<int, float> GetNtypeEnergy()
-    {
-        return enNtype;
-    };
-    ///Return the total energy deposited in the detector.
-    float GetEnergy()
-    {
-        return enCal;
-    };
+    TVector3 GetEventPosition ( bool calibrated = true );
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
 
     virtual void SetEnShiftVsPosGraph ( std::string graphFileName );
+
+    std::vector<int> stripsP;
+    std::vector<float> enRawP;
+    std::vector<float> enCalP;
+    std::vector<long long unsigned int> timeP;
+
+    std::vector<int> stripsN;
+    std::vector<float> enRawN;
+    std::vector<float> enCalN;
+    std::vector<long long unsigned int> timeN;
+
+    virtual std::vector<float> GetHitsInfo ( std::string info, std::vector<float>* dest = nullptr );
+    virtual std::vector<int> GetHitsInfo ( std::string info, std::vector<int>* dest = nullptr );
+    virtual std::vector<long long unsigned int> GetHitsInfo ( std::string info, std::vector<long long unsigned int>* dest = nullptr );
+    virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true );
+    virtual int GetMultiplicity ( bool nType = false, bool calibrated = true );
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( QQQ5, 1 );

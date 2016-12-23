@@ -26,10 +26,8 @@ private:
     ///The bin centers along the phi axis in radians.
     Float_t binsAzimuthalCenter[8]; //!
 
+    ///The absolute centers of the strips
     TVector3 pStripCenterPos[8];
-
-    ///Pair strip# and energy of the p type side.
-    std::pair<int, float> enPtype;
 
     ///The constructed position of the event.
     TVector3 eventPos;
@@ -79,28 +77,33 @@ public:
         return binsAzimuthalCenter;
     };
 
+    ///Return the total number of fired contacts above theshold.
+    virtual int GetContactMult();
+    ///Return the number of fired contacts above threhsold for the specified type.
+    virtual int GetContactMult ( bool contactType );
+
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true );
+
+    virtual void SortAndCalibrate ( bool doCalibrate = true );
+
     ///Return the computed event position.
-    TVector3 GetEventPosition ( int pStripHit, int nStripHit, float eNear, float eFar );
-    ///Return a pair of (strip#,energy) from the p type side.
-    std::pair<int, float> GetPtypeEnergy()
-    {
-        return enPtype;
-    };
-    ///Returns 0, Needed to be added to be used globally in orrubaDet
-    std::pair<int, float> GetNtypeEnergy()
-    {
-        return std::make_pair ( 0, 0.0 );
-    };
-    ///Return the total energy deposited in the detector.
-    float GetEnergy()
-    {
-        return enPtype.second;
-    };
+    TVector3 GetEventPosition ( bool calibrated = true );
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
 
     virtual void SetEnShiftVsPosGraph ( std::string graphFileName );
+
+    std::vector<int> stripsP;
+    std::vector<float> enRawP;
+    std::vector<float> enCalP;
+    std::vector<long long unsigned int> timeP;
+
+    virtual std::vector<float> GetHitsInfo ( std::string info, std::vector<float>* dest = nullptr );
+    virtual std::vector<int> GetHitsInfo ( std::string info, std::vector<int>* dest = nullptr );
+    virtual std::vector<long long unsigned int> GetHitsInfo ( std::string info, std::vector<long long unsigned int>* dest = nullptr );
+    virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true );
+    virtual int GetMultiplicity ( bool nType = false, bool calibrated = true );
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( BB10, 1 )
