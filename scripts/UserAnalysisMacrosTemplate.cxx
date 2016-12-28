@@ -665,7 +665,7 @@ void FillUserHists ( long long int maxEvents = 0 )
 {
     TChain* uChain = gA->userChain;
 
-    cout << "the chain contains " << uChain->GetEntries() << "entries...\n";
+    cout << "the chain contains " << uChain->GetEntries() << " entries...\n";
 
     std::vector<SiDataBase>* vectSiData = new std::vector<SiDataBase>;
     std::vector<SiDataDetailed>* vectSiDataD = new vector<SiDataDetailed>;

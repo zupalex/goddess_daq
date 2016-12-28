@@ -992,62 +992,62 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                         datum->SetMemberAddress ( "E2_ts_n", &tsN );
                         break;
                     }
-                }
 
-                det->GetHitsInfo ( "front strips", stripP );
-                det->GetHitsInfo ( "back strips", stripN );
+                    det->GetHitsInfo ( "front strips", stripP );
+                    det->GetHitsInfo ( "back strips", stripN );
 
-                det->GetHitsInfo ( "back timestamps", tsN );
+                    det->GetHitsInfo ( "back timestamps", tsN );
 
-                if ( ! ( detType == "superX3" && det->GetDepth() == 1 ) )
-                {
-                    det->GetHitsInfo ( "front timestamps", tsP );
-
-                    if ( doCalibrate )
+                    if ( ! ( detType == "superX3" && det->GetDepth() == 1 ) )
                     {
-                        det->GetHitsInfo ( "front energies cal", eP );
-                        det->GetHitsInfo ( "back energies cal", eN );
+                        det->GetHitsInfo ( "front timestamps", tsP );
+
+                        if ( doCalibrate )
+                        {
+                            det->GetHitsInfo ( "front energies cal", eP );
+                            det->GetHitsInfo ( "back energies cal", eN );
+                        }
+                        else
+                        {
+                            det->GetHitsInfo ( "front energies raw", eP );
+                            det->GetHitsInfo ( "back energies raw", eN );
+                        }
                     }
                     else
                     {
-                        det->GetHitsInfo ( "front energies raw", eP );
-                        det->GetHitsInfo ( "back energies raw", eN );
-                    }
-                }
-                else
-                {
-                    std::vector<int> dummyStripN;
+                        std::vector<int> dummyStripN;
 
-                    dummyStripN.resize ( stripP->size() );
-                    std::fill ( dummyStripN.begin(), dummyStripN.end(), -1 );
+                        dummyStripN.resize ( stripP->size() );
+                        std::fill ( dummyStripN.begin(), dummyStripN.end(), -1 );
 
-                    stripN->insert ( stripN->begin(), dummyStripN.begin(), dummyStripN.end() );
+                        stripN->insert ( stripN->begin(), dummyStripN.begin(), dummyStripN.end() );
 
-                    det->GetHitsInfo ( "near timestamps", tsP );
-                    std::vector<unsigned long long int> farTs;
-                    det->GetHitsInfo ( "far timestamps", &farTs );
+                        det->GetHitsInfo ( "near timestamps", tsP );
+                        std::vector<unsigned long long int> farTs;
+                        det->GetHitsInfo ( "far timestamps", &farTs );
 
-                    tsN->insert ( tsN->begin(), farTs.begin(), farTs.end() );
+                        tsN->insert ( tsN->begin(), farTs.begin(), farTs.end() );
 
-                    if ( doCalibrate )
-                    {
-                        det->GetHitsInfo ( "near energies cal", eP );
-                        det->GetHitsInfo ( "far energies cal", eN );
+                        if ( doCalibrate )
+                        {
+                            det->GetHitsInfo ( "near energies cal", eP );
+                            det->GetHitsInfo ( "far energies cal", eN );
 
-                        std::vector<float> backEn;
-                        det->GetHitsInfo ( "back energies cal", &backEn );
+                            std::vector<float> backEn;
+                            det->GetHitsInfo ( "back energies cal", &backEn );
 
-                        eN->insert ( eN->end(), backEn.begin(), backEn.end() );
-                    }
-                    else
-                    {
-                        det->GetHitsInfo ( "near energies raw", eP );
-                        det->GetHitsInfo ( "far energies raw", eN );
+                            eN->insert ( eN->end(), backEn.begin(), backEn.end() );
+                        }
+                        else
+                        {
+                            det->GetHitsInfo ( "near energies raw", eP );
+                            det->GetHitsInfo ( "far energies raw", eN );
 
-                        std::vector<float> backEn;
-                        det->GetHitsInfo ( "back energies raw", &backEn );
+                            std::vector<float> backEn;
+                            det->GetHitsInfo ( "back energies raw", &backEn );
 
-                        eN->insert ( eN->end(), backEn.begin(), backEn.end() );
+                            eN->insert ( eN->end(), backEn.begin(), backEn.end() );
+                        }
                     }
                 }
 
