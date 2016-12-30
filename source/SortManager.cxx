@@ -1099,6 +1099,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     if ( system ( str ) ) {}
     printf ( "deleted %s\n", str );
 
+    gConfig = new GoddessConfig ( "goddess.position", ( string ) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile );
+
     /*------------------------------------------*/
     /* if we are using root file, then either   */
     /* read in old rootfile or create a new one */
@@ -1200,8 +1202,6 @@ int SortManager::GEBacq ( char* ChatFileName )
     if ( !execParams->noHists ) execParams->histDir->cd();
     sup_agod();
     if ( !execParams->noHists ) execParams->histDir->cd();
-    gConfig = new GoddessConfig ( "goddess.position", ( string ) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile );
-    execParams->f1->cd();
     sup_god();
     if ( !execParams->noHists ) execParams->histDir->cd();
 //     //sup_phoswich ();
@@ -1645,7 +1645,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     std::cerr << "\n";
 
-    std::cout << "Terminating Sorting Process because ";
+    std::cout << "\nTerminating Sorting Process because ";
 
     if ( ( execParams->CurEvNo - execParams->firstEvent ) >= execParams->nEvents ) std::cout << "we treated " << execParams->CurEvNo << " out of " << execParams->nEvents << "\n";
     else if ( !inData.eof() ) std::cout << "we reached the end of the file...\n";
