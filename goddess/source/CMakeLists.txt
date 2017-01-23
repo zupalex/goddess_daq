@@ -10,19 +10,19 @@ if (${ROOT_VERSION} VERSION_GREATER "6.0")
 	  ${CMAKE_INSTALL_PREFIX})
 endif()
 
+set (GODDESSSTRUCT_SOURCES GoddessStruct.cxx GoddessStructDictionary.cxx)
+
+add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
+add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
+target_link_libraries(GoddessStruct GoddessToolboxLib)
+
 set (ORRUBA_SOURCES SolidVector.cxx Detector.cxx siDet.cxx orrubaDet.cxx
 ORRUBA.cxx superX3.cxx BB10.cxx QQQ5.cxx GoddessConfig.cxx IonChamber.cxx
 LiquidScint.cxx ORRUBADictionary.cxx)
 
 add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 add_library(ORRUBA SHARED $<TARGET_OBJECTS:ORRUBA_OBJECT>)
-target_link_libraries(ORRUBA GoddessStruct)
-
-set (GODDESSSTRUCT_SOURCES GoddessStruct.cxx GoddessStructDictionary.cxx)
-
-add_library(GoddessStruct_OBJECT OBJECT ${GODDESSSTRUCT_SOURCES})
-add_library(GoddessStruct SHARED $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
-target_link_libraries(GoddessStruct ${ROOT_LIBRARIES})
+target_link_libraries(ORRUBA GoddessStruct GoddessToolboxLib)
 
 install(TARGETS ORRUBA GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
 

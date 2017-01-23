@@ -11,6 +11,40 @@
 
 #include "SolidVector.h"
 
+struct GeomInfos
+{
+    double barrelRadius;
+    double barrelLength;
+
+    double barrelLayerSpacing;
+    double endcapLayerSpacing;
+
+    TVector3 SuperX3Offset;
+    TVector3 qqq5Offset;
+    TVector3 beamSpotOffset;
+
+    double firstStripLowEdge;
+    double firstStripWidth;
+    double deltaPitch;
+
+    double qqq5RefPhi;
+    double qqq5DeltaPhi;
+
+    double qqq5RefZrot;
+    double qqq5DeltaZrot;
+
+    double sX3ActiveLength;
+    double sX3ActiveWidth;
+
+    double sX3RefPhi;
+    double sX3DeltaPhi;
+
+    double sX3RefZrot;
+    double sX3DeltaZrot;
+
+    double bb10ActiveWidth;
+};
+
 class GoddessConfig
 {
 private:
@@ -40,9 +74,12 @@ private:
 
 public:
     ///Default constructor.
-    GoddessConfig ( std::string positionFile, std::string configFile, std::string sx3EnAdjustFName = "", std::string qqq5EnAdjustFName = ""  );
+    GoddessConfig ( std::string positionFile, std::string configFile, std::string sx3EnAdjustFName = "", std::string qqq5EnAdjustFName = "" );
     ///Default destructor.
     virtual ~GoddessConfig();
+    
+//     GeomInfos geom;
+    std::map<string, double> geomInfos;
 
     ///Gets the detector and contact number for the specified digitizer channel.
     Detector *SetRawValue ( short daqType, short digitizerCh, unsigned int rawValue, int ignThr, unsigned long long timestamp = 0 );

@@ -55,8 +55,10 @@ add_subdirectory(hribf)
 
 #Include our headers and continue in the source directory
 include_directories(include)
+include_directories(toolbox/include)
 include_directories(goddess/include)
 include_directories(scripts/include)
+add_subdirectory(toolbox/source)
 add_subdirectory(goddess/source)
 add_subdirectory(source)
 add_subdirectory(scripts)
@@ -66,6 +68,9 @@ install(FILES share/crmat.LINUX share/AGATA_crmat.dat share/dgscal.dat share/map
 
 file(GLOB GODDESS_CONF_FILES "share/*.config")
 install(FILES ${GODDESS_CONF_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+file(GLOB GODDESS_GEOM_FILES "share/*.geom")
+install(FILES ${GODDESS_GEOM_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 file(GLOB USERROOTFILES "share/*.root")
 install(FILES ${USERROOTFILES} DESTINATION ${CMAKE_INSTALL_PREFIX})

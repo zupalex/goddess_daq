@@ -235,6 +235,8 @@ void GoddessConfig::ReadConfig ( std::string filename, std::string sx3EnAdjustFN
             }
 
             det->SetDetector ( serialNum, sector, depth, upStream, pos_, enAdjustFName );
+            det->SetGeomParams ( geomInfos );
+            det->ConstructBins();
 
             if ( IsInsertable ( pTypeDaqType, pTypeDaqCh, det, det->GetNumChannels ( siDet::pType ) ) )
             {
@@ -546,9 +548,77 @@ IonChamber *GoddessConfig::ReadIonChamberConfig ( std::istringstream &lineStream
     return ionChamber_;
 }
 
-void GoddessConfig::ReadPosition ( std::string filename )
+void GoddessConfig::ReadPosition ( string filename )
 {
-    std::cout << "GoddessConfig::ReadPosition isn't implemeted yet. Filename was " << filename << "\n";
+    std::ifstream geomFile ( filename );
+
+    if ( !geomFile.good() )
+    {
+        cerr << "ERROR: Unable to read geometry file: " << filename << " !\n";
+        return;
+    }
+
+    cout << "Reading " << filename << " to set the geometry...\n";
+
+    string readLine;
+
+    while ( std::getline ( geomFile, readLine ) )
+    {
+        if ( readLine.empty() ) continue;
+
+        size_t firstCharPos = readLine.find_first_not_of ( " \b\n\t\v" );
+
+        if ( readLine[firstCharPos] == '#' ) continue;
+        if ( readLine[firstCharPos] == '-' ) continue;
+
+        size_t equalPos = readLine.find ( "=" );
+
+        string geomKey = readLine.substr ( firstCharPos, equalPos-firstCharPos );
+
+        size_t lastCharPos = geomKey.find_last_not_of ( " \b\n\t\v" );
+
+        geomKey = geomKey.substr ( 0, lastCharPos+1 );
+
+        if ( geomKey.find ( "Offset" ) != string::npos )
+        {
+            string valStr = readLine.substr ( equalPos+1 ) ;
+
+            size_t openPar = valStr.find ( "(" );
+            size_t closePar = valStr.find ( ")" );
+            size_t coma = valStr.find ( "," );
+
+            if ( openPar == string::npos || closePar == string::npos || coma == string::npos )
+            {
+                cerr << "Geometry file is corrupted...\n";
+                return;
+            }
+
+            geomInfos[geomKey + " X"] = EvalString ( valStr.substr ( openPar+1, coma - ( openPar+1 ) ) );
+            cout << "Found parameter \"" << geomKey + " X" << "\" : " << geomInfos[geomKey + " X"] << endl;
+
+            size_t nextComa = valStr.find ( ",", coma+1 );
+
+            if ( nextComa == string::npos )
+            {
+                cerr << "Geometry file is corrupted...\n";
+                return;
+            }
+
+            geomInfos[geomKey + " Y"] = EvalString ( valStr.substr ( coma+1, nextComa - ( coma+1 ) ) );
+            cout << "Found parameter \"" << geomKey + " Y" << "\" : " << geomInfos[geomKey + " Y"] << endl;
+
+            geomInfos[geomKey + " Z"] = EvalString ( valStr.substr ( nextComa+1, closePar - ( nextComa+1 ) ) );
+            cout << "Found parameter \"" << geomKey + " Z" << "\" : " << geomInfos[geomKey + " Z"] << endl;
+        }
+        else
+        {
+            geomInfos[geomKey] = EvalString ( readLine.substr ( equalPos+1 ) );
+
+            cout << "Found parameter \"" << geomKey << "\" : " << geomInfos[geomKey] << endl;
+        }
+    }
+
+    return;
 }
 
 /**We check that at the insertion point the previous entry has sufficient
@@ -834,10 +904,10 @@ bool GoddessConfig::ParseID ( std::string id, short &sector, short &depth, bool 
  */
 SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short depth, bool upStream )
 {
-    static float barrelRadius = 3.750 * 25.4; //mm
-//     static float halfBarrelLength = ( 4.375 - 0.7 ) * 25.4; //mm
-    static float sX3ActiveLength = 75.; //mm
-    static float sX3NearFrame = 4.0; //mm
+    static float barrelRadius = geomInfos["Barrel Radius"]; //mm
+    static float barrelLength = geomInfos["Barrel Length"]; //mm
+    static float sX3ActiveLength = geomInfos["SuperX3 Active Length"]; //mm
+
     SolidVector pos ( 0.0, 0.0, 0.0 );
 
     TVector3 zAxis ( 0,0,1 );
@@ -845,32 +915,30 @@ SolidVector GoddessConfig::GetPosVector ( std::string type, short sector, short 
     //Compute position for barrel detectors.
     if ( type == "superX3" || type == "BB10" )
     {
-        float barrelDet_spacing = 4.8; // mm
+        TVector3 layerOffset ( 0.0, 0.0 + ( depth-1 ) * geomInfos["Barrel Layer Spacing"],  0 );
+        TVector3 superX3Offset ( geomInfos["SuperX3 Offset X"], geomInfos["SuperX3 Offset Y"], geomInfos["SuperX3 Offset Z"] );
 
-        TVector3 barrelDet_offset ( 0.0, 0.0 + ( depth-1 ) * barrelDet_spacing, sX3NearFrame );
-
-        TVector3 refSX3D_sect0 ( 0 + barrelDet_offset.X(), barrelRadius + barrelDet_offset.Y(), sX3ActiveLength/2. + barrelDet_offset.Z() );
+        TVector3 refSX3D_sect0 = TVector3 ( 0, barrelRadius, sX3ActiveLength/2. ) + superX3Offset + layerOffset;
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refSX3D_sect0.Angle ( zAxis ) ) : refSX3D_sect0.Angle ( zAxis ) );
-        pos.SetPhi ( TMath::PiOver2() + sector / 12. * TMath::TwoPi() );
+        pos.SetPhi ( geomInfos["SuperX3 Ref Phi"] + sector * geomInfos["SuperX3 Delta Phi"] );
         pos.SetMag ( refSX3D_sect0.Mag() );
-        pos.SetRotationZ ( sector / 12. * TMath::TwoPi() );
+        pos.SetRotationZ ( geomInfos["SuperX3 Ref Zrot"] + sector * geomInfos["SuperX3 Delta Zrot"] );
 
     }
     else if ( type == "QQQ5" )
     {
-        float QQQ5_spacing = 4.0; // mm
+        TVector3 layerOffset ( 0.0, 0.0 , ( depth-1 ) * geomInfos["Endcap Layer Spacing"] );
+        TVector3 qqq5Offset ( geomInfos["QQQ5 Offset X"], geomInfos["QQQ5 Offset Y"], geomInfos["QQQ5 Offset Z"] );
 
-        TVector3 QQQ5DA_orig_offset ( 0, 4.49, 0 + ( depth-1 ) * QQQ5_spacing ); // everything in mm
-
-        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, 100 ) + QQQ5DA_orig_offset;
+        TVector3 refQQQ5D_sectA = TVector3 ( 0, 0, barrelLength/2. ) + qqq5Offset + layerOffset;
 
         pos.SetXYZ ( 0,0,1 );
         pos.SetTheta ( upStream ? ( TMath::Pi() - refQQQ5D_sectA.Angle ( zAxis ) ) : refQQQ5D_sectA.Angle ( zAxis ) );
-        pos.SetPhi ( TMath::PiOver2() + sector * TMath::PiOver2() );
+        pos.SetPhi ( geomInfos["QQQ5 Ref Phi"] + sector * geomInfos["QQQ5 Delta Phi"] );
         pos.SetMag ( refQQQ5D_sectA.Mag() );
-        pos.SetRotationZ ( sector * TMath::PiOver2() );
+        pos.SetRotationZ ( geomInfos["QQQ5 Ref Zrot"] + sector * geomInfos["QQQ5 Delta Zrot"] );
     }
 
     return pos;

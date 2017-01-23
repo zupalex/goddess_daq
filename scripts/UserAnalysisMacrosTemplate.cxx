@@ -109,7 +109,6 @@ bool OrrubaEnergyThr ( SiDataBase* siData_ )
               );
 }
 
-
 //******************************************************************************************//
 //******************************************************************************************//
 // ------------------------- Write your macros here --------------------------------------- //
@@ -126,9 +125,12 @@ TH2F* hEvsA_SX3U_tot[2][maxMult];
 TH2F* hEvsA_QQQ5U_tot[2][maxMult];
 TH2F* hEvsA_SX3U[12][2][maxMult];
 TH2F* hEvsA_QQQ5U[4][2][maxMult];
+TH2F* hEvsStrip_QQQ5U[4][2][maxMult];
 
-void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY )
+void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, TVector3 targetPos = TVector3 ( 0, 0, 0 ), TChain* chain = nullptr )
 {
+    string qqq5Aliases = "ABCD";
+
     for ( int i = 0; i < 2; i++ )
     {
         for ( int j = 0; j < maxMult; j++ )
@@ -154,10 +156,41 @@ void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
 
         for ( int j = 0; j < 4; j++ )
         {
+            TVector3 qqq5StartPoint = GetDetPos ( chain, true, false, j );
+
+            TVector3 beamDir ( 0, 0, 1 );
+
+            double qqq5LowEdges[33];
+
+            float firstStripWidth = 2.55;
+
+//             if ( i == 0 ) cout << "---------- QQQ5 U" << qqq5Aliases[j] << " Bins Edges ------------\n";
+
+            qqq5LowEdges[32] = ( ( qqq5StartPoint - targetPos ) - TVector3 ( 0, firstStripWidth/2., 0 ) ).Angle ( beamDir ) * TMath::RadToDeg();
+
+            TVector3 prevStripLowEdge = ( qqq5StartPoint - targetPos ) - TVector3 ( 0, firstStripWidth/2., 0 );
+
+//             if ( i == 0 ) cout << "bin #32 -> " << qqq5LowEdges[32] << endl;
+
+            for ( unsigned int binItr = 1; binItr < 33; binItr++ )
+            {
+                float prevStripWidth = firstStripWidth - ( binItr-1 ) * 0.05;
+
+                TVector3 lowEdgePos = prevStripLowEdge + TVector3 ( 0, prevStripWidth, 0 );
+                prevStripLowEdge = lowEdgePos;
+
+                qqq5LowEdges[32-binItr] = lowEdgePos.Angle ( beamDir )  * TMath::RadToDeg();
+
+//                 if ( i == 0 ) cout << "bin #" << 32-binItr << " -> " << qqq5LowEdges[32-binItr] << endl;
+            }
+
             for ( int k = 0; k < maxMult; k++ )
             {
+                hEvsStrip_QQQ5U[j][i][k] = MakeNewHist ( Form ( "En_%s_vs_Strip_QQQ5U%d_mult%d", i == 0 ? "front" : "back", j, k ),
+                                           Form ( "Energy %s vs Strip# QQQ5 U%d mult %d", i == 0 ? "front" : "back", j, k ), 34, -1, 33, nBinsY, minY, maxY );
+
                 hEvsA_QQQ5U[j][i][k] = MakeNewHist ( Form ( "En_%s_vs_Angle_QQQ5U%d_mult%d", i == 0 ? "front" : "back", j, k ),
-                                                     Form ( "Energy %s vs Angle QQQ5 U%d mult %d", i == 0 ? "front" : "back", j, k ), 34, -1, 33, nBinsY, minY, maxY );
+                                                     Form ( "Energy %s vs Angle QQQ5 U%d mult %d", i == 0 ? "front" : "back", j, k ), 32, qqq5LowEdges, nBinsY, minY, maxY );
             }
         }
     }
@@ -201,8 +234,16 @@ bool FillEvsAHist ( SiDataBase* siData_ )
                 if ( fEnergy > 0 ) hEvsA_QQQ5U_tot[0][mult]->Fill ( strip, fEnergy );
                 if ( bEnergy > 0 ) hEvsA_QQQ5U_tot[1][mult]->Fill ( strip, bEnergy );
 
-                if ( fEnergy > 0 ) hEvsA_QQQ5U[sector][0][mult]->Fill ( strip, fEnergy );
-                if ( bEnergy > 0 ) hEvsA_QQQ5U[sector][1][mult]->Fill ( strip, bEnergy );
+                if ( fEnergy > 0 )
+                {
+                    hEvsStrip_QQQ5U[sector][0][mult]->Fill ( strip, fEnergy );
+                    hEvsA_QQQ5U[sector][0][mult]->Fill ( angle, fEnergy );
+                }
+                if ( bEnergy > 0 )
+                {
+                    hEvsStrip_QQQ5U[sector][1][mult]->Fill ( strip, bEnergy );
+                    hEvsA_QQQ5U[sector][1][mult]->Fill ( angle, bEnergy );
+                }
 
                 filled = true;
             }
@@ -365,7 +406,9 @@ bool FillGsVsExHist ( GamData* gamData_, SiDataBase* siData_, bool vetoBGO, floa
 
     bool energyOK = OrrubaEnergyThr ( siData_ );
 
-    bool doFill = timestampOK && sectorOK && energyOK;
+    bool doFill;
+//     doFill = timestampOK && sectorOK && energyOK;
+    doFill = timestampOK && sectorOK && siData_->ESumLayer ( 1, false ) > 0;
 
     string histsBaseName;
 
@@ -619,6 +662,10 @@ bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_, bool vetoBGO = f
 
     bool energyOK = OrrubaEnergyThr ( siData_ );
 
+    bool doFill;
+//     doFill = sectorOK && timestampOK && energyOK;
+    doFill = sectorOK && timestampOK && siData_->ESumLayer ( 1, false ) > 0;
+
     string histsBaseName;
 
     if ( vetoBGO ) histsBaseName = "Gs_BGOVeto_Gates_";
@@ -655,7 +702,7 @@ bool FillGsGateORRUBA ( SiDataBase* siData_, GamData* gamData_, bool vetoBGO = f
 
         filled = true;
     }
-
+ 
     return filled;
 }
 
@@ -665,7 +712,22 @@ void FillUserHists ( long long int maxEvents = 0 )
 {
     TChain* uChain = gA->userChain;
 
+    if ( uChain == nullptr )
+    {
+        cerr << "The user TChain has not been initialized... Aborting...\n";
+
+        return;
+    }
+
     cout << "the chain contains " << uChain->GetEntries() << " entries...\n";
+
+    TVector3 targetPosition ( 0, 0, 0 );
+
+    InitdTGsORRUBAHists();
+    InitGsGateORRUBAHists();
+
+    InitEvsAHist ( 1800, 0, 180, 1500, 0, 15, targetPosition, uChain );
+    InitQvalHist ( 800, -20, 20, 5000, 0, 5000 );
 
     std::vector<SiDataBase>* vectSiData = new std::vector<SiDataBase>;
     std::vector<SiDataDetailed>* vectSiDataD = new vector<SiDataDetailed>;
@@ -687,11 +749,6 @@ void FillUserHists ( long long int maxEvents = 0 )
     }
 
     uChain->SetBranchAddress ( "gam", &vectGamData );
-
-    InitdTGsORRUBAHists();
-    InitGsGateORRUBAHists();
-    InitEvsAHist ( 1800, 0, 180, 1000, 0, 10 );
-    InitQvalHist ( 800, -20, 20, 5000, 0, 5000 );
 
 //     PrintHistsMapContent();
 

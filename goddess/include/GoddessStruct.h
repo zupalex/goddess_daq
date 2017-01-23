@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 
+#include "TObject.h"
 #include "TArrayF.h"
 #include "TMath.h"
 #include "TVector3.h"
@@ -303,6 +304,51 @@ public:
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( ORRUBARawData, 1 )
+    /// \endcond
+};
+
+
+class GoddessGeomInfos : public TObject
+{
+private:
+
+public:
+    GoddessGeomInfos ();
+    GoddessGeomInfos ( std::map<std::string, double> geomInfos_ );
+    virtual ~GoddessGeomInfos();
+
+    double barrelRadius;
+    double barrelLength;
+
+    double barrelLayerSpacing;
+    double endcapLayerSpacing;
+
+    TVector3 targetOffset;
+    TVector3 superX3Offset;
+    TVector3 qqq5Offset;
+
+    double superX3ActiveLength;
+    double superX3ActiveWidth;
+
+    double bb10ActiveWidth;
+
+    double qqq5FirstStripWidth;
+    double qqq5DeltaPitch;
+
+    double qqq5RefPhi;
+    double qqq5DeltaPhi;
+
+    double qqq5RefRotz;
+    double qqq5DeltaRotz;
+
+    double superX3RefPhi;
+    double superX3DeltaPhi;
+
+    double superX3RefRotz;
+    double superX3DeltaRotz;
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( GoddessGeomInfos, 1 )
     /// \endcond
 };
 

@@ -11,7 +11,7 @@ set (GODDESSANALYSIS_SOURCES GoddessAnalysis.cxx GoddessCalib.cxx GoddessAnalysi
 
 add_library(GoddessAnalysis_OBJECT OBJECT ${GODDESSANALYSIS_SOURCES})
 add_library(GoddessAnalysis SHARED $<TARGET_OBJECTS:GoddessAnalysis_OBJECT>)
-target_link_libraries(GoddessAnalysis ${ROOT_LIBRARIES} GoddessStruct ORRUBA)
+target_link_libraries(GoddessAnalysis ORRUBA GoddessToolboxLib)
 
 install(TARGETS GoddessAnalysis DESTINATION ${CMAKE_INSTALL_PREFIX})
 

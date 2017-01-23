@@ -92,23 +92,24 @@ public:
     virtual ~PARS();
 
     char ConfigFile[STRLEN];
-    
+    char GeomFile[STRLEN];
+
     std::string sx3EnAdjustFile;
     std::string qqq5EnAdjustFile;
-    
+
     short noCalib;
     bool noMapping;
     bool noHists;
     unsigned short ignoreThresholds;
     unsigned short siDetailLvl;
-    
+
     std::string userFilter;
     std::ofstream cleanedMerged;
-    
+
     char ROOTFile[STRLEN];
-    
+
     unsigned long long int nEvents;
-    
+
     char ROOTFileOption[STRLEN];
     char GTSortInputFile[STRLEN];
     int UseShareMemFile;
@@ -249,7 +250,7 @@ public:
     GoddessConfig* gConfig;
 
     std::ifstream inData;
-    
+
     unsigned long long int totBytesRead;
 
     char CommandFileName[STRLEN];

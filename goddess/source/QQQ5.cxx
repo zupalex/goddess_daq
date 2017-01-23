@@ -17,7 +17,6 @@ QQQ5::QQQ5 ( std::string serial_Num, unsigned short sector_, unsigned short dept
     orrubaDet ( serial_Num, sector_, depth_, up_Stream, position )
 {
     siDet::SetNumContacts ( 32, 4 );
-    ConstructBins();
     Clear();
 }
 
@@ -35,18 +34,17 @@ void QQQ5::ConstructBins()
 {
 //     float QQQ5_active_length = 56.8; // mm
 
-    float firstStripWidth = 2.55;
-
-    TVector3 firstStripOffset ( 0, 25.2 + firstStripWidth/2., 0 ); // everything in mm
+    TVector3 firstStripOffset ( 0, firstStripWidth/2., 0 ); // everything in mm
 
     TVector3 prevStripRefDetCenter = firstStripOffset;
 
     pStripCenterPos[0] = detPos.GetTVector3() + firstStripOffset;
+//     cerr << "QQQ5 strip #0 : " << pStripCenterPos[0].Y() << endl;
 
     for ( int i = 1; i < 32; i++ )
     {
-        float prevStripWidth = firstStripWidth - ( i-1 ) * 0.05;
-        float currStripWidth = firstStripWidth - i * 0.05;
+        float prevStripWidth = firstStripWidth - ( i-1 ) * deltaPitch;
+        float currStripWidth = firstStripWidth - i * deltaPitch;
 
         TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, ( prevStripWidth + currStripWidth ) / 2., 0 );
         prevStripRefDetCenter = pStPosRefDetCenter;
@@ -54,6 +52,7 @@ void QQQ5::ConstructBins()
         pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
 
         pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
+//         cerr << "QQQ5 strip #" << i << " : " << pStripCenterPos[i].Y() << endl;
     }
 
 //     for ( int i = 0; i < 4; i++ )
@@ -112,6 +111,11 @@ void QQQ5::SetPosID()
     }
 }
 
+void QQQ5::SetGeomParams ( map< string, double > geomInfos_ )
+{
+    firstStripWidth = geomInfos_["QQQ5 First Strip Width"];
+    deltaPitch = geomInfos_["QQQ5 Delta Pitch"];
+}
 
 /**This method is called when a contact energy is updated. We call the parent
  * siDet::SetRawValue to handle storing the raw and calibrated value. If the update

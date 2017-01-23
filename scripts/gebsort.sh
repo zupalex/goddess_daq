@@ -10,7 +10,8 @@ ReturnError()
     echo ""
     echo "-> suffix=output_file_suffix will append the specified suffix at the end of the output rootfile name"
     echo "-> nevents=XXXX command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file" 
-    echo "-> config=config_filename force the use of [config_file_name] instead of the default config file automatically determined from the run number provided"
+    echo "-> config=config_filename force the use of [config_filename] instead of the default config file automatically determined from the run number provided"
+    echo "-> geom=geom_filename force the use of [geom_filename] instead of the default \"goddess.geom\""
     echo "-> sx3enfix=filename enable the SX3 energies adjustment using the graphs provided in the file given as an input"
     echo "-> nocalib=mode handles the calibration level."
     echo "           mode==0 (default mode) will generate only the sorted AND calibrated tree."
@@ -52,6 +53,7 @@ NEVENTSARG=""
 FSTEVENTSARG=""
 SPLITEVTARG=""
 CONFIGFILEARG=""
+GEOMFILEARG=""
 
 USERFILTERDIR=""
 USERFILTERARG=""
@@ -150,6 +152,11 @@ COUNTER=$(($COUNTER + 1))
 
 	NEVENTSARG="-nevents $NEVENTS"
 	
+    elif [ "$arg" != "${arg##geom=}" ]; then
+
+	GEOMFILEARG="-geom ${arg##geom=}"
+	echo "Forced use of the following geometry file: ${arg##geom=}"
+		
     elif [ "$arg" != "${arg##config=}" ]; then
 
 	CONFIGFILEARG="-config ${arg##config=}"
@@ -218,7 +225,7 @@ do
     fi
     
     time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
-    $NEVENTSARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG \
+    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG \
     -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     
     echo "GEBSort DONE at `date`"

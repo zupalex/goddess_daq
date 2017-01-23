@@ -1,25 +1,6 @@
 #ifndef __GODDESSANAMACROSINCLUDES__
 #define __GODDESSANAMACROSINCLUDES__
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <streambuf>
-#include <string>
-#include <vector>
-#include <map>
-#include <random>
-#include <type_traits>
-#include <cxxabi.h>
-#include <pthread.h>
-#include <dirent.h>
-#include <utility>
-#include <tuple>
-#include <array>
-#include <chrono>
-#include <ctime>
-#include <math.h>
-
 #include "TROOT.h"
 #include "TSystem.h"
 #include <TQObject.h>
@@ -69,13 +50,6 @@
 
 #include "SolidVector.h"
 #include "GoddessStruct.h"
-
-using std::map;
-using std::string;
-using std::vector;
-using std::cout;
-using std::cerr;
-using std::clog;
-using std::endl;
+#include "GoddessToolbox.h"
 
 #endif

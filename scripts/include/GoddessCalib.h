@@ -48,6 +48,8 @@ private:
 public:
     virtual ~GoddessCalib();
 
+    static void RegisterClassForROOTSession() {}
+
     // ****************** Singleton stuffs ******************************* //
 
     static GoddessCalib* sinstance()
@@ -122,7 +124,12 @@ public:
 
     // ******************* Geometry Utilities ************************** //
 
+    TChain* initialPosChain;
+    
     map<string, TH1F*> hQval_NewGeom;
+
+    map<string, TH2F*> hEvsA_SX3_NewGeom;
+    map<string, TH2F*> hEvsA_QQQ5_NewGeom;
 
     vector<float> lastQQQ5Offsets, lastSX3Offsets;
 
@@ -130,14 +137,18 @@ public:
     void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
     TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
     void GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
-                                  float qqq5OffX, float qqq5OffY, float QQQ5OffZ,
+                                  float qqq5OffX, float qqq5OffY, float qqq5OffZ,
                                   float sX3OffX, float sX3OffY, float sX3OffZ,
                                   int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ );
-    string DrawQValNewGeom ( string histName );
+    string DrawNewGeom ( string histName );
     void GetBestParameters ( float mean = 4.1, float fwhm = 0.5, string detType = "", string inFileName = "", string betterFitMode = "sigma < bestSigma && chi2 < bestChi2" );
     TF1* FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ );
     void WriteNewGeomGraphs ( string outFileName = "" );
     void ReloadNewGeomGraphs ( string outFileName );
+
+    void GenerateGeomAdjustRootfile ( string filesname, string treename, long long int nEntries, string outfname );
+
+    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, int qqq5OffX, int qqq5OffY, int qqq5OffZ, int sX3OffX, int sX3OffY, int sX3OffZ, int targetOffX, int targetOffY, int targetOffZ );
 
     // ******************** Calibration Utilities ********************** //
 
@@ -181,7 +192,7 @@ public:
 
     template<typename First, typename... Rest> inline void PlotSX3ResStripsCalGraphs ( TChain* chain, bool isUpstream, First fstSector, Rest... otherSectors );
 
-    void PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, long int nentries, bool isUpstream_, vector<unsigned short> sectorsList );
+    void PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, long int nentries, bool isUpstream_, vector<int> sectorsList );
     template<typename FirstSector, typename... VarArgs> inline void PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors );
 
     TGraph* DrawPosCalGraph ( TChain* chain, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ );
@@ -197,7 +208,7 @@ public:
 
     map<string, TH2F*> DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
             int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts,
-            vector<unsigned short> sectorsList, string configFileName );
+            vector<int> sectorsList, string configFileName );
 
     template<typename First, typename... Rest> inline map<string, TH2F*> DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
             int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
@@ -299,7 +310,7 @@ template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResS
 
 template<typename FirstSector, typename... VarArgs> inline void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
 {
-    vector<unsigned short> sectorsList;
+    vector<int> sectorsList;
 
     GetListOfSectorsToTreat<FirstSector, VarArgs...> ( &sectorsList, fstSector, sectors... );
 
@@ -356,7 +367,7 @@ template<typename First, typename... Rest> map<string, TH2F*> GoddessCalib::Draw
         int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
         First fstSector, Rest... otherSectors , string configFileName )
 {
-    vector<unsigned short> sectorsList;
+    vector<int> sectorsList;
     sectorsList.clear();
 
     GetListOfSectorsToTreat<First, Rest...> ( &sectorsList, fstSector, otherSectors... );

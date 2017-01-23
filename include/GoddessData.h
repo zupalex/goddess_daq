@@ -22,7 +22,7 @@ double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det = nullptr, f
 class GoddessData
 {
 public:
-    GoddessData ( std::string configFilename );
+    GoddessData ();
     ~GoddessData();
 
     int Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt );

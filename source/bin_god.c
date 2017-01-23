@@ -11,12 +11,10 @@
 
 void sup_god()
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+//     PARS* Pars = SortManager::sinstance()->execParams;
 
-    std::string testconf = Pars->ConfigFile;
-    SortManager::sinstance()->godData = new GoddessData ( testconf );
-    //godData = new GoddessData("goddess.config");
-    //godData = new GoddessData("goddess_95Mo_runs200_to_352.config");
+//     std::string confName = Pars->ConfigFile;
+    SortManager::sinstance()->godData = new GoddessData ();
 }
 
 int bin_god ( GEB_EVENT* gebEvt )

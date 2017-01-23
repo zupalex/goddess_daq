@@ -46,6 +46,8 @@ public:
     ///Clear the stored values in this detector.
     void Clear();
 
+    double activeWidth;
+
     TVector3 GetPStripCenterPos ( int strip )
     {
         return pStripCenterPos[strip];
@@ -88,6 +90,8 @@ public:
 
     ///Return the computed event position.
     TVector3 GetEventPosition ( bool calibrated = true );
+
+    virtual void SetGeomParams ( map<string, double> geomInfos_ );
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );

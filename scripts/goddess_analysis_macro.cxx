@@ -8,6 +8,7 @@ string localPathToGoddessDaq = "";
 
 void LinuxLibrariesLoader ( string myPath )
 {
+    gSystem->Load ( Form ( "%s/exec/libGoddessToolboxLib.so", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.so", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libORRUBA.so", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.so", myPath.c_str() ) );
@@ -17,6 +18,7 @@ void MacLibrariesLoader ( string myPath )
 {
     gSystem->AddDynamicPath ( Form ( "%s/exec", myPath.c_str() ) );
 
+    gSystem->Load ( Form ( "%s/exec/libGoddessToolboxLib.dylib", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessStruct.dylib", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libORRUBA.dylib", myPath.c_str() ) );
     gSystem->Load ( Form ( "%s/exec/libGoddessAnalysis.dylib", myPath.c_str() ) );
@@ -44,7 +46,9 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
     LinuxLibrariesLoader ( myPathToGoddessDaq );
 #endif
 
-    std::cout << std::endl;
+    gROOT->ProcessLine ( "GoddessAnalysis::RegisterClassForROOTSession();" );
+    gROOT->ProcessLine ( "GoddessCalib::RegisterClassForROOTSession();" );
+
     std::cout << "Type \"StartUserAnalysis()\" to load the user macros from UserAnalysisMacros.cxx" << std::endl;
     std::cout << std::endl;
     std::cout << "To load the TEntryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;

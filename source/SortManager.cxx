@@ -1099,7 +1099,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     if ( system ( str ) ) {}
     printf ( "deleted %s\n", str );
 
-    gConfig = new GoddessConfig ( "goddess.position", ( string ) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile );
+    gConfig = new GoddessConfig ( ( string ) execParams->GeomFile, ( string ) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile );
 
     /*------------------------------------------*/
     /* if we are using root file, then either   */
@@ -1187,8 +1187,6 @@ int SortManager::GEBacq ( char* ChatFileName )
         execParams->histDir = execParams->f1->mkdir ( "hists" );
         execParams->treeDir = execParams->f1->mkdir ( "trees" );
         execParams->f1->Write ( 0, TObject::kWriteDelete );
-        execParams->histDir->cd();
-
         execParams->histDir->cd();
     }
     /* spectra for different types of data */

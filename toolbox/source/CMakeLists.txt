@@ -1,0 +1,7 @@
+set (GODDESSTOOLBOX_SOURCES GoddessToolbox.cxx)
+
+add_library(GODDESSTOOLBOX_OBJECT OBJECT ${GODDESSTOOLBOX_SOURCES})
+add_library(GoddessToolboxLib SHARED $<TARGET_OBJECTS:GODDESSTOOLBOX_OBJECT>)
+target_link_libraries(GoddessToolboxLib ${ROOT_LIBRARIES})
+
+install(TARGETS GoddessToolboxLib DESTINATION ${CMAKE_INSTALL_PREFIX})

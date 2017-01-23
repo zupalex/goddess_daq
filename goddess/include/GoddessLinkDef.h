@@ -20,6 +20,7 @@
 
 #pragma link C++ class ChValPair+;
 #pragma link C++ class ORRUBARawData+;
+#pragma link C++ class GoddessGeomInfos;
 
 #pragma link C++ class vector<GamData>+;
 #pragma link C++ class vector<SiDataBase>+;

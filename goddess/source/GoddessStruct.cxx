@@ -334,3 +334,50 @@ unsigned short ORRUBARawData::GetMultRange ( unsigned short beg, unsigned short 
 
 
 ClassImp ( ORRUBARawData )
+
+
+
+GoddessGeomInfos::GoddessGeomInfos()
+{
+
+}
+
+GoddessGeomInfos::GoddessGeomInfos ( std::map< std::string, double > geomInfos_ )
+{
+    barrelRadius = geomInfos_["Barrel Radius"];
+    barrelLength = geomInfos_["Barrel Length"];
+
+    barrelLayerSpacing = geomInfos_["Barrel Layer Spacing"];
+    endcapLayerSpacing = geomInfos_["Endcap Layer Spacing"];
+
+    targetOffset = TVector3 ( geomInfos_["Beam Spot Offset X"], geomInfos_["Beam Spot Offset Y"], geomInfos_["Beam Spot Offset Z"] );
+    superX3Offset = TVector3 ( geomInfos_["SuperX3 Offset X"], geomInfos_["SuperX3 Offset Y"], geomInfos_["SuperX3 Offset Z"] );
+    qqq5Offset = TVector3 ( geomInfos_["QQQ5 Offset X"], geomInfos_["QQQ5 Offset Y"], geomInfos_["QQQ5 Offset Z"] );
+
+    superX3ActiveLength = geomInfos_["SuperX3 Active Length"];
+    superX3ActiveWidth = geomInfos_["SuperX3 Active Width"];
+
+    bb10ActiveWidth = geomInfos_["BB10 Active Width"];
+
+    qqq5FirstStripWidth = geomInfos_["QQQ5 First Strip Width"];
+    qqq5DeltaPitch = geomInfos_["QQQ5 Delta Pitch"];
+
+    qqq5RefPhi = geomInfos_["QQQ5 Ref Phi"];
+    qqq5DeltaPhi = geomInfos_["QQQ5 Delta Phi"];
+
+    qqq5RefRotz = geomInfos_["QQQ5 Ref Zrot"];
+    qqq5DeltaRotz = geomInfos_["QQQ5 Delta Zrot"];
+
+    superX3RefPhi = geomInfos_["SuperX3 Ref Phi"];
+    superX3DeltaPhi = geomInfos_["SuperX3 Delta Phi"];
+
+    superX3RefRotz = geomInfos_["SuperX3 Ref Zrot"];
+    superX3DeltaRotz = geomInfos_["SuperX3 Delta Zrot"];
+}
+
+GoddessGeomInfos::~GoddessGeomInfos()
+{
+
+}
+
+ClassImp ( GoddessGeomInfos )

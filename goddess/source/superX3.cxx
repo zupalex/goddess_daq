@@ -16,7 +16,6 @@ superX3::superX3 ( std::string serial_Num, unsigned short sector_, unsigned shor
     orrubaDet ( serial_Num, sector_, depth_, up_Stream, position )
 {
     siDet::SetNumContacts ( 8, 4 );
-    ConstructBins();
     Clear();
 }
 
@@ -32,13 +31,10 @@ superX3::~superX3() {}
  */
 void superX3::ConstructBins()
 {
-    float SX3_width = 40.3; //mm
-    float SX3_length = 75.; //mm
-
     for ( int i = 0; i < 4; i++ )
     {
         // We get the position of the strip center relative to the detector center assuming that the detector lies on the (X,Z) plane
-        TVector3 pStPosRefDetCenter ( ( ( 3./8. ) * SX3_width ) - ( i * SX3_width/4. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
+        TVector3 pStPosRefDetCenter ( ( ( 3./8. ) * activeWidth ) - ( i * activeWidth/4. ), 0, 0 ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive X direction
 
         // We then rotate that vector by the detector rotation around the Z axis
         pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
@@ -46,7 +42,7 @@ void superX3::ConstructBins()
         // The final position fo the center of the strip is the vector giving the detector center to which we add the vector going from the detector center to the strip center
         pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
 
-        TVector3 nStPosRefDetCenter ( 0, 0, ( ( 3./8. ) * SX3_length ) - ( i * SX3_length/4. ) ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive Z direction
+        TVector3 nStPosRefDetCenter ( 0, 0, ( ( 3./8. ) * activeLength ) - ( i * activeLength/4. ) ); // Ref taken at the center of the SX3 so strip 0 offset is 1 and a half strip width toward positive Z direction
 
         nStripCenterPos[i] = detPos.GetTVector3() + nStPosRefDetCenter;
     }
@@ -214,6 +210,12 @@ bool superX3::ValidStrip ( int strip )
         return false;
     }
     return true;
+}
+
+void superX3::SetGeomParams ( map< string, double > geomInfos_ )
+{
+    activeLength = geomInfos_["SuperX3 Active Length"];
+    activeWidth = geomInfos_["SuperX3 Active Width"];
 }
 
 /**This method is called when a contact energy is updated. We call the parent
@@ -652,8 +654,6 @@ TVector3 superX3::GetEventPosition ( bool calibrated )
     eNear = GetNearEn ( calibrated );
     eFar = GetFarEn ( calibrated );
 
-    float SX3_length = 75.; // mm
-
     float recenter = ( parPosCal[pStripHit].at ( 1 ) + parPosCal[pStripHit].at ( 0 ) ) / 2.;
 
     float normalize = parPosCal[pStripHit].at ( 1 ) - parPosCal[pStripHit].at ( 0 );
@@ -664,7 +664,7 @@ TVector3 superX3::GetEventPosition ( bool calibrated )
 
     if ( !upStream ) zRes *= -1;
 
-    TVector3 zResPos ( 0, 0, zRes * SX3_length );
+    TVector3 zResPos ( 0, 0, zRes * activeLength );
 
     TVector3 interactionPos = pStripCenterPos[pStripHit] + zResPos;
 

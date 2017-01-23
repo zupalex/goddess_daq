@@ -11,6 +11,7 @@
 #include "TList.h"
 #include "TIterator.h"
 #include "TF1.h"
+#include "GoddessToolbox.h"
 
 ///Abstract class defining a detector.
 class Detector : public TObject

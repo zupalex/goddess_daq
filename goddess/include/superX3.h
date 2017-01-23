@@ -75,6 +75,9 @@ public:
     ///Clear the stored values in this detector.
     void Clear();
 
+    double activeLength;
+    double activeWidth;
+
     ///Calculate the position on the resistive strip detectors.
     void UpdatePosition ( int strip );
 
@@ -183,6 +186,8 @@ public:
     static unsigned short GetNearContact ( unsigned short strip );
     ///Return the contact for the far end of the strip.
     static unsigned short GetFarContact ( unsigned short strip );
+
+    virtual void SetGeomParams ( map<string, double> geomInfos_ );
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );

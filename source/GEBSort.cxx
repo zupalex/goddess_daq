@@ -41,6 +41,7 @@ int main ( int argc, char** argv )
     Pars->HaveRootFileName = 0;
 
     strcpy ( Pars->ConfigFile, "Uninitialized" );
+    strcpy ( Pars->GeomFile, "goddess.geom" );
     sprintf ( Pars->ROOTFileOption, "UNDEFINED" );
 
     Pars->sx3EnAdjustFile = "";
@@ -181,16 +182,22 @@ int main ( int argc, char** argv )
                 strcpy ( Pars->ConfigFile, argv[j++] );
                 printf ( "will read config file from: %s ...\n", Pars->ConfigFile );
             }
+            else if ( ( p = strstr ( argv[j], "-geom" ) ) != NULL )
+            {
+                j++;
+                strcpy ( Pars->GeomFile, argv[j++] );
+                printf ( "will read geometry from: %s ...\n", Pars->GeomFile );
+            }
             else if ( ( p = strstr ( argv[j], "-sx3enadjust" ) ) != NULL )
             {
                 j++;
-                Pars->sx3EnAdjustFile = (string) argv[j++];
+                Pars->sx3EnAdjustFile = ( string ) argv[j++];
                 printf ( "will apply a correction to the SX3 energies based on the following file: %s ...\n", Pars->sx3EnAdjustFile.c_str() );
             }
             else if ( ( p = strstr ( argv[j], "-qqq5enadjust" ) ) != NULL )
             {
                 j++;
-                Pars->qqq5EnAdjustFile = (string) argv[j++];
+                Pars->qqq5EnAdjustFile = ( string ) argv[j++];
                 printf ( "will apply a correction to the QQQ5 energies based on the following file: %s ...\n", Pars->qqq5EnAdjustFile.c_str() );
             }
             else if ( ( p = strstr ( argv[j], "-nocalib" ) ) != NULL )

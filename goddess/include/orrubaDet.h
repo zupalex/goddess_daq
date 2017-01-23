@@ -75,6 +75,8 @@ public:
         return sector;
     }
 
+    virtual void SetGeomParams ( map<string, double> geomInfos_ ) = 0;
+
     virtual void SortAndCalibrate ( bool doCalibrate = true ) = 0;
 
     virtual TVector3 GetPStripCenterPos ( int strip ) = 0;

@@ -91,10 +91,8 @@ double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det, float enear
     return 1.;
 }
 
-GoddessData::GoddessData ( std::string configFilename )
+GoddessData::GoddessData ()
 {
-    ( void ) configFilename; // to prevent useless warning about this variable not being used for the moment....
-
     PARS* Pars = SortManager::sinstance()->execParams;
 
     config = SortManager::sinstance()->gConfig;
@@ -117,6 +115,14 @@ GoddessData::GoddessData ( std::string configFilename )
         std::cerr << "ERROR: Not in a ROOT File?\n";
         return;
     }
+
+    f->mkdir ( "infos" );
+    f->cd ( "/infos" );
+
+    GoddessGeomInfos* godGeomInf = new GoddessGeomInfos ( config->geomInfos );
+    godGeomInf->Write ( "GoddessGeom" );
+
+    f->cd ( "../" );
 
     if ( !Pars->noHists ) f->cd ( "/trees" );
     else f->cd ();
