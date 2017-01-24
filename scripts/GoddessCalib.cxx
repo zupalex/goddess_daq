@@ -471,21 +471,24 @@ void GoddessCalib::ValidatePlotEnCalGraphs()
 
         if ( chain == NULL )
         {
-            auto lOK = gDirectory->GetListOfKeys();
+            cout << "User Chain is empty. Trying to use the current opened file: " << gDirectory->GetName() << "\n";
 
-            if ( lOK->GetSize() > 0 )
+            TTree* testTree = dynamic_cast<TTree*> ( gDirectory->FindObjectAny ( treeName.c_str() ) );
+
+            if ( testTree != nullptr )
             {
-                for ( int i = 0; i < lOK->GetSize(); i++ )
-                {
-                    TTree* testTree = ( TTree* ) lOK->At ( i );
+                string completePTreePath = testTree->GetDirectory()->GetPath();
+                if ( completePTreePath[completePTreePath.length()-1] != '/' ) completePTreePath += "/";
+                completePTreePath += treeName;
 
-                    if ( testTree != nullptr &&  treeName == ( ( string ) testTree->GetName() ) )
-                    {
-                        GoddessCalib::sinstance()->calTreeName = testTree->GetName();
-                        GoddessCalib::sinstance()->AddFileToChain ( gDirectory->GetName() );
-                        chain = GoddessCalib::sinstance()->calChain;
-                    }
-                }
+                if ( completePTreePath.find ( ":" ) != string::npos ) completePTreePath.replace ( completePTreePath.find ( ":" ), 1, "" );
+
+                cout << "Found matching tree in current file: " << testTree->GetDirectory()->GetPath() << "\n";
+
+                GoddessCalib::sinstance()->calTreeName = treeName;
+
+                GoddessCalib::sinstance()->AddFileToChain ( completePTreePath.c_str() );
+                chain = GoddessCalib::sinstance()->calChain;
             }
         }
 
@@ -644,22 +647,42 @@ void GoddessCalib::ValidatePlotPosCalGraphs()
 
         if ( chain == NULL )
         {
-            auto lOK = gDirectory->GetListOfKeys();
+            cout << "User Chain is empty. Trying to use the current opened file: " << gDirectory->GetName() << "\n";
 
-            if ( lOK->GetSize() > 0 )
+            TTree* testTree = dynamic_cast<TTree*> ( gDirectory->FindObjectAny ( treeName.c_str() ) );
+
+            if ( testTree != nullptr )
             {
-                for ( int i = 0; i < lOK->GetSize(); i++ )
-                {
-                    TTree* testTree = ( TTree* ) lOK->At ( i );
+                string completePTreePath = testTree->GetDirectory()->GetPath();
+                if ( completePTreePath[completePTreePath.length()-1] != '/' ) completePTreePath += "/";
+                completePTreePath += treeName;
 
-                    if ( testTree != nullptr )
-                    {
-                        GoddessCalib::sinstance()->calTreeName = testTree->GetName();
-                        GoddessCalib::sinstance()->AddFileToChain ( gDirectory->GetName() );
-                        chain = GoddessCalib::sinstance()->calChain;
-                    }
-                }
+                if ( completePTreePath.find ( ":" ) != string::npos ) completePTreePath.replace ( completePTreePath.find ( ":" ), 1, "" );
+
+                cout << "Found matching tree in current file: " << testTree->GetDirectory()->GetPath() << "\n";
+
+                GoddessCalib::sinstance()->calTreeName = treeName;
+
+                GoddessCalib::sinstance()->AddFileToChain ( completePTreePath.c_str() );
+                chain = GoddessCalib::sinstance()->calChain;
             }
+
+//             auto lOK = gDirectory->GetListOfKeys();
+//
+//             if ( lOK->GetSize() > 0 )
+//             {
+//                 for ( int i = 0; i < lOK->GetSize(); i++ )
+//                 {
+//                     TTree* testTree = ( TTree* ) lOK->At ( i );
+//
+//                     if ( testTree != nullptr )
+//                     {
+//                         GoddessCalib::sinstance()->calTreeName = testTree->GetName();
+//                         GoddessCalib::sinstance()->AddFileToChain ( gDirectory->GetName() );
+//                         chain = GoddessCalib::sinstance()->calChain;
+//                     }
+//                 }
+//             }
         }
 
         if ( chain == NULL ) return;
@@ -1269,13 +1292,6 @@ void GoddessCalib::AddFileToChain ( string fileName )
     calChain->Add ( fileName.c_str() );
 
     return;
-}
-
-void GoddessCalib::AddFileToChain ( TFile* file )
-{
-    string fileName = file->GetName();
-
-    return AddFileToChain ( fileName );
 }
 
 void GoddessCalib::ResetChain()
@@ -3835,14 +3851,14 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
 //     float originalSX3Y = 95.25; // mm
 //     float originalQQQ5Z = 100; // mm
 
-    float qqq5FstStripWidth = 2.55; // mm
+//     float qqq5FstStripWidth = 2.55; // mm
 
     TVector3 totQQQ5Offset ( qqq5OffX-targetOffX, qqq5OffY-targetOffY, qqq5OffZ-targetOffZ );
     TVector3 totSX3Offset ( sX3OffX-targetOffX, sX3OffY-targetOffY, sX3OffZ-targetOffZ );
 
     char qqq5SectAliases[4] = {'A', 'B', 'C', 'D'};
 
-    TVector3 qqq5sPos[2][4];
+//     TVector3 qqq5sPos[2][4];
 //     TVector3 sX3sPos[2][12];
 
     string sX3OffXStr, sX3OffYStr, sX3OffZStr, qqq5OffXStr, qqq5OffYStr, qqq5OffZStr, targetOffXStr, targetOffYStr, targetOffZStr;
@@ -3856,6 +3872,8 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
     targetOffXStr = GetNameCompliantStr ( targetOffX );
     targetOffYStr = GetNameCompliantStr ( targetOffY );
     targetOffZStr = GetNameCompliantStr ( targetOffZ );
+
+    map<string, TH2F*> tempQQQ5EvsAHists;
 
     for ( int up = 0; up < 2; up++ )
     {
@@ -3893,46 +3911,46 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
                 }
                 else
                 {
-                    qqq5sPos[up][sect] = GetDetPos ( initialPosChain, true, false, sect );
-
-                    float detPhi = qqq5sPos[up][sect].Phi();
-
-                    qqq5sPos[up][sect].SetPhi ( 90*TMath::DegToRad() );
-
-                    if ( qqq5sPos[up][sect].Mag() == 0 ) continue;
+//                     qqq5sPos[up][sect] = GetDetPos ( initialPosChain, true, false, sect );
+//
+//                     float detPhi = qqq5sPos[up][sect].Phi();
+//
+//                     qqq5sPos[up][sect].SetPhi ( 90*TMath::DegToRad() );
+//
+//                     if ( qqq5sPos[up][sect].Mag() == 0 ) continue;
 
                     string histKey = Form ( "EvsA_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
                                             qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str() );
 
-                    double qqq5BinsEdges[33];
+//                     double qqq5BinsEdges[33];
+//
+//                     TVector3 lowEdge = qqq5sPos[up][sect] - TVector3 ( 0, qqq5FstStripWidth/2., 0 );
+//                     lowEdge.SetPhi ( detPhi );
+//
+//                     for ( int i = 0; i < 33; i++ )
+//                     {
+//                         qqq5BinsEdges[ 32-i ] = ( lowEdge + totQQQ5Offset ).Angle ( beamDir ) * TMath::RadToDeg();
+//
+//                         TVector3 toNextStrip ( 0, qqq5FstStripWidth - i*0.05 , 0 );
+//                         toNextStrip.SetPhi ( detPhi );
+//
+//                         lowEdge += toNextStrip;
+//                     }
+//
+//                     cout << "------ Bins for " << ( bar ? "SuperX3" : "QQQ5" ) << " " << ( up ? "U" : "D" ) << sect << " ------\n";
+//                     for ( int i = 0; i < 33; i++ )
+//                     {
+//                         cout << "Bin #" << i << " : " << qqq5BinsEdges[i] << endl;
+//                     }
 
-                    TVector3 lowEdge = qqq5sPos[up][sect] - TVector3 ( 0, qqq5FstStripWidth/2., 0 );
-                    lowEdge.SetPhi ( detPhi );
-
-                    for ( int i = 0; i < 33; i++ )
+                    if ( tempQQQ5EvsAHists.find ( histKey ) == tempQQQ5EvsAHists.end() )
                     {
-                        qqq5BinsEdges[ 32-i ] = ( lowEdge + totQQQ5Offset ).Angle ( beamDir ) * TMath::RadToDeg();
-
-                        TVector3 toNextStrip ( 0, qqq5FstStripWidth - i*0.05 , 0 );
-                        toNextStrip.SetPhi ( detPhi );
-
-                        lowEdge += toNextStrip;
+                        tempQQQ5EvsAHists[histKey] = new TH2F ( ( histKey+"_temp" ).c_str(),
+                                                                Form ( "Energy vs. Angle new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d",
+                                                                        ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ ),
+                                                                1800, 0, 180, 1500, 0, 15 );
                     }
-
-                    cout << "------ Bins for " << ( bar ? "SuperX3" : "QQQ5" ) << " " << ( up ? "U" : "D" ) << sect << " ------\n";
-                    for ( int i = 0; i < 33; i++ )
-                    {
-                        cout << "Bin #" << i << " : " << qqq5BinsEdges[i] << endl;
-                    }
-
-                    if ( hEvsA_QQQ5_NewGeom.find ( histKey ) == hEvsA_QQQ5_NewGeom.end() )
-                    {
-                        hEvsA_QQQ5_NewGeom[histKey] = new TH2F ( histKey.c_str(),
-                                Form ( "Energy vs. Angle new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d",
-                                       ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ ),
-                                32, qqq5BinsEdges, 1500, 0, 15 );
-                    }
-                    hEvsA_QQQ5_NewGeom[histKey]->Reset();
+                    tempQQQ5EvsAHists[histKey]->Reset();
 
                     histKey = Form ( "QVal_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
                                      qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str() );
@@ -3994,7 +4012,7 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
 
         int sectorPhiMod[4] = {1, 0, 3, 2};
 
-        (*pos).SetPhi ( sectorPhiMod[sector] * 90*TMath::DegToRad() );
+        ( *pos ).SetPhi ( sectorPhiMod[sector] * 90*TMath::DegToRad() );
 
         float angle = ( *pos + ( isBarrel ? totSX3Offset : totQQQ5Offset ) ).Angle ( beamDir );
 
@@ -4030,7 +4048,7 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
             detKey = Form ( "EvsA_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s", ( isUpstream ? "U" : "D" ), qqq5SectAliases[sector],
                             qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str() );
 
-            hEvsA_QQQ5_NewGeom[detKey]->Fill ( angle*TMath::RadToDeg(), energy );
+            tempQQQ5EvsAHists[detKey]->Fill ( angle*TMath::RadToDeg(), energy );
         }
     }
 
@@ -4038,7 +4056,86 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
 
     inFile->Close();
 
-    cout << "Min QQQ5 U0 angle: " << minAngleQQQ5U0 << endl;
+//     cout << "Min QQQ5 U0 angle: " << minAngleQQQ5U0 << endl;
+
+    cout << "Converting QQQ5 histograms...\n";
+
+    for ( auto grItr = tempQQQ5EvsAHists.begin(); grItr != tempQQQ5EvsAHists.end(); grItr++ )
+    {
+        vector<double> nonEmptyBins;
+        nonEmptyBins.clear();
+
+        TH2F* hist = grItr->second;
+
+        int nBinsX = hist->GetNbinsX();
+        int nBinsY = hist->GetNbinsY();
+
+        for ( int bx = 0; bx < nBinsX; bx++ )
+        {
+            for ( int by = 0; by < nBinsY; by++ )
+            {
+                if ( hist->GetBinContent ( bx, by ) > 0 )
+                {
+                    nonEmptyBins.push_back ( hist->GetXaxis()->GetBinCenter ( bx ) );
+
+                    break;
+                }
+            }
+        }
+
+        double* qqq5BinsEdges;
+
+        if ( nonEmptyBins.size() > 1 )
+        {
+//             double currBinWidth = nonEmptyBins[1] - nonEmptyBins[0];
+// 	    double currIncrease = 1.;
+//
+//             for ( unsigned int i = 2; i < nonEmptyBins.size(); i++ )
+//             {
+//                 double nextBinWidth = nonEmptyBins[i] - nonEmptyBins[i-1];
+// 		double nextIncrease = nextBinWidth/currBinWidth;
+//             }
+
+            qqq5BinsEdges = new double[nonEmptyBins.size() +1];
+
+            for ( unsigned int i = 0; i < nonEmptyBins.size()-1; i++ )
+            {
+                qqq5BinsEdges[i+1] = ( nonEmptyBins[i]+nonEmptyBins[i+1] ) /2.;
+            }
+
+            qqq5BinsEdges[0] = nonEmptyBins[0] - ( qqq5BinsEdges[1]-nonEmptyBins[0] );
+            qqq5BinsEdges[nonEmptyBins.size()] = nonEmptyBins[nonEmptyBins.size()-1] + ( nonEmptyBins[nonEmptyBins.size()-1]-qqq5BinsEdges[nonEmptyBins.size()-1] );
+
+//             cout << "------ Bins for " << grItr->first << " ------\n";
+//             for ( unsigned int i = 0; i < nonEmptyBins.size() +1; i++ )
+//             {
+//                 cout << "Bin #" << i << " : " << qqq5BinsEdges[i] << endl;
+//             }
+
+            string hkey = grItr->first;
+
+            if ( hEvsA_QQQ5_NewGeom.find ( hkey ) == hEvsA_QQQ5_NewGeom.end() )
+            {
+                hEvsA_QQQ5_NewGeom[hkey] = new TH2F ( hkey.c_str(),grItr->second->GetTitle() , nonEmptyBins.size(), qqq5BinsEdges, 1500, 0, 15 );
+            }
+            hEvsA_QQQ5_NewGeom[hkey]->Reset();
+
+            for ( int bx = 0; bx < nBinsX; bx++ )
+            {
+                for ( int by = 0; by < nBinsY; by++ )
+                {
+                    if ( hist->GetBinContent ( bx, by ) > 0 )
+                    {
+                        hEvsA_QQQ5_NewGeom[hkey]->Fill ( hist->GetXaxis()->GetBinCenter ( bx ), hist->GetYaxis()->GetBinCenter ( by ), hist->GetBinContent ( bx, by ) );
+                    }
+                }
+            }
+        }
+    }
+
+    tempQQQ5EvsAHists.clear();
+
+    gDirectory->Delete ( "*temp*;*" );
 
     return;
 }

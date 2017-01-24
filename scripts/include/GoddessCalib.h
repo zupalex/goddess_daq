@@ -110,7 +110,6 @@ public:
 
     string calTreeName;
     TChain* calChain;
-    void AddFileToChain ( TFile* file );
     void AddFileToChain ( string fileName );
     void ResetChain();
 
@@ -125,7 +124,7 @@ public:
     // ******************* Geometry Utilities ************************** //
 
     TChain* initialPosChain;
-    
+
     map<string, TH1F*> hQval_NewGeom;
 
     map<string, TH2F*> hEvsA_SX3_NewGeom;
