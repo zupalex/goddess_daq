@@ -79,9 +79,9 @@ public:
     ///Get the calibrated energy of the contact specified.
     float GetCalEnergy ( int contact, bool nType = false );
     ///Return the total number of fired contacts above theshold.
-    virtual int GetContactMult() = 0;
+    virtual int GetContactMult ( bool calibrated = true ) = 0;
     ///Return the number of fired contacts above threhsold for the specified type.
-    virtual int GetContactMult ( bool contactType ) = 0;
+    virtual int GetContactMult ( bool contactType, bool calibrated ) = 0;
 
     ///Return the smallest timestamp.
     unsigned long long GetTimeStamp();

@@ -875,7 +875,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
                 orrubaDet* det = detItr->second;
 
                 //Skip detectors with no contacts above threshold.
-                if ( ( Pars->noCalib == 0 || ( Pars->noCalib > 0 && Pars->ignoreThresholds == 0 ) ) && det->GetContactMult() == 0 )
+                if ( ( Pars->noCalib == 0 || ( Pars->noCalib > 0 && Pars->ignoreThresholds == 0 ) ) && det->GetContactMult ( doCalibrate ) == 0 )
                 {
                     continue;
                 }

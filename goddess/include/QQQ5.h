@@ -65,7 +65,7 @@ public:
 
     ///Clear the stored values in this detector.
     void Clear();
-    
+
     double firstStripWidth;
     double deltaPitch;
 
@@ -131,9 +131,9 @@ public:
     };
 
     ///Return the total number of fired contacts above theshold.
-    virtual int GetContactMult();
+    virtual int GetContactMult ( bool calibrated = true );
     ///Return the number of fired contacts above threhsold for the specified type.
-    virtual int GetContactMult ( bool contactType );
+    virtual int GetContactMult ( bool contactType, bool calibrated );
 
     virtual float GetEnSum ( bool nType = false, bool calibrated = true );
 

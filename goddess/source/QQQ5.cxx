@@ -210,15 +210,24 @@ void QQQ5::SortAndCalibrate ( bool doCalibrate )
     }
 }
 
-int QQQ5::GetContactMult()
+int QQQ5::GetContactMult ( bool calibrated )
 {
-    return enCalP.size() + enCalN.size();
+    if ( calibrated ) return enCalP.size() + enCalN.size();
+    else return enRawP.size() + enRawN.size();
 }
 
-int QQQ5::GetContactMult ( bool contactType )
+int QQQ5::GetContactMult ( bool contactType, bool calibrated )
 {
-    if ( contactType == siDet::nType ) return enCalN.size();
-    else return enCalP.size();
+    if ( contactType == siDet::nType )
+    {
+        if ( calibrated ) return enCalN.size();
+        else return enRawN.size();
+    }
+    else
+    {
+        if ( calibrated ) return enCalP.size();
+        else return enRawP.size();
+    }
 }
 
 std::vector< float > QQQ5::GetHitsInfo ( std::string info, std::vector<float>* dest )

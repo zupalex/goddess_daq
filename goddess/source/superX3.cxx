@@ -533,15 +533,24 @@ void superX3::SortAndCalibrate ( bool doCalibrate )
     }
 }
 
-int superX3::GetContactMult()
+int superX3::GetContactMult ( bool calibrated )
 {
-    return enNearCal.size() + enCalN.size();
+    if ( calibrated ) return enNearCal.size() + enCalN.size();
+    else return enNearRaw.size() + enRawN.size();
 }
 
-int superX3::GetContactMult ( bool contactType )
+int superX3::GetContactMult ( bool contactType, bool calibrated )
 {
-    if ( contactType == siDet::nType ) return enCalN.size();
-    else return enNearCal.size();
+    if ( contactType == siDet::nType )
+    {
+        if ( calibrated ) return enCalN.size();
+        else return enRawN.size();
+    }
+    else
+    {
+        if ( calibrated ) return enNearCal.size();
+        else return enNearRaw.size();
+    }
 }
 
 std::vector< float > superX3::GetHitsInfo ( std::string info, std::vector<float>* dest )

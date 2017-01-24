@@ -137,16 +137,18 @@ void BB10::SortAndCalibrate ( bool doCalibrate )
 //     }
 }
 
-int BB10::GetContactMult()
+int BB10::GetContactMult ( bool calibrated )
 {
-    return enCalP.size();
+    if ( calibrated ) return enCalP.size();
+    else return enRawP.size();
 }
 
-int BB10::GetContactMult ( bool contactType )
+int BB10::GetContactMult ( bool contactType, bool calibrated )
 {
     ( void ) contactType;
 
-    return enRawP.size();
+    if ( calibrated ) return enRawP.size();
+    else return enRawP.size();
 }
 
 std::vector< float > BB10::GetHitsInfo ( std::string info, std::vector<float>* dest )
