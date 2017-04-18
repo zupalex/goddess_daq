@@ -49,6 +49,8 @@ void goddess_analysis_macro ( string myPathToGoddessDaq )
     gROOT->ProcessLine ( "GoddessAnalysis::RegisterClassForROOTSession();" );
     gROOT->ProcessLine ( "GoddessCalib::RegisterClassForROOTSession();" );
 
+    gROOT->ProcessLine ( Form ( "pathToGDAQ = \"%s\";", localPathToGoddessDaq.c_str() ) );
+
     std::cout << "Type \"StartUserAnalysis()\" to load the user macros from UserAnalysisMacros.cxx" << std::endl;
     std::cout << std::endl;
     std::cout << "To load the TEntryList creation macros, type \"LoadMakeEventLists()\"" << std::endl;

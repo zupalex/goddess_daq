@@ -33,7 +33,7 @@ SuperX3 Offset = (0, 4.8, 3.7)
 QQQ5 Offset = (0, 25.2, -12.7)
 
 # Offset given compared to the center of the chamber
-Beam Spot Offset = (0, 0, 0)
+Beam Spot Offset = (0, 0, 7.0)
 
 --------------------------------------------------------------------------------------------------
 

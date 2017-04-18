@@ -104,6 +104,7 @@ public:
     unsigned short siDetailLvl;
 
     std::string userFilter;
+    std::string triggerMode;
     std::ofstream cleanedMerged;
 
     char ROOTFile[STRLEN];
@@ -126,6 +127,7 @@ public:
     unsigned int NumToPrint;
     int DumpEvery;
     TFile* f1;
+    TTree* mainTree;
     TDirectory* histDir;
     TDirectory* treeDir;
     TList* wlist;

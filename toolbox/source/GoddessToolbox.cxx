@@ -1,30 +1,164 @@
 #include "GoddessToolbox.h"
 
-std::vector<int> DecodeNumberString ( std::string sectorsString, bool verbose )
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+string GetLocalTimeAndDate()
+{
+    time_t t = time ( nullptr );
+    struct tm* localt = localtime ( &t );
+
+    char* timeAndDate = new char[256];
+
+    sprintf ( timeAndDate, "%s", asctime ( localt ) );
+
+    return ( string ) timeAndDate;
+}
+
+string GetCurrentYear()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t lastSpace = timeAndDate.find_last_of ( " " );
+
+    string currYear = timeAndDate.substr ( lastSpace+1 );
+
+    return FindAndReplaceInString ( currYear, "\n", "" );
+}
+
+string GetCurrentDayName()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t firstSpace = timeAndDate.find_first_of ( " " );
+
+    string currDay = timeAndDate.substr ( 0, firstSpace );
+
+    return currDay;
+}
+
+string GetCurrentMonthName()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t firstSpace = timeAndDate.find_first_of ( " " );
+    size_t secSpace = timeAndDate.find_first_of ( " ", firstSpace+1 );
+
+    string currMonth = timeAndDate.substr ( firstSpace+1, secSpace-firstSpace-1 );
+
+    return currMonth;
+}
+
+int GetCurrentDayNum()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t firstNum = timeAndDate.find_first_of ( "0123456789" );
+    size_t nextSpace = timeAndDate.find_first_of ( " ", firstNum+1 );
+
+    string currDayNum = timeAndDate.substr ( firstNum, firstNum-nextSpace );
+
+    return std::stoi ( currDayNum );
+}
+
+int GetCurrentMonthNum()
+{
+    string currMonthName = GetCurrentMonthName();
+
+    if ( currMonthName == "Jan" ) return 1;
+    else if ( currMonthName == "Feb" ) return 2;
+    else if ( currMonthName == "Mar" ) return 3;
+    else if ( currMonthName == "Apr" ) return 4;
+    else if ( currMonthName == "May" ) return 5;
+    else if ( currMonthName == "Jun" ) return 6;
+    else if ( currMonthName == "Jul" ) return 7;
+    else if ( currMonthName == "Aug" ) return 8;
+    else if ( currMonthName == "Sep" ) return 9;
+    else if ( currMonthName == "Oct" ) return 10;
+    else if ( currMonthName == "Nov" ) return 11;
+    else if ( currMonthName == "Dec" ) return 12;
+    else return 0;
+}
+
+int GetCurrentHour()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t firstNum = timeAndDate.find_first_of ( "0123456789" );
+    size_t nextSpace = timeAndDate.find_first_of ( " ", firstNum+1 );
+    size_t firstSemicolon = timeAndDate.find_first_of ( ":", firstNum+1 );
+
+    string currHour = timeAndDate.substr ( nextSpace+1, firstSemicolon-nextSpace-1 );
+
+    return std::stoi ( currHour );
+}
+
+int GetCurrentMinute()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t firstSemicolon = timeAndDate.find_first_of ( ":" );
+    size_t secSemicolon = timeAndDate.find_first_of ( ":", firstSemicolon+1 );
+
+    string currMinute = timeAndDate.substr ( firstSemicolon+1, secSemicolon-firstSemicolon-1 );
+
+    return std::stoi ( currMinute );
+}
+
+int GetCurrentSecond()
+{
+    string timeAndDate = GetLocalTimeAndDate();
+
+    size_t firstSemicolon = timeAndDate.find_first_of ( ":" );
+    size_t secSemicolon = timeAndDate.find_first_of ( ":", firstSemicolon+1 );
+    size_t nextSpace = timeAndDate.find_first_of ( " ", secSemicolon+1 );
+
+    string currMinute = timeAndDate.substr ( secSemicolon+1, nextSpace-secSemicolon-1 );
+
+    return std::stoi ( currMinute );
+}
+
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+bool CompareStrings ( string ref_, string search_, bool exactMatch, bool caseSensitive )
+{
+    if ( std::search ( ref_.begin(), ref_.end(), search_.begin(), search_.end(), ignoreCharCasePred ( caseSensitive ) ) != ref_.end() )
+    {
+        if ( exactMatch && ref_.length() != search_.length() ) return false;
+        else return true;
+    }
+
+    return false;
+}
+
+std::vector<int> DecodeNumberString ( std::string itemsString, bool verbose )
 {
     std::vector<int> sectorsNum;
 
     sectorsNum.clear();
 
-    while ( sectorsString.length() > 0 )
+    while ( itemsString.length() > 0 )
     {
-        size_t foundComa = sectorsString.find ( "," );
-        size_t foundDash = sectorsString.find ( "-" );
+        size_t foundComa = itemsString.find ( "," );
+        size_t foundDash = itemsString.find ( "-" );
 
         std::string sub1 = "";
         std::string sub2 = "";
 
         if ( foundComa != std::string::npos && foundComa < foundDash )
         {
-            sub1 = sectorsString.substr ( 0, foundComa );
+            sub1 = itemsString.substr ( 0, foundComa );
         }
         else if ( foundDash != std::string::npos )
         {
-            sub1 = sectorsString.substr ( 0, foundDash );
-            sub2 = sectorsString.substr ( foundDash+1, foundComa );
+            sub1 = itemsString.substr ( 0, foundDash );
+            sub2 = itemsString.substr ( foundDash+1, foundComa-foundDash-1 );
         }
         else
-            sub1 = sectorsString;
+            sub1 = itemsString;
 
         int fstPush;
 
@@ -100,13 +234,13 @@ std::vector<int> DecodeNumberString ( std::string sectorsString, bool verbose )
 
         if ( foundComa != std::string::npos || foundDash != std::string::npos )
         {
-//                 std::cout << "sectorsString was " << sectorsString;
-            sectorsString.replace ( 0, sub2.length() > 0 ? foundDash+1 : foundComa+1, "" );
-//                 std::cout << " ... is now " << sectorsString << "\n";
+//             std::cout << "itemsString was " << itemsString;
+            itemsString.replace ( 0, sub2.length() > 0 ? foundDash+1 : foundComa+1, "" );
+//             std::cout << " ... is now " << itemsString << "\n";
         }
         else
         {
-            sectorsString.clear();
+            itemsString.clear();
         }
     }
 
@@ -153,9 +287,20 @@ std::vector<std::string> DecodeTags ( std::string tagsStr )
     return tags;
 }
 
-vector< string > GetDirContent ( string dirName, string mode, string fileExt, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith )
+vector< string > GetDirContent ( string dirName, string mode, string fileExt, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith, bool caseSensitive )
 {
     std::vector<std::string> fileList, mustAllTags, cantTags, mustOneOfTags;
+
+    bool mustTagsOrdered = false;
+
+    if ( mode.find ( "\\ordered" ) != string::npos )
+    {
+        mustTagsOrdered = true;
+
+//         cout << "Requested to find tags in order...\n";
+
+        mode = FindAndReplaceInString ( mode, "\\ordered", "" );
+    }
 
     if ( !mustHaveAll.empty() )
     {
@@ -172,42 +317,100 @@ vector< string > GetDirContent ( string dirName, string mode, string fileExt, st
         mustOneOfTags = DecodeTags ( mustHaveOneOf );
     }
 
+    if ( startWith == "*" ) startWith.clear();
+
     DIR* toScan = nullptr;
     dirent* dirEntry = nullptr;
 
-    if ( mode == "system" )
+    int scanMode = 0;
+
+    if ( mode.find ( "system" ) == 0 )
     {
         if ( dirName.empty() ) dirName = "./";
         toScan = opendir ( dirName.c_str() );
         dirEntry = new dirent;
+
+        scanMode = 1;
     }
 
     TIterator* rootListItr = nullptr;
     TObject* rootListEntry = nullptr;
 
-    if ( mode == "root" )
+    std::vector<string> acceptedClasses;
+    acceptedClasses.clear();
+
+    if ( mode.find ( "root" ) == 0 )
     {
+        if ( mode.length() > 4 )
+        {
+            std::size_t classesSep = mode.find ( " " );
+
+            while ( classesSep != std::string::npos )
+            {
+                std::size_t classStartPos = mode.find_first_not_of ( " \b\r\n\v", classesSep );
+
+                if ( classStartPos == string::npos ) break;
+
+                std::size_t nextClassesSep = mode.find ( " ", classStartPos );
+
+                if ( nextClassesSep != std::string::npos ) acceptedClasses.push_back ( mode.substr ( classStartPos, nextClassesSep-classStartPos ) );
+                else acceptedClasses.push_back ( mode.substr ( classStartPos ) );
+
+                classesSep = nextClassesSep;
+            }
+
+            if ( acceptedClasses.size() > 0 ) cout << "Class filters: ";
+            for ( unsigned int cFilt = 0; cFilt < acceptedClasses.size(); cFilt++ )
+            {
+                cout << "\"" << acceptedClasses[cFilt] << "\" ";
+            }
+            cout << endl;
+        }
+
         if ( !dirName.empty() ) gDirectory->cd ( dirName.c_str() );
 
-        auto rootLOK = gDirectory->GetList();
+        TList* gDirList = gDirectory->GetList();
+        TList* gDirKeys = gDirectory->GetListOfKeys();
 
-        if ( rootLOK != nullptr )
+        TList* gDirAllObj = new TList();
+        gDirAllObj->Clear();
+
+        if ( gDirList != nullptr && gDirList->GetSize() > 0 ) gDirAllObj->AddAll ( gDirList );
+        if ( gDirKeys != nullptr && gDirKeys->GetSize() > 0 ) gDirAllObj->AddAll ( gDirKeys );
+
+        if ( gDirAllObj != nullptr && gDirAllObj->GetSize() > 0 )
         {
-            rootListItr = rootLOK->MakeIterator();
+            rootListItr = gDirAllObj->MakeIterator();
             rootListEntry = rootListItr->Next();
         }
+
+        scanMode = 2;
     }
 
-    while ( ( mode == "system" && ( dirEntry = readdir ( toScan ) ) != NULL ) || ( mode == "root" && rootListItr != nullptr && rootListEntry != nullptr ) )
+    while ( ( scanMode == 1 && ( dirEntry = readdir ( toScan ) ) != NULL ) || ( scanMode == 2 && rootListItr != nullptr && rootListEntry != nullptr ) )
     {
         std::string entName;
 
-        if ( mode == "system" ) entName = dirEntry->d_name;
-        else if ( mode == "root" )
+        if ( scanMode == 1 ) entName = dirEntry->d_name;
+        else if ( scanMode == 2 )
         {
             entName = rootListEntry->GetName();
 
+            bool skipEntry = false;
+            if ( acceptedClasses.size() > 0 )
+            {
+                string entryClassName = ( string ) rootListEntry->ClassName();
+
+                if ( entryClassName == "TKey" ) entryClassName = gDirectory->GetKey ( entName.c_str() )->GetClassName();
+
+//                 cout << "Encounter object of type " << entryClassName << endl;
+
+                skipEntry = std::find ( acceptedClasses.begin(), acceptedClasses.end(), entryClassName ) == acceptedClasses.end();
+            }
+
             rootListEntry = rootListItr->Next();
+
+            if ( skipEntry ) continue;
         }
         else
         {
@@ -216,17 +419,34 @@ vector< string > GetDirContent ( string dirName, string mode, string fileExt, st
             return fileList;
         }
 
-        if ( startWith.empty() || ( !startWith.empty() && entName.find ( startWith.c_str() ) == 0 ) )
+        if ( entName.empty() ) continue;
+
+        if ( startWith.empty() || ( !startWith.empty() && std::search ( entName.begin(), entName.end(), startWith.begin(), startWith.end(), ignoreCharCasePred ( caseSensitive ) ) == entName.begin() ) )
         {
-            if ( fileExt.empty() || ( !fileExt.empty() && entName.find ( fileExt.c_str() ) != std::string::npos ) )
+            if ( fileExt.empty() || ( !fileExt.empty() && std::search ( entName.begin(), entName.end(), fileExt.begin(), fileExt.end(), ignoreCharCasePred ( caseSensitive ) ) != entName.end() ) )
             {
                 bool mustAllFlag = true, cantFlag = false, mustOneOfFlag = ( mustOneOfTags.size() > 0 ? false : true );
 
                 if ( mustAllTags.size() > 0 )
                 {
+                    string::iterator prevTagPos = entName.begin();
+
                     for ( unsigned int i = 0; i < mustAllTags.size(); i++ )
                     {
-                        if ( entName.find ( mustAllTags[i].c_str() ) == std::string::npos ) mustAllFlag = false;
+                        string::iterator startSearch = entName.begin();
+
+                        if ( mustTagsOrdered ) startSearch = prevTagPos;
+
+                        string::iterator currTagPos = std::search ( startSearch, entName.end(), mustAllTags[i].begin(), mustAllTags[i].end(), ignoreCharCasePred ( caseSensitive ) );
+
+                        if ( currTagPos == entName.end() )
+                        {
+                            mustAllFlag = false;
+                            continue;
+                        }
+
+                        prevTagPos = currTagPos;
+                        prevTagPos++;
                     }
                 }
 
@@ -234,7 +454,11 @@ vector< string > GetDirContent ( string dirName, string mode, string fileExt, st
                 {
                     for ( unsigned int i = 0; i < cantTags.size(); i++ )
                     {
-                        if ( entName.find ( cantTags[i].c_str() ) != std::string::npos ) cantFlag = true;
+                        if ( std::search ( entName.begin(), entName.end(), cantTags[i].begin(),  cantTags[i].end(), ignoreCharCasePred ( caseSensitive ) ) != entName.end() )
+                        {
+                            cantFlag = true;
+                            continue;
+                        }
                     }
                 }
 
@@ -242,7 +466,7 @@ vector< string > GetDirContent ( string dirName, string mode, string fileExt, st
                 {
                     for ( unsigned int i = 0; i < mustOneOfTags.size(); i++ )
                     {
-                        if ( entName.find ( mustOneOfTags[i].c_str() ) != std::string::npos ) mustOneOfFlag = true;
+                        if ( std::search ( entName.begin(), entName.end(), mustOneOfTags[i].begin(),  mustOneOfTags[i].end(), ignoreCharCasePred ( caseSensitive ) ) != entName.end() ) mustOneOfFlag = true;
                     }
                 }
 
@@ -254,7 +478,7 @@ vector< string > GetDirContent ( string dirName, string mode, string fileExt, st
     return fileList;
 }
 
-std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode )
+std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode, bool caseSensitive )
 {
     std::size_t pathEnd = itemsString.find_last_of ( "/" );
 
@@ -271,7 +495,7 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
     if ( itemsString == "*" ) return GetDirContent ( path, mode, "", "", "", "", "" );
 
     std::size_t startPos = itemsString.find_first_not_of ( "*[]" );
-    std::size_t special = itemsString.find_first_of ( "*[]", startPos );
+    std::size_t special = itemsString.find_first_of ( "*[]" );
 
     std::vector<std::string> fNameParts;
     std::vector<std::tuple<std::size_t, char, std::size_t>> sChars;
@@ -282,46 +506,43 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
 
     if ( special == std::string::npos )
     {
-        files.push_back ( itemsString );
+        files = GetDirContent ( path, mode, "", itemsString, "", "", "", caseSensitive );
     }
     else
     {
         if ( startPos == 0 ) fStartWith = itemsString.substr ( 0, special );
 
+        if ( special < startPos )
+        {
+            sChars.push_back ( std::make_tuple ( special, itemsString[special], special ) );
+            special = itemsString.find_first_of ( "*[]", startPos );
+        }
+
         while ( special != std::string::npos )
         {
             fNameParts.push_back ( itemsString.substr ( startPos, special - startPos ) );
 
-//             std::cout << "new name part: " << itemsString.substr ( startPos, special - startPos ) << "\n";
+            //             std::cout << "new name part: " << itemsString.substr ( startPos, special - startPos ) << "\n";
 
             sChars.push_back ( std::make_tuple ( special, itemsString[special], startPos ) );
 
-//             std::cout << "separator: " << itemsString[special] << " @ " << special << "\n";
-
             startPos = itemsString.find_first_not_of ( "*[]", special );
+
+            //             std::cout << "separator: " << itemsString[special] << " @ " << special << "\n";
+
             special = itemsString.find_first_of ( "*[]", startPos );
-        }
-
-        if ( startPos != std::string::npos )
-        {
-            fNameParts.push_back ( itemsString.substr ( startPos, itemsString.length() ) );
-
-            fMustHaveAll += itemsString.substr ( startPos, itemsString.length() );
-            fMustHaveAll += " ";
-
-//             std::cout << "new must all tag: " << itemsString.substr ( startPos, itemsString.length() ) << "\n";
-
-//             std::cout << "new name part: " << itemsString.substr ( startPos, special - startPos ) << "\n";
         }
 
         for ( unsigned int i = 0; i < sChars.size(); i++ )
         {
             if ( std::get<1> ( sChars[i] ) == '*' )
             {
+                if ( std::get<2> ( sChars[i] ) == std::get<0> ( sChars[i] ) ) continue;
+
                 fMustHaveAll += itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) );
                 fMustHaveAll += " ";
 
-//                 std::cout << "new must all tag: " << itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) ) << "\n";
+                //                 std::cout << "new must all tag: " << itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) ) << "\n";
             }
 
             else if ( std::get<1> ( sChars[i] ) == '[' )
@@ -345,7 +566,7 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
                         fMustHaveOneOf += Form ( "%s%d", baseStr.c_str(), filesNbr[j] );
                         fMustHaveOneOf += " ";
 
-//                         std::cout << "new must one of tag: " << Form ( "%s%d", baseStr.c_str(), filesNbr[j] ) << "\n";
+                        //                         std::cout << "new must one of tag: " << Form ( "%s%d", baseStr.c_str(), filesNbr[j] ) << "\n";
                     }
 
                     i++;
@@ -360,7 +581,19 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
             }
         }
 
-        files = GetDirContent ( path, mode, "", fMustHaveAll, "", fMustHaveOneOf, fStartWith );
+        if ( startPos != std::string::npos )
+        {
+            fNameParts.push_back ( itemsString.substr ( startPos, itemsString.length() ) );
+
+            fMustHaveAll += itemsString.substr ( startPos, itemsString.length() );
+            fMustHaveAll += " ";
+
+            //             std::cout << "new must all tag: " << itemsString.substr ( startPos, itemsString.length() ) << "\n";
+
+            //             std::cout << "new name part: " << itemsString.substr ( startPos, special - startPos ) << "\n";
+        }
+
+        files = GetDirContent ( path, mode, "", fMustHaveAll, "", fMustHaveOneOf, fStartWith, caseSensitive );
     }
 
     return files;
@@ -386,64 +619,6 @@ vector< string > SplitString ( string toSplit, string splitter )
 
     return splitString;
 }
-
-// string FindAndReplaceInString ( string input, string toReplace, string substitute, unsigned int nTimes, unsigned int startIndex )
-// {
-//     int repSize = toReplace.length();
-// 
-// //     vector<std::size_t> foundPosList;
-// 
-//     std::size_t foundPos = input.find ( toReplace.c_str() );
-// 
-// //     while ( foundPos != string::npos )
-// //     {
-// //         foundPosList.push_back ( foundPos );
-// //
-// //         foundPos = input.find ( toReplace.c_str(), foundPos+1 );
-// //     }
-// //
-// //     nTimes = std::min ( nTimes, ( unsigned int ) ( foundPosList.size()-startIndex ) );
-// //
-// //     string newString = input;
-// //
-// //     for ( unsigned int i = startIndex; i < startIndex+nTimes; i++ )
-// //     {
-// //         newString.replace ( foundPosList[i], repSize, substitute );
-// //     }
-// 
-//     unsigned int counter = 0;
-//     unsigned int replaced = 0;
-//     bool noLimit = false;
-//     size_t skipPos = 0;
-//     if ( nTimes == 0 )
-//     {
-//         nTimes = replaced+1;
-//         noLimit = true;
-//     }
-// 
-//     string newString = input;
-// 
-//     while ( foundPos != string::npos && replaced < nTimes )
-//     {
-//         if ( counter >= startIndex )
-//         {
-//             newString.replace ( foundPos, repSize, substitute );
-// 
-//             foundPos = newString.find ( toReplace.c_str(), skipPos );
-//             replaced++;
-//         }
-//         else
-//         {
-//             skipPos = foundPos+repSize;
-//             foundPos = newString.find ( toReplace.c_str(), skipPos );
-//         }
-// 
-//         counter++;
-//         if ( noLimit ) nTimes = replaced+1;
-//     }
-// 
-//     return newString;
-// }
 
 void ReadDetectorID ( std::string DetectorID, bool* isUpstream, unsigned short* numsector, bool* isBarrel, int* layernum, bool* side, bool* isSX3 )
 {
@@ -515,7 +690,7 @@ void ReadDetectorID ( std::string DetectorID, bool* isUpstream, unsigned short* 
             std::cout << ' ' << ID.at ( l );
             std::cout << '\n';
         }
-//         int ulength = ID[1].length();
+        //         int ulength = ID[1].length();
         std::string upstream = ID[1];
 
         std::string detlayer = ID[2].substr ( 0 );
@@ -572,16 +747,541 @@ string GetNameCompliantStr ( int input )
     return ( string ) output;
 }
 
-// string ReplaceSpecialVariables ( string varStr )
-// {
-//     map<string, double> specialVars;
+std::function<bool ( double,double ) > CheckValProxFunc ( double compVal )
+{
+    return [compVal] ( double a, double b )
+    {
+        bool res =  fabs ( a - b ) <= compVal ;
+        return res;
+    };
+}
+
+int RoundValue ( double val )
+{
+    int floorVal = ( int ) val;
+
+    double decimals = ( val - floorVal ) * 10;
+    int firstDecimal = ( int ) decimals;
+
+    if ( firstDecimal >= 5 ) return ceil ( val );
+    else return floor ( val );
+}
+
+std::pair< vector< double >, vector< double > > FillGraphFromFile ( string input )
+{
+    vector<double> xs, ys;
+    xs.clear();
+    ys.clear();
+
+    std::ifstream inFile ( input.c_str(), std::ios_base::in );
+
+    if ( !inFile.is_open() )
+    {
+        std::cerr << "Failed to open file " << input << std::endl;
+        return std::make_pair ( xs, ys );
+    }
+
+    string readLine;
+
+    while ( std::getline ( inFile, readLine ) )
+    {
+        std::istringstream iss;
+        iss.str ( readLine );
+
+        double x_, y_;
+
+        iss >> x_ >> y_;
+
+        xs.push_back ( x_ );
+        ys.push_back ( y_ );
+    }
+
+    inFile.close();
+
+    return std::make_pair ( xs, ys );
+}
+
+double EvalGraph ( vector<double> x_, vector<double> y_, double toEval )
+{
+    if ( x_.size() == 0 || y_.size() == 0 ) return 0.;
+
+    auto lowItr = std::find ( x_.begin(), x_.end(), toEval );
+
+    auto lstItr = x_.end();
+    lstItr--;
+
+    int low, up;
+
+    low = std::distance ( x_.begin(), lowItr );
+
+    if ( lowItr != x_.end() ) return y_[low];
+    else
+    {
+        lowItr = std::lower_bound ( x_.begin(), x_.end(), toEval );
+
+        if ( lowItr == x_.end() ) lowItr--;
+
+        if ( lowItr != x_.begin() ) lowItr--;
+
+        low = std::distance ( x_.begin(), lowItr );
+
+        auto upItr = lowItr;
+        upItr++;
+
+        up = std::distance ( x_.begin(), upItr );
+
+        return ( y_[up] + ( toEval - x_[up] ) * ( y_[low] - y_[up] ) / ( x_[low] - x_[up] ) );
+    }
+
+    return 0.;
+}
+
+double IntegrateGraph ( vector< double > x_, vector< double > y_, double xMin_, double xMax_, double dx_ )
+{
+    if ( xMin_ >= xMax_ ) return 0.0;
+
+    double yMin = EvalGraph ( x_, y_, xMin_ );
+    double yMax = EvalGraph ( x_, y_, xMax_ );
+
+    double prevY = yMin;
+    double nextX = xMin_ + dx_;
+
+    double totIntegral = 0.0;
+
+    while ( nextX < xMax_ )
+    {
+        double nextY = EvalGraph ( x_, y_, nextX );
+
+        totIntegral += nextY * dx_ + ( prevY - nextY ) * dx_ / 2.;
+
+        nextX += dx_;
+        prevY = nextY;
+    }
+
+    totIntegral += yMax * ( xMax_-nextX ) + ( prevY - yMax ) * ( xMax_-nextX ) / 2.;
+
+    return totIntegral;
+}
+
+double GetEffectiveThickness ( double angle, double targetThickness_ )
+{
+    return fabs ( targetThickness_ / ( 2 * TMath::Cos ( angle ) ) );
+}
+
+double ComputeEnergyLoss ( vector<double> energies_, vector<double> rangeOrStoppingPower_, double startingEnergy, float mass, double xMin_, double xMax_, double dx_, string mode )
+{
+    if ( xMin_ >= xMax_ ) return 0.0;
+
+    if ( mode == "Integral" )
+    {
+        double nextX = xMin_;
+
+        double remainingEnergy = startingEnergy;
+
+        while ( nextX < xMax_ )
+        {
+            remainingEnergy -= EvalGraph ( energies_, rangeOrStoppingPower_, remainingEnergy ) * dx_ / mass;
+
+            nextX += dx_;
+        }
+
+        remainingEnergy -= EvalGraph ( energies_, rangeOrStoppingPower_, remainingEnergy ) * ( xMax_-nextX ) / mass;
+
+        return ( startingEnergy - remainingEnergy ) * mass;
+    }
+    else if ( mode == "Interpolation" )
+    {
+        double rangeMax = EvalGraph ( energies_, rangeOrStoppingPower_, startingEnergy );
+
+        double remainingEnergy = EvalGraph ( rangeOrStoppingPower_, energies_, rangeMax - ( xMax_-xMin_ ) );
+
+        return ( startingEnergy - remainingEnergy ) * mass;
+    }
+    else return 0.0;
+}
+
+double TryGetRemainingEnergy ( string mass_db, int mass, int charge, double startingEnergy, double thickness_, double dx_, string targetStr, double density, string tablePath, string mode )
+{
+    std::ifstream mass_input ( mass_db.c_str(), std::ios_base::in );
+
+    if ( !mass_input.is_open() )
+    {
+        std::cerr << "Failed to open the mass database. Energy loss has not been computed...\n";
+
+        return startingEnergy;
+    }
+
+    string elementStr = "";
+
+    GetAtomicFormula ( mass_input, mass, charge, elementStr );
+
+    char* tryFindStr = new char[512];
+
+    char* densityStr = new char[128];
+
+    if ( density == 0 ) sprintf ( densityStr, "*" );
+    else sprintf ( densityStr, "%d", ( int ) density );
+
+    sprintf ( tryFindStr, "%s/%s_in_%s_%smg_cm3*", tablePath.c_str(), elementStr.c_str(), targetStr.c_str(), densityStr );
+
+    vector<string> tryFindTable = DecodeItemsToTreat ( ( string ) tryFindStr, "system", false );
+
+    double remainingEnergy = startingEnergy;
+
+    if ( tryFindTable.size() == 1 )
+    {
+        auto beamTable = FillGraphFromFile ( tablePath + "/" + tryFindTable[0] );
+
+        double eLoss = ComputeEnergyLoss ( beamTable.first, beamTable.second, startingEnergy/mass, mass, 0, thickness_, dx_, mode );
+
+//         std::cout << "Computed energy loss using table " << tryFindTable[0] << " : " << eLoss << " MeV" << std::endl;
+
+        remainingEnergy -= eLoss;
+    }
+
+    return remainingEnergy; // in MeV
+}
+
+void ListHistograms ( string match, unsigned int limit, unsigned int startAt, bool caseSensitive )
+{
+    std::vector<string> matchingHists;
+    matchingHists.clear();
+
+    if ( match.empty() ) match = "*";
+
+    matchingHists = DecodeItemsToTreat ( match, "root \\ordered TH1F TH2F TH1D TH2D", caseSensitive );
+
+    if ( limit == 0 ) limit = 20;
+
+    unsigned int histAmount = gDirectory->GetList()->GetSize();
+
+    unsigned int digitsNumber = 1;
+
+    string userIn;
+
+    while ( ( histAmount / pow ( 10,digitsNumber ) ) >= 1 ) digitsNumber++;
+
+    if ( startAt >= matchingHists.size() )
+    {
+        return;
+    }
+
+    cout << matchingHists.size() << " matching histograms...\n\n";
+
+DisplayResults:
+
+    for ( unsigned int i = startAt; i < std::min ( ( unsigned int ) matchingHists.size(), startAt+limit ); i++ )
+    {
+        cout << "-> Histogram #" << std::setw ( digitsNumber ) << i << " : " << matchingHists[i] << endl;
+    }
+
+    startAt += limit;
+
+    if ( startAt >= matchingHists.size() )
+    {
+        return;
+    }
+
+UserPrompt:
+
+    cout << "Continue = Enter / Quit = q : ";
+
+    std::getline ( std::cin, userIn );
+
+    if ( userIn == "q" || userIn == "quit" ) return;
+    else if ( userIn.empty() ) goto DisplayResults;
+    else
+    {
+        cerr << "Invalid input...\n";
+        goto UserPrompt;
+    }
+
+    return;
+}
+
+//____________________________________________________________________________________________//
+//____________________________________________________________________________________________//
+
+int InitReadMassesForKinematic ( std::ifstream& mass_db )
+{
+    if ( !mass_db.is_open() )
+    {
+        std::cerr << "No File Found for the Masses Database!\n";
+        return -1;
+    }
+
+    std::stringstream readMassDB;
+    string readLine;
+
+    int massTableLineBeg = -1;
+
+    while ( std::getline ( mass_db, readLine ) )
+    {
+        if ( readLine.length() == 0 ) continue;
+
+        readMassDB.clear();
+        readMassDB.str ( readLine );
+
+        if ( readLine.find ( "MASS" ) != string::npos &&  readLine.find ( "LIST" ) != string::npos )
+        {
+            massTableLineBeg += 5;
+            break;
+        }
+    }
+
+    return massTableLineBeg;
+}
+
+void GetRelevantInfoPositions ( string* readWord, short& posMassExcess, short& posBindingEnergy, short& posBetaDecay, short& posAMU, short& posElement )
+{
+    std::stringstream checkNumConversion;
+    float dummyf;
+
+    checkNumConversion.str ( readWord[posElement] );
+    checkNumConversion >> dummyf;
+
+    if ( !checkNumConversion.fail() ) // Our element is a number and not a string!
+    {
+//         std::cout << Form ( "Did not fail to parse Word#%d as a float ** ", posElement );
+        posMassExcess++;
+        posElement++;
+    }
+
+    checkNumConversion.clear();
+    checkNumConversion.str ( readWord[posMassExcess] );
+    checkNumConversion >> dummyf;
+
+    if ( checkNumConversion.fail() ) // Our Mass Excess number is not a number!
+    {
+//         std::cout << Form ( "Failed to parse Word#%d as an float ** ", posMassExcess );
+        posMassExcess++;
+    }
+
+    posBindingEnergy = posMassExcess+2;
+
+    posBetaDecay = posBindingEnergy+3;
+
+    if ( readWord[posMassExcess][readWord[posMassExcess].length()-1] == '#' ) posMassExcess = -1;
+
+    if ( readWord[posBindingEnergy][readWord[posBindingEnergy].length()-1] == '#' ) posBindingEnergy = -1;
+
+    if ( readWord[posBetaDecay] == "*" )
+    {
+        posAMU = posBetaDecay+1;
+        posBetaDecay = -1;
+    }
+    else
+    {
+        posAMU = posBetaDecay+2;
+    }
+
+    if ( readWord[posAMU+1][readWord[posAMU+1].length()-1] == '#' ) posAMU = -1;
+
+    return;
+}
+
+void GetAtomicFormula ( std::ifstream& mass_db, int mass, int charge, string& toReconstruct )
+{
+    mass_db.clear();
+    mass_db.seekg ( 0 );
+
+    string element = "";
+
+    if ( mass == 1 && charge == 1 )
+    {
+        toReconstruct = "p";
+    }
+    else if ( mass == 2 && charge == 1 )
+    {
+        toReconstruct = "d";
+    }
+    else if ( mass == 1 && charge == 0 )
+    {
+        toReconstruct = "n";
+    }
+    else if ( mass == 3 && charge == 1 )
+    {
+        toReconstruct = "t";
+    }
+    else
+    {
+        std::stringstream readMassDB;
+        string readLine;
+
+        int massTableLineBeg = InitReadMassesForKinematic ( mass_db );
+
+        for ( int i = 0; i < massTableLineBeg; i++ )
+        {
+            std::getline ( mass_db, readLine );
+        }
+
+        while ( std::getline ( mass_db, readLine ) )
+        {
+            readMassDB.clear();
+            readMassDB.str ( readLine );
+
+            short posMassExcess = 5, posBindingEnergy = -1, posBetaDecay = -1, posAMU = -1, posElement = 4;
+
+            string readWord[17];
+
+//         std::cout << "Read Line:\n";
+
+            for ( int i = 0; i < 17; i++ )
+            {
+                readMassDB >> readWord[i];
+//             std::cout << readWord[i] << "  ";
+            }
+
+//         std::cout << "\n";
+
+            GetRelevantInfoPositions ( readWord, posMassExcess, posBindingEnergy, posBetaDecay, posAMU, posElement );
+
+            if ( charge == std::stoi ( readWord[posElement-2] ) )
+            {
+                char* massChar = new char[4];
+                sprintf ( massChar, "%i", mass );
+
+                toReconstruct = massChar;
+                toReconstruct += readWord[posElement];
+
+                break;
+            }
+        }
+
+        return;
+    }
+}
+
+bool CharIsDigit ( char toCheck )
+{
+    if ( toCheck == '0' || toCheck == '1' || toCheck == '2' || toCheck == '3' || toCheck == '4' || toCheck == '5' || toCheck == '6' || toCheck == '7' || toCheck == '8' || toCheck == '9' )
+        return true;
+    else return false;
+}
+
+void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, int& charge, float& atomicMass )
+{
+    mass_db.clear();
+    mass_db.seekg ( 0 );
+
+    std::vector<int> massDigits;
+
+    string element = "";
+    mass = 0;
+    charge = -1;
+
+    massDigits.clear();
+
+    if ( toDecode == "p" )
+    {
+        mass = 1;
+        element = "H";
+    }
+    else if ( toDecode == "d" )
+    {
+        mass = 2;
+        element = "H";
+    }
+    else if ( toDecode == "n" )
+    {
+        mass = 1;
+        element = "n";
+    }
+    else if ( toDecode == "t" )
+    {
+        mass = 3;
+        element = "H";
+    }
+    else
+    {
+        for ( unsigned int i = 0; i < toDecode.length(); i++ )
+        {
+            if ( CharIsDigit ( toDecode[i] ) )
+            {
+                string digit;
+                digit = toDecode[i];
+
+                massDigits.push_back ( std::stoi ( digit ) );
+            }
+            else
+            {
+                element += toDecode[i];
+            }
+        }
+
+        for ( unsigned short i = 0; i < massDigits.size(); i++ )
+        {
+//         std::cout << "Retreived mass digit: " << massDigits[i] << "\n";
+            mass += massDigits[i] * pow ( 10, massDigits.size() - 1 - i );
+        }
+    }
+
+//     std::cout << "Retreiving the charge of element: " << element << " ...\n";
+//     std::cout << "Decoded Mass: " << mass << "\n";
+
+    std::stringstream readMassDB;
+    string readLine;
+
+    int massTableLineBeg = InitReadMassesForKinematic ( mass_db );
+
+    for ( int i = 0; i < massTableLineBeg; i++ )
+    {
+        std::getline ( mass_db, readLine );
+    }
+
+    short posMassExcess = 5, posBindingEnergy = -1, posBetaDecay = -1, posAMU = -1, posElement = 4;
+
+    while ( std::getline ( mass_db, readLine ) )
+    {
+        readMassDB.clear();
+        readMassDB.str ( readLine );
+
+        string readWord[17];
+
+//         std::cout << "Read Line:\n";
+
+        for ( int i = 0; i < 17; i++ )
+        {
+            readMassDB >> readWord[i];
+//             std::cout << readWord[i] << "  ";
+        }
+
+//         std::cout << "\n";
+
+        posMassExcess = 5;
+        posBindingEnergy = -1;
+        posBetaDecay = -1;
+        posAMU = -1;
+        posElement = 4;
+
+        GetRelevantInfoPositions ( readWord, posMassExcess, posBindingEnergy, posBetaDecay, posAMU, posElement );
+
+        charge = CheckForMatch<string> ( readWord, posElement, mass, element );
+
+        if ( charge >= 0 ) break;
+    }
+
+    readMassDB.clear();
+    readMassDB.str ( readLine );
+
+    string mainAMStr;
+    string secondaryAMStr;
+
+    for ( short i = 0; i < posAMU+1; i++ ) readMassDB >> mainAMStr;
+    readMassDB >> secondaryAMStr;
+
+    string atomicMassStr = mainAMStr + secondaryAMStr;
+
+//     std::size_t fstSpacePos = readLine.find_first_of ( " ", posAMU );;
+//     std::size_t amEndPos = readLine.find_first_of ( " \n", fstSpacePos+1 );
+//     atomicMassStr = readLine.substr ( posAMU, amEndPos-posAMU );
 //
-//     specialVars["Pi"] = TMath::Pi();
-//
-//     for ( auto sVarsItr = specialVars.begin(); sVarsItr != specialVars.end(); sVarsItr++ )
-//     {
-//         varStr = FindAndReplaceInString ( varStr, sVarsItr->first, Form ( "%3.10f", sVarsItr->second ) );
-//     }
-//
-//     return varStr;
-// }
+//     atomicMassStr = FindAndReplaceInString ( atomicMassStr, " ", "" );
+
+//     std::cout << "Atomic Mass String: " << atomicMassStr << std::endl;
+
+    atomicMass = std::stof ( atomicMassStr );
+    atomicMass *= 1e-6;
+
+    return;
+}

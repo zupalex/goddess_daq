@@ -18,12 +18,20 @@
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <time.h>
+#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
+#include <list>
+#include <functional>
+#include <cassert>
+#include <algorithm>
 
+#include "TObject.h"
 #include "TROOT.h"
 #include "TSystem.h"
 #include "TMath.h"
+#include "TKey.h"
 
 using std::map;
 using std::string;
@@ -34,15 +42,77 @@ using std::clog;
 using std::endl;
 using std::size_t;
 
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+string GetLocalTimeAndDate();
+string GetCurrentYear();
+
+string GetCurrentDayName();
+string GetCurrentMonthName();
+
+int GetCurrentDayNum();
+int GetCurrentMonthNum();
+
+int GetCurrentHour();
+int GetCurrentMinute();
+int GetCurrentSecond();
+
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+
+inline std::function<bool ( char,char ) > ignoreCharCasePred ( bool caseSensitive )
+{
+    return [caseSensitive] ( char a, char b ) -> bool
+    {
+        if ( !caseSensitive ) return ( std::tolower ( a ) == std::tolower ( b ) );
+        else return a == b;
+    };
+}
+
+template<typename T> struct has_operator_equal
+{
+    template<typename U> static auto test ( U* ) -> decltype ( std::declval<U>() == std::declval<U>() );
+    template<typename> static auto test ( ... ) -> std::false_type;
+
+    static typename std::is_same<bool, decltype ( test<T> ( nullptr ) ) >::type type;
+    static const bool value = std::is_same<bool, decltype ( test<T> ( nullptr ) ) >::value;
+};
+
+template<typename T> struct has_redirect_output
+{
+    template<typename U> static auto test ( U* ) -> decltype ( cout << std::declval<U>() );
+    template<typename> static auto test ( ... ) -> std::false_type;
+
+    static typename std::is_same<decltype ( cout << "whatever" ), decltype ( test<T> ( nullptr ) ) >::type type;
+    static const bool value = ( std::is_same<decltype ( cout << "whatever" ), decltype ( test<T> ( nullptr ) ) >::value );
+};
+
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+
+bool CompareStrings ( string ref_, string search_, bool exactMatch = true, bool caseSensitive = true );
+
 vector<int> DecodeNumberString ( string itemsString, bool verbose = false );
 
 vector<string> DecodeTags ( string tagsStr );
 
-vector<string> GetDirContent ( string dirName = "./", string mode = "root", string fileExt = "", string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "" );
+vector<string> GetDirContent ( string dirName = "./", string mode = "root", string fileExt = "",
+                               string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "", bool caseSensitive = true );
 
-std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode = "root" );
+std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode = "root", bool caseSensitive = true );
 
 vector<string> SplitString ( string toSplit, string splitter );
+
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
 
 void ReadDetectorID ( std::string DetectorID, bool* isUpstream, unsigned short* numsector, bool* isBarrel, int* layernum, bool* side, bool* isSX3 );
 
@@ -50,31 +120,66 @@ string GetDetectorID ( bool isUpstream, bool isBarrel, unsigned int sector );
 
 string GetNameCompliantStr ( int input );
 
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
 
+
+void ListHistograms ( string match = "", unsigned int limit = 0, unsigned int startAt = 0, bool caseSensitive = true );
+
+//_______________________________________________________________________________________________________________________________________________//
+
+template<std::false_type& fType1, typename rType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
+{
+    cout << "No valid Keys to redirect to the standard output...\n";
+}
+
+//_______________________________________________________________________________________________________________________________________________//
+
+template<std::true_type& tType1, std::false_type& fType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
+{
+    auto itr = map_.begin();
+
+    cout << "Map Keys:\n";
+
+    while ( itr != map_.end() )
+    {
+        cout << itr->first << endl;
+
+        itr++;
+    }
+}
+
+//_______________________________________________________________________________________________________________________________________________//
+
+template<std::true_type& tType1, std::true_type& tType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
+{
+    auto itr = map_.begin();
+
+    cout << "Map Content:\n";
+
+    while ( itr != map_.end() )
+    {
+        cout << itr->first << " : " << itr->second << endl;
+
+        itr++;
+    }
+}
+
+//_______________________________________________________________________________________________________________________________________________//
+
+template<typename KeyType = string, typename ValType = int> void PrintMapContent ( map<KeyType, ValType> map_ )
+{
+    PrintMapKeysAndValues<has_redirect_output<KeyType>::type, has_redirect_output<ValType>::type, KeyType, ValType> ( map_ );
+}
+
+//_______________________________________________________________________________________________________________________________________________//
 
 inline string FindAndReplaceInString ( string input, string toReplace, string substitute, unsigned int nTimes = 0, unsigned int startIndex = 0 )
 {
     int repSize = toReplace.length();
 
-//     vector<std::size_t> foundPosList;
-
     std::size_t foundPos = input.find ( toReplace.c_str() );
-
-//     while ( foundPos != string::npos )
-//     {
-//         foundPosList.push_back ( foundPos );
-//
-//         foundPos = input.find ( toReplace.c_str(), foundPos+1 );
-//     }
-//
-//     nTimes = std::min ( nTimes, ( unsigned int ) ( foundPosList.size()-startIndex ) );
-//
-//     string newString = input;
-//
-//     for ( unsigned int i = startIndex; i < startIndex+nTimes; i++ )
-//     {
-//         newString.replace ( foundPosList[i], repSize, substitute );
-//     }
 
     unsigned int counter = 0;
     unsigned int replaced = 0;
@@ -110,6 +215,8 @@ inline string FindAndReplaceInString ( string input, string toReplace, string su
     return newString;
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 inline string ReplaceSpecialVariables ( string varStr )
 {
     map<string, double> specialVars;
@@ -124,7 +231,7 @@ inline string ReplaceSpecialVariables ( string varStr )
     return varStr;
 }
 
-
+//_______________________________________________________________________________________________________________________________________________//
 
 template<typename T1, typename T2> void AddLinkMapEntries ( map<string, T1*>* linkMap_, string str, T2& val )
 {
@@ -132,6 +239,8 @@ template<typename T1, typename T2> void AddLinkMapEntries ( map<string, T1*>* li
 
     return;
 }
+
+//_______________________________________________________________________________________________________________________________________________//
 
 template<typename T1, typename T2, typename... Rest> void AddLinkMapEntries ( map<string, T1>* linkMap_, string varsStr, T2& var1, Rest&... varRest )
 {
@@ -150,6 +259,8 @@ template<typename T1, typename T2, typename... Rest> void AddLinkMapEntries ( ma
     return;
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 template<typename T, typename... Rest> map<string, T*> MakeLinkMap ( string varsStr, T& var1, Rest&... varRest )
 {
     map<string, T*> linkMap;
@@ -158,6 +269,8 @@ template<typename T, typename... Rest> map<string, T*> MakeLinkMap ( string vars
 
     return linkMap;
 }
+
+//_______________________________________________________________________________________________________________________________________________//
 
 template<typename T> string SubstituteStrInFormula ( string formula, map<string, T*> linkMap )
 {
@@ -185,6 +298,8 @@ template<typename T> string SubstituteStrInFormula ( string formula, map<string,
 
     return modFormula;
 }
+
+//_______________________________________________________________________________________________________________________________________________//
 
 template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
 {
@@ -435,6 +550,8 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
     return memItr->second;
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 template<typename T> T EvalComplexString ( string toEval, T* result = nullptr )
 {
     string toEvalCp = toEval;
@@ -444,11 +561,6 @@ template<typename T> T EvalComplexString ( string toEval, T* result = nullptr )
 
     openBracketPos = toEvalCp.find_last_of ( "(" );
     closeBracketPos = toEvalCp.find_first_of ( ")", openBracketPos );
-
-    //     if ( openBracketPos == string::npos && closeBracketPos == string::npos )
-    //     {
-    //         cout << "No brackets detected. Fall back to the simple evaluation...\n";
-    //     }
 
     while ( openBracketPos != string::npos && closeBracketPos != string::npos )
     {
@@ -504,6 +616,8 @@ template<typename T> T EvalComplexString ( string toEval, T* result = nullptr )
     return EvalSimpleString<T> ( toEvalCp, result );
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 template<typename T1, typename T2> T2 EvalString ( string toEval, map<string, T1*>* linkMap_ = nullptr, T2* result = nullptr )
 {
     string toEvalSub = toEval;
@@ -516,10 +630,14 @@ template<typename T1, typename T2> T2 EvalString ( string toEval, map<string, T1
     else return EvalSimpleString<T2> ( toEvalSub, result );
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 inline double EvalString ( string toEval, map<string, double*>* linkMap_ = nullptr, double* result = nullptr )
 {
     return EvalString<double, double> ( toEval, linkMap_, result );
 }
+
+//_______________________________________________________________________________________________________________________________________________//
 
 template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, T*>* linkMap_ = nullptr )
 {
@@ -577,6 +695,8 @@ template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, 
 
     return false;
 }
+
+//_______________________________________________________________________________________________________________________________________________//
 
 template<typename T> bool ComplexFormulaComparator ( string compStr, map<string, T*>* linkMap_ = nullptr )
 {
@@ -670,6 +790,8 @@ template<typename T> bool ComplexFormulaComparator ( string compStr, map<string,
     return memItr->second;
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 template<typename T> bool StringFormulaComparator ( string compStr, map<string, T*>* linkMap_ = nullptr )
 {
     string toEvalCp = compStr;
@@ -712,9 +834,118 @@ template<typename T> bool StringFormulaComparator ( string compStr, map<string, 
     return ComplexFormulaComparator<T> ( toEvalCp, linkMap_ );
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
 inline bool StringFormulaComparator ( string compStr )
 {
     return StringFormulaComparator<double> ( compStr );
 }
 
+//_______________________________________________________________________________________________________________________________________________//
+
+std::function<bool ( double,double ) > CheckValProxFunc ( double compVal );
+
+int RoundValue ( double val );
+
+std::pair<vector<double>, vector<double>> FillGraphFromFile ( string input );
+
+double EvalGraph ( vector<double> x_, vector<double> y_, double toEval );
+double IntegrateGraph ( vector<double> x_, vector<double> y_, double xMin_, double xMax_, double dx_ );
+
+double GetEffectiveThickness ( double angle, double targetThickness_ );
+
+double ComputeEnergyLoss ( vector<double> energies_, vector<double> rangeOrStoppingPower_, double startingEnergy, float mass, double xMin_, double xMax_, double dx_, string mode = "Interpolation" );
+
+double TryGetRemainingEnergy ( string mass_db, int mass, int charge, double startingEnergy, double thickness_, double dx_,
+                               string targetStr = "*", double density = 0, string tablePath = "./", string mode = "Interpolation" );
+
+//_______________________________________________________________________________________________________________________________________________//
+
+int InitReadMassesForKinematic ( std::ifstream& mass_db );
+
+void GetRelevantInfoPositions ( string* readWord, short& posMassExcess, short& posBindingEnergy, short& posBetaDecay, short& posAMU, short& posElement );
+
+void GetAtomicFormula ( std::ifstream& mass_db, int mass, int charge, string& toReconstruct );
+void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, int& charge, float& atomicMass );
+
+bool CharIsDigit ( char toCheck );
+
+template<typename T> bool IsSameValue ( T a_, T b_ )
+{
+    return a_ == b_;
+}
+
+template<typename T1, typename T2> bool IsSameValue ( T1 a_, T2 b_ )
+{
+    if ( !std::is_same<T1, T2 >::value ) return false;
+    else return IsSameValue<T1> ( a_, b_ );
+}
+
+template<typename T2> inline int CheckForMatch ( string* readWord, short posElement, short massCheck, T2 chargeCheck )
+{
+//     std::cout << "Performing the CheckForMatch function with: " << posMassExcess << " / " << posBindingEnergy << " / " << posBetaDecay << " / " << posAMU;
+//     std::cout << " / " << posElement << " / " << massCheck << " / " << chargeCheck << " / " << memberID << " / "<< "\n";
+
+    int charge = -1;
+
+    int foundMatch = -1;
+
+    if ( std::stoi ( readWord[posElement-1] ) == massCheck )
+    {
+        if ( std::is_same<int, decltype ( chargeCheck ) >::value )
+        {
+            if ( IsSameValue ( std::stoi ( readWord[posElement-2] ), chargeCheck ) ) foundMatch = 1;
+        }
+        else if ( std::is_same<string, decltype ( chargeCheck ) >::value )
+        {
+//             std::cout << "Searching Element by Atomic Symbol " << chargeCheck << " ...\n";
+
+            if ( IsSameValue ( readWord[posElement], chargeCheck ) )
+            {
+                foundMatch = 1;
+            }
+        }
+    }
+
+    if ( foundMatch >= 0 )
+    {
+//         std::cout << "Found a matching pattern: " << foundMatch << " ...\n";
+
+        charge = std::stoi ( readWord[posElement-2] );
+
+//         std::cout << "Decoded charge: " << charge << " ...\n";
+    }
+
+    return charge;
+}
+
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -119,8 +119,17 @@ GoddessData::GoddessData ()
     f->mkdir ( "infos" );
     f->cd ( "/infos" );
 
-    GoddessGeomInfos* godGeomInf = new GoddessGeomInfos ( config->geomInfos );
-    godGeomInf->Write ( "GoddessGeom" );
+    if ( config->geomInfos.size() > 0 )
+    {
+        GoddessGeomInfos* godGeomInf = new GoddessGeomInfos ( config->geomInfos );
+        godGeomInf->Write ( "GoddessGeom" );
+    }
+    if ( config->reacInfos.size() > 0 )
+    {
+        GoddessReacInfos* godReacInf = new GoddessReacInfos ( config->reacInfos );
+        godReacInf->targetType = config->targetType;
+        godReacInf->Write ( "GoddessReac" );
+    }
 
     f->cd ( "../" );
 
@@ -147,6 +156,8 @@ GoddessData::GoddessData ()
 
         tree->Branch ( "ic", &ionData );
     }
+
+    Pars->mainTree = tree;
 
     if ( Pars->noCalib == 2 )
     {

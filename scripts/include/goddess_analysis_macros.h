@@ -17,6 +17,7 @@
 #include "TChain.h"
 #include "TBranch.h"
 #include "TH2F.h"
+#include "TH3F.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TH1D.h"

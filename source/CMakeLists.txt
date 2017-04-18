@@ -6,7 +6,7 @@ set (GEBSort_SOURCES GEBSort.cxx GoddessData.cxx time_stamp.c bin_dgs.c bin_god.
 # (Seems the original authors used .c as a c++ extension?)
 set_source_files_properties(${GEBSort_SOURCES} ${GEBMerge_SOURCES} ag2mode2.c mkMap.c PROPERTIES LANGUAGE CXX)
 
-add_executable(GEBSort_nogeb ${GEBSort_SOURCES} $<TARGET_OBJECTS:ORRUBA_OBJECT> $<TARGET_OBJECTS:GoddessStruct_OBJECT>)
+add_executable(GEBSort_nogeb ${GEBSort_SOURCES} $<TARGET_OBJECTS:ORRUBA_OBJECT> $<TARGET_OBJECTS:GoddessStruct_OBJECT> $<TARGET_OBJECTS:GODDESSTOOLBOX_OBJECT>)
 target_link_libraries(GEBSort_nogeb ${ROOT_LIBRARIES})
 
 add_executable(mkMap mkMap.c)

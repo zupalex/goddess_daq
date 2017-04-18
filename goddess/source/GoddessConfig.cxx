@@ -97,29 +97,96 @@ void GoddessConfig::ReadConfig ( std::string filename, std::string sx3EnAdjustFN
     unsigned int lineCnt = 0;
 
     //Loop over every line in the config file
-    while ( std::getline ( mapFile, line ).good() )
+    while ( std::getline ( mapFile, line ) )
     {
         lineCnt++;
         //Remove comments
-        size_t pos = line.find ( '#' );
-
-        if ( pos != std::string::npos )
-        {
-            line.erase ( pos );
-        }
+        if ( line.find ( '#' ) != std::string::npos ) continue;
+        if ( line.empty() ) continue;
 
         //Remove leading whitespace.
-        size_t wordStart = line.find_first_not_of ( " \t" );
+        size_t wordStart = line.find_first_not_of ( " \b\n\t\v" );
 
-        if ( wordStart == std::string::npos )
-        {
-            continue;
-        }
+        if ( wordStart == std::string::npos ) continue;
 
         line.erase ( 0, wordStart );
 
         //Convert string to stream
         std::istringstream lineStream ( line );
+
+        //Check for the reactions info technically before the mapping
+
+
+        if ( line.find ( "ReacInfo:" ) != std::string::npos )
+        {
+            string infoType_;
+            std::size_t firstEqualPos = line.find_first_of ( "=" );
+
+            infoType_ = line.substr ( 9, firstEqualPos-9 );
+            infoType_ = FindAndReplaceInString ( infoType_, " ", "" );
+
+            std::cout << "Found reaction info. Type: " << infoType_ << std::endl;
+
+            if ( infoType_ == "Beam" || infoType_ == "Target" || infoType_ == "Ejectile" )
+            {
+                string atomicForm = line.substr ( firstEqualPos+1, line.find_first_of ( "," ) - firstEqualPos - 1 );
+                atomicForm = FindAndReplaceInString ( atomicForm, " ", "" );
+
+                float readAtomicMass;
+                int readA, readZ;
+
+                std::ifstream mdb ( "mass_db.dat" );
+
+                DecodeAtomicFormula ( mdb, atomicForm, readA, readZ, readAtomicMass );
+
+                reacInfos[infoType_ + " Charge"] = readZ;
+                reacInfos[infoType_ + " Mass"] = readA;
+                reacInfos[infoType_ + " Atomic Mass"] = readAtomicMass;
+
+                if ( infoType_ == "Beam" )
+                {
+                    std::size_t energyPos = line.find_first_of ( "0123456789.", line.find ( "Energy" ) );
+                    reacInfos["Beam Energy"] = std::stof ( line.substr ( energyPos, line.find_first_not_of ( "0123456789.", energyPos ) - energyPos ) );
+                }
+
+                else if ( infoType_ == "Target" )
+                {
+                    std::size_t typePos = line.find_first_of ( "=", line.find ( "Type" ) ) + 1;
+                    std::size_t foundComa = line.find_first_of ( ",", typePos );
+                    std::size_t thicknessPos = line.find_first_of ( "0123456789.", line.find ( "Thickness" ) );
+
+                    targetType = line.substr ( typePos, foundComa-typePos );
+                    targetType = FindAndReplaceInString ( targetType, " ", "" );
+
+                    reacInfos["Target Thickness"] = std::stof ( line.substr ( thicknessPos ) );
+                }
+
+                std::cout << "Z = " << reacInfos[infoType_ + " Charge"] << " , A = " << reacInfos[infoType_ + " Mass"] << " , Atomic Mass = " << reacInfos[infoType_ + " Atomic Mass"];
+                if ( infoType_ == "Beam" ) std::cout << " @ " << reacInfos["Beam Energy"] << "MeV";
+                if ( infoType_ == "Target" ) std::cout << " / Type = " << targetType << " / Thickness = " << reacInfos["Target Thickness"] << "mg/cm2";
+                std::cout << "\n";
+            }
+
+            else if ( infoType_ == "ReactionQ-Value" )
+            {
+                reacInfos["Reaction Q-Value"] = std::stof ( line.substr ( 29 ) );
+                std::cout << reacInfos["Reaction Q-Value"] << std::endl;
+            }
+
+            else if ( infoType_ == "GainModifierQQQ5" )
+            {
+                reacInfos["QQQ5 Gain Mod"] = std::stof ( line.substr ( 31 ) );
+                std::cout << reacInfos["QQQ5 Gain Mod"] << std::endl;
+            }
+
+            else if ( infoType_ == "GainModifierSuperX3" )
+            {
+                reacInfos["SuperX3 Gain Mod"] = std::stof ( line.substr ( 34 ) );
+                std::cout << reacInfos["SuperX3 Gain Mod"] << std::endl;
+            }
+
+            continue;
+        }
 
         //Read the first line for a detector block
         // This line specifies the following in order:
@@ -156,7 +223,7 @@ void GoddessConfig::ReadConfig ( std::string filename, std::string sx3EnAdjustFN
                 chMap[std::make_pair ( daqType, daqCh )] = std::make_pair ( liquidScints.back(), false );
             }
         }
-        else
+        else if ( detType == "QQQ5" || detType == "BB10" || detType == "superX3" )
         {
             int pTypeDaqType, nTypeDaqType;
             int pTypeDaqCh, nTypeDaqCh = 0;
@@ -261,11 +328,12 @@ void GoddessConfig::ReadConfig ( std::string filename, std::string sx3EnAdjustFN
                 }
             }
         }
+        else continue;
 
         //Read calibration information.
         std::istream::streampos prevPos = mapFile.tellg();
 
-        while ( std::getline ( mapFile, line ).good() )
+        while ( std::getline ( mapFile, line ) )
         {
             lineCnt++;
             //Remove comments

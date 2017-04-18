@@ -64,7 +64,7 @@ add_subdirectory(source)
 add_subdirectory(scripts)
 install(DIRECTORY chatfiles DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-install(FILES share/crmat.LINUX share/AGATA_crmat.dat share/dgscal.dat share/map.dat share/.rootlogon.C DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES share/crmat.LINUX share/AGATA_crmat.dat share/dgscal.dat share/map.dat share/.rootlogon.C share/mass_db.dat DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 file(GLOB GODDESS_CONF_FILES "share/*.config")
 install(FILES ${GODDESS_CONF_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
@@ -74,3 +74,10 @@ install(FILES ${GODDESS_GEOM_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 file(GLOB USERROOTFILES "share/*.root")
 install(FILES ${USERROOTFILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+if(NOT EXISTS exec/ranges_tables)
+  file(MAKE_DIRECTORY exec/ranges_tables)
+endif()
+
+file(GLOB RANGESTABLES "share/ranges_tables/*.txt")
+install(FILES ${RANGESTABLES} DESTINATION ${CMAKE_INSTALL_PREFIX}/ranges_tables)

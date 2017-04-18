@@ -9,27 +9,43 @@ ReturnError()
     echo "-> Optional arguments can be put in any order"
     echo ""
     echo "-> suffix=output_file_suffix will append the specified suffix at the end of the output rootfile name"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> nevents=XXXX command will treat XXXX events without having to modify the chat file / nevents=all will treat all the events in the merged file" 
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> config=config_filename force the use of [config_filename] instead of the default config file automatically determined from the run number provided"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> geom=geom_filename force the use of [geom_filename] instead of the default \"goddess.geom\""
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> sx3enfix=filename enable the SX3 energies adjustment using the graphs provided in the file given as an input"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> nocalib=mode handles the calibration level."
     echo "           mode==0 (default mode) will generate only the sorted AND calibrated tree."
     echo "           mode==1 will generate one tree sorted BUT NOT calibrated." 
     echo "           mode==2 will generate two sorted trees, one calibrated, the other one not"
     echo "           mode==-1 will not generate any sorted or calibrated tree. Useful only if run with the unmapped tree is generated with the nomapping mode"
+    echo "______________________________________________________________________________________________________________________________________________________________"
+    echo "-> trigmode=mode to specify which trigger to use to reconstruct events."
+    echo "           mode==default (default mode) will use ORRUBA as a trigger and scan forward in the timestamp list."
+    echo "           mode==free will use the first event in the queue as a trigger."
+    echo "           mode==reverse will use ORRUBA as a trigger and scan backward in the timestamp list. Useful if the corresponding gamma have a lower timestamp."
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> ignorethr=mode handles the thresholds ignore level."
     echo "             mode==0 will apply the threshold no matter what, even for the sorted uncalibrated tree." 
     echo "             mode==1 will not apply the threshold to the sorted uncalibrated tree but will apply it to the calibrated one"
     echo "             mode==2 won't apply any threshold to any tree"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> sidetails=mode handles the detail level for the output Si Data."
     echo "           mode==0 won't generate any output for the Si detectors." 
     echo "           mode==1 will store only the sum of the energies per sector."
     echo "           mode==2 will store all the energies collected by each strips individually as well as the sum per sector."
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> nomapping will create an additional tree containing the raw data in pairs <channel, value>"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> nohists will prevent histograms to be generated"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> userfilter[=folder_name] will apply the UserEventFilter to generate the root file."
     echo "                            if [=folder_name] is specified, a \"cleaned\" merged file will be generated in the specified folder"
+    echo "______________________________________________________________________________________________________________________________________________________________"
 }
 
 if [ $# -lt 3 ] 
@@ -57,6 +73,8 @@ GEOMFILEARG=""
 
 USERFILTERDIR=""
 USERFILTERARG=""
+
+TRIGMODEARG=""
 
 SX3ENADJUSTARG=""
 
@@ -172,6 +190,11 @@ COUNTER=$(($COUNTER + 1))
 	OUTPUTSUFFIX="${arg##suffix=}"
 	echo "The following suffix will be append at the end of the output filename: $OUTPUTSUFFIX"
 	
+    elif [ "$arg" != "${arg##trigmode=}" ]; then
+    
+	TRIGMODEARG="-triggermode ${arg##suffix=}"
+	echo "The TRIGGER MODE used is ${arg##suffix=}"
+	
     elif [ "$arg" != "${arg##userfilter=}" ]; then
 
         USERFILTERDIR=${arg##userfilter=}
@@ -225,7 +248,7 @@ do
     fi
     
     time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
-    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG \
+    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $TRIGMODEARG\
     -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     
     echo "GEBSort DONE at `date`"

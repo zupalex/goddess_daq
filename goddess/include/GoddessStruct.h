@@ -4,11 +4,101 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
+#include <iomanip>
 
 #include "TObject.h"
 #include "TArrayF.h"
 #include "TMath.h"
+#include "TFile.h"
 #include "TVector3.h"
+#include "GoddessToolbox.h"
+
+class GoddessGeomInfos : public TObject
+{
+private:
+
+public:
+    GoddessGeomInfos ();
+    GoddessGeomInfos ( std::map<std::string, double> geomInfos_ );
+    virtual ~GoddessGeomInfos();
+
+    double barrelRadius;
+    double barrelLength;
+
+    double targetLadderAngle;
+
+    double barrelLayerSpacing;
+    double endcapLayerSpacing;
+
+    TVector3 targetOffset;
+    TVector3 superX3Offset;
+    TVector3 qqq5Offset;
+
+    double superX3ActiveLength;
+    double superX3ActiveWidth;
+
+    double bb10ActiveWidth;
+
+    double qqq5FirstStripWidth;
+    double qqq5DeltaPitch;
+
+    double qqq5RefPhi;
+    double qqq5DeltaPhi;
+
+    double qqq5RefRotz;
+    double qqq5DeltaRotz;
+
+    double superX3RefPhi;
+    double superX3DeltaPhi;
+
+    double superX3RefRotz;
+    double superX3DeltaRotz;
+
+    void DumpInfo();
+
+    double GetMeasure ( std::string name );
+    TVector3 GetOffset ( std::string name );
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( GoddessGeomInfos, 2 )
+    /// \endcond
+};
+
+class GoddessReacInfos : public TObject
+{
+private:
+
+public:
+    GoddessReacInfos ();
+    GoddessReacInfos ( std::map<std::string, double> reacInfos_ );
+    virtual ~GoddessReacInfos();
+
+    unsigned int beamZ;
+    unsigned int beamA;
+    float beamAtomicMass;
+    unsigned int targetZ;
+    unsigned int targetA;
+    unsigned int ejecZ;
+    unsigned int ejecA;
+    unsigned int recoilZ;
+    unsigned int recoilA;
+
+    float beamEk; // MeV
+    float qValGsGs; // MeV the reaction Q-Value from G.S. to G.S.
+
+    string targetType;
+    float targetThickness; // ug/cm2
+
+    float qqq5EnGain;
+    float sX3EnGain;
+
+    void DumpInfo();
+
+    /// \cond This is just for ROOT and doesn't need to be documented
+    ClassDef ( GoddessReacInfos, 1 )
+    /// \endcond
+};
 
 ///Structure of gamma ray data from DGS
 struct GamData
@@ -27,6 +117,7 @@ struct GamData
 class SiDataBase
 {
 private:
+
 
 public:
     ///Default constructor.
@@ -72,10 +163,11 @@ public:
      * massTarget is the mass of the target in a.m.u.
      * massEjec is the mass of the emitted light particle in a.m.u.
      */
-    virtual float QValue ( float massBeam = 134., float kBeam = 1337.7, float massTarget = 2., float massEjec = 1., float massRecoil = 0.0 ) const;
+    virtual float QValue ( float massBeam = 134., float kBeam = 1337., float massTarget = 2., float massEjec = 1., float massRecoil = 135. ) const;
+    static float QValue ( GoddessReacInfos* rInfos_, float energy_, float angle_ ); //!
 
     ///Method which can be used within the root Draw command to plot the angular distribution of the particles detected in a specific layer
-    virtual float Angle ( unsigned short layer = 1 ) const;
+    virtual float Angle ( unsigned short layer = 1, float targetOffX = 0.0, float targetOffY = 0.0, float targetOffZ = 0.0 ) const;
 
     /// Vector containing the sum of the energies gathered in the different layers.
     /**They are not sorted so do not use with the Draw command in root.
@@ -304,51 +396,6 @@ public:
 
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( ORRUBARawData, 1 )
-    /// \endcond
-};
-
-
-class GoddessGeomInfos : public TObject
-{
-private:
-
-public:
-    GoddessGeomInfos ();
-    GoddessGeomInfos ( std::map<std::string, double> geomInfos_ );
-    virtual ~GoddessGeomInfos();
-
-    double barrelRadius;
-    double barrelLength;
-
-    double barrelLayerSpacing;
-    double endcapLayerSpacing;
-
-    TVector3 targetOffset;
-    TVector3 superX3Offset;
-    TVector3 qqq5Offset;
-
-    double superX3ActiveLength;
-    double superX3ActiveWidth;
-
-    double bb10ActiveWidth;
-
-    double qqq5FirstStripWidth;
-    double qqq5DeltaPitch;
-
-    double qqq5RefPhi;
-    double qqq5DeltaPhi;
-
-    double qqq5RefRotz;
-    double qqq5DeltaRotz;
-
-    double superX3RefPhi;
-    double superX3DeltaPhi;
-
-    double superX3RefRotz;
-    double superX3DeltaRotz;
-
-    /// \cond This is just for ROOT and doesn't need to be documented
-    ClassDef ( GoddessGeomInfos, 1 )
     /// \endcond
 };
 

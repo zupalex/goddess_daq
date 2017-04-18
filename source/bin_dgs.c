@@ -27,20 +27,6 @@
 
 #include "SortManager.h"
 
-// #if(0)
-// typedef struct PAYLOAD
-// {
-//     char p[MAXDATASIZE];
-// } PAYLOAD;
-//
-// typedef struct TRACK_STRUCT
-// {
-//     int n;
-//     GEBDATA* gd;
-//     PAYLOAD* payload;
-// } TRACK_STRUCT;
-// #endif
-
 /* Gain Calibrtation */
 float M = 350.0; // changed from 350.0
 float ehigain[NGE + 1];
@@ -126,7 +112,6 @@ int sup_dgs()
 
     void getcal ( char* );
 
-    //char file_name[]="./dgscal.dat.350";        // place this is sort directory
     char file_name[] = "./dgscal.dat";      // place this is sort directory
 
     PARS* Pars = SortManager::sinstance()->execParams;
@@ -452,8 +437,7 @@ int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent )
 
 /* ----------------------------------------------------------------- */
 
-int
-bin_dgs ( GEB_EVENT* GEB_event )
+int bin_dgs ( GEB_EVENT* GEB_event )
 {
     /* declarations */
 
@@ -524,8 +508,6 @@ bin_dgs ( GEB_EVENT* GEB_event )
         }
     }
 
-#if(1)
-
     if ( EvTimeStam0 == 0 )
     {
         EvTimeStam0 = DGSEvent[0].event_timestamp;
@@ -535,12 +517,6 @@ bin_dgs ( GEB_EVENT* GEB_event )
 
 
 // GS ENERGY CALIBRATION
-
-//unsigned short int GSMAP[500]={0};
-//unsigned short int MODMAP[20]={0};
-
-//#include "GSMAP.h"
-//#include "GSII_angles.h"
 
     double d1;
     int e;
@@ -554,16 +530,19 @@ bin_dgs ( GEB_EVENT* GEB_event )
             gsid = DGSEvent[i].tid;
             if ( !Pars->noHists ) hGeCounter->Fill ( ( int ) ( ( DGSEvent[0].event_timestamp - EvTimeStam0 ) / 100000000 ), gsid );
             Energy = ( ( float ) ( DGSEvent[i].post_rise_energy ) - ( float ) ( DGSEvent[i].pre_rise_energy ) * ehiPZ[gsid] ) / M * ehigain[gsid];
-            //Energy = Energy - ehibase[gsid]*(1.-ehiPZ[gsid])*ehigain[gsid] + ehioffset[gsid];
             Energy = Energy - float ( DGSEvent[i].base_sample ) * ( 1. - ehiPZ[gsid] ) * ehigain[gsid] + ehioffset[gsid];
 
 
             if ( Pars->beta != 0 )
             {
+//                 std::cerr << "Beta used for Doppler Correction: " << Pars->beta << std::endl;
+
                 d1 = angtheta[gsid - 1] / 57.29577951;
                 Energy = Energy * ( 1 - Pars->beta * cos ( d1 ) ) / sqrt ( 1 - Pars->beta * Pars->beta );
             }
+
             DGSEvent[i].ehi = Energy;
+
             for ( j = 0; j < *ng; j++ )
             {
                 if ( DGSEvent[j].tpe == BGO && DGSEvent[j].tid == gsid )    // BGO & GE in coincidence
@@ -618,37 +597,10 @@ bin_dgs ( GEB_EVENT* GEB_event )
             if ( !Pars->noHists )
             {
                 hTrB->Fill ( DGSEvent[i].baseline, gsid );
-                hFwB->Fill ( DGSEvent[i].base_sample, gsid );
-                //hE_TrB[gsid]->Fill(DGSEvent[i].ehi,DGSEvent[i].baseline);
+                hFwB->Fill ( DGSEvent[i].base_sample, gsid );;
             }
         }
     }
-
-#if(0) //DOPPLER CORRECTION
-
-    SetBeta();
-
-    //printf("\nPars.beta: %f\n",Pars.beta);
-
-    for ( int i = 0; i < *ng; i++ )
-    {
-        if ( DGSEvent[i].tpe == GE )
-        {
-            r = ( float ) rand() / RAND_MAX - 0.5;
-            e = DGSEvent[i].ehi;
-            // e =e*DopCorFac[GSMAP[DGSEvent[i].tid]] + r;
-            e = e * DopCorFac[GSMAP[DGSEvent[i].id - 1000]] + r;
-            if ( e  < L14BITS )
-            {
-                DGSEvent[i].ehi  = ( int ) ( e + 0.5 );
-            }
-            else
-            {
-                DGSEvent[i].ehi =  INT_MAX - 1;
-            }
-        }
-    }
-#endif
 
     /* debug list the gamma rays we found */
 
@@ -668,35 +620,7 @@ bin_dgs ( GEB_EVENT* GEB_event )
             fflush ( stdout );
         };
 
-    /* simple bin */
-    /*
-     * if ( !Pars.noHists )
-     * {
-        for (i = 0; i < *ng; i++)
-          if (DGSEvent[i].tpe == GE) {
-            if (DGSEvent[i].ehi > 0 && DGSEvent[i].ehi < LONGLEN) {
-              dgs_sumehi->Fill ((double) DGSEvent[i].ehi, 1);
-              ehi[DGSEvent[i].tid]->Fill ((double) DGSEvent[i].ehi, 1);
-            };
-          };
-
-          if (DGSEvent[i].id > 0 && DGSEvent[i].id < NCHANNELS)
-            dgshitpat->Fill ((double) DGSEvent[i].id, 1);
-
-          if (DGSEvent[i].tpe == GE && !DGSEvent[i].flag)
-            if (DGSEvent[i].tid > 0 && DGSEvent[i].tid < NGE)
-              if (DGSEvent[i].ehi > 5) {
-                hitpatge->Fill ((double) DGSEvent[i].tid, 1);
-              };
-
-          if (DGSEvent[i].tpe == BGO)
-            if (DGSEvent[i].tid > 0 && DGSEvent[i].tid < NGE)
-              hitpatbgo->Fill ((double) DGSEvent[i].tid, 1);
-    }
-    */
     /* done */
-
-#endif
 
     if ( Pars->CurEvNo <= Pars->NumToPrint )
     {
@@ -706,37 +630,6 @@ bin_dgs ( GEB_EVENT* GEB_event )
     return ( 0 );
 
 
-
-}
-
-/*--------------------------------------------------------*/
-void
-SetBeta()
-{
-    /* delarations */
-
-    PARS* Pars = SortManager::sinstance()->execParams;
-
-    int i;
-    double d1;
-
-    /*-------------------------------------*/
-    /* find Doppler and aberration factors */
-    /*-------------------------------------*/
-
-    for ( i = 0; i < NGSGE; i++ )
-    {
-        //printf("det %3.3i-> ", i);
-        d1 = angle[i] / 57.29577951;
-        DopCorFac[i] = ( 1 - Pars->beta * cos ( d1 ) ) / sqrt ( 1 - Pars->beta * Pars->beta );
-        //printf("dop cor fac: %6.4f; ", DopCorFac[i]);
-        ACFac[i] = DopCorFac[i] * DopCorFac[i];
-        //printf("aberration cor fac: %6.4f\n", ACFac[i]);
-
-    };
-    fflush ( stdout );
-
-    /* done */
 
 }
 

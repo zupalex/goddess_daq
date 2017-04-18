@@ -37,6 +37,7 @@ int main ( int argc, char** argv )
     Pars->noMapping = false;
     Pars->noHists = false;
     Pars->userFilter = "";
+    Pars->triggerMode = "default";
     Pars->InputSrc = NOTDEF;
     Pars->HaveRootFileName = 0;
 
@@ -290,6 +291,16 @@ int main ( int argc, char** argv )
                 Pars->userFilter = filteredName;
 
                 printf ( "The UserEventFilter will be applied to generate the root file\n" );
+            }
+            else if ( ( p = strstr ( argv[j], "-triggermode" ) ) != NULL )
+            {
+                j++;
+                char trigMode[500];
+                strcpy ( trigMode, argv[j++] );
+
+                Pars->triggerMode = trigMode;
+
+                printf ( "The TRIGGER MODE is %s\n", trigMode );
             }
             else if ( ( p = strstr ( argv[j], "-rootfile" ) ) != NULL )
             {

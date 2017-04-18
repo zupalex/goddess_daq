@@ -297,7 +297,7 @@ int SortManager::ShowStatus()
 {
     printf ( "read %i events; ", ( execParams->CurEvNo - execParams->firstEvent ) );
     printf ( "Pars.beta=%6.4f; ", ( float ) execParams->beta );
-    printf ( "time since last update %i minutes\n", ( int ) tdmp );
+    printf ( "time since last update %i seconds\n", ( int ) tdmp );
     printf ( "CommandFileName=\"%s\"\n", CommandFileName );
     fflush ( stdout );
 
@@ -545,14 +545,14 @@ int SortManager::GEBSort_read_chat ( char* name )
         {
             nret = sscanf ( str, "%s %f", str1, &execParams->beta );
             CheckNoArgs ( nret, 2, str );
-            printf ( "will use execParams->Beta (v/c) correction of %f\n", execParams->beta );
+            printf ( "initialize execParams->Beta (v/c) correction with %f\n", execParams->beta );
             fflush ( stdout );
         }
         else if ( ( p = strstr ( str, "DumpEvery" ) ) != NULL )
         {
             nret = sscanf ( str, "%s %i", str1, &execParams->DumpEvery );
             CheckNoArgs ( nret, 2, str );
-            printf ( "will dump to output file every %i minutes\n", execParams->DumpEvery );
+            printf ( "will dump to output file every %i seconds\n", execParams->DumpEvery );
             fflush ( stdout );
 
         }
@@ -625,6 +625,10 @@ int SortManager::GEBGetEv ( )
 
     int coincCounter = 0;
 
+    bool startFilling = false;
+    
+    if(execParams->triggerMode == "free") startFilling = true;
+
     while ( !inData.eof() && coincCounter < MAXCOINEV )
     {
         if ( overflowGEBEv->ptgd.size() > 1 )
@@ -635,14 +639,19 @@ int SortManager::GEBGetEv ( )
         }
         else if ( overflowGEBEv->ptgd.size() == 1 )
         {
-            *buffHeader[coincCounter] = * ( overflowGEBEv->ptgd[0] );
+            execParams->curTS = overflowGEBEv->ptgd[0]->timestamp;
 
-            memcpy ( buffData[coincCounter], overflowGEBEv->ptinp[0], overflowGEBEv->ptgd[0]->length );
+            if ( startFilling || overflowGEBEv->ptgd[0]->type == 16 || overflowGEBEv->ptgd[0]->type == 19 )
+            {
+                *buffHeader[coincCounter] = * ( overflowGEBEv->ptgd[0] );
 
-            GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
-            GEB_event->ptinp.push_back ( buffData[coincCounter] );
+                memcpy ( buffData[coincCounter], overflowGEBEv->ptinp[0], overflowGEBEv->ptgd[0]->length );
 
-            execParams->curTS = buffHeader[coincCounter]->timestamp;
+                GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
+                GEB_event->ptinp.push_back ( buffData[coincCounter] );
+
+                startFilling = true;
+            }
 
             overflowGEBEv->ptgd.clear();
             overflowGEBEv->ptinp.clear();
@@ -711,7 +720,7 @@ int SortManager::GEBGetEv ( )
 
 //             if ( nbadTS > 1000 )
 //             {
-//                 printf ( "too many bad TS, quit withe error code 3\n" );
+//                 printf ( "too many bad TS, quit with error code 3\n" );
 //                 fflush ( stdout );
 // //              return (3);
 //             }
@@ -719,33 +728,43 @@ int SortManager::GEBGetEv ( )
 
         if ( ( long long ) ( TS - execParams->curTS ) < execParams->dTS )
         {
+            if ( !startFilling && ( buffHeader[coincCounter]->type == 16 || buffHeader[coincCounter]->type == 19 ) )
+            {
+                startFilling = true;
+                execParams->curTS = buffHeader[coincCounter]->timestamp;
+            }
+
+            if ( startFilling )
+            {
 //             std::cerr << "..........................\n";
 //             std::cerr << "Should push back in GEB_event:\n";
 //             std::cerr << "---> type: " << buffHeader->type << "\n";
 //             std::cerr << "---> length: " << buffHeader->length << "\n";
 //             std::cerr << "---> timestamp: " << buffHeader->timestamp << "\n";
 
-            GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
-            GEB_event->ptinp.push_back ( buffData[coincCounter] );
+                GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
+                GEB_event->ptinp.push_back ( buffData[coincCounter] );
 
 //             std::cerr << "Pushed back in GEB_event:\n";
 //             std::cerr << "---> type: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->type << "\n";
 //             std::cerr << "---> length: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->length << "\n";
 //             std::cerr << "---> timestamp: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->timestamp << "\n";
 
-            if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
-            {
-                printf ( "ev# %5i ", execParams->CurEvNo );
-                char str[256];
-                GebTypeStr ( buffHeader[coincCounter]->type, str );
-                printf ( "%s ", str );
-                printf ( "%4iBytes ", buffHeader[coincCounter]->length );
-                printf ( "TS=%lli ", buffHeader[coincCounter]->timestamp );
-                printf ( "curTS=%lli ", execParams->curTS );
-                dTS = TS - execParams->curTS;
-                printf ( "dTS= %lli\n", dTS );
-                fflush ( stdout );
+                if ( execParams->CurEvNo <= execParams->NumToPrint || ( execParams->CurEvNo % execParams->modwrite == 0 ) )
+                {
+                    printf ( "ev# %5i ", execParams->CurEvNo );
+                    char str[256];
+                    GebTypeStr ( buffHeader[coincCounter]->type, str );
+                    printf ( "%s ", str );
+                    printf ( "%4iBytes ", buffHeader[coincCounter]->length );
+                    printf ( "TS=%lli ", buffHeader[coincCounter]->timestamp );
+                    printf ( "curTS=%lli ", execParams->curTS );
+                    dTS = TS - execParams->curTS;
+                    printf ( "dTS= %lli\n", dTS );
+                    fflush ( stdout );
+                }
             }
+            else execParams->curTS = buffHeader[coincCounter]->timestamp;
         }
         else
         {
@@ -1100,6 +1119,29 @@ int SortManager::GEBacq ( char* ChatFileName )
     printf ( "deleted %s\n", str );
 
     gConfig = new GoddessConfig ( ( string ) execParams->GeomFile, ( string ) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile );
+
+    // Calculate the beta of the beam from its energy, charge, mass and the target properties. Requires a corresponding energy loss lookup table
+
+    if ( gConfig->reacInfos["Beam Mass"] > 0 && gConfig->reacInfos["Beam Charge"] > 0 && gConfig->reacInfos["Beam Energy"] > 0 && gConfig->reacInfos["Target Thickness"] > 0 )
+    {
+        string targetStr_;
+        if ( gConfig->reacInfos.find ( "TargetType" ) != gConfig->reacInfos.end() ) targetStr_ = gConfig->reacInfos["Target Type"];
+        else targetStr_ = "*";
+
+        double beamERemaining = TryGetRemainingEnergy ( "mass_db.dat", gConfig->reacInfos["Beam Mass"], gConfig->reacInfos["Beam Charge"], gConfig->reacInfos["Beam Energy"],
+                                gConfig->reacInfos["Target Thickness"]/2., 0.01, targetStr_, 0, "./ranges_tables", "Interpolation" );
+
+        float bMass;
+
+        if ( gConfig->reacInfos["Beam Atomic Mass"] > 0 ) bMass = gConfig->reacInfos["Beam Atomic Mass"];
+        else bMass = gConfig->reacInfos["Beam Mass"];
+
+        execParams->beta = sqrt ( 1 - pow ( 931.494*bMass,2 ) / pow ( beamERemaining+931.494*bMass,2 ) );
+
+        std::cout << "Energy loss of the beam in the target calculated using: Mass = " << bMass << " / Charge = " << gConfig->reacInfos["Beam Charge"];
+        std::cout << " / Energy = " << gConfig->reacInfos["Beam Energy"] << " / Target Thickness = " << gConfig->reacInfos["Target Thickness"] << std::endl;
+        std::cout << "Beta of the beam updated to take into account the energy loss in the target: New value = " << execParams->beta << std::endl;
+    }
 
     /*------------------------------------------*/
     /* if we are using root file, then either   */
@@ -1511,7 +1553,7 @@ int SortManager::GEBacq ( char* ChatFileName )
                 {
 
                     sscanf ( str, "%s %i", str1, &execParams->DumpEvery );
-                    printf ( "will dump to output file every %i minutes\n", execParams->DumpEvery );
+                    printf ( "will dump to output file every %i seconds\n", execParams->DumpEvery );
                     fflush ( stdout );
 
                 }
@@ -1619,6 +1661,9 @@ int SortManager::GEBacq ( char* ChatFileName )
                 if ( !execParams->UseShareMemFile )
                 {
                     printf ( "Writing ROOT file\n" );
+
+                    execParams->f1 = execParams->mainTree->GetCurrentFile();
+
                     if ( !execParams->noHists ) execParams->histDir->Write ( 0, TObject::kOverwrite );
                     //execParams->treeDir->Write(0,TObject::kWriteDelete);
                     execParams->f1->Flush();

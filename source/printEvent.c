@@ -288,7 +288,7 @@ printEvent (FILE * fp, int evno, TRACK_STRUCT * track)
                   if (diff < 0)
                     diff = -diff;
                   if (diff < 5)
-                    fprintf (fp, "full energy");
+                    fprintf (fp, "full Energy");
                   else
                     {
                       fprintf (fp, "COMPTON LOSS=%5.0f", diff);

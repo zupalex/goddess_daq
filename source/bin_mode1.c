@@ -204,7 +204,7 @@ sup_mode1()
     //ndetXfom->SetYTitle ("fom");
 
     //sprintf (str1, "ngamXsumTrackE");
-    //sprintf (str2, "# gammarays vs gamma ray energy");
+    //sprintf (str2, "# gammarays vs gamma ray Energy");
     //ngamXsumTrackE = mkTH2F (str1, str2, MAXNGAM, 1, MAXNGAM, LONGLEN, 1, LONGLEN);
     //sprintf (str1, "ngam");
     //ngamXsumTrackE->SetXTitle (str1);
@@ -216,7 +216,7 @@ sup_mode1()
     //HK = mkTH2F (str1, str2, 1024, 0, MAXK, 1024, 0, MAXH);
     //sprintf (str1, "K, # gamma rays");
     //HK->SetXTitle (str1);
-    //sprintf (str1, "H, summed energy");
+    //sprintf (str1, "H, summed Energy");
     //HK->SetYTitle (str1);
 
     //sprintf (str1, "rate_mode1");
@@ -234,7 +234,7 @@ sup_mode1()
 
 
     //sprintf (str1, "ndet_e");
-    //sprintf (str2, "interaction points vs gamma energy");
+    //sprintf (str2, "interaction points vs gamma Energy");
     //ndet_e = mkTH2F (str1, str2, 9, 1, 10, Pars.GGMAX, 1, (double) Pars.GGMAX);
     //sprintf (str1, "ndet");
     //ndet_e->SetXTitle (str1);
@@ -259,7 +259,7 @@ sup_mode1()
     //evsr_first = mkTH2F (str1, str2, MEDIUMLEN, RMIN, RMAX, MEDIUMLEN, 1, MEDIUMLEN);
     //sprintf (str1, "radius (cm)");
     //evsr_first->SetXTitle (str1);
-    //sprintf (str1, "energy");
+    //sprintf (str1, "Energy");
     //evsr_first->SetYTitle (str1);
 
 

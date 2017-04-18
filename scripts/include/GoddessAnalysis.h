@@ -16,7 +16,7 @@ public:
 
     // ---------------- General useful functions -------------------------- //
 
-    static void RegisterClassForROOTSession() {}
+    static void RegisterClassForROOTSession () {}
 
     template<typename T> static void DisplayMapKeys ( std::map<string, T> map_ );
     inline static void DisplayMapKeys ( std::map<string, float> map_ );
@@ -50,26 +50,26 @@ public:
 
     // ****************** Reaction parameters *************************** //
 
-    float beamEk;
-    float beamMass;
-    float targetMass;
-    float ejecMass;
-    float recoilMass;
-    float qvalGsGs;
+    GoddessGeomInfos* geomInfo;
+    GoddessReacInfos* reacInfo;
 
-    void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1312., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.1 );
+    void AutoReadAndSetReacParameters();
+    void SetReacParameters ( float beamMass_ = 134., float beamEk_ = 1312., float targetMass_ = 2., float ejecMass_ = 1., float recoilMass_ = 135., float qValGsGs_ = 4.14 );
     void SetBeamParameters ( float beamMass_ = 134., float beamEk_ = 1312. );
     void SetBeamEk ( float beamEk_ = 1312. );
     void SetBeamMass ( float beamMass_ = 134. );
     void SetTargetMass ( float targetMass_ = 2. );
     void SetEjectileMass ( float ejecMass_ = 1. );
     void SetRecoilMass ( float recoilMass_ = 135. );
-    void SetQvalueGsToGs ( float qvalGsGs_ = 4.1 );
+    void SetQvalueGsToGs ( float qvalGsGs_ = 4.14 );
 
     // ------------------ For the User Macros ------------------------------- //
 
     TChain* userChain;
     TTree* userTree;
+    vector<TTree*> userTreeList;
+
+    void PrintUserTreeList();
 
     void AddFileToTreat ( TFile* inFile, string treeName );
     void AddFileToTreat ( string inFile, string treeName );
@@ -205,6 +205,7 @@ template<typename First, typename... Rest> TH2F* GoddessAnalysis::DrawEnergyVsAn
 // -------------------- User Analysis Macros Stuffs --------------------------------------- //
 
 extern GoddessAnalysis* gA;
+extern unsigned int ghistcount;
 
 extern std::map<string, std::pair<TObject*, vector<GamData*>>> histsMap;
 extern vector<string> specialHists;
@@ -218,6 +219,11 @@ template<typename First, typename... Rest> void LoadTrees ( string treeName, Fir
 {
     if ( gA == nullptr ) gA = new GoddessAnalysis();
 
+    if ( gA->userChain != nullptr ) delete gA->userChain;
+    gA->userChain = nullptr;
+
+//     gA->userTreeList.clear();
+//
     gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
 }
 
@@ -325,27 +331,7 @@ TH1F* DrawSum ( TH1F** hists );
 
 template<typename THist> void DrawSum ( string toSum, THist*& dest )
 {
-//     std::size_t foundOpenBracket = toSum.find ( "[" );
-//     std::size_t foundCloseBracket = toSum.find ( "]" );
-//
-//     std::vector<string> histsNames;
-//     histsNames.clear();
-//
-//     if ( foundOpenBracket != string::npos && foundCloseBracket != string::npos )
-//     {
-//         std::vector<int> detNums = DecodeNumberString ( toSum.substr ( foundOpenBracket+1, foundCloseBracket-foundOpenBracket-1 ) );
-//
-//         for ( unsigned int i = 0; i < detNums.size(); i++ )
-//         {
-//             histsNames.push_back ( Form ( "%s%d%s", toSum.substr ( 0, foundOpenBracket ).c_str(), detNums[i], toSum.substr ( foundCloseBracket + 1 ).c_str() ) );
-//         }
-//     }
-//     else if ( ( foundOpenBracket != string::npos && foundCloseBracket == string::npos ) || ( foundOpenBracket == string::npos && foundCloseBracket != string::npos ) )
-//     {
-//         return;
-//     }
-
-    std::vector<string> histsNames = DecodeItemsToTreat ( toSum, "root" );
+    vector<string> histsNames = DecodeItemsToTreat ( toSum, "root" );
 
     for ( unsigned int i = 0; i < histsNames.size(); i++ )
     {
@@ -372,23 +358,60 @@ template<typename THist> void DrawSum ( string toSum, THist*& dest )
 void DrawSum ( string toSum, TH1F*& dest );
 void DrawSum ( string toSum, TH2F*& dest );
 
+TGraph* DrawGraphFromDataset ( vector<double> xSet, vector<double> ySet );
+
 TH2F* DrawCombinedKinematics ( string qqq5List, string sX3List );
 TGraph* SuperimposeCalculatedKinematics ( string input );
 
-void PrintProgress ( long long int maxEvents_, long long int currEvt );
-
-void PrintHistsMapContent();
+void PrintProgress ( long long int maxEvents_, long long int currEvt, int fileNbr = -1 );
 
 TH1F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, bool addToSpecialList = false );
-
 TH2F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, bool addToSpecialList = false );
-
 TH2F* MakeNewHist ( string name, string title, int nBinsX, double* binsX, unsigned int nBinsY, int minY, int maxY, bool addToSpecialList = false );
+TH3F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, unsigned int nBinsZ, int minZ, int maxZ, bool addToSpecialList );
+TH3F* MakeNewHist ( string name, string title, int nBinsX, double* binsX, unsigned int nBinsY, int minY, int maxY, unsigned int nBinsZ, int minZ, int maxZ, bool addToSpecialList );
 
-void ListHistograms ( string match = "", unsigned int limit = 0, unsigned int startAt = 0 );
+int ToStripID ( bool isUpstream_, bool isBarrel_, bool isFront_, int sector_, int strip_ );
+vector<int> ToStripID ( string sectorStr, bool displayList = false );
+void ToStripID ( vector<int>* dest, string sectorStr );
 
-TVector3 GetDetPos ( TChain* c, bool isUpstream_, bool isBarrel_, int sector_, int verbose = 0 );
-TVector3 GetDetPos ( TTree* tree, bool isUpstream_, bool isBarrel_, int sector_, int verbose = 0 );
+template<typename... Rest> void ToStripID ( vector<int>* dest, string sectorStr1, Rest... otherSectorStr )
+{
+    dest->clear();
+
+    ToStripID ( dest, sectorStr1 );
+
+    ToStripID ( dest, otherSectorStr... );
+}
+
+template<typename... Rest> vector<int> ToStripID ( string sectorStr1, Rest... otherSectorStr )
+{
+    vector<int> stripIDsList;
+
+    ToStripID<string> ( &stripIDsList, sectorStr1, otherSectorStr... );
+
+    return stripIDsList;
+}
+
+TH1D* DrawGodHist ( TH2F* source, string toDraw, string opt = "" );
+TH2D* DrawGodHist ( TH3F* source, string toDraw, string opt = "" );
+
+TVector3 GetDetPos ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose = 0 );
+TVector3 GetDetPos ( TChain* c, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose = 0 );
+TVector3 GetDetPos ( TTree* tree, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose = 0 );
+
+vector<double> GetBinsEdges ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector, int depth_, int verbose = 0 );
+
+void InsertReacInfo ( TFile* file, GoddessReacInfos* reacInfo_, bool overwriteIfExists = false );
+void InsertGeomInfo ( TFile* file, GoddessGeomInfos* geomInfo_, bool overwriteIfExists = false );
+void InsertReacInfo ( string files, GoddessReacInfos* reacInfo_, bool overwriteIfExists = false );
+void InsertGeomInfo ( string files, GoddessGeomInfos* geomInfo_, bool overwriteIfExists = false );
+
+extern string pathToGDAQ;
+
+void WriteUserHists ( string outName );
+void UpdateUserHists ( string outName );
+void ClearUserHists();
 
 #endif
 

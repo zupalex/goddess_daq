@@ -68,7 +68,7 @@ sup_mode3()
 //  sprintf (str2, "SegE");
 //  SegE = mkTH2F (str1, str2, MAXSEGNO, 1, MAXSEGNO, SHORTLEN, 1, LONGLEN);
 //  SegE->SetXTitle ("Crystal#*36+seg#");
-//  SegE->SetYTitle ("segment energy");
+//  SegE->SetYTitle ("segment Energy");
 //
 //  gDirectory->cd("/");
 

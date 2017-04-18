@@ -36,6 +36,22 @@ extern TH2F* hQval_vs_strip_QQQ5UB_mod;
 extern TH2F* hQval_vs_strip_QQQ5UC_mod;
 extern TH2F* hQval_vs_strip_QQQ5UD_mod;
 
+struct NewGeomPars
+{
+    bool overrideGeom;
+    bool overrideReac;
+    bool computeEjectileELoss;
+    bool computebeamELoss;
+
+    void Init()
+    {
+        overrideGeom = false;
+        overrideReac = false;
+        computebeamELoss = true;
+        computeEjectileELoss = true;
+    }
+};
+
 class GoddessCalib : public GoddessAnalysis
 {
 private:
@@ -123,12 +139,23 @@ public:
 
     // ******************* Geometry Utilities ************************** //
 
+    NewGeomPars nGP;
+
+    void SetNewGeomMode ( bool geomOR, bool reacOR, bool beamELoss, bool ejecELoss );
+    void SetGeomOverride ( bool geomOR );
+    void SetReacOverride ( bool reacOR );
+    void SetComputeBeamELoss ( bool beamELoss );
+    void SetComputeEjecELoss ( bool ejecELoss );
+
     TChain* initialPosChain;
 
     map<string, TH1F*> hQval_NewGeom;
+    map<string, TH1F*> hEx_NewGeom;
 
     map<string, TH2F*> hEvsA_SX3_NewGeom;
     map<string, TH2F*> hEvsA_QQQ5_NewGeom;
+
+    map<string, TH2F*> hQvalvsStrip_QQQ5_NewGeom;
 
     vector<float> lastQQQ5Offsets, lastSX3Offsets;
 
@@ -147,9 +174,14 @@ public:
 
     void GenerateGeomAdjustRootfile ( string filesname, string treename, long long int nEntries, string outfname );
 
-    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, int qqq5OffX, int qqq5OffY, int qqq5OffZ, int sX3OffX, int sX3OffY, int sX3OffZ, int targetOffX, int targetOffY, int targetOffZ );
+    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries,
+                                  int qqq5OffX, int qqq5OffY, int qqq5OffZ,
+                                  int sX3OffX, int sX3OffY, int sX3OffZ,
+                                  int targetOffX, int targetOffY, int targetOffZ );
 
     // ******************** Calibration Utilities ********************** //
+
+    map<string, string> stoppingPowerTable;
 
     map<string, map<unsigned short, vector<double>>> resStripsCalMap;
     map<string, vector<double>> endcapsStripsCalMap;
@@ -239,7 +271,8 @@ public:
 
     TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, string sector );
 
-    TF1* FitQValGS ( TH1F* hist, vector<float> mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0 );
+    TF1* FitQValGS ( TH1F* hist, vector<float> mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0, bool verbose = false );
+    TF1* FitQVal ( TH1F* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, bool verbose );
 
     TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, int modCoeff_ = 100 );
 
