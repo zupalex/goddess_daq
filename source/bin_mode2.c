@@ -65,9 +65,9 @@ int sup_mode2()
     //char str1[STRLEN], str2[STRLEN]; //unused
     //float pi, il;//unused
     int i;
-    PARS* Pars = SortManager::sinstance()->execParams;
+    PARS* pars= SortManager::sinstance()->execParams;
 
-    if ( !Pars->noHists )
+    if ( !pars->noHists )
     {
         TH1D* mkTH1D ( char*, char*, int, double, double );
         TH2F* mkTH2F ( char*, char*, int, double, double, int, double, double );
@@ -84,7 +84,7 @@ int sup_mode2()
 
     for ( i = 1; i <= MAXDETPOS; i++ )
     {
-        Pars->detpolang[i] = 0;
+        pars->detpolang[i] = 0;
     }
     printf ( "MAXDETPOS=%i\n", MAXDETPOS );
     fflush ( stdout );
@@ -129,7 +129,7 @@ int exit_mode2 ()
 
 /* ----------------------------------------------------------------- */
 
-int bin_mode2 ( GEB_EVENT* GEB_event )
+int bin_mode2 ( GEB_EVENT* gebEvt )
 {
     /* declarations */
     //int nn, rmax,rmin;//unused
@@ -152,22 +152,22 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
     int nCCenergies;
     static int nperrors = 0;
 
-    PARS* Pars = SortManager::sinstance()->execParams;
+    PARS* pars= SortManager::sinstance()->execParams;
     char* ptinp;
 
-    if ( Pars->CurEvNo <= Pars->NumToPrint )
+    if ( pars->CurEvNo <= pars->NumToPrint )
     {
-        printf ( "entered bin_mode2: %i/%i\n", Pars.CurEvNo, Pars.NumToPrint );
+        printf ( "entered bin_mode2: %i/%i\n", pars.CurEvNo, pars.NumToPrint );
     }
 
-    if ( Pars.requiretracked )
+    if ( pars.requiretracked )
     {
 
         /* require tracked data before we bin mode2 data */
 
         i1 = 0;
-        for ( i = 0; i < GEB_event->mult; i++ )
-            if ( GEB_event->ptgd[i]->type == GEB_TYPE_TRACK )
+        for ( i = 0; i < gebEvt->mult; i++ )
+            if ( gebEvt->ptgd[i]->type == GEB_TYPE_TRACK )
             {
                 i1++;
             }
@@ -181,26 +181,26 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
     addedEnergy = 0;
     ndecomp = 0;
-    for ( i = 0; i < GEB_event->mult; i++ )
+    for ( i = 0; i < gebEvt->mult; i++ )
     {
         CCenergies[i] = 0;
     }
     nCCenergies = 0;
-    for ( i = 0; i < GEB_event->mult; i++ )
+    for ( i = 0; i < gebEvt->mult; i++ )
     {
-        if ( GEB_event->ptgd[i]->type == GEB_TYPE_DECOMP )
+        if ( gebEvt->ptgd[i]->type == GEB_TYPE_DECOMP )
         {
             ndecomp++;
 
             /* cast */
 
-            ptinp = ( char* ) GEB_event->ptinp[i];
+            ptinp = ( char* ) gebEvt->ptinp[i];
 
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( pars.CurEvNo <= pars.NumToPrint )
             {
-                GebTypeStr ( GEB_event->ptgd[i]->type, str );
-                printf ( "bin_mode2, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str,
-                         GEB_event->ptgd[i]->timestamp );
+                GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                printf ( "bin_mode2, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str,
+                         gebEvt->ptgd[i]->timestamp );
             }
 
 
@@ -209,14 +209,14 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
             if ( firsttime )
             {
                 firsttime = 0;
-                t0 = GEB_event->ptgd[i]->timestamp;
+                t0 = gebEvt->ptgd[i]->timestamp;
             };
-            d1 = ( double ) ( GEB_event->ptgd[i]->timestamp - t0 );
+            d1 = ( double ) ( gebEvt->ptgd[i]->timestamp - t0 );
             d1 /= 100000000;
             d1 /= 60;
 
             //if (d1 > 0 && d1 < (double) RATELEN)
-            //if ( !Pars.noHists ) rate_mode2->Fill (d1, 1 / 60.0);
+            //if ( !pars.noHists ) rate_mode2->Fill (d1, 1 / 60.0);
 
             /* find basic info */
 
@@ -226,31 +226,31 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
             /* make z_plot and xy_plot */
 
-            //if ( !Pars.noHists )
+            //if ( !pars.noHists )
             //{
             //for (j = 0; j < ptinp->num; j++)
             //  {
-            //  if (Pars.AGATA_data==0)
+            //  if (pars.AGATA_data==0)
             //    //z_plot->Fill((double)(moduleno * 4 + crystalno),(double)ptinp->intpts[j].z,1.0);
-            //  //else if (Pars.AGATA_data==1)
+            //  //else if (pars.AGATA_data==1)
             //    //z_plot->Fill((double)(moduleno * 3 + crystalno),(double)ptinp->intpts[j].z,1.0);
             //   //xy_plot->Fill((double)ptinp->intpts[j].x,(double)ptinp->intpts[j].y,1.0);
             //  }
             //}
 
 
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( pars.CurEvNo <= pars.NumToPrint )
             {
-                printf ( "* %i/%i, is GEB_TYPE_DECOMP: num=%i\n", i, GEB_event->mult, ptinp->num );
+                printf ( "* %i/%i, is GEB_TYPE_DECOMP: num=%i\n", i, gebEvt->mult, ptinp->num );
                 printf ( "__detno: %i, module: %i, crystalNumber: %i\n", detno, moduleno, crystalno );
             }
 
             /* calibrate mode 2 CC data */
 
-            ptinp->tot_e = ptinp->tot_e * Pars.CCcal_gain[detno] + Pars.CCcal_offset[detno];
+            ptinp->tot_e = ptinp->tot_e * pars.CCcal_gain[detno] + pars.CCcal_offset[detno];
             addedEnergy += ptinp->tot_e;
             CCenergies[nCCenergies++] = ptinp->tot_e;
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( pars.CurEvNo <= pars.NumToPrint )
             {
                 printf ( "CCenergies[%i]=%f\n", nCCenergies - 1, CCenergies[nCCenergies - 1] );
             }
@@ -260,9 +260,9 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
             for ( j = 0; j < ptinp->num; j++ )
             {
 //            printf("%3i,%3i: e=%7.1f --> ", detno,ptinp->intpts[j].seg,ptinp->intpts[j].e);
-                ptinp->intpts[j].e = ptinp->intpts[j].e * Pars.SEGcal_gain[detno][ptinp->intpts[j].seg]
-                                     + Pars.SEGcal_offset[detno][ptinp->intpts[j].seg];
-//            printf("%7.1f (%7.3f,%7.3f)\n", ptinp->intpts[j].e,Pars.SEGcal_offset[detno][ptinp->intpts[j].seg],Pars.SEGcal_gain[detno][ptinp->intpts[j].seg]);
+                ptinp->intpts[j].e = ptinp->intpts[j].e * pars.SEGcal_gain[detno][ptinp->intpts[j].seg]
+                                     + pars.SEGcal_offset[detno][ptinp->intpts[j].seg];
+//            printf("%7.1f (%7.3f,%7.3f)\n", ptinp->intpts[j].e,pars.SEGcal_offset[detno][ptinp->intpts[j].seg],pars.SEGcal_gain[detno][ptinp->intpts[j].seg]);
             }
 
             /* store original/calibrated segment energy for later use */
@@ -271,24 +271,24 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
             /* hit pattern */
 
-            //if ( !Pars.noHists ) hitpat->Fill ((double) detno, 1);
+            //if ( !pars.noHists ) hitpat->Fill ((double) detno, 1);
 
             /* worldmap all hits */
 
             for ( j = 0; j < ptinp->num; j++ )
             {
 
-                if ( Pars.nocrystaltoworldrot == 0 )
+                if ( pars.nocrystaltoworldrot == 0 )
                 {
 
-                    if ( Pars.AGATA_data == 0 )
+                    if ( pars.AGATA_data == 0 )
                     {
 
                         /* rotate into world coordinates first */
                         /* and make it cm rather than mm because */
                         /* crmat needs it in cm */
 
-                        if ( Pars.CurEvNo <= Pars.NumToPrint )
+                        if ( pars.CurEvNo <= pars.NumToPrint )
                         {
                             printf ( "* %i: ", j );
                             printf ( "%7.2f,%7.2f,%7.2f --> ", ptinp->intpts[j].x, ptinp->intpts[j].y, ptinp->intpts[j].z );
@@ -299,25 +299,25 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
                         zz = ptinp->intpts[j].z / 10.0;
 
 
-                        ptinp->intpts[j].x = Pars.crmat[moduleno][crystalno][0][0] * xx
-                                             + Pars.crmat[moduleno][crystalno][0][1] * yy
-                                             + Pars.crmat[moduleno][crystalno][0][2] * zz + Pars.crmat[moduleno][crystalno][0][3];
+                        ptinp->intpts[j].x = pars.crmat[moduleno][crystalno][0][0] * xx
+                                             + pars.crmat[moduleno][crystalno][0][1] * yy
+                                             + pars.crmat[moduleno][crystalno][0][2] * zz + pars.crmat[moduleno][crystalno][0][3];
 
-                        ptinp->intpts[j].y = Pars.crmat[moduleno][crystalno][1][0] * xx
-                                             + Pars.crmat[moduleno][crystalno][1][1] * yy
-                                             + Pars.crmat[moduleno][crystalno][1][2] * zz + Pars.crmat[moduleno][crystalno][1][3];
+                        ptinp->intpts[j].y = pars.crmat[moduleno][crystalno][1][0] * xx
+                                             + pars.crmat[moduleno][crystalno][1][1] * yy
+                                             + pars.crmat[moduleno][crystalno][1][2] * zz + pars.crmat[moduleno][crystalno][1][3];
 
-                        ptinp->intpts[j].z = Pars.crmat[moduleno][crystalno][2][0] * xx
-                                             + Pars.crmat[moduleno][crystalno][2][1] * yy
-                                             + Pars.crmat[moduleno][crystalno][2][2] * zz + Pars.crmat[moduleno][crystalno][2][3];
+                        ptinp->intpts[j].z = pars.crmat[moduleno][crystalno][2][0] * xx
+                                             + pars.crmat[moduleno][crystalno][2][1] * yy
+                                             + pars.crmat[moduleno][crystalno][2][2] * zz + pars.crmat[moduleno][crystalno][2][3];
 
-                        if ( Pars.CurEvNo <= Pars.NumToPrint )
+                        if ( pars.CurEvNo <= pars.NumToPrint )
                         {
                             printf ( "%7.2f,%7.2f,%7.2f\n", ptinp->intpts[j].x, ptinp->intpts[j].y, ptinp->intpts[j].z );
                         }
 
                     }
-                    else if ( Pars.AGATA_data == 1 )
+                    else if ( pars.AGATA_data == 1 )
                     {
                         detno = moduleno * 3 + crystalno;
 
@@ -328,14 +328,14 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 //                      printf("nnn: %i,%f\n", moduleno * 3 + crystalno,(float)ptinp->intpts[j].z,1.0);
 
                         ptinp->intpts[j].x =
-                            Pars.rotxx[detno] * xx + Pars.rotxy[detno] * yy + Pars.rotxz[detno] * zz + Pars.TrX[detno];
+                            pars.rotxx[detno] * xx + pars.rotxy[detno] * yy + pars.rotxz[detno] * zz + pars.TrX[detno];
                         ptinp->intpts[j].y =
-                            Pars.rotyx[detno] * xx + Pars.rotyy[detno] * yy + Pars.rotyz[detno] * zz + Pars.TrY[detno];;
+                            pars.rotyx[detno] * xx + pars.rotyy[detno] * yy + pars.rotyz[detno] * zz + pars.TrY[detno];;
                         ptinp->intpts[j].z =
-                            Pars.rotzx[detno] * xx + Pars.rotzy[detno] * yy + Pars.rotzz[detno] * zz + Pars.TrZ[detno];;
+                            pars.rotzx[detno] * xx + pars.rotzy[detno] * yy + pars.rotzz[detno] * zz + pars.TrZ[detno];;
 
 
-                        if ( Pars.CurEvNo <= Pars.NumToPrint )
+                        if ( pars.CurEvNo <= pars.NumToPrint )
                         {
                             printf ( "AG::x: %9.2f --> %9.2f\n", xx, ptinp->intpts[j].x );
                             printf ( "AG::y: %9.2f --> %9.2f\n", yy, ptinp->intpts[j].y );
@@ -376,9 +376,9 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
                 if ( rr > RMIN && rr < RMAX )
                 {
-                    //if ( !Pars.noHists ) radius_all->Fill ((double) rr, 1);
+                    //if ( !pars.noHists ) radius_all->Fill ((double) rr, 1);
                     //need to make sure if the following if statement controls the evsr Fill
-                    //if ( !Pars.noHists && ptinp->intpts[j].e > 0 && ptinp->intpts[j].e < MEDIUMLEN ) {};
+                    //if ( !pars.noHists && ptinp->intpts[j].e > 0 && ptinp->intpts[j].e < MEDIUMLEN ) {};
                     //evsr_all->Fill ((double) rr, ptinp->intpts[j].e);
                 };
 
@@ -387,9 +387,9 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
                 sX = aziAng * sinf ( polAng ) / RAD2DEG;
                 sY = polAng / RAD2DEG;    /* + 1.5; */
 
-                if ( Pars.CurEvNo <= Pars.NumToPrint && 0 )
+                if ( pars.CurEvNo <= pars.NumToPrint && 0 )
                 {
-                    printf ( "%i [type %i] ", j, GEB_event->ptgd[i]->type );
+                    printf ( "%i [type %i] ", j, gebEvt->ptgd[i]->type );
                     printf ( "e: %9.2f/%9.2f ", ptinp->intpts[j].e, ptinp->tot_e );
                     printf ( "(%6.2f,%6.2f,%6.2f)cry --> ", xx, yy, zz );
                     printf ( "(%6.2f,%6.2f,%6.2f)world(cm); ", ptinp->intpts[j].x, ptinp->intpts[j].y, ptinp->intpts[j].z );
@@ -400,7 +400,7 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
                 /* update */
 
                 //if (sX >= -180 && sX <= 180 && sY >= 0 && sY <= 180)
-                //if ( !Pars.noHists ) SMAP_allhits->Fill (sX, sY, 1);
+                //if ( !pars.noHists ) SMAP_allhits->Fill (sX, sY, 1);
                 //else
                 //{
                 if ( nperrors < 10 )
@@ -414,7 +414,7 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
             /* simple dopler corrected sum of CC energies */
 
-            //if ( !Pars.noHists ) CCsum_s->Fill (ptinp->tot_e / Pars.modCCdopfac[ptinp->crystal_id], 1);
+            //if ( !pars.noHists ) CCsum_s->Fill (ptinp->tot_e / pars.modCCdopfac[ptinp->crystal_id], 1);
 
 
             /* quietly rescale all interaction energies to the CC energy */
@@ -439,8 +439,8 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
                     ptinp->intpts[j].z * ptinp->intpts[j].z;
                 rr = sqrtf ( rr );
 
-                dp = ( ptinp->intpts[j].x * Pars.beamdir[0] +
-                       ptinp->intpts[j].y * Pars.beamdir[1] + ptinp->intpts[j].z * Pars.beamdir[2] ) / rr;
+                dp = ( ptinp->intpts[j].x * pars.beamdir[0] +
+                       ptinp->intpts[j].y * pars.beamdir[1] + ptinp->intpts[j].z * pars.beamdir[2] ) / rr;
 
                 if ( dp < -1.0 )
                 {
@@ -452,8 +452,8 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
                 }
                 polang[j] = acosf ( dp );
 
-                rr = 1.0 - Pars.beta * Pars.beta;
-                doppler_factor[j] = sqrt ( rr ) / ( 1.0 - Pars.beta * cos ( polang[j] ) );
+                rr = 1.0 - pars.beta * pars.beta;
+                doppler_factor[j] = sqrt ( rr ) / ( 1.0 - pars.beta * cos ( polang[j] ) );
 
             };
 
@@ -466,7 +466,7 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
             /* central contact energy matrix and total energy */
 
-            /*if ( !Pars.noHists )
+            /*if ( !pars.noHists )
             {
                 if ( detno > 0 && detno < MAXDETPOS )
                     if ( ptinp->tot_e > 0 && ptinp->tot_e < LONGLEN )
@@ -483,12 +483,12 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
 
     /* update added energy spectrum */
 
-    //if ( !Pars.noHists ) CCadd->Fill ((double) addedEnergy, 1);
+    //if ( !pars.noHists ) CCadd->Fill ((double) addedEnergy, 1);
 
     /* fill the ggCC martrix */
 
     //CCmult->Fill (nCCenergies, 1);
-    /*if ( !Pars.noHists && nCCenergies >= Pars.multlo && nCCenergies <= Pars.multhi )
+    /*if ( !pars.noHists && nCCenergies >= pars.multlo && nCCenergies <= pars.multhi )
         for ( i = 0; i < nCCenergies; i++ )
             for ( j = i + 1; j < nCCenergies; j++ )
             {
@@ -498,7 +498,7 @@ int bin_mode2 ( GEB_EVENT* GEB_event )
     */
     /* done */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "exit bin_mode2\n" );
     }

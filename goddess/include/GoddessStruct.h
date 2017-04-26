@@ -89,6 +89,7 @@ public:
 
     string targetType;
     float targetThickness; // ug/cm2
+    float targetDensity; // mg/cm3
 
     float qqq5EnGain;
     float sX3EnGain;

@@ -34,7 +34,7 @@
 
 /* parameters */
 
-extern PARS Pars;
+extern PARS pars;
 
 
 
@@ -74,8 +74,8 @@ sup_mode3()
 
     /* list what we have */
 
-//  Pars.wlist = gDirectory->GetList ();
-//  Pars.wlist->Print ();
+//  pars.wlist = gDirectory->GetList ();
+//  pars.wlist->Print ();
 
     return (0);
 }
@@ -83,7 +83,7 @@ sup_mode3()
 /* ----------------------------------------------------------------- */
 
 int
-bin_mode3(GEB_EVENT* GEB_event)
+bin_mode3(GEB_EVENT* gebEvt)
 {
 
     /* declarations */
@@ -111,23 +111,23 @@ bin_mode3(GEB_EVENT* GEB_event)
 
     /* prototypes */
 
-    if (Pars.CurEvNo <= Pars.NumToPrint) {
-        printf("entered bin_mode3 @ event number: %i\n", Pars.CurEvNo);
+    if (pars.CurEvNo <= pars.NumToPrint) {
+        printf("entered bin_mode3 @ event number: %i\n", pars.CurEvNo);
     }
 
     nseghits = 0;
-    for (i = 0; i < GEB_event->mult; i++) {
+    for (i = 0; i < gebEvt->mult; i++) {
 
-        if (GEB_event->ptgd[i]->type == GEB_TYPE_RAW) {
+        if (gebEvt->ptgd[i]->type == GEB_TYPE_RAW) {
             nseghits++;
 
-            if (Pars.CurEvNo <= Pars.NumToPrint) {
-                GebTypeStr(GEB_event->ptgd[i]->type, str);
-                printf("bin_mode3, %2i> %2i, %s, TS=%lli, 0x%llx\n", i, GEB_event->ptgd[i]->type, str,
-                       GEB_event->ptgd[i]->timestamp, GEB_event->ptgd[i]->timestamp);
+            if (pars.CurEvNo <= pars.NumToPrint) {
+                GebTypeStr(gebEvt->ptgd[i]->type, str);
+                printf("bin_mode3, %2i> %2i, %s, TS=%lli, 0x%llx\n", i, gebEvt->ptgd[i]->type, str,
+                       gebEvt->ptgd[i]->timestamp, gebEvt->ptgd[i]->timestamp);
             }
 
-            testPattern = (unsigned int*) GEB_event->ptinp[i];
+            testPattern = (unsigned int*) gebEvt->ptinp[i];
             if (*testPattern != EOE) {
                 nBadTestPat++;
 
@@ -136,7 +136,7 @@ bin_mode3(GEB_EVENT* GEB_event)
                 }
 
                 if (nBadTestPat < 10) {
-                    printf("ooops: testPattern=%8.8x after event # %i ", *testPattern, Pars.CurEvNo);
+                    printf("ooops: testPattern=%8.8x after event # %i ", *testPattern, pars.CurEvNo);
                     fflush(stdout);
                     exit(1);
                 };
@@ -158,18 +158,18 @@ bin_mode3(GEB_EVENT* GEB_event)
                 Event.hdr[i] = t1 + t2;
             };
 
-            if (Pars.CurEvNo <= Pars.NumToPrint)
+            if (pars.CurEvNo <= pars.NumToPrint)
                 for (i = 0; i < HDRLENWORDS; i++) {
                     printf("Event.hdr[%2i]=0x%4.4x, %6i\n", i, Event.hdr[i], Event.hdr[i]);
                 }
 
             Event.len = 4 * (Event.hdr[0] & 0x7ff) + 4;
-            if (Pars.CurEvNo <= Pars.NumToPrint) {
+            if (pars.CurEvNo <= pars.NumToPrint) {
                 printf("Event.len=%i\n", Event.len);
             }
 
             Event.traceLen = Event.len - HDRLENBYTES - 4;
-            if (Pars.CurEvNo <= Pars.NumToPrint) {
+            if (pars.CurEvNo <= pars.NumToPrint) {
                 printf("Event.len=%i, Event.traceLen=%i\n", Event.len, Event.traceLen);
             }
 
@@ -229,13 +229,13 @@ bin_mode3(GEB_EVENT* GEB_event)
 //  Event.ehi = abs(Event.rawE)/64;
             Event.ehi = abs(Event.rawE / 320);    // slower but cannot bit-shift an int
 
-            if (Pars.CurEvNo <= Pars.NumToPrint) {
+            if (pars.CurEvNo <= pars.NumToPrint) {
                 printf("Event.ehi=%i\n", Event.ehi);
             }
 
             /* bin some data */
 
-            //if (!Pars.noHists && Event.ehi > 10 && Event.ehi < LONGLEN) {
+            //if (!pars.noHists && Event.ehi > 10 && Event.ehi < LONGLEN) {
 
                 //ehi_sum_mode3->Fill ((double) Event.ehi, 1);
 
@@ -268,8 +268,8 @@ bin_mode3(GEB_EVENT* GEB_event)
             printf("hdr[ 6]=0x%4.4x, ", Event.hdr[6]);
 #endif
 
-            if (Pars.CurEvNo <= Pars.NumToPrint) {
-                printf("ev %8i> ", Pars.CurEvNo);
+            if (pars.CurEvNo <= pars.NumToPrint) {
+                printf("ev %8i> ", pars.CurEvNo);
                 printf("board= %8i; ", Event.board_id);
                 printf("chan= %8i; ", Event.chan_id);
                 printf("id= %8i; ", Event.id);
@@ -318,7 +318,7 @@ bin_mode3(GEB_EVENT* GEB_event)
         /* if just one segment fired, so the other segments  */
         /* effectively suppress. */
 
-        /*if (!Pars.noHists && Event.ehi > 10 && Event.ehi < LONGLEN)
+        /*if (!pars.noHists && Event.ehi > 10 && Event.ehi < LONGLEN)
             if (Event.id > 0 && Event.id < MAXSEGNO)
                 //SegE->Fill ((double) Event.id, (double) Event.ehi);
             { };*/
@@ -327,7 +327,7 @@ bin_mode3(GEB_EVENT* GEB_event)
 
     /* done */
 
-    if (Pars.CurEvNo <= Pars.NumToPrint) {
+    if (pars.CurEvNo <= pars.NumToPrint) {
         printf("exit bin_mode3\n");
     }
 

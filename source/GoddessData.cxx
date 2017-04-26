@@ -91,18 +91,18 @@ double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det, float enear
     return 1.;
 }
 
-GoddessData::GoddessData ()
+GoddessData::GoddessData ( PARS* pars_, GoddessConfig* gconf_ )
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
+    pars= pars_;
 
-    config = SortManager::sinstance()->gConfig;
+    config = gconf_;
 
     gamData = new std::vector<GamData>;
     siData = new std::vector<SiDataBase>;
     siDataD = new std::vector<SiDataDetailed>;
     ionData = new std::vector<IonData>;
 
-    if ( Pars->noMapping )
+    if ( pars->noMapping )
     {
         gsRaw = new std::vector<GSRawData>;
         orrubaRaw = new ORRUBARawData();
@@ -133,15 +133,15 @@ GoddessData::GoddessData ()
 
     f->cd ( "../" );
 
-    if ( !Pars->noHists ) f->cd ( "/trees" );
+    if ( !pars->noHists ) f->cd ( "/trees" );
     else f->cd ();
 
-    if ( Pars->noCalib >= 0 )
+    if ( pars->noCalib >= 0 )
     {
         std::string treeName = "god";
         std::string treeTitle = "GODDESS Tree";
 
-        if ( Pars->noCalib == 1 )
+        if ( pars->noCalib == 1 )
         {
             treeName = "sorted";
             treeTitle = "GODDESS Sorted not Calibrated Tree";
@@ -151,15 +151,15 @@ GoddessData::GoddessData ()
         tree->Branch ( "timestamp", &firstTimestamp );
         tree->Branch ( "gam", &gamData );
 
-        if ( Pars->siDetailLvl == 2 || Pars->noCalib == 1 ) tree->Branch ( "si", &siDataD, 32000, 0 );
-        else if ( Pars->siDetailLvl == 1 ) tree->Branch ( "si", &siData, 32000, 0 );
+        if ( pars->siDetailLvl == 2 || pars->noCalib == 1 ) tree->Branch ( "si", &siDataD, 32000, 0 );
+        else if ( pars->siDetailLvl == 1 ) tree->Branch ( "si", &siData, 32000, 0 );
 
         tree->Branch ( "ic", &ionData );
     }
 
-    Pars->mainTree = tree;
+    pars->mainTree = tree;
 
-    if ( Pars->noCalib == 2 )
+    if ( pars->noCalib == 2 )
     {
         gamData_snc = new std::vector<GamData>;
         siData_snc = new std::vector<SiDataDetailed>;
@@ -168,11 +168,11 @@ GoddessData::GoddessData ()
         sortedTree = new TTree ( "sorted", "GODDESS Sorted not Calibrated Tree" );
         sortedTree->Branch ( "timestamp", &firstTimestamp );
         sortedTree->Branch ( "gam", &gamData_snc );
-        if ( Pars->siDetailLvl > 0 ) sortedTree->Branch ( "si", &siData_snc, 32000, 0 );
+        if ( pars->siDetailLvl > 0 ) sortedTree->Branch ( "si", &siData_snc, 32000, 0 );
         sortedTree->Branch ( "ic", &ionData_snc );
     }
 
-    if ( Pars->noMapping )
+    if ( pars->noMapping )
     {
         rawTree = new TTree ( "raw", "GODDESS Raw Tree" );
         rawTree->Branch ( "timestamp", &firstTimestamp );
@@ -180,7 +180,7 @@ GoddessData::GoddessData ()
         rawTree->Branch ( "gam", &gsRaw );
     }
 
-    if ( !Pars->noHists )
+    if ( !pars->noHists )
     {
         // ORRUBA histograms
         f->cd ( "/hists" );
@@ -225,8 +225,6 @@ GoddessData::GoddessData ()
 
 void GoddessData::InitBB10Hists()
 {
-//     PARS* Pars = SortManager::sinstance()->execParams;
-
     TClonesArray* bb10s = config->GetBB10s();
     int nbb10s = bb10s->GetEntries();
     TDirectory* dirBB10 = gDirectory->mkdir ( "bb10" );
@@ -255,8 +253,6 @@ void GoddessData::InitBB10Hists()
 
 void GoddessData::InitQQQ5Hists()
 {
-//     PARS* Pars = SortManager::sinstance()->execParams;
-
     TClonesArray* qqq5s = config->GetQQQ5s();
     int nqqq5s = qqq5s->GetEntries();
     TDirectory* dirQQQ5 = gDirectory->mkdir ( "qqq5" );
@@ -297,8 +293,6 @@ void GoddessData::InitQQQ5Hists()
 }
 void GoddessData::InitSuperX3Hists()
 {
-//     PARS* Pars = SortManager::sinstance()->execParams;
-
     TDirectory* dirSX3 = gDirectory->mkdir ( "sx5" );
 
     TClonesArray* sx3s = config->GetSuperX3s();
@@ -376,8 +370,6 @@ void GoddessData::InitSuperX3Hists()
 }
 void GoddessData::InitLiquidScintHists()
 {
-//     PARS* Pars = SortManager::sinstance()->execParams;
-
     std::vector<LiquidScint*> liquids = config->GetLiquidScints();
     int nliquids = liquids.size();
 
@@ -399,8 +391,6 @@ void GoddessData::InitLiquidScintHists()
 
 void GoddessData::InitGammaHists()
 {
-//     PARS* Pars = SortManager::sinstance()->execParams;
-
     TDirectory* dirDet = gDirectory->mkdir ( "gamma" );
     dirDet->cd();
     gDirectory->mkdir ( "gamma" )->cd();
@@ -411,14 +401,12 @@ void GoddessData::InitGammaHists()
 
 int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvts )
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
-
-    bool doCalibrate = ( Pars->noCalib ) % 2 == 0;
+    bool doCalibrate = ( pars->noCalib ) % 2 == 0;
 
     //Map of channels to suppress, This occurs if they were not found in the map.
     static std::map<std::pair<short, short>, bool> suppressCh;
 
-    //Loop over GEB_event and get the lowest timestmap
+    //Loop over gebEvt and get the lowest timestmap
     firstTimestamp = gebEvt->ptgd[0]->timestamp;
 
     for ( unsigned int i = 1; i < gebEvt->ptgd.size(); i++ )
@@ -429,20 +417,20 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         }
     }
 
-    if ( Pars->noMapping )
+    if ( pars->noMapping )
     {
         orrubaRaw->Clear();
         gsRaw->clear();
     }
 
-    if ( !Pars->noHists ) analogMult->Fill ( agodEvts->size() );
+    if ( !pars->noHists ) analogMult->Fill ( agodEvts->size() );
 
     // getting data from analog events
     for ( size_t i = 0; i < agodEvts->size(); i++ )
     {
         AGODEVENT agodEvt = agodEvts->at ( i );
 
-        if ( !Pars->noHists ) analogADCMult->Fill ( agodEvt.values.size() );
+        if ( !pars->noHists ) analogADCMult->Fill ( agodEvt.values.size() );
 
         unsigned long long int timestamp = agodEvt.timestamp;
 
@@ -453,7 +441,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             DAQchannel = channel;
             DAQCh_Energy[channel] = value;
 
-            if ( Pars->noMapping )
+            if ( pars->noMapping )
             {
                 orrubaRaw->isDigital.push_back ( false );
 
@@ -467,7 +455,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
             //unsigned long long timestamp = agodEvt.timestamp;
 
-            if ( !Pars->noHists ) enRawA->Fill ( value, channel );
+            if ( !pars->noHists ) enRawA->Fill ( value, channel );
 
             std::pair<short, short> key = std::make_pair ( GEB_TYPE_AGOD, channel );
             if ( suppressCh.find ( key ) != suppressCh.end() )
@@ -475,7 +463,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
                 continue;
             }
 
-            Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, Pars->ignoreThresholds, timestamp );
+            Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, pars->ignoreThresholds, timestamp );
 
             if ( !det )
             {
@@ -514,7 +502,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         }
     }
 
-    if ( !Pars->noHists ) digitalMult->Fill ( dgodEvts->size() );
+    if ( !pars->noHists ) digitalMult->Fill ( dgodEvts->size() );
     // getting data from digital events
     for ( size_t i = 0; i < dgodEvts->size(); i++ )
     {
@@ -525,9 +513,9 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
         DAQchannel = channel;
         //DAQCh_Energy[channel] = value; //filling this will overwrite the analog
-        if ( !Pars->noHists ) enRawD->Fill ( value, channel );
+        if ( !pars->noHists ) enRawD->Fill ( value, channel );
 
-        if ( Pars->noMapping )
+        if ( pars->noMapping )
         {
             orrubaRaw->isDigital.push_back ( true );
 
@@ -546,7 +534,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             continue;
         }
 
-        Detector* det = config->SetRawValue ( GEB_TYPE_DFMA, channel, value, Pars->ignoreThresholds, timestamp );
+        Detector* det = config->SetRawValue ( GEB_TYPE_DFMA, channel, value, pars->ignoreThresholds, timestamp );
 
         if ( !det )
         {
@@ -595,12 +583,12 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
     int userFilterFlag = 0;
 
-    if ( Pars->noCalib != -1 )
+    if ( pars->noCalib != -1 )
     {
-        userFilterFlag = FillTrees ( dgsEvts/*,dgodEvts,agodEvts*/ );
+        userFilterFlag = FillTrees ( gebEvt, dgsEvts );
     }
 
-    if ( Pars->noMapping )
+    if ( pars->noMapping )
     {
         rawTree->Fill();
     }
@@ -625,8 +613,6 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
 void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 {
-//     PARS* Pars = SortManager::sinstance()->execParams;
-
     std::map<std::string, int> numSectorHits;
 
     unsigned short numDetsOverThresh = 0;
@@ -849,18 +835,16 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
     hDetPosMult->Fill ( numSectorHits.size() );
 }
 
-int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvts*/ )
+int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts )
 {
-    PARS* Pars = SortManager::sinstance()->execParams;
-
-    //Reminder: Pars->noCalib == ...
+    //Reminder: pars->noCalib == ...
     //                          0 writes just the sorted and calibrated tree.
     //                          1 writes just the sorted but non calibrated tree.
     //                          2 writes both the sorted calibrated and non calibrated trees.
     //The following line declares and defines an int used to loop...
-    // ->twice if we need to fill 2 different trees (Pars->noCalib == 2) or
-    // ->just once if we just want to get one tree in the end (Pars->noCalib == 0 or 1)
-    int noCalType = Pars->noCalib == 2 ? 2 : 1;
+    // ->twice if we need to fill 2 different trees (pars->noCalib == 2) or
+    // ->just once if we just want to get one tree in the end (pars->noCalib == 0 or 1)
+    int noCalType = pars->noCalib == 2 ? 2 : 1;
 
     for ( int nc = 0; nc < noCalType; nc++ )
     {
@@ -871,22 +855,22 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
         bool writeDetails = false;
 
-        //Pars->noCalib + nc will range from 0 to 3 since nc can only be 0 if Pars->noCalib is 0 or 1, and can be 0 or 1 if Pars->noCalib is 2
-        bool doCalibrate = ( Pars->noCalib + nc ) % 2 == 0;
+        //pars->noCalib + nc will range from 0 to 3 since nc can only be 0 if pars->noCalib is 0 or 1, and can be 0 or 1 if pars->noCalib is 2
+        bool doCalibrate = ( pars->noCalib + nc ) % 2 == 0;
 
-        if ( Pars->siDetailLvl == 2 || Pars->noCalib == 1  || ( Pars->noCalib == 2 && nc == 1 ) )
+        if ( pars->siDetailLvl == 2 || pars->noCalib == 1  || ( pars->noCalib == 2 && nc == 1 ) )
         {
             writeDetails = true;
         }
 
-        if ( Pars->siDetailLvl > 0 )
+        if ( pars->siDetailLvl > 0 )
         {
             for ( auto detItr = siDets.begin(); detItr != siDets.end(); ++detItr )
             {
                 orrubaDet* det = detItr->second;
 
                 //Skip detectors with no contacts above threshold.
-                if ( ( Pars->noCalib == 0 || ( Pars->noCalib > 0 && Pars->ignoreThresholds == 0 ) ) && det->GetContactMult ( doCalibrate ) == 0 )
+                if ( ( pars->noCalib == 0 || ( pars->noCalib > 0 && pars->ignoreThresholds == 0 ) ) && det->GetContactMult ( doCalibrate ) == 0 )
                 {
                     continue;
                 }
@@ -1133,7 +1117,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
         datum.time = dgsEvts->at ( dgsEvtNum ).event_timestamp;
 
-        switch ( Pars->noCalib )
+        switch ( pars->noCalib )
         {
         case 0:
             datum.en = dgsEvts->at ( dgsEvtNum ).ehi;
@@ -1151,7 +1135,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
         gamData->push_back ( datum );
 
-        if ( Pars->noMapping )
+        if ( pars->noMapping )
         {
             GSRawData rawDatum;
             rawDatum.type = dgsEvts->at ( dgsEvtNum ).tpe;
@@ -1173,7 +1157,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 
         ionData->push_back ( datum );
 
-        if ( Pars->noCalib == 2 )
+        if ( pars->noCalib == 2 )
         {
             ionData_snc->push_back ( datum );
         }
@@ -1189,20 +1173,13 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
 //if (!gamData->empty() && !siData->empty()) tree->Fill();
 //std::cout << ionData->size() << '\n';
 
-    SortManager::sinstance()->SetGamDets ( gamData );
-    SortManager::sinstance()->SetSiDets ( siData );
-    SortManager::sinstance()->SetIonChamber ( ionData );
-
-    int uff = ( !Pars->userFilter.empty() ? SortManager::sinstance()->GetWriteEventFlag() : 1 );
+    int uff = ( !pars->userFilter.empty() ? GetWriteEventFlag ( gebEvt ) : 1 );
 
     if ( uff == 1 )
     {
         tree->Fill();
 
-        if ( Pars->noCalib == 2 )
-        {
-            sortedTree->Fill();
-        }
+        if ( pars->noCalib == 2 ) sortedTree->Fill();
     }
 
     gamData->clear();
@@ -1210,7 +1187,7 @@ int GoddessData::FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAE
     siDataD->clear();
     ionData->clear();
 
-    if ( Pars->noCalib == 2 )
+    if ( pars->noCalib == 2 )
     {
         gamData_snc->clear();
         siData_snc->clear();

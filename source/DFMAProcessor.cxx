@@ -1,545 +1,25 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <math.h>
-#include <string.h>
-#include <assert.h>
+#include "DFMAProcessor.h"
 
-#include "Rtypes.h"
-#include "TROOT.h"
-#include "TFile.h"
-#include "TRandom.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TObjArray.h"
-#include "TObject.h"
-#include "TKey.h"
-#include "TSystem.h"
-#include "TCutG.h"
-#include "TTree.h"
-#include "gdecomp.h"
-#include "limits.h"
-
-#include "GEBSort.h"
-#include "GTMerge.h"
-#include "functions_dfma.h"
-
-#include "SortManager.h"
-
-#define LEFT 1
-#define RIGHT 2
-#define ICDE 3
-#define PPACDE 4
-#define PPACDE2 5
-
-#define DSSDTRLEN 10
-#define MCPTRLEN 10
-
-#define SICH 5
-#define RCH  2
-#define LCH  1
-
-#define EnergyFromTrace 0
-#define SmoothOrNot 1
-#define WITHDGS 1
-
-// Change DSSD tid info here->
-
-#define FRTIDLOW 1  //1
-#define FRTIDHIGH 160   //160
-#define BATIDLOW 161    //161
-#define BATIDHIGH 320   //320
-#define NUMFR 160   //160
-#define NUMBA 160   //160
-#define NUMSTRIPS 320   //320
-
-/* Doppler correction and Ge calibrations */
-
-#define NGSGE 110
-#define MAXNUMGE 15
-#define MAXNUMDEC 4
-
-struct strip_type
+DFMAProcessor::DFMAProcessor ( int* tlkup_, int* tid_, int* ng_, PARS* pars_ )
 {
-    int phystrip;
-    int thr;
-    float off;
-    float gain;
-    int baseline;
-};
-
-struct strip_type map_fr[NUMSTRIPS + 1];
-struct strip_type map_ba[NUMSTRIPS + 1];
-
-
-struct clover_map
-{
-
-    float gain;
-    float off;
-
-};
-
-struct clover_map clmap[21];
-
-struct recoil_pu_type
-{
-
-    short int trace[MAXTRACELEN];
-    unsigned short int traceLen;
-    int s_fr;
-    int s_ba;
-    unsigned long long int ts;
-
-};
-
-
-
-struct recoil_type
-{
-
-    unsigned long long int ts;
-    int en;
-    int pu;
-    float left;
-    float right;
-    double x;
-    int d2t0;
-    int d2t1;
-    int d2t2;
-    int nge;
-    long long int geehi[MAXNUMGE];
-    unsigned long long int tge[MAXNUMGE];
-    int getid[MAXNUMGE];
-    int traceLen;
-    short int trace_fr[1000];
-    short int trace_ba[1000];
-
-};
-
-struct decay_type_new
-{
-
-    unsigned long long int ts;
-    int en;
-    int pu_fr;
-    int pu_ba;
-    unsigned long long int time;
-    //unsigned short int traceLen;
-    //int dssdbase;
-    //short int trace[MAXTRACELEN];
-    int traceLen;
-    //short int trace[MAXTRACELEN];
-    short int trace_fr[1000];
-    short int trace_ba[1000];
-    int nge;
-    long long int geehi[MAXNUMGE];
-    unsigned long long int tge[MAXNUMGE];
-    int getid[MAXNUMGE];
-    int fdecEv;
-    int d2t0;
-    int d2t1;
-    int s_ba;
-    int s_fr;
-};
-
-struct decay_type
-{
-
-    unsigned long long int ts;
-    int en;
-    int pu_fr;
-    int pu_ba;
-    unsigned long long int time;
-    int traceLen;
-    short int trace_fr[1000];
-    short int trace_ba[1000];
-    int nge;
-    long long int geehi[MAXNUMGE];
-    unsigned long long int tge[MAXNUMGE];
-    int getid[MAXNUMGE];
-    int d2t0;
-    int d2t1;
-    int d2t2;
-};
-
-
-
-struct focal_plane
-{
-
-    int left;
-    int right;
-    int icde;
-    int ppacde;
-    int ppacde2;
-    unsigned long long int left_ts;
-    unsigned long long int right_ts;
-    unsigned long long int icde_ts;
-    unsigned long long int ppacde_ts;
-    unsigned long long int ppacde2_ts;
-
-
-};
-
-
-
-struct chain_type
-{
-
-    int s_fr;
-    int s_ba;
-    recoil_type recoil;
-    int ndec;
-    decay_type decay[4];//*4thGen
-    int corr_type;//*26th Apr
-
-};
-
-struct pixel_type
-{
-
-    int status;
-    chain_type chain;
-
-};
-
-
-struct clover_type
-{
-
-    int nge;
-    int tid[MAXNUMGE];
-    long long int ehi[MAXNUMGE];
-    unsigned long long int tge[MAXNUMGE];
-
-};
-
-struct clover_type clover;
-
-
-struct chain_type chain;
-struct recoil_pu_type recoil_pu[100];
-struct recoil_type recoil;
-struct decay_type decay;
-struct decay_type decay_fr;
-struct decay_type decay_ba;
-struct focal_plane fplane;
-struct pixel_type dssd_corr[NUMFR + 1][NUMBA + 1];
-struct pixel_type dssd_front[NUMFR + 1];
-struct pixel_type dssd_back[NUMBA + 1];
-
-
-
-//>>>>>>>>>>>>>>>>>>
-// RING BUFFER CODE
-
-#define RBUFFSIZE 5
-
-#if(0)
-
-
-struct dssd_type
-{
-
-    decay_type_new east;
-    decay_type_new west;
-    decay_type_new top;
-
-};
-
-
-struct dssd_buffer_type
-{
-
-    dssd_type event[RBUFFSIZE];
-    int head;
-    int tail;
-    int count;
-
-};
-
-struct dssd_type dssd_event;
-struct dssd_buffer_type dssd_buffer;
-
-//struct global_type global;
-
-struct dssd_buffer_type dssd_tree;
-
-
-
-struct decay_type_new east;
-
-
-
-struct decay_type_new empty;
-
-
-struct recoil_buffer_type
-{
-
-    recoil_type recoil[RBUFFSIZE];
-    int head;
-    int tail;
-    int count;
-    int s_fr;
-    int s_ba;
-
-};
-
-struct recoil_buffer_type recbuffer;
-
-struct decay_buffer_type
-{
-
-    decay_type decay[RBUFFSIZE];
-    int head;
-    int tail;
-    int count;
-    int s_fr;
-    int s_ba;
-};
-
-struct decay_buffer_type decbuffer;
-
-
-struct pixel_buffer_type
-{
-    recoil_buffer_type recbuffer;
-    decay_buffer_type decbuffer;
-    int status_flag;
-};
-
-struct pixel_buffer_type pixel_buff[101][101];
-
-struct pixel_buffer_type front_buff[101];
-struct pixel_buffer_type back_buff[101];
-
-//*********************************************************
-
-
-void DSSDBuffer_put ( dssd_buffer_type* _this, dssd_type& c )
-{
-
-    dssd_type newrecoil = c;
-
-    _this->head = ( ( _this->head ) % ( RBUFFSIZE ) + 1 );
-    _this->event[ ( _this->head ) - 1] = newrecoil; // WAS _this->recoil[(_this->head)-1] = newrecoil;
-
-    ++_this->count;
-
+    RealCount = 0;
+    trn1 = 0;
+    trn2 = 0;
+    TestTr1 = 0;
+    TestTr2 = 0;
+    TestTr3 = 0;
+    TestTr4 = 0;
+    leTr = 0;
+    numDFMA = 0;
+    numDGS = 0;
+
+    tlkup = tlkup_;
+    tid = tid_;
+    ng = ng_;
 }
 
-//*********************************************************
-
-//**********************************************************
-
-void RBuffer_init ( recoil_buffer_type* _this )
+int DFMAProcessor::ExitDFMA()
 {
-    //The following clears:
-    //-> buf
-    // -> head
-    //  -> tail
-    //  -> count
-    //  and sets head = tail
-
-    memset ( _this, 0, sizeof ( *_this ) );
-
-}
-//**********************************************************
-
-void DBuffer_init ( decay_buffer_type* _this )
-{
-    //The following clears:
-    //-> buf
-    // -> head
-    //  -> tail
-    //  -> count
-    //  and sets head = tail
-
-    memset ( _this, 0, sizeof ( *_this ) );
-
-}
-
-//**********************************************************
-
-int RBuffer_empty ( recoil_buffer_type* _this )
-{
-    // If the buffer is empty, returns 0. If not, returns 1.
-    return ( 0 == _this->count );
-}
-
-
-//**********************************************************
-
-int RBuffer_full ( recoil_buffer_type* _this )
-{
-    // If the buffer is NOT full, returns 0. If FULL, returns 1.
-    return ( _this->count >= RBUFFSIZE );
-}
-
-//**********************************************************
-
-void RBuffer_put ( recoil_buffer_type* _this, recoil_type& c )
-{
-
-    recoil_type newrecoil = c;
-
-    _this->head = ( ( _this->head ) % ( RBUFFSIZE ) + 1 );
-    _this->recoil[ ( _this->head ) - 1] = newrecoil; // WAS _this->recoil[(_this->head)-1] = newrecoil;
-
-    ++_this->count;
-
-}
-
-//**********************************************************
-
-void DBuffer_put ( decay_buffer_type* _this, decay_type& c )
-{
-
-    decay_type newrecoil = c;
-
-    _this->head = ( ( _this->head ) % ( RBUFFSIZE ) + 1 );
-    _this->decay[ ( _this->head ) - 1] = newrecoil; // WAS_this->decay[(_this->head)-1] = newrecoil;
-
-    ++_this->count;
-
-}
-
-//**********************************************************
-
-int lookback ( int P, int M )
-{
-
-    int f = 0;
-
-    f = ( ( P + RBUFFSIZE - ( M % RBUFFSIZE ) ) % RBUFFSIZE );
-
-
-    return f;
-
-}
-
-#endif
-
-
-unsigned long long int ts, t_first, t_last, t_firstge;
-int CurSubEvNo;
-bool first = true;
-bool firstge = true;
-
-int RealCount = 0;
-int trn1 = 0;
-int trn2 = 0;
-int TestTr1 = 0;
-int TestTr2 = 0;
-int TestTr3 = 0;
-int TestTr4 = 0;
-int leTr = 0;
-int numDFMA = 0;
-int numDGS = 0;
-// external parameters
-
-extern TFile* treef;//TREES...
-extern TTree* tree;//TREES...
-
-extern PARS Pars;
-extern int ng;
-extern DGSEVENT DGSEvent[MAXCOINEV];
-extern int tlkup[NCHANNELS];
-extern int tid[NCHANNELS];
-extern int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* DFMAEvent );
-extern DFMAEVENT DFMAEvent[MAXCOINEV];
-
-// DEFINE HISTOGRAMS HERE!!!! (LIKE USERDECLARE.H)
-
-TH1D* h1_short_dec_en;
-TH2F* h2_le_output_left;
-TH2F* h2_rec_gammas;
-TH2F* h2_all_gammas;
-TH2F* h2_dssd_gammas;
-TH2F* h2_mcp_gammas;
-//TH2F *h2_te107_gammas;
-
-//TH2F *h2_corr_gammas;
-TH2F* h2_corr_gammas_short;
-TH2F* h2_gamma_gamma_shortdec;
-TH2F* h2_dTgdssd, *h2_dTgdssd_ch40;
-TH2F* h2_dTgdssd_allge;
-TH1D* h1_dTgl, *h1_dTgr;
-TH2F* h2_stripfr_cxng, *h2_stripba_cxng, *h2_stripba_cxng_frontgated;
-
-TH1D* h1_cl, *h1_cr, *h1_esi, *h1_cx, *h1_cxn;
-TH2F* h2_clr;
-TH1D* h1_clg, *h1_crg, *h1_cxg, *h1_cxng;
-TH1D* h1_cx_en_g1, *h1_cxn_en_g1;
-TH1D* h1_cx_en_g2, *h1_cxn_en_g2;
-
-TH2F* h2_clrg;
-TH2F* h2_clrg_int; //new
-TH2F* h2_traceg;
-TH2F* h2_traceg2;
-
-TH1D* h1_ch0, *h1_ch1, *h1_ch2, *h1_ch3, *h1_ch4, *h1_ch5;
-
-TH2F* h2_frba_t;
-
-
-// DSSD stuff
-
-TH2F* h2_dssd_en, *h2_dssd_en_raw;
-TH2F* h2_dssd_fr_emax;
-TH2F* h2_dssd_ba_emax;
-TH2F* h2_d_fr_e, *h2_d_ba_e;
-TH2F* h2_r_fr_e, *h2_r_ba_e;
-TH2F* h2_dssd_rate, *h2_FP_rate;
-//TH1D *h1_dssd_rate_1us;
-TH1D* h1_dssd_rate_1D;
-TH1D* h1_decay_rate;
-TH1D* h1_GE_rate;
-TH1D* h1_FP_rate_left, *h1_FP_rate_right;
-TH2F* h2_tdssdmcp_fr, *h2_tdssdmcp_ba;
-TH2F* h2_tdssdmcp_fr_r, *h2_tdssdmcp_ba_r;
-TH1D* h1_ndssd;
-
-TH2F* h2_lefttraces;
-TH2F* h2_righttraces;
-
-TH1D* h1_cl_int;
-TH1D* h1_cr_int;
-TH1D* h1_cxg_int;
-TH1D* h1_cxng_int;
-TH2F* h2_clr_int;
-TH2F* h2_clrg_en;
-TH2F* h2_clrg_en_g1, *h2_clrg_en_g2;
-TH2F* h2_r_hitxy, *h2_d_hitxy, *h2_dssd_hitxy_phys;
-
-TH2F* h2_dssd_fr_p2;
-TH2F* h2_dssd_ba_p2;
-TH2F* h2_clr_p2;
-TH2F* h2_dssd_fr_p1;
-TH2F* h2_dssd_ba_p1;
-TH2F* h2_clr_p1;
-
-TH2F* h2_dssd_traces_fr, *h2_dssd_traces_ba;
-
-TH2F* h2_xehi, *h2_xehig;
-TH2F* h2_x_d_fr_e, *h2_x_d_fr_e_short;
-
-// Correlation histograms
-
-TH2F* h2_e1t1log, *h2_e2t2log, *h2_e3t3log;
-TH2F* h2_e1t1c1, *h2_e2t2c1, *h2_e3t3c1;
-TH2F* h2_e1t1c2, *h2_e2t2c2, *h2_e3t3c2;
-TH2F* h2_e1t1c3, *h2_e2t2c3, *h2_e3t3c3;
-TH2F* h2_e1t1c4, *h2_e2t2c4, *h2_e3t3c4;
-
-/*-----------------------------------------------------*/
-
-
-int exit_dfma()
-{
-
     int i, j;
 
     for ( i = 1; i < 161; i++ )
@@ -560,7 +40,7 @@ int exit_dfma()
     treef->cd();
 
     tree->Write ( "tree" );
-    Pars.f1->cd();
+    pars.f1->cd();
     treef->Close();
 #endif
 
@@ -569,8 +49,7 @@ int exit_dfma()
 
 /*-----------------------------------------------------*/
 
-int
-sup_dfma()
+int DFMAProcessor::SupDFMA()
 {
 
 #if(1)
@@ -599,21 +78,21 @@ sup_dfma()
     strcpy ( compstr, "2" );
     strcpy ( presortFile, "TREE_FILES/new_presort." );
 
-    i = strlen ( Pars.ROOTFile );
+    i = strlen ( pars.ROOTFile );
 
-    while ( Pars.ROOTFile[i] != '/' )
+    while ( pars.ROOTFile[i] != '/' )
     {
         i--;
     }
 
-    for ( j = i + 1; j < static_cast<int> ( strlen ( Pars.ROOTFile ) ) ; j++ )
+    for ( j = i + 1; j < static_cast<int> ( strlen ( pars.ROOTFile ) ) ; j++ )
     {
-        onechar[0] = Pars.ROOTFile[j];
+        onechar[0] = pars.ROOTFile[j];
         onechar[1] = '\0';
         strcat ( presortFile, onechar );
     }
 
-    printf ( "ROOT file %s\n", Pars.ROOTFile );
+    printf ( "ROOT file %s\n", pars.ROOTFile );
     printf ( "presort file %s\n", presortFile );
 
 
@@ -622,7 +101,7 @@ sup_dfma()
     treef = new TFile ( presortFile, "recreate" );
     tree = new TTree ( "tree", "presorted data" );
 
-    Pars.f1->cd();
+    pars.f1->cd();
 
     tree->Branch ( "s_fr", &chain.s_fr, "s_fr/i" );
     tree->Branch ( "s_ba", &chain.s_ba, "s_ba/i" );
@@ -868,51 +347,8 @@ sup_dfma()
     fclose ( fmap1 );
 #endif
 
-
-
-
-
-
-//*******************
-// MAP FILE map.dat *
-//*******************
-
-    char str[STRLEN];
-    int i1, i2, i7, i8;
-    FILE* fp;
-    for ( i = 0; i < NCHANNELS; i++ )
-    {
-        tlkup[i] = NOTHING;
-        tid[i] = NOTHING;
-    };
-
-    printf ( "MAPPING H\n" );
-
-    fp = fopen ( "./map_gsfma322.dat", "r" );
-// fp = fopen ("./map_LBNL_final4.dat", "r");
-    if ( fp == NULL )
-    {
-        printf ( "need a map file to run\n" );
-        printf ( "do - g++ mkMap_LBNL.c -o mkMap_LBNL; ./mkMap_LBNL > map_LBNL.dat\n" );
-        exit ( 1 );
-    };
-
-    printf ( "\nmapping H\n" );
-    i2 = fscanf ( fp, "\n%i %i %i %s", &i1, &i7, &i8, str );
-    printf ( "%i %i %i %s\n", i1, i7, i8, str );
-    while ( i2 == 4 )
-    {
-        tlkup[i1] = i7;
-        tid[i1] = i8;
-        i2 = fscanf ( fp, "\n%i %i %i %s", &i1, &i7, &i8, str );
-        printf ( "%i %i %i %s\n", i1, i7, i8, str );
-    };
-    fclose ( fp );
-
-    Pars.wlist = gDirectory->GetList();
-    Pars.wlist->Print();
-
-
+    pars.wlist = gDirectory->GetList();
+    pars.wlist->Print();
 
 #endif
 
@@ -923,9 +359,7 @@ sup_dfma()
 
 /* ----------------------------------------------------------------- */
 
-
-
-int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
+int DFMAProcessor::DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* thedfmaEvt )
 {
     /* firmware circa Sept 2014 */
 
@@ -939,7 +373,7 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
     unsigned long long int ulli1;
 
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "entered DGSEvDecompose_v3:\n" );
         printf ( "\nmapping\n" );
@@ -974,7 +408,7 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 
     /* debug print */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "event len=%i (%lu bytes) >\n", len, len * sizeof ( unsigned int ) );
         for ( i = 0; i < len; i++ )
@@ -1004,25 +438,25 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 
     /* extract IDs */
 
-    theDFMAEvent->chan_id = ( * ( ev + 0 ) & 0x0000000f );
-    theDFMAEvent->board_id = ( ( * ( ev + 0 ) >> 4 ) & 0xfff );
-    theDFMAEvent->id = theDFMAEvent->board_id * 10 + theDFMAEvent->chan_id;
+    thedfmaEvt->chan_id = ( * ( ev + 0 ) & 0x0000000f );
+    thedfmaEvt->board_id = ( ( * ( ev + 0 ) >> 4 ) & 0xfff );
+    thedfmaEvt->id = thedfmaEvt->board_id * 10 + thedfmaEvt->chan_id;
 
     /* store the type and type ID */
 
-    theDFMAEvent->tpe = tlkup[theDFMAEvent->id];
-    theDFMAEvent->tid = tid[theDFMAEvent->id];
+    thedfmaEvt->tpe = tlkup[thedfmaEvt->id];
+    thedfmaEvt->tid = tid[thedfmaEvt->id];
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
-        printf ( "chan_id = %i, board_id=%i, id=%i\n", theDFMAEvent->chan_id, theDFMAEvent->board_id, theDFMAEvent->id );
+        printf ( "chan_id = %i, board_id=%i, id=%i\n", thedfmaEvt->chan_id, thedfmaEvt->board_id, thedfmaEvt->id );
     }
 
     /* extract the energy */
 
     PRE_RISE_SUM = * ( ev + 7 ) & 0x00ffffff;
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "PRE_RISE_SUM =  0x%8.8x %12i  ", PRE_RISE_SUM, PRE_RISE_SUM );
         ui0 = 0x80000000;
@@ -1052,7 +486,7 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
     ui2 <<= 8;
     POST_RISE_SUM = ui1 + ui2;
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "POST_RISE_SUM = 0x%8.8x %12i  ", POST_RISE_SUM, POST_RISE_SUM );
         ui0 = 0x80000000;
@@ -1080,36 +514,36 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
     /* so making ints of them is not a problem */
 
     rawE = ( int ) POST_RISE_SUM - ( int ) PRE_RISE_SUM;
-    theDFMAEvent->ehi = rawE / 10;
-    if ( theDFMAEvent->ehi < 0 )
+    thedfmaEvt->ehi = rawE / 10;
+    if ( thedfmaEvt->ehi < 0 )
     {
-        theDFMAEvent->ehi = -theDFMAEvent->ehi;
+        thedfmaEvt->ehi = -thedfmaEvt->ehi;
     }
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
-        printf ( "rawE = 0x%8.8x %i, theDFMAEvent->ehi= %i\n", rawE, rawE, theDFMAEvent->ehi );
+        printf ( "rawE = 0x%8.8x %i, thedfmaEvt->ehi= %i\n", rawE, rawE, thedfmaEvt->ehi );
     }
 
     /* extract the LED time stamp */
 
-    theDFMAEvent->LEDts = 0;
-    theDFMAEvent->LEDts = ( unsigned long long int ) * ( ev + 1 );
+    thedfmaEvt->LEDts = 0;
+    thedfmaEvt->LEDts = ( unsigned long long int ) * ( ev + 1 );
     ulli1 = ( unsigned long long int ) ( * ( ev + 2 ) & 0x0000ffff );
     ulli1 = ( ulli1 << 32 );
-    theDFMAEvent->LEDts += ulli1;
+    thedfmaEvt->LEDts += ulli1;
 
     /* extract trace */
 
 
-    theDFMAEvent->traceLen = 0;
+    thedfmaEvt->traceLen = 0;
     for ( i = 0; i < len - HDRLENINTS; i++ )
     {
 
-        theDFMAEvent->trace[theDFMAEvent->traceLen] = ( unsigned long long int ) ( * ( ev + 13 + i ) & 0x00003fff );
-        theDFMAEvent->traceLen++;
-        theDFMAEvent->trace[theDFMAEvent->traceLen] = ( unsigned long long int ) ( * ( ev + 13 + i ) >> 16 & 0x00003fff );
-        theDFMAEvent->traceLen++;
+        thedfmaEvt->trace[thedfmaEvt->traceLen] = ( unsigned long long int ) ( * ( ev + 13 + i ) & 0x00003fff );
+        thedfmaEvt->traceLen++;
+        thedfmaEvt->trace[thedfmaEvt->traceLen] = ( unsigned long long int ) ( * ( ev + 13 + i ) >> 16 & 0x00003fff );
+        thedfmaEvt->traceLen++;
 
     }
 
@@ -1165,20 +599,20 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 
     prerisesum = PRE_RISE_SUM / 400;
 
-    theDFMAEvent->baseline = baseline;
-    theDFMAEvent->postrisebeg = postrisebeg;
-    theDFMAEvent->prerisebeg = prerisebeg;
-    theDFMAEvent->postriseend = postriseend;
-    theDFMAEvent->preriseend = preriseend;
-    theDFMAEvent->peaksample = peaksample;
-    theDFMAEvent->basesample = basesample;
-    theDFMAEvent->prevTS = prevTS;
-    theDFMAEvent->prerisesum = prerisesum;
+    thedfmaEvt->baseline = baseline;
+    thedfmaEvt->postrisebeg = postrisebeg;
+    thedfmaEvt->prerisebeg = prerisebeg;
+    thedfmaEvt->postriseend = postriseend;
+    thedfmaEvt->preriseend = preriseend;
+    thedfmaEvt->peaksample = peaksample;
+    thedfmaEvt->basesample = basesample;
+    thedfmaEvt->prevTS = prevTS;
+    thedfmaEvt->prerisesum = prerisesum;
 
 
     /* done */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "exit DGSEvDecompose_v3:\n" );
     }
@@ -1191,23 +625,23 @@ int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent )
 //**********************************************************
 
 
-int bin_dfma ( GEB_EVENT* GEB_event )
+int DFMAProcessor::BinDFMA ( GEB_EVENT* gebEvt )
 {
 
-    if ( Pars.CurEvNo <= 100 ) //Pars.NumToPrint){
+    if ( pars.CurEvNo <= 100 ) //pars.NumToPrint){
     {
-        printf ( "entered bin_dfma:\n" );
+        printf ( "entered BinDFMA:\n" );
     }
 
 #if(1)
 
-    //if(Pars.CurEvNo > 0){
-    //if(((DFMAEvent[0].LEDts - t_first)/1E8)>30){
-    if ( Pars.CurEvNo > 0 )
+    //if(pars.CurEvNo > 0){
+    //if(((dfmaEvt[0].LEDts - t_first)/1E8)>30){
+    if ( pars.CurEvNo > 0 )
     {
 
 
-        // printf("\nTest1, event number %i\n",Pars.CurEvNo);
+        // printf("\nTest1, event number %i\n",pars.CurEvNo);
 
         float cal_e;
 
@@ -1227,9 +661,9 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         int GebTypeStr ( int type, char strg[] );
 
 
-        if ( Pars.CurEvNo <= Pars.NumToPrint )
+        if ( pars.CurEvNo <= pars.NumToPrint )
         {
-            printf ( "entered bin_dfma:\n" );
+            printf ( "entered BinDFMA:\n" );
         }
 
         //*********************************************************************
@@ -1241,28 +675,28 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         nsubev = 0;
         nfp = 0;
 
-        for ( i = 0; i < GEB_event->mult; i++ )
+        for ( i = 0; i < gebEvt->mult; i++ )
         {
 
-            GebTypeStr ( GEB_event->ptgd[i]->type, strg );
+            GebTypeStr ( gebEvt->ptgd[i]->type, strg );
 
-            if ( GEB_event->ptgd[i]->type == 16 )
+            if ( gebEvt->ptgd[i]->type == 16 )
             {
 
-                if ( Pars.CurEvNo <= Pars.NumToPrint )
+                if ( pars.CurEvNo <= pars.NumToPrint )
                 {
-                    printf ( "bin_dfma, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, strg, GEB_event->ptgd[i]->timestamp );
+                    printf ( "BinDFMA, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, strg, gebEvt->ptgd[i]->timestamp );
                 }
 
-                DFMAEvDecompose_v3 ( ( unsigned int* ) GEB_event->ptinp[i], GEB_event->ptgd[i]->length / sizeof ( unsigned int ),
-                                     &DFMAEvent[nsubev] );
+                DFMAEvDecompose_v3 ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ),
+                                     &dfmaEvt[nsubev] );
 
-                if ( DFMAEvent[nsubev].tpe == DSSD )
+                if ( dfmaEvt[nsubev].tpe == DSSD )
                 {
                     ndssd++;
                     ndfma++;
                 }
-                if ( DFMAEvent[nsubev].tpe == FP )
+                if ( dfmaEvt[nsubev].tpe == FP )
                 {
                     nfp++;
                     ndfma++;
@@ -1274,13 +708,13 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         }
 
-        if ( !Pars.noHists ) h1_ndssd->Fill ( ndssd );
+        if ( !pars.noHists ) h1_ndssd->Fill ( ndssd );
 
-        if ( DFMAEvent[0].LEDts != 0 )
+        if ( dfmaEvt[0].LEDts != 0 )
         {
             numDFMA++;
         }
-        if ( DGSEvent[0].event_timestamp != 0 )
+        if ( dgsEvt[0].event_timestamp != 0 )
         {
             numDGS++;
         }
@@ -1289,29 +723,22 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         if ( first && ( numDFMA > 1000 ) && ( numDGS > 1000 ) )
         {
-            t_first = DFMAEvent[0].LEDts;
+            t_first = dfmaEvt[0].LEDts;
             first = false;
         }
-        if ( Pars.CurEvNo % 10000 == 0 )
+        if ( pars.CurEvNo % 10000 == 0 )
         {
-            printf ( "Processing event number %i with timestamp %llu. Time elapsed: %i seconds\n", Pars.CurEvNo, DFMAEvent[0].LEDts, int ( float ( DFMAEvent[0].LEDts - t_first ) / 1E8 ) );
+            printf ( "Processing event number %i with timestamp %llu. Time elapsed: %i seconds\n", pars.CurEvNo, dfmaEvt[0].LEDts, int ( float ( dfmaEvt[0].LEDts - t_first ) / 1E8 ) );
         }
 
 
         if ( firstge )
         {
-            t_firstge = DGSEvent[0].event_timestamp;
+            t_firstge = dgsEvt[0].event_timestamp;
             firstge = false;
         }
 
 //long long int tmp1, tmp2;//unused
-
-
-
-
-
-
-
 
 // Declarations for variables
 
@@ -1362,9 +789,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         int gate = 0;
 
-
-
-
 //<><><><><><><><><><><><><><><><><>*
 // Dig out DSSD event and calibrate *
 //<><><><><><><><><><><><><><><><><>*
@@ -1373,19 +797,19 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         for ( i = 0; i < nsubev; i++ )
         {
 
-            if ( DFMAEvent[i].tpe == DSSD )
+            if ( dfmaEvt[i].tpe == DSSD )
             {
 
                 cal_e = .0;
-                //cal_e = DFMAEvent[i].ehi;
+                //cal_e = dfmaEvt[i].ehi;
 
-                if ( !Pars.noHists ) h2_dssd_en_raw->Fill ( DFMAEvent[i].ehi, DFMAEvent[i].tid );
+                if ( !pars.noHists ) h2_dssd_en_raw->Fill ( dfmaEvt[i].ehi, dfmaEvt[i].tid );
 
                 // FRONT - selecting maximum energy strip and calibrating
 
-                if ( DFMAEvent[i].tid < BATIDLOW )
+                if ( dfmaEvt[i].tid < BATIDLOW )
                 {
-                    cal_e = double ( map_fr[DFMAEvent[i].tid].gain ) * ( DFMAEvent[i].ehi + double ( rand() ) / RAND_MAX - 0.5 ) + double ( map_fr[DFMAEvent[i].tid].off );
+                    cal_e = double ( map_fr[dfmaEvt[i].tid].gain ) * ( dfmaEvt[i].ehi + double ( rand() ) / RAND_MAX - 0.5 ) + double ( map_fr[dfmaEvt[i].tid].off );
 
                     if ( cal_e > dssd_fr_emax )
                     {
@@ -1396,9 +820,9 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                 // BACK - selecting maximum energy strip and calibrating
 
-                if ( DFMAEvent[i].tid > FRTIDHIGH )
+                if ( dfmaEvt[i].tid > FRTIDHIGH )
                 {
-                    cal_e = double ( map_ba[DFMAEvent[i].tid].gain ) * ( DFMAEvent[i].ehi + double ( rand() ) / RAND_MAX - 0.5 ) + double ( map_ba[DFMAEvent[i].tid].off );
+                    cal_e = double ( map_ba[dfmaEvt[i].tid].gain ) * ( dfmaEvt[i].ehi + double ( rand() ) / RAND_MAX - 0.5 ) + double ( map_ba[dfmaEvt[i].tid].off );
 
                     if ( cal_e > dssd_ba_emax )
                     {
@@ -1408,15 +832,14 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 }
 
                 // UNCOMMENT THIS IF YOU WANT CALIBRATED ENERGIES PROPAGATED THROUGH REMAINDER OF CODE
-                DFMAEvent[i].ehi = cal_e;
+                dfmaEvt[i].ehi = cal_e;
 
 
-                if ( !Pars.noHists ) h2_dssd_en->Fill ( DFMAEvent[i].ehi, DFMAEvent[i].tid );
-                if ( !Pars.noHists ) h2_dssd_rate->Fill ( ( DFMAEvent[i].LEDts - t_first ) / 1E8, DFMAEvent[i].tid );
+                if ( !pars.noHists ) h2_dssd_en->Fill ( dfmaEvt[i].ehi, dfmaEvt[i].tid );
+                if ( !pars.noHists ) h2_dssd_rate->Fill ( ( dfmaEvt[i].LEDts - t_first ) / 1E8, dfmaEvt[i].tid );
 
             }
         }
-
 
 //<><><><><><><><><><><><><><><><><><><><><><><*
 // Time difference between DSSD front and back *
@@ -1425,35 +848,26 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         signed long long int tdssd_fr;
         signed long long int tdssd_ba;
 
-
         tdssd_fr = 0;
         tdssd_ba = 0;
 
         double frba_t;
         frba_t = 0.0;
 
-
         if ( dssd_fr_emax != 0 && dssd_ba_emax != 0 )
         {
 
-            frba_t = double ( DFMAEvent[dssd_fr_subev].LEDts ) - double ( DFMAEvent[dssd_ba_subev].LEDts );
-            if ( !Pars.noHists ) h2_frba_t->Fill ( frba_t, DFMAEvent[dssd_fr_subev].tid );
-            if ( !Pars.noHists ) h2_frba_t->Fill ( frba_t, DFMAEvent[dssd_ba_subev].tid );
+            frba_t = double ( dfmaEvt[dssd_fr_subev].LEDts ) - double ( dfmaEvt[dssd_ba_subev].LEDts );
+            if ( !pars.noHists ) h2_frba_t->Fill ( frba_t, dfmaEvt[dssd_fr_subev].tid );
+            if ( !pars.noHists ) h2_frba_t->Fill ( frba_t, dfmaEvt[dssd_ba_subev].tid );
 
-            tdssd_fr = DFMAEvent[dssd_fr_subev].LEDts;
-            tdssd_ba = DFMAEvent[dssd_ba_subev].LEDts;
-
-
+            tdssd_fr = dfmaEvt[dssd_fr_subev].LEDts;
+            tdssd_ba = dfmaEvt[dssd_ba_subev].LEDts;
         }
-
-
-
-
 
 //<><><><><><><><><><><><><>*
 // Dig out focal plane data *
 //<><><><><><><><><><><><><>*
-
 
         signed long long int tdssdmcp_fr;
         signed long long int tdssdmcp_ba;
@@ -1476,79 +890,77 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         for ( i = 0; i < nsubev; i++ )
         {
-
-            switch ( DFMAEvent[i].tpe )
+            switch ( dfmaEvt[i].tpe )
             {
-
                 //-------------*
                 // Focal Plane *
                 //-------------*
 
             case FP:
-                if ( !Pars.noHists )
+                if ( !pars.noHists )
                 {
-                    if ( DFMAEvent[i].tid == 1 )
+                    if ( dfmaEvt[i].tid == 1 )
                     {
-                        h1_ch0->Fill ( DFMAEvent[i].ehi );
+                        h1_ch0->Fill ( dfmaEvt[i].ehi );
                     }
-                    if ( DFMAEvent[i].tid == 2 )
+                    if ( dfmaEvt[i].tid == 2 )
                     {
-                        h1_ch1->Fill ( DFMAEvent[i].ehi );
+                        h1_ch1->Fill ( dfmaEvt[i].ehi );
                     }
-                    if ( DFMAEvent[i].tid == 3 )
+                    if ( dfmaEvt[i].tid == 3 )
                     {
-                        h1_ch2->Fill ( DFMAEvent[i].ehi );
+                        h1_ch2->Fill ( dfmaEvt[i].ehi );
                     }
-                    if ( DFMAEvent[i].tid == 4 )
+                    if ( dfmaEvt[i].tid == 4 )
                     {
-                        h1_ch3->Fill ( DFMAEvent[i].ehi );
+                        h1_ch3->Fill ( dfmaEvt[i].ehi );
                     }
-                    if ( DFMAEvent[i].tid == 5 )
+                    if ( dfmaEvt[i].tid == 5 )
                     {
-                        h1_ch4->Fill ( DFMAEvent[i].ehi );
+                        h1_ch4->Fill ( dfmaEvt[i].ehi );
                     }
-                    if ( DFMAEvent[i].tid == 6 )
+                    if ( dfmaEvt[i].tid == 6 )
                     {
-                        h1_ch5->Fill ( DFMAEvent[i].ehi );
+                        h1_ch5->Fill ( dfmaEvt[i].ehi );
                     }
                 }
-                if ( DFMAEvent[i].tid == SICH && DFMAEvent[i].ehi > 0 )
+                if ( dfmaEvt[i].tid == SICH && dfmaEvt[i].ehi > 0 )
                 {
                     gate = 1;
                 }
 
 
                 // MWPC LEFT
-                if ( DFMAEvent[i].tid == LCH && DFMAEvent[i].ehi > 0 )
+                if ( dfmaEvt[i].tid == LCH && dfmaEvt[i].ehi > 0 )
                 {
 
                     left_subev = i;
 
-                    if ( !Pars.noHists ) h2_FP_rate->Fill ( ( DFMAEvent[i].LEDts - t_first ) / 1E8, DFMAEvent[i].tid );
-                    if ( !Pars.noHists  && ( DFMAEvent[i].LEDts - t_first ) / 1E5 < 100000 )
+                    if ( !pars.noHists ) h2_FP_rate->Fill ( ( dfmaEvt[i].LEDts - t_first ) / 1E8, dfmaEvt[i].tid );
+                    if ( !pars.noHists  && ( dfmaEvt[i].LEDts - t_first ) / 1E5 < 100000 )
                     {
-                        h1_FP_rate_left->Fill ( ( DFMAEvent[i].LEDts - t_first ) / 1E5 );
+                        h1_FP_rate_left->Fill ( ( dfmaEvt[i].LEDts - t_first ) / 1E5 );
                     }
-                    tdssdmcp_fr = ( DFMAEvent[i].LEDts ) - ( tdssd_fr );
-                    tdssdmcp_ba = ( DFMAEvent[i].LEDts ) - ( tdssd_ba );
+                    tdssdmcp_fr = ( dfmaEvt[i].LEDts ) - ( tdssd_fr );
+                    tdssdmcp_ba = ( dfmaEvt[i].LEDts ) - ( tdssd_ba );
 
-                    if ( !Pars.noHists && tdssd_fr != 0 )
+                    if ( !pars.noHists && tdssd_fr != 0 )
                     {
-                        h2_tdssdmcp_fr->Fill ( tdssdmcp_fr, DFMAEvent[dssd_fr_subev].tid );
+                        h2_tdssdmcp_fr->Fill ( tdssdmcp_fr, dfmaEvt[dssd_fr_subev].tid );
                     }
-                    if ( !Pars.noHists && tdssd_ba != 0 )
+                    if ( !pars.noHists && tdssd_ba != 0 )
                     {
-                        h2_tdssdmcp_ba->Fill ( tdssdmcp_ba, DFMAEvent[dssd_ba_subev].tid - 160 );
+                        h2_tdssdmcp_ba->Fill ( tdssdmcp_ba, dfmaEvt[dssd_ba_subev].tid - 160 );
                     }
 
 
-                    cl = DFMAEvent[i].ehi;
+                    cl = dfmaEvt[i].ehi;
 
                     /*
 
 
                     if (trn1<1000) {
-                                for (jj=0;jj<1000;jj++) h2_traceg->Fill(trn1,jj,DFMAEvent[i].trace[jj]);
+                                for (jj=0;jj<1000;jj++) h2_traceg->Fill(trn1,jj,dfmaEvt[i].trace[jj]);
                                 trn1=trn1+1;
                      }
 
@@ -1563,7 +975,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                                  let0 = 0;
                                  let1 = 0;
 
-                                 leFilter(DFMAEvent[i].trace, 1000, 20, letrace, let0, let1, 200);
+                                 leFilter(dfmaEvt[i].trace, 1000, 20, letrace, let0, let1, 200);
 
 
                                  if(leTr<100){
@@ -1573,13 +985,13 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
 
                      for(j=5;j<(5+l_num_bkgd);j++){
-                        l_bkgdsum = l_bkgdsum + DFMAEvent[i].trace[j];
+                        l_bkgdsum = l_bkgdsum + dfmaEvt[i].trace[j];
                      }
 
                      l_avgbkgd = (l_bkgdsum/l_num_bkgd);
 
                                  for(j=let0; j<(let0+l_num_sig); j++){
-                        l_signal = l_signal + DFMAEvent[i].trace[j];
+                        l_signal = l_signal + dfmaEvt[i].trace[j];
                      }
 
                      cl_int = l_signal - (l_avgbkgd*l_num_sig);
@@ -1589,36 +1001,36 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 }
 
                 // MWPC RIGHT
-                if ( DFMAEvent[i].tid == RCH && DFMAEvent[i].ehi > 0 )
+                if ( dfmaEvt[i].tid == RCH && dfmaEvt[i].ehi > 0 )
                 {
 
                     right_subev = i;
 
-                    if ( !Pars.noHists ) h2_FP_rate->Fill ( ( DFMAEvent[i].LEDts - t_first ) / 1E8, DFMAEvent[i].tid );
-                    if ( !Pars.noHists && ( DFMAEvent[i].LEDts - t_first ) / 1E5 < 100000 )
+                    if ( !pars.noHists ) h2_FP_rate->Fill ( ( dfmaEvt[i].LEDts - t_first ) / 1E8, dfmaEvt[i].tid );
+                    if ( !pars.noHists && ( dfmaEvt[i].LEDts - t_first ) / 1E5 < 100000 )
                     {
-                        h1_FP_rate_right->Fill ( ( DFMAEvent[i].LEDts - t_first ) / 1E5 );
+                        h1_FP_rate_right->Fill ( ( dfmaEvt[i].LEDts - t_first ) / 1E5 );
                     }
 
-                    tdssdmcp_fr_r = ( DFMAEvent[i].LEDts ) - ( tdssd_fr );
-                    tdssdmcp_ba_r = ( DFMAEvent[i].LEDts ) - ( tdssd_ba );
+                    tdssdmcp_fr_r = ( dfmaEvt[i].LEDts ) - ( tdssd_fr );
+                    tdssdmcp_ba_r = ( dfmaEvt[i].LEDts ) - ( tdssd_ba );
 
-                    if ( !Pars.noHists  && tdssd_fr != 0 )
+                    if ( !pars.noHists  && tdssd_fr != 0 )
                     {
-                        h2_tdssdmcp_fr_r->Fill ( tdssdmcp_fr_r, DFMAEvent[dssd_fr_subev].tid );
+                        h2_tdssdmcp_fr_r->Fill ( tdssdmcp_fr_r, dfmaEvt[dssd_fr_subev].tid );
                     }
-                    if ( !Pars.noHists && tdssd_ba != 0 )
+                    if ( !pars.noHists && tdssd_ba != 0 )
                     {
-                        h2_tdssdmcp_ba_r->Fill ( tdssdmcp_ba_r, DFMAEvent[dssd_ba_subev].tid - 160 );
+                        h2_tdssdmcp_ba_r->Fill ( tdssdmcp_ba_r, dfmaEvt[dssd_ba_subev].tid - 160 );
                     }
 
-                    cr = DFMAEvent[i].ehi;
+                    cr = dfmaEvt[i].ehi;
 
                     /*
 
 
                     if (trn2<1000) {
-                    for (jj=0;jj<1000;jj++) h2_traceg2->Fill(trn2,jj,DFMAEvent[i].trace[jj]);
+                    for (jj=0;jj<1000;jj++) h2_traceg2->Fill(trn2,jj,dfmaEvt[i].trace[jj]);
                     trn2=trn2+1;
                     }
 
@@ -1632,16 +1044,16 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                     let0 = 0;
                     let1 = 0;
 
-                    leFilter(DFMAEvent[i].trace, 1000, 20, letrace, let0, let1, 200);
+                    leFilter(dfmaEvt[i].trace, 1000, 20, letrace, let0, let1, 200);
 
                     for(j=5;j<(5+r_num_bkgd);j++){
-                         r_bkgdsum = r_bkgdsum + DFMAEvent[i].trace[j];
+                         r_bkgdsum = r_bkgdsum + dfmaEvt[i].trace[j];
                       }
 
                       r_avgbkgd = (r_bkgdsum/r_num_bkgd);
 
                                   for(j=let0;j<(let0+r_num_sig);j++){
-                         r_signal = r_signal + DFMAEvent[i].trace[j];
+                         r_signal = r_signal + dfmaEvt[i].trace[j];
                       }
 
                       cr_int = r_signal - (r_avgbkgd*r_num_sig);
@@ -1652,30 +1064,16 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                 }
 
-
-
-                if ( DFMAEvent[i].tid == SICH && DFMAEvent[i].ehi > 0 )
+                if ( dfmaEvt[i].tid == SICH && dfmaEvt[i].ehi > 0 )
                 {
-                    esi = DFMAEvent[i].ehi;
+                    esi = dfmaEvt[i].ehi;
                 }
-
-
-
-
                 break;
-
-
 
             default:
                 break;
-
-
-
             }
-
         }
-
-
 
 #endif
 
@@ -1690,120 +1088,90 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         for ( i = 0; i < ng; i++ )
         {
-
-            if ( DGSEvent[i].tpe == GE && geone == 1000 )
+            if ( dgsEvt[i].tpe == GE && geone == 1000 )
             {
                 geone = i;
             }
-
         }
-
 
         int ch40subev = 1000;
 
-
         for ( j = 0; j < ng; j++ )
         {
-            if ( DGSEvent[j].tid == 40 && DGSEvent[j].tpe == GE && DGSEvent[j].flag == 0 )
+            if ( dgsEvt[j].tid == 40 && dgsEvt[j].tpe == GE && dgsEvt[j].flag == 0 )
             {
                 ch40subev = j;
             }
         }
 
-
-
         if ( ch40subev < 1000 )
         {
             for ( i = 0; i < nsubev; i++ )
             {
-                if ( DFMAEvent[i].tpe == DSSD )
+                if ( dfmaEvt[i].tpe == DSSD )
                 {
-                    dTgdssd = double ( DGSEvent[ch40subev].event_timestamp ) - double ( DFMAEvent[i].LEDts );
-                    if ( !Pars.noHists ) h2_dTgdssd_ch40->Fill ( dTgdssd, DFMAEvent[i].tid );
+                    dTgdssd = double ( dgsEvt[ch40subev].event_timestamp ) - double ( dfmaEvt[i].LEDts );
+                    if ( !pars.noHists ) h2_dTgdssd_ch40->Fill ( dTgdssd, dfmaEvt[i].tid );
                 }
             }
         }
-
-
-
 
         dTgdssd = 0.0;
 
         for ( i = 0; i < nsubev; i++ )
         {
-            if ( ( DFMAEvent[i].LEDts > 0 ) && ( DFMAEvent[i].tpe == DSSD ) && ( ng > 0 ) )
+            if ( ( dfmaEvt[i].LEDts > 0 ) && ( dfmaEvt[i].tpe == DSSD ) && ( ng > 0 ) )
             {
 
-                dTgdssd = double ( DGSEvent[geone].event_timestamp ) - double ( DFMAEvent[i].LEDts );
-                if ( !Pars.noHists ) h2_dTgdssd->Fill ( dTgdssd, DFMAEvent[i].tid );
+                dTgdssd = double ( dgsEvt[geone].event_timestamp ) - double ( dfmaEvt[i].LEDts );
+                if ( !pars.noHists ) h2_dTgdssd->Fill ( dTgdssd, dfmaEvt[i].tid );
 
-
-
-
-
-
-                if ( dTgdssd > 1000 && Pars.CurEvNo < 10000 )
+                if ( dTgdssd > 1000 && pars.CurEvNo < 10000 )
                 {
-
                     //printf("\n\nDebugging!");
-                    //printf("\nEvent number %i",Pars.CurEvNo);
-                    //printf("\n DFMAEvent[%i].LEDts: %llu",i,DFMAEvent[i].LEDts);
-                    //printf("\n DGSEvent[%i].LEDts: %llu",geone,DGSEvent[geone].event_timestamp);
-
+                    //printf("\nEvent number %i",pars.CurEvNo);
+                    //printf("\n dfmaEvt[%i].LEDts: %llu",i,dfmaEvt[i].LEDts);
+                    //printf("\n dgsEvt[%i].LEDts: %llu",geone,dgsEvt[geone].event_timestamp);
                 }
-
-
             }
         }
-
 
         dTgdssd = 0.0;
 
-
         if ( dssd_fr_emax > 0 )
         {
-
             for ( i = 0; i < ng; i++ )
             {
-                if ( DGSEvent[i].tpe == GE && DGSEvent[i].flag == 0 )
+                if ( dgsEvt[i].tpe == GE && dgsEvt[i].flag == 0 )
                 {
-                    dTgdssd = double ( DGSEvent[i].event_timestamp ) - double ( DFMAEvent[dssd_fr_subev].LEDts );
-                    if ( !Pars.noHists )  h2_dTgdssd_allge->Fill ( dTgdssd, DFMAEvent[dssd_fr_subev].tid );
+                    dTgdssd = double ( dgsEvt[i].event_timestamp ) - double ( dfmaEvt[dssd_fr_subev].LEDts );
+                    if ( !pars.noHists )  h2_dTgdssd_allge->Fill ( dTgdssd, dfmaEvt[dssd_fr_subev].tid );
                 }
             }
 
         }
-
-
-
-
 
         double dTgl;
         dTgl = 0.0;
         double dTgr;
         dTgr = 0.0;
 
-        if ( DFMAEvent[left_subev].LEDts > 0 )
+        if ( dfmaEvt[left_subev].LEDts > 0 )
         {
-            dTgl = double ( DGSEvent[0].event_timestamp ) - double ( DFMAEvent[left_subev].LEDts );
-            if ( !Pars.noHists ) h1_dTgl->Fill ( dTgl );
+            dTgl = double ( dgsEvt[0].event_timestamp ) - double ( dfmaEvt[left_subev].LEDts );
+            if ( !pars.noHists ) h1_dTgl->Fill ( dTgl );
         }
-        if ( DFMAEvent[right_subev].LEDts > 0 )
+        if ( dfmaEvt[right_subev].LEDts > 0 )
         {
-            dTgr = double ( DGSEvent[0].event_timestamp ) - double ( DFMAEvent[right_subev].LEDts );
-            if ( !Pars.noHists ) h1_dTgr->Fill ( dTgr );
+            dTgr = double ( dgsEvt[0].event_timestamp ) - double ( dfmaEvt[right_subev].LEDts );
+            if ( !pars.noHists ) h1_dTgr->Fill ( dTgr );
         }
-
-
-
-
-
 
 //<><><>*
 // MWPC *
 //<><><>*
 
-        if ( !Pars.noHists )
+        if ( !pars.noHists )
         {
             h1_esi->Fill ( esi );
 
@@ -1811,11 +1179,8 @@ int bin_dfma ( GEB_EVENT* GEB_event )
             {
                 if ( TestTr1 < 100 )
                 {
-                    for ( i = 0; i < 1000; i++ )
-                    {
-                        h2_lefttraces->Fill ( TestTr1, i, DFMAEvent[left_subev].trace[i] );
+                    for ( i = 0; i < 1000; i++ ) h2_lefttraces->Fill ( TestTr1, i, dfmaEvt[left_subev].trace[i] );
 
-                    }
                     TestTr1++;
                 }
             }
@@ -1824,11 +1189,8 @@ int bin_dfma ( GEB_EVENT* GEB_event )
             {
                 if ( TestTr4 < 100 )
                 {
-                    for ( i = 0; i < 1000; i++ )
-                    {
-                        h2_righttraces->Fill ( TestTr4, i, DFMAEvent[right_subev].trace[i] );
+                    for ( i = 0; i < 1000; i++ ) h2_righttraces->Fill ( TestTr4, i, dfmaEvt[right_subev].trace[i] );
 
-                    }
                     TestTr4++;
                 }
             }
@@ -1856,62 +1218,55 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 cratn_int = cl_int / ( cl_int + cr_int ) * 1000.0;  //new
             }
 
-            if ( !Pars.noHists ) h1_cl_int->Fill ( cl_int ); // new
-            if ( !Pars.noHists ) h1_cr_int->Fill ( cr_int ); // new
+            if ( !pars.noHists ) h1_cl_int->Fill ( cl_int ); // new
+            if ( !pars.noHists ) h1_cr_int->Fill ( cr_int ); // new
 
-            if ( !Pars.noHists ) h1_cl->Fill ( cl );
-            if ( !Pars.noHists ) h1_cr->Fill ( cr );
-            if ( !Pars.noHists ) h2_clr->Fill ( cl / 10, cr / 10 );
-            if ( !Pars.noHists ) h2_clr_int->Fill ( cl_int / 50, cr_int / 50 ); //new
+            if ( !pars.noHists ) h1_cl->Fill ( cl );
+            if ( !pars.noHists ) h1_cr->Fill ( cr );
+            if ( !pars.noHists ) h2_clr->Fill ( cl / 10, cr / 10 );
+            if ( !pars.noHists ) h2_clr_int->Fill ( cl_int / 50, cr_int / 50 ); //new
 
-            if ( !Pars.noHists ) h1_cx->Fill ( crat );
+            if ( !pars.noHists ) h1_cx->Fill ( crat );
 
-            if ( !Pars.noHists ) h1_cxn->Fill ( cratn );
+            if ( !pars.noHists ) h1_cxn->Fill ( cratn );
 
             if ( ndssd > 0 )
             {
-
-                if ( !Pars.noHists ) h1_clg->Fill ( cl );
-                if ( !Pars.noHists ) h1_crg->Fill ( cr );
-                if ( !Pars.noHists ) h2_clrg->Fill ( cl, cr );
+                if ( !pars.noHists ) h1_clg->Fill ( cl );
+                if ( !pars.noHists ) h1_crg->Fill ( cr );
+                if ( !pars.noHists ) h2_clrg->Fill ( cl, cr );
 
                 if ( dssd_fr_emax > 4500 && dssd_ba_emax > 4500 ) // Gating on Alpha energies
                 {
+                    if ( !pars.noHists ) h2_clrg_en->Fill ( cl, cr );
 
-                    if ( !Pars.noHists ) h2_clrg_en->Fill ( cl, cr );
-
-                    if ( !Pars.noHists && map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip >= 20 && map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip < 40 )
+                    if ( !pars.noHists && map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip >= 20 && map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip < 40 )
                     {
                         h2_clrg_en_g1->Fill ( cl, cr );
                         h1_cx_en_g1->Fill ( cl / cr * 1000.0 );
                         h1_cxn_en_g1->Fill ( cl / ( cl + cr ) * 1000.0 );
                     }
 
-                    if ( Pars.noHists && map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip >= 100 && map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip < 120 )
+                    if ( pars.noHists && map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip >= 100 && map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip < 120 )
                     {
                         h2_clrg_en_g2->Fill ( cl, cr );
                         h1_cx_en_g2->Fill ( cl / cr * 1000.0 );
                         h1_cxn_en_g2->Fill ( cl / ( cl + cr ) * 1000.0 );
                     }
 
-                    if ( !Pars.noHists )
+                    if ( !pars.noHists )
                     {
-                        h2_stripfr_cxng->Fill ( map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip, cratn );
-                        h2_stripba_cxng->Fill ( map_ba[DFMAEvent[dssd_ba_subev].tid].phystrip, cratn );
+                        h2_stripfr_cxng->Fill ( map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip, cratn );
+                        h2_stripba_cxng->Fill ( map_ba[dfmaEvt[dssd_ba_subev].tid].phystrip, cratn );
                     }
 
-                    if ( !Pars.noHists && map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip > 74 && map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip < 86 )
+                    if ( !pars.noHists && map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip > 74 && map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip < 86 )
                     {
-
-                        h2_stripba_cxng_frontgated->Fill ( map_ba[DFMAEvent[dssd_ba_subev].tid].phystrip, cratn );
-
+                        h2_stripba_cxng_frontgated->Fill ( map_ba[dfmaEvt[dssd_ba_subev].tid].phystrip, cratn );
                     }
-
-
-
                 }
 
-                if ( !Pars.noHists )
+                if ( !pars.noHists )
                 {
                     h2_clrg_int->Fill ( cl_int / 50, cr_int / 50 ); //new
 
@@ -1925,7 +1280,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         }
 
-        // printf("\nTest2, event number %i\n",Pars.CurEvNo);
+        // printf("\nTest2, event number %i\n",pars.CurEvNo);
 
 
 //*********************************
@@ -1963,7 +1318,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         int fd_fr_emax, fd_ba_emax;
         unsigned long long int fd_fr_ts, fd_fr_ts2;
         int fd_fr_emax2;
-
 
         fd_fr_ts = 0;
         fd_fr_ts2 = 0;
@@ -2023,13 +1377,10 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         s_fd_fr = 0;
         s_fd_ba = 0;
 
-
-
 #if(1)
 
         if ( ( dssd_fr_emax != 0 ) && ( dssd_ba_emax != 0 ) )
         {
-
             //***********************
             // Condition for recoil *
             //***********************
@@ -2039,34 +1390,33 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 //if((dssd_fr_emax >= 15000) && (dssd_ba_emax >= 15000)){
                 //FRONT
                 r_fr_emax = dssd_fr_emax;
-                s_r_fr = DFMAEvent[dssd_fr_subev].tid;
-                r_fr_ts = DFMAEvent[dssd_fr_subev].LEDts; // Take recoil timestamp from FRONT...
+                s_r_fr = dfmaEvt[dssd_fr_subev].tid;
+                r_fr_ts = dfmaEvt[dssd_fr_subev].LEDts; // Take recoil timestamp from FRONT...
                 r_fr_subev = dssd_fr_subev;
-                r_fr_PU = DFMAEvent[dssd_fr_subev].pu;
-                r_fr_trace_len = DFMAEvent[dssd_fr_subev].traceLen;
-                r_fr_d2t0 = DFMAEvent[dssd_fr_subev].d2t0;
-                r_fr_d2t1 = DFMAEvent[dssd_fr_subev].d2t1;
-                r_fr_d2t2 = DFMAEvent[dssd_fr_subev].d2t2;
-                for ( j = 0; j < DFMAEvent[dssd_fr_subev].traceLen; j++ )
+                r_fr_PU = dfmaEvt[dssd_fr_subev].pu;
+                r_fr_trace_len = dfmaEvt[dssd_fr_subev].traceLen;
+                r_fr_d2t0 = dfmaEvt[dssd_fr_subev].d2t0;
+                r_fr_d2t1 = dfmaEvt[dssd_fr_subev].d2t1;
+                r_fr_d2t2 = dfmaEvt[dssd_fr_subev].d2t2;
+                for ( j = 0; j < dfmaEvt[dssd_fr_subev].traceLen; j++ )
                 {
-                    r_fr_trace[j] = DFMAEvent[dssd_fr_subev].trace[j];
+                    r_fr_trace[j] = dfmaEvt[dssd_fr_subev].trace[j];
                 }
 
                 //BACK
                 r_ba_emax = dssd_ba_emax;
-                s_r_ba = DFMAEvent[dssd_ba_subev].tid - NUMFR;
-                r_ba_ts = DFMAEvent[dssd_ba_subev].LEDts; // Take recoil timestamp from BACK...
+                s_r_ba = dfmaEvt[dssd_ba_subev].tid - NUMFR;
+                r_ba_ts = dfmaEvt[dssd_ba_subev].LEDts; // Take recoil timestamp from BACK...
                 r_ba_subev = dssd_ba_subev;
-                r_ba_PU = DFMAEvent[dssd_ba_subev].pu;
-                r_ba_trace_len = DFMAEvent[dssd_ba_subev].traceLen;
-                r_ba_d2t0 = DFMAEvent[dssd_ba_subev].d2t0;
-                r_ba_d2t1 = DFMAEvent[dssd_ba_subev].d2t1;
-                r_ba_d2t2 = DFMAEvent[dssd_ba_subev].d2t2;
-                for ( j = 0; j < DFMAEvent[dssd_ba_subev].traceLen; j++ )
+                r_ba_PU = dfmaEvt[dssd_ba_subev].pu;
+                r_ba_trace_len = dfmaEvt[dssd_ba_subev].traceLen;
+                r_ba_d2t0 = dfmaEvt[dssd_ba_subev].d2t0;
+                r_ba_d2t1 = dfmaEvt[dssd_ba_subev].d2t1;
+                r_ba_d2t2 = dfmaEvt[dssd_ba_subev].d2t2;
+                for ( j = 0; j < dfmaEvt[dssd_ba_subev].traceLen; j++ )
                 {
-                    r_ba_trace[j] = DFMAEvent[dssd_ba_subev].trace[j];
+                    r_ba_trace[j] = dfmaEvt[dssd_ba_subev].trace[j];
                 }
-
 
                 //*****************************
                 // DEALING WITH RECOIL PILEUP *
@@ -2087,7 +1437,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                 fdecEv = 1;
                               if((r_fr_PU == 3) && (r_ba_PU == 3)) fdecEv = 3;
-
 
                               s_fd_fr=s_r_fr;
                               s_fd_ba=s_r_ba;
@@ -2159,13 +1508,8 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                                  fd_ba_emax2 = ef2;
                                  fd_ba_ts2 = r_ba_ts + curt2s[s_r_ba+NUMFR] - curt0s[s_r_ba+NUMFR];
-
-
                               }
-
-
                     } */
-
             }
 
             //**************************
@@ -2178,32 +1522,29 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                 //FRONT
                 d_fr_emax = dssd_fr_emax;
-                s_d_fr = DFMAEvent[dssd_fr_subev].tid;
-                s_d_fr_phys = map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip;
+                s_d_fr = dfmaEvt[dssd_fr_subev].tid;
+                s_d_fr_phys = map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip;
                 d_fr_subev = dssd_fr_subev;
-                d_fr_ts = DFMAEvent[dssd_fr_subev].LEDts;
-                d_fr_PU = DFMAEvent[dssd_fr_subev].pu;
-                d_fr_trace_len = DFMAEvent[dssd_fr_subev].traceLen;
-                for ( jj = 0; jj < DFMAEvent[dssd_fr_subev].traceLen; jj++ )
+                d_fr_ts = dfmaEvt[dssd_fr_subev].LEDts;
+                d_fr_PU = dfmaEvt[dssd_fr_subev].pu;
+                d_fr_trace_len = dfmaEvt[dssd_fr_subev].traceLen;
+                for ( jj = 0; jj < dfmaEvt[dssd_fr_subev].traceLen; jj++ )
                 {
-                    d_fr_trace[jj] = DFMAEvent[dssd_fr_subev].trace[jj];
+                    d_fr_trace[jj] = dfmaEvt[dssd_fr_subev].trace[jj];
                 }
 
                 //BACK
                 d_ba_emax = dssd_ba_emax;
-                s_d_ba = DFMAEvent[dssd_ba_subev].tid - NUMFR;
-                s_d_ba_phys = map_ba[DFMAEvent[dssd_ba_subev].tid].phystrip;
-                d_ba_ts = DFMAEvent[dssd_ba_subev].LEDts;     // Take decay timestamp from BACK...
+                s_d_ba = dfmaEvt[dssd_ba_subev].tid - NUMFR;
+                s_d_ba_phys = map_ba[dfmaEvt[dssd_ba_subev].tid].phystrip;
+                d_ba_ts = dfmaEvt[dssd_ba_subev].LEDts;     // Take decay timestamp from BACK...
                 d_ba_subev = dssd_ba_subev;
-                d_ba_PU = DFMAEvent[dssd_ba_subev].pu;
-                d_fr_trace_len = DFMAEvent[dssd_ba_subev].traceLen;
-                for ( jj = 0; jj < DFMAEvent[dssd_ba_subev].traceLen; jj++ )
+                d_ba_PU = dfmaEvt[dssd_ba_subev].pu;
+                d_fr_trace_len = dfmaEvt[dssd_ba_subev].traceLen;
+                for ( jj = 0; jj < dfmaEvt[dssd_ba_subev].traceLen; jj++ )
                 {
-                    d_ba_trace[jj] = DFMAEvent[dssd_ba_subev].trace[jj];
+                    d_ba_trace[jj] = dfmaEvt[dssd_ba_subev].trace[jj];
                 }
-
-
-
 
                 //****************************
                 // DEALING WITH DECAY PILEUP *
@@ -2261,9 +1602,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
 
                 }}*/
-
             }
-
         }
 
 #endif
@@ -2272,7 +1611,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 // DSSD hit patterns and energies *
 //<><><><><><><><><><><><><><><><>*
 
-        if ( !Pars.noHists )
+        if ( !pars.noHists )
         {
             if ( s_r_fr != 0 && s_r_ba != 0 )
             {
@@ -2285,14 +1624,14 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
             if ( dssd_fr_emax > 0 && dssd_ba_emax > 0 )
             {
-                h2_dssd_hitxy_phys->Fill ( map_fr[DFMAEvent[dssd_fr_subev].tid].phystrip, map_ba[DFMAEvent[dssd_ba_subev].tid].phystrip );
+                h2_dssd_hitxy_phys->Fill ( map_fr[dfmaEvt[dssd_fr_subev].tid].phystrip, map_ba[dfmaEvt[dssd_ba_subev].tid].phystrip );
 
                 if ( TestTr3 < 100 )
                 {
                     for ( i = 0; i < 1000; i++ )
                     {
-                        h2_dssd_traces_fr->Fill ( TestTr3, i, DFMAEvent[dssd_fr_subev].trace[i] );
-                        h2_dssd_traces_ba->Fill ( TestTr3, i, DFMAEvent[dssd_ba_subev].trace[i] );
+                        h2_dssd_traces_fr->Fill ( TestTr3, i, dfmaEvt[dssd_fr_subev].trace[i] );
+                        h2_dssd_traces_ba->Fill ( TestTr3, i, dfmaEvt[dssd_ba_subev].trace[i] );
                     }
                     TestTr3++;
                 }
@@ -2300,51 +1639,39 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
             if ( dssd_fr_emax > 0 )
             {
-
-                h2_dssd_fr_emax->Fill ( dssd_fr_emax, DFMAEvent[dssd_fr_subev].tid );
+                h2_dssd_fr_emax->Fill ( dssd_fr_emax, dfmaEvt[dssd_fr_subev].tid );
                 h2_d_fr_e->Fill ( d_fr_emax, s_d_fr );
                 h2_r_fr_e->Fill ( r_fr_emax, s_r_fr );
 
-
-                if ( ( DFMAEvent[dssd_fr_subev].LEDts - t_first ) / 1E5 < 100000 )
+                if ( ( dfmaEvt[dssd_fr_subev].LEDts - t_first ) / 1E5 < 100000 )
                 {
-                    h1_dssd_rate_1D->Fill ( ( DFMAEvent[dssd_fr_subev].LEDts - t_first ) / 1E5 );
-                    //h1_dssd_rate_1us->Fill((DFMAEvent[dssd_fr_subev].LEDts - t_first)/100);
+                    h1_dssd_rate_1D->Fill ( ( dfmaEvt[dssd_fr_subev].LEDts - t_first ) / 1E5 );
+                    //h1_dssd_rate_1us->Fill((dfmaEvt[dssd_fr_subev].LEDts - t_first)/100);
                     if ( s_d_fr != 0 )
                     {
-                        h1_decay_rate->Fill ( ( DFMAEvent[dssd_fr_subev].LEDts - t_first ) / 1E5 );
+                        h1_decay_rate->Fill ( ( dfmaEvt[dssd_fr_subev].LEDts - t_first ) / 1E5 );
                     }
-
                 }
-
             }
 
             if ( dssd_ba_emax > 0 )
             {
-
-                h2_dssd_ba_emax->Fill ( dssd_ba_emax, DFMAEvent[dssd_ba_subev].tid - NUMFR );
+                h2_dssd_ba_emax->Fill ( dssd_ba_emax, dfmaEvt[dssd_ba_subev].tid - NUMFR );
                 h2_d_ba_e->Fill ( d_ba_emax, s_d_ba );
                 h2_r_ba_e->Fill ( r_ba_emax, s_r_ba );
-
             }
         }
 
-
-
-
         /*
-        if(Pars.CurEvNo > 1925000){
-        printf("\n\nEvent number: %i, r_fr_subev: %i, s_r_fr: %i, s_r_ba : %i, ng: %i\n",Pars.CurEvNo,r_fr_subev,s_r_fr,s_r_ba,ng);
+        if(pars.CurEvNo > 1925000){
+        printf("\n\nEvent number: %i, r_fr_subev: %i, s_r_fr: %i, s_r_ba : %i, ng: %i\n",pars.CurEvNo,r_fr_subev,s_r_fr,s_r_ba,ng);
         printf("status: %i\n",dssd_corr[s_r_fr][s_r_ba].status);
         printf("s_d_fr: %i, s_d_ba: %i\n",s_d_fr,s_d_ba);
 
         }
         */
 
-
 #if(1) // comment out correlations code
-
-
 
 //<><><><><><><><><><><><><><><><><><><>*
 //                      *
@@ -2358,12 +1685,10 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         if ( ( s_r_fr != 0 ) && ( s_r_ba != 0 ) )
         {
-
-            //if(Pars.CurEvNo > 1925000)printf("EvNum %i Are we in this loop?\n",Pars.CurEvNo);
+            //if(pars.CurEvNo > 1925000)printf("EvNum %i Are we in this loop?\n",pars.CurEvNo);
 
             switch ( dssd_corr[s_r_fr][s_r_ba].status )
             {
-
             case 0:
 
                 // no recoils so far
@@ -2372,7 +1697,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                 // recoil last
 
-                recoil.pu = DFMAEvent[r_fr_subev].pu;
+                recoil.pu = dfmaEvt[r_fr_subev].pu;
                 recoil.en = r_fr_emax;
                 recoil.ts = r_fr_ts;
                 recoil.d2t2 = r_fr_d2t2;
@@ -2394,35 +1719,31 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                     recoil.trace_fr[i] = r_fr_trace[i];
                 }
 
-
-
-
 #if(WITHDGS)
                 // Storing DGS info for this recoil...
                 recoil.nge = ng;
                 jj = 0;
                 for ( i = 0; i < ng; i++ )
                 {
-                    if ( DGSEvent[i].tpe == GE && jj < MAXNUMGE )
+                    if ( dgsEvt[i].tpe == GE && jj < MAXNUMGE )
                     {
-                        recoil.geehi[jj] = DGSEvent[i].ehi;
-                        recoil.tge[jj] = DGSEvent[i].event_timestamp;
-                        recoil.getid[jj] = DGSEvent[i].tid;
+                        recoil.geehi[jj] = dgsEvt[i].ehi;
+                        recoil.tge[jj] = dgsEvt[i].event_timestamp;
+                        recoil.getid[jj] = dgsEvt[i].tid;
                         jj++;
                     }
                 }
 #endif
-
 
                 dssd_corr[s_r_fr][s_r_ba].status = 1;
                 dssd_corr[s_r_fr][s_r_ba].chain.recoil = recoil;
                 dssd_corr[s_r_fr][s_r_ba].chain.s_fr = s_r_fr;
                 dssd_corr[s_r_fr][s_r_ba].chain.s_ba = s_r_ba;
 
-
-                // if(Pars.CurEvNo > 1925800)printf("\nTest middle event number %i\n",Pars.CurEvNo);
+                // if(pars.CurEvNo > 1925800)printf("\nTest middle event number %i\n",pars.CurEvNo);
 
                 break;
+
             default: // there is chain already
 
                 // store previous chain in the tree
@@ -2433,7 +1754,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                 // reset the pixel
 
-                recoil.pu = DFMAEvent[r_fr_subev].pu;
+                recoil.pu = dfmaEvt[r_fr_subev].pu;
                 recoil.en = r_fr_emax;
                 recoil.ts = r_fr_ts;
                 recoil.d2t2 = r_fr_d2t2;
@@ -2448,11 +1769,11 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 jj = 0;
                 for ( i = 0; i < ng; i++ )
                 {
-                    if ( DGSEvent[i].tpe == GE && jj < MAXNUMGE )
+                    if ( dgsEvt[i].tpe == GE && jj < MAXNUMGE )
                     {
-                        recoil.geehi[jj] = DGSEvent[i].ehi;
-                        recoil.tge[jj] = DGSEvent[i].event_timestamp;
-                        recoil.getid[jj] = DGSEvent[i].tid;
+                        recoil.geehi[jj] = dgsEvt[i].ehi;
+                        recoil.tge[jj] = dgsEvt[i].event_timestamp;
+                        recoil.getid[jj] = dgsEvt[i].tid;
                         jj++;
                     }
                 }
@@ -2464,9 +1785,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                     recoil.trace_fr[i] = r_fr_trace[i];
                 }
 
-
                 dssd_corr[s_r_fr][s_r_ba].chain.recoil = recoil;
-
 
                 // reinitialising decays...
                 for ( i = 0; i < dssd_corr[s_r_fr][s_r_ba].chain.ndec; i++ )
@@ -2478,22 +1797,21 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                         dssd_corr[s_r_fr][s_r_ba].chain.decay[i].pu_fr = 0;
                         dssd_corr[s_r_fr][s_r_ba].chain.decay[i].pu_ba = 0;
                         dssd_corr[s_r_fr][s_r_ba].chain.decay[i].time = 0;
+
                         for ( j = 0; j < dssd_corr[s_r_fr][s_r_ba].chain.decay[i].traceLen; j++ )
                         {
                             dssd_corr[s_r_fr][s_r_ba].chain.decay[i].trace_fr[j] = 0;
                             dssd_corr[s_r_fr][s_r_ba].chain.decay[i].trace_ba[j] = 0;
                         }
-                        dssd_corr[s_r_fr][s_r_ba].chain.decay[i].traceLen = 0;
 
+                        dssd_corr[s_r_fr][s_r_ba].chain.decay[i].traceLen = 0;
 
                         dssd_corr[s_r_fr][s_r_ba].chain.decay[i].nge = 0;
                         for ( j = 0; j < MAXNUMGE; j++ )
                         {
-
                             dssd_corr[s_r_fr][s_r_ba].chain.decay[i].geehi[j] = 0;
                             dssd_corr[s_r_fr][s_r_ba].chain.decay[i].tge[j] = 0;
                             dssd_corr[s_r_fr][s_r_ba].chain.decay[i].getid[j] = 0;
-
                         }
                     }
                 }
@@ -2503,17 +1821,10 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 dssd_corr[s_r_fr][s_r_ba].chain.s_fr = s_r_fr;
                 dssd_corr[s_r_fr][s_r_ba].chain.s_ba = s_r_ba;
 
-
-
                 break;
-
-
             } // switch
 
         } // f&b
-
-
-
 
 //<><><><><><><><><><>*
 // Decay correlations *
@@ -2545,8 +1856,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
         unsigned long long int decay0_time;
         decay0_time = 0;
 
-
-
         if ( ( s_d_fr != 0 ) && ( s_d_ba != 0 ) )
         {
             decEv = 1;
@@ -2554,12 +1863,8 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
         while ( decEv == 1 || fdecEv != 0 )
         {
-
-
             if ( decEv == 1 )
             {
-
-
                 decay.en = d_fr_emax;
                 decay.ts = d_fr_ts;
 
@@ -2567,7 +1872,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 decay.d2t0 = d_fr_d2t0;
                 decay.d2t1 = d_fr_d2t1;
                 decay.d2t2 = d_fr_d2t2;
-
 
                 // Decay-Decay PU
                 decay.pu_fr = d_fr_PU;
@@ -2585,32 +1889,23 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                     decay.getid[j] = clover.tid[j];
                 }
 
-
                 decEv = 0;
-
-
             }
+
             else
             {
-
                 if ( fdecEv != 0 )
                 {
-
-
                     s_d_fr = s_fd_fr;
                     s_d_ba = s_fd_ba;
 
                     decay.en = fd_fr_emax;
                     decay.ts = fd_fr_ts;
 
-
                     if ( ( fdecEv == 1 ) || ( fdecEv == 3 ) ) // recoil PU
                     {
-
                         if ( fdecEv == 1 )
                         {
-
-
                             decay.pu_fr = r_fr_PU;
                             decay.pu_ba = r_ba_PU;
                             decay.d2t0 = r_fr_d2t0;
@@ -2634,7 +1929,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                         }
                         else if ( fdecEv == 3 )
                         {
-
                             decay.pu_fr = r_fr_PU;
                             decay.pu_ba = r_ba_PU;
                             decay.d2t0 = r_fr_d2t0;
@@ -2656,13 +1950,11 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                             fd_fr_emax = fd_fr_emax2;
                             fd_fr_ts = fd_fr_ts2;
                             fdecEv = 1;
-
                         }
                     }
 
                     if ( fdecEv == 2 ) // decay PU
                     {
-
                         //decay.decpos = 1;
 
                         decay.pu_fr = d_fr_PU;
@@ -2684,18 +1976,12 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                             decay.getid[j] = clover.tid[j];
                         }
                         fdecEv = 0;
-
                     }
-
-
                 }
             }
 
-
-
             switch ( dssd_corr[s_d_fr][s_d_ba].status )
             {
-
             case 0:   // No recoil before - do nothing.
                 break;
             case 1:   // First decay generation
@@ -2708,44 +1994,37 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 if ( decay.time > 0 )
                 {
                     logtime = log10 ( 10.0 * decay.time );
-                    if ( !Pars.noHists ) h2_e1t1log->Fill ( decay.en, logtime );
-
+                    if ( !pars.noHists ) h2_e1t1log->Fill ( decay.en, logtime );
                 }
 
-                if ( !Pars.noHists ) h2_x_d_fr_e->Fill ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.x, decay.en );
+                if ( !pars.noHists ) h2_x_d_fr_e->Fill ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.x, decay.en );
 
                 if ( logtime < 8 && logtime > 0 )
                 {
-
-                    if ( !Pars.noHists ) h2_x_d_fr_e_short->Fill ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.x, decay.en );
+                    if ( !pars.noHists ) h2_x_d_fr_e_short->Fill ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.x, decay.en );
 
                     //if ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.nge > 0 )
                     //{
                     //for(j=0;j<dssd_corr[s_d_fr][s_d_ba].chain.recoil.nge;j++) h2_corr_gammas->Fill(decay.en,dssd_corr[s_d_fr][s_d_ba].chain.recoil.geehi[j]);
                     //}
-                    if ( !Pars.noHists ) h1_short_dec_en->Fill ( decay.en );
-
+                    if ( !pars.noHists ) h1_short_dec_en->Fill ( decay.en );
                 }
 
                 if ( logtime < 8 && logtime > 0 )
                 {
-
                     if ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.nge > 0 )
                     {
-
                         for ( j = 0; j < dssd_corr[s_d_fr][s_d_ba].chain.recoil.nge; j++ )
                         {
                             dTgdssd = double ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.tge[j] ) - double ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.ts );
-                            if ( !Pars.noHists && dTgdssd > dtmin && dTgdssd < dtmax )
+                            if ( !pars.noHists && dTgdssd > dtmin && dTgdssd < dtmax )
                             {
                                 h2_corr_gammas_short->Fill ( decay.en, dssd_corr[s_d_fr][s_d_ba].chain.recoil.geehi[j] );
                             }
                         }
 
-
                         if ( decay.en > 3760 && decay.en < 3920 )
                         {
-
                             for ( j = 0; j < dssd_corr[s_d_fr][s_d_ba].chain.recoil.nge - 1; j++ )
                             {
 
@@ -2753,26 +2032,19 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 
                                 if ( dTgdssd > dtmin && dTgdssd < dtmax )
                                 {
-
-
                                     for ( int k = j + 1; k < dssd_corr[s_d_fr][s_d_ba].chain.recoil.nge; k++ )
                                     {
                                         dTgdssd = double ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.tge[k] ) - double ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.ts );
-                                        if ( !Pars.noHists && dTgdssd > dtmin && dTgdssd < dtmax )
+                                        if ( !pars.noHists && dTgdssd > dtmin && dTgdssd < dtmax )
                                         {
-
                                             h2_gamma_gamma_shortdec->Fill ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.geehi[j], dssd_corr[s_d_fr][s_d_ba].chain.recoil.geehi[k] );
                                             h2_gamma_gamma_shortdec->Fill ( dssd_corr[s_d_fr][s_d_ba].chain.recoil.geehi[k], dssd_corr[s_d_fr][s_d_ba].chain.recoil.geehi[j] );
-
                                         }
                                     }
-
-
                                 }
                             }
                         }
                     }
-
                 }
 
                 break;
@@ -2791,7 +2063,7 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                     h2_e2t2log->Fill ( decay.en, logtime );
                 }
 
-                //if ( !Pars.noHists )
+                //if ( !pars.noHists )
                 //{
                 //h2_e2t2c1->Fill(decay.en,decay.time/T1COMP1);
                 //h2_e2t2c2->Fill(decay.en,decay.time/T1COMP2);
@@ -2805,8 +2077,6 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 //h2_e1e2->Fill(decay.en, dssd_corr[s_d_fr][s_d_ba].chain.decay[0].en);
                 //}
 
-
-
                 break;
 
             case 3:   // Third decay generation
@@ -2816,15 +2086,13 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 dssd_corr[s_d_fr][s_d_ba].status++;
                 dssd_corr[s_d_fr][s_d_ba].chain.ndec = 3;
 
-
-
                 if ( decay.time > 0 )
                 {
                     logtime = log10 ( 10.0 * decay.time );
-                    if ( !Pars.noHists ) h2_e3t3log->Fill ( decay.en, logtime );
+                    if ( !pars.noHists ) h2_e3t3log->Fill ( decay.en, logtime );
                 }
 
-                //if ( !Pars.noHists )
+                //if ( !pars.noHists )
                 //{
                 //h2_e3t3c1->Fill(decay.en,decay.time/T1COMP1);
                 //h2_e3t3c2->Fill(decay.en,decay.time/T1COMP2);
@@ -2837,13 +2105,9 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 // h2_e2e3->Fill(decay.en, dssd_corr[s_d_fr][s_d_ba].chain.decay[1].en);
                 //}
 
-
-
                 break;
 
             case 4:   // Fourth decay generation
-
-
                 dssd_corr[s_d_fr][s_d_ba].status++;
                 dssd_corr[s_d_fr][s_d_ba].chain.ndec = 4;
 
@@ -2852,10 +2116,10 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                 dssd_corr[s_d_fr][s_d_ba].chain.decay[3] = decay;
                 if (decay.time>0){
                    logtime=log10(10.0*decay.time);
-                   if ( !Pars.noHists ) h2_e4t4log->Fill(decay.en,logtime);
+                   if ( !pars.noHists ) h2_e4t4log->Fill(decay.en,logtime);
                 }
 
-                if ( !Pars.noHists )
+                if ( !pars.noHists )
                 {
                               h2_e4t4c1->Fill(decay.en,decay.time/T1COMP1);
                               h2_e4t4c2->Fill(decay.en,decay.time/T1COMP2);
@@ -2864,50 +2128,42 @@ int bin_dfma ( GEB_EVENT* GEB_event )
                     }
                               */
 
-
                 break;
+
             case 5:   // Fifth decay generation
                 dssd_corr[s_d_fr][s_d_ba].status++;
                 dssd_corr[s_d_fr][s_d_ba].chain.ndec = 5;
                 break;
+
             default:
                 dssd_corr[s_d_fr][s_d_ba].status++;
                 dssd_corr[s_d_fr][s_d_ba].chain.ndec = 6;
                 break;
-
             }
-
-
         } //end while
 
-
 #endif
-
-
 
 //<><><><><><><><>*
 // Singles gammas *
 //<><><><><><><><>*
 
-        // printf("\nTest4, event number %i\n",Pars.CurEvNo);
+        // printf("\nTest4, event number %i\n",pars.CurEvNo);
 
 #if(1)
 
-        if ( !Pars.noHists )
+        if ( !pars.noHists )
         {
             for ( i = 0; i < ng; i++ )
             {
-                if ( ( DGSEvent[i].tpe == GE ) && ( DGSEvent[i].flag == 0 ) ) // Check for clean GEs
+                if ( ( dgsEvt[i].tpe == GE ) && ( dgsEvt[i].flag == 0 ) ) // Check for clean GEs
                 {
-                    h2_all_gammas->Fill ( DGSEvent[i].ehi, DGSEvent[i].tid );
+                    h2_all_gammas->Fill ( dgsEvt[i].ehi, dgsEvt[i].tid );
 
-
-                    if ( ( DGSEvent[i].event_timestamp - t_first ) / 1E5 < 100000 )
+                    if ( ( dgsEvt[i].event_timestamp - t_first ) / 1E5 < 100000 )
                     {
-                        h1_GE_rate->Fill ( ( DGSEvent[i].event_timestamp - t_first ) / 1E5 );
+                        h1_GE_rate->Fill ( ( dgsEvt[i].event_timestamp - t_first ) / 1E5 );
                     }
-
-
                 }
             }
         }
@@ -2919,175 +2175,362 @@ int bin_dfma ( GEB_EVENT* GEB_event )
 // Recoil-correlated gammas *
 //<><><><><><><><><><><><><>*
 
-
-
 #if(1)
 
-//printf("\n\n1) Event number %i has s_r_fr %i, s_r_ba %i, ng %i",Pars.CurEvNo,s_r_fr,s_r_ba,ng);
+//printf("\n\n1) Event number %i has s_r_fr %i, s_r_ba %i, ng %i",pars.CurEvNo,s_r_fr,s_r_ba,ng);
 //printf("\nndssd: %i, cl: %f, cr: %f\n",ndssd,cl,cr);
-        if ( !Pars.noHists )
+        if ( !pars.noHists )
         {
             if ( s_r_fr != 0 && s_r_ba != 0 )
             {
-
-
-
                 for ( i = 0; i < ng; i++ )
                 {
-
-
-
-                    if ( ( DGSEvent[i].tpe == GE ) && ( DGSEvent[i].flag == 0 ) ) // Check for clean GEs
+                    if ( ( dgsEvt[i].tpe == GE ) && ( dgsEvt[i].flag == 0 ) ) // Check for clean GEs
                     {
-                        h2_rec_gammas->Fill ( DGSEvent[i].ehi, DGSEvent[i].tid );
-                        h2_xehi->Fill ( cratn, DGSEvent[i].ehi );
+                        h2_rec_gammas->Fill ( dgsEvt[i].ehi, dgsEvt[i].tid );
+                        h2_xehi->Fill ( cratn, dgsEvt[i].ehi );
 
                         if ( dTgdssd > dtmin && dTgdssd < dtmax )
                         {
-                            h2_xehig->Fill ( cratn, DGSEvent[i].ehi );
+                            h2_xehig->Fill ( cratn, dgsEvt[i].ehi );
                         }
-
-
                     }
                 }
             }
-
 
             if ( ndssd > 0 )
             {
-
-
-
                 for ( i = 0; i < ng; i++ )
                 {
-                    if ( ( DGSEvent[i].tpe == GE ) && ( DGSEvent[i].flag == 0 ) ) // Check for clean GEs
+                    if ( ( dgsEvt[i].tpe == GE ) && ( dgsEvt[i].flag == 0 ) ) // Check for clean GEs
                     {
-                        h2_dssd_gammas->Fill ( DGSEvent[i].ehi, DGSEvent[i].tid );
+                        h2_dssd_gammas->Fill ( dgsEvt[i].ehi, dgsEvt[i].tid );
                     }
                 }
             }
 
-
             if ( cl != 0 || cr != 0 )
             {
-
                 for ( i = 0; i < ng; i++ )
                 {
-                    if ( ( DGSEvent[i].tpe == GE ) && ( DGSEvent[i].flag == 0 ) ) // Check for clean GEs
+                    if ( ( dgsEvt[i].tpe == GE ) && ( dgsEvt[i].flag == 0 ) ) // Check for clean GEs
                     {
-                        h2_mcp_gammas->Fill ( DGSEvent[i].ehi, DGSEvent[i].tid );
+                        h2_mcp_gammas->Fill ( dgsEvt[i].ehi, dgsEvt[i].tid );
                     }
                 }
             }
         }
 
-
-
-
 #endif
-
 
 //<><><><><><><><><>*
 // Print statements *
 //<><><><><><><><><>*
 
-        if ( Pars.CurEvNo <= Pars.NumToPrint )
+        if ( pars.CurEvNo <= pars.NumToPrint )
         {
-
-            printf ( "Print statements at end of bin_dfma\n" );
+            printf ( "Print statements at end of BinDFMA\n" );
 
             for ( i = 0; i < 1; i++ )
             {
-
-
                 printf ( "\n\n\nwe have %i gamma rays\n", ng );
                 printf ( "%2i> ", i );
-                printf ( "chan_id=%i; ", DGSEvent[i].chan_id );
-                printf ( "board_id=%i; ", DGSEvent[i].board_id );
-                printf ( "id =%i; ", DGSEvent[i].id );
-                printf ( "tpe=%i; ", DGSEvent[i].tpe );
-                printf ( "tid=%i; ", DGSEvent[i].tid );
-                printf ( "EventTS=%llu; ", DGSEvent[i].event_timestamp );
-                printf ( "ehi=%f ", DGSEvent[i].ehi );
+                printf ( "chan_id=%i; ", dgsEvt[i].chan_id );
+                printf ( "board_id=%i; ", dgsEvt[i].board_id );
+                printf ( "id =%i; ", dgsEvt[i].id );
+                printf ( "tpe=%i; ", dgsEvt[i].tpe );
+                printf ( "tid=%i; ", dgsEvt[i].tid );
+                printf ( "EventTS=%llu; ", dgsEvt[i].event_timestamp );
+                printf ( "ehi=%f ", dgsEvt[i].ehi );
                 printf ( "\n\n\n" );
-
-
             }
         }
 
         // debug list the dssd events we found
 
-        if ( Pars.CurEvNo <= Pars.NumToPrint )
+        if ( pars.CurEvNo <= pars.NumToPrint )
             for ( i = 0; i < ndssd; i++ )
             {
                 printf ( "we have %i DSSD event(s)\n", ndssd );
                 printf ( "%2i> ", i );
-                printf ( "chan_id=%i; ", DFMAEvent[i].chan_id );
-                printf ( "board_id=%i; ", DFMAEvent[i].board_id );
-                printf ( "id =%i; ", DFMAEvent[i].id );
-                printf ( "tpe=%i; ", DFMAEvent[i].tpe );
-                printf ( "tid=%i; ", DFMAEvent[i].tid );
-                printf ( "LEDTS=%llu; ", DFMAEvent[i].LEDts );
-                printf ( "ehi=%8i ", DFMAEvent[i].ehi );
+                printf ( "chan_id=%i; ", dfmaEvt[i].chan_id );
+                printf ( "board_id=%i; ", dfmaEvt[i].board_id );
+                printf ( "id =%i; ", dfmaEvt[i].id );
+                printf ( "tpe=%i; ", dfmaEvt[i].tpe );
+                printf ( "tid=%i; ", dfmaEvt[i].tid );
+                printf ( "LEDTS=%llu; ", dfmaEvt[i].LEDts );
+                printf ( "ehi=%8i ", dfmaEvt[i].ehi );
                 printf ( "\n\n\n\n" );
                 fflush ( stdout );
             };
 
-
         // done
 
-
-        if ( Pars.CurEvNo <= Pars.NumToPrint )
+        if ( pars.CurEvNo <= pars.NumToPrint )
         {
-            printf ( "exit bin_dfma\n" );
+            printf ( "exit BinDFMA\n" );
         }
 
         return ( 0 );
     }
-
-
 
 #endif
 
     return ( 0 );
 }
 
+/**************************/
+/*TRACE ANALYSIS FUNCTIONS*/
+/**************************/
 
-
-
-
-//*******************************************************************************************************
-
-
-
-#if(0)
-void
-SetBeta()
+// smooth3ch filter
+void smoothFilter3ch ( short int trace[], int trLen, short int smoothTrace2[] )
 {
-
-    /* declarations */
-
     int i;
-    double d1;
 
-    /*-------------------------------------*/
-    /* find Doppler and aberration factors */
-    /*-------------------------------------*/
-
-    for ( i = 0; i < NGSGE; i++ )
+    for ( i=5; i<trLen; i++ )
     {
-        //printf("det %3.3i-> ", i);
-        d1 = angle[i] / 57.29577951;
-        DopCorFac[i] = ( 1 - Pars.beta * cos ( d1 ) ) / sqrt ( 1 - Pars.beta * Pars.beta );
-        //printf("dop cor fac: %6.4f; ", DopCorFac[i]);
-        ACFac[i] = DopCorFac[i] * DopCorFac[i];
-        //printf("aberration cor fac: %6.4f\n", ACFac[i]);
+        smoothTrace2[i]= ( trace[i-1] + 2*trace[i] + trace[i+1] ) /4;
+    }
+}
 
-    };
-    fflush ( stdout );
+// smooth5ch filter
+void smoothFilter5ch ( short int trace[], int trLen, short int smoothTrace2[] )
+{
+    int i;
 
+    for ( i=5; i<trLen; i++ )
+    {
+        smoothTrace2[i]= ( trace[i-2] + 2*trace[i-1] + 4*trace[i] + 2*trace[i+1] + trace[i+2] ) /10;
+    }
+}
 
+// smooth7ch filter
+void smoothFilter7ch ( short int trace[], int trLen, short int smoothTrace2[] )
+{
+    int i;
+
+    for ( i=5; i<trLen; i++ )
+    {
+        smoothTrace2[i]= ( trace[i-3] + 2*trace[i-2] + 4*trace[i-1] + 8*trace[i] + 4*trace[i+1] +2*trace[i+2] + trace[i+3] ) /22;
+    }
+}
+
+// D filter
+void dFilter ( short int trace[], int trLen, int dTrace[] )
+{
+    int i;
+
+    for ( i=1; i<trLen; i++ )
+    {
+        dTrace[i]=trace[i]-trace[i-1];
+    }
+}
+
+// D filter
+void dFilterNEW ( short int trace[], int trLen, short int dTrace[] )
+{
+    int i;
+
+    for ( i=1; i<trLen; i++ )
+    {
+        dTrace[i]=trace[i]-trace[i-5];
+    }
+}
+
+void averaging ( short int trace[], int trLen, short int dTrace[] )
+{
+    int i;
+
+    for ( i=1; i<trLen; i++ )
+    {
+        dTrace[i] = ( trace[i-2] + trace[i-1] + trace[i] + trace[i+1] + trace[i+2] ) /5;
+    }
+}
+
+// DD filter
+void ddFilter ( short int trace[], int trLen, int ddTrace[] )
+{
+    int i;
+
+    for ( i=10; i<trLen-4; i++ )
+    {
+        ddTrace[i]=trace[i]-2*trace[i-1]+trace[i-2];
+    }
 
 }
 
-#endif
+// DD filter small signals
+void ddFilterNEW ( short int trace[], int trLen, short int ddTrace[] )
+{
+    int i;
+
+    for ( i=10; i<trLen-4; i++ )
+    {
+        ddTrace[i]=trace[i]-2*trace[i-5]+trace[i-10];
+    }
+
+}
+
+// LE filter
+void leFilter ( short int trace[], int trLen, int k, int leTrace[], int& t0, int& t1, int leThr )
+{
+    int i;
+    t0 = 0;
+    t1 = 0;
+
+    for ( i=k; i<trLen; i++ )
+    {
+        leTrace[i]=trace[i]-trace[i-k];
+        //if(i<100)printf("trace[%i]: %i, trace[%i]: %i, leTrace[%i]: %i\n",i,trace[i],i-k,trace[i-k],leTrace[i]);
+
+        if ( ( leTrace[i]>leThr ) && ( leTrace[i-1]<leThr ) && ( t0>0 ) && ( t1==0 ) )
+        {
+            t1 = i;
+        }
+        if ( ( leTrace[i]>leThr ) && ( leTrace[i-1]< leThr ) && ( t0==0 ) )
+        {
+            t0 = i;
+        }
+    }
+}
+
+// trigger 1 on trace
+void trigTrace ( int trace[], int trLen, int trStart, int trStop, int thr, int &t0 )
+{
+    int i;
+
+    int safetyTrace = 0;
+    if ( trStop < trLen ) safetyTrace = trStop;
+    else safetyTrace = trLen;
+
+    for ( i=trStart; i<safetyTrace; i++ )
+    {
+        if ( ( trace[i]>=thr ) && ( trace[i+1]<thr ) && ( t0==0 ) )
+        {
+            t0=i;
+            break;
+        }
+    }
+
+}
+
+
+void negd2 ( int trace[], int trLen, int trStart, int trStop, int thr, int &numtrigs )
+{
+    int safetyTrace = 0;
+    if ( trStop < trLen ) safetyTrace = trStop;
+    else safetyTrace = trLen;
+
+    int i;
+
+    for ( i=trStart; i<safetyTrace; i++ )
+    {
+        if ( ( trace[i]>=thr ) && ( trace[i+1] < thr ) ) numtrigs++;
+    }
+}
+
+// Trapezoidal filter
+void trapFilter ( short int trace[], int trLen, int m, int k, int trapTrace[] )
+{
+    int i;
+    for ( i=m+k+m; i<trLen; i++ ) trapTrace[i] = trapTrace[i-1] + ( trace[i]-trace[i-m] )- ( trace[i-m-k]-trace[i-m-k-m] );
+}
+
+// extract energies from PU traces
+void GetPUEn ( int t1, int t0, int trace[], int trlen, float &e0, float &e1, int m, int k, int n, float trise )
+{
+    float ebl;
+    float dt;
+    int iw0, iw1;
+    int i;
+
+    if ( t1-t0>k ) // time separation longer than k
+    {
+        // integration windows
+        if ( t1-t0-k>m ) iw0=m;
+        else iw0=t1-t0-k; // 11-11 correction
+        //if (iw0<0) iw0=1;
+        if ( trlen-t1-k>m ) iw1=m;
+        else iw1=trlen-t1-k; //11-11 correction
+        //if (iw1<0) iw1=1;
+        //if (iw1>iw0) iw1=iw0;
+
+        // front energies
+        e0=0;
+        e1=0;
+        for ( i=t0+k; i<t0+k+iw0; i++ )
+        {
+            e0=e0+trace[i]-trace[i-iw0-k];
+        }
+        for ( i=t1+k; i<t1+iw1+k; i++ )
+        {
+            e1=e1+trace[i]-trace[i-k-t1+t0-iw1];
+        }
+
+        e0=e0*float ( m ) /float ( iw0 ); // gain correction // 11-11 correction
+        e1=e1*float ( m ) /float ( iw1 ); //  gain correction // 11-11 corrrection
+        e1=e1-e0;
+    }
+
+    else     // t1-t0 < k
+    {
+        if ( t1-t0<=trise )
+        {
+            e0=0;
+            e1=0;
+            dt=t1-t0;
+            // integration of the begining of 1st signal
+            for ( i=t0; i<t1; i++ )
+            {
+                e0=e0+trace[i];
+            }
+            //printf("integral %f\n", e0);
+            ebl=0;
+            // base line inegration
+            for ( i=t0-m; i<t0; i++ )
+            {
+                ebl=ebl+trace[i];
+            }
+            e0=e0-ebl*dt/float ( m ); // energy of 1st signal
+            // integration of 1st and 2nd signal
+            for ( i=t1+k; i<t1+m+k; i++ )
+            {
+                e1=e1+trace[i];
+            }
+
+            e1=e1-ebl; // energy sum of 1st and 2nd signal
+            e0=2.0*trise*float ( m ) *e0/dt/dt; // energy of 1st signal
+            e1=e1-e0; // enery of 2nd signal
+        }
+
+        else
+        {
+            e0=0;
+            e1=0;
+            dt=t1-t0-trise;
+            // integration of the begining of 1st signal
+            for ( i=t0+trise; i<t1; i++ )
+            {
+                e0=e0+trace[i];
+            }
+            //printf("integral %f\n", e0);
+            ebl=0;
+            // base line inegration
+            for ( i=t0-m; i<t0; i++ )
+            {
+                ebl=ebl+trace[i];
+            }
+            e0=e0-ebl*dt/float ( m ); // energy of 1st signal
+            // integration of 1st and 2nd signal
+            for ( i=t1+k; i<t1+m+k; i++ )
+            {
+                e1=e1+trace[i];
+            }
+
+            e1=e1-ebl; // energy sum of 1st and 2nd signal
+            e0=float ( m ) *e0/dt; // energy of 1st signal
+            e1=e1-e0; // enery of 2nd signal
+        }
+    }
+}

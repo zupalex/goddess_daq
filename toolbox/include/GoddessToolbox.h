@@ -18,6 +18,7 @@
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
 #include <math.h>
@@ -46,23 +47,22 @@ using std::size_t;
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
 
-string GetLocalTimeAndDate();
-string GetCurrentYear();
+string GetLocalTimeAndDate ( bool doPrint = false );
+string GetCurrentYear ( bool doPrint = false );
 
-string GetCurrentDayName();
-string GetCurrentMonthName();
+string GetCurrentDayName ( bool doPrint = false );
+string GetCurrentMonthName ( bool doPrint = false );
 
-int GetCurrentDayNum();
-int GetCurrentMonthNum();
+int GetCurrentDayNum ( bool doPrint = false );
+int GetCurrentMonthNum ();
 
-int GetCurrentHour();
-int GetCurrentMinute();
-int GetCurrentSecond();
+int GetCurrentHour ( bool doPrint = false );
+int GetCurrentMinute ( bool doPrint = false );
+int GetCurrentSecond ( bool doPrint = false );
 
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
-
 
 inline std::function<bool ( char,char ) > ignoreCharCasePred ( bool caseSensitive )
 {
@@ -102,7 +102,7 @@ vector<int> DecodeNumberString ( string itemsString, bool verbose = false );
 
 vector<string> DecodeTags ( string tagsStr );
 
-vector<string> GetDirContent ( string dirName = "./", string mode = "root", string fileExt = "",
+vector<string> GetDirContent ( string dirName = "./", string mode = "root", string endWith = "",
                                string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "", bool caseSensitive = true );
 
 std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode = "root", bool caseSensitive = true );
@@ -918,6 +918,17 @@ template<typename T2> inline int CheckForMatch ( string* readWord, short posElem
 
     return charge;
 }
+
+
+//_________________________________________GEOMETRY AND TRIGONOMETRY FUNCTIONS & UTILITIES_______________________________________________________//
+
+
+float findAzimuthFromCartesian ( float xx, float yy );
+float findPolarFromCartesian ( float xx, float yy, float zz, float* rr );
+
+//_________________________________________RANDOM INITIALIZER UTILITIES_______________________________________________________//
+
+int GetASeed ( unsigned int *seed );
 
 #endif
 

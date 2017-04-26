@@ -7,7 +7,6 @@
 #include "IonChamber.h"
 #include "LiquidScint.h"
 #include "GoddessStruct.h"
-#include "SortManager.h"
 
 #include "GTMerge.h"
 #include "GEBSort.h"
@@ -22,7 +21,7 @@ double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det = nullptr, f
 class GoddessData
 {
 public:
-    GoddessData ();
+    GoddessData ( PARS* pars_, GoddessConfig* gconf_ );
     ~GoddessData();
 
     int Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt );
@@ -34,6 +33,7 @@ private:
         unsigned long long timestamp;
     };
 
+    PARS* pars;
     GoddessConfig* config;
 
     ///The lowest timestamp int he current event.
@@ -64,7 +64,7 @@ private:
     void InitBB10Hists();
     void InitGammaHists();
 
-    int FillTrees ( std::vector<DGSEVENT>* dgsEvts/*, std::vector<DFMAEVENT> *dgodEvts, std::vector<AGODEVENT> *agodEvt*/ );
+    int FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts );
     void FillHists ( std::vector<DGSEVENT>* dgsEvts );
 
     ///Map of all fired detectors in an event keyed by position ID.
@@ -165,6 +165,7 @@ private:
     float psd;
     float tac;
 
+    bool GetWriteEventFlag ( GEB_EVENT* gebEvt );
 };
 
 #endif

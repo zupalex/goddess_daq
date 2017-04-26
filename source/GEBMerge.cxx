@@ -307,7 +307,7 @@ int main ( int argc, char **argv )
 
     /* initialize random number generator etc */
 
-    get_a_seed ( &seed );
+    GetASeed ( &seed );
     srand ( seed );
     nstat = ( MSTAT * ) calloc ( 1, sizeof ( MSTAT ) );
     bzero ( ( char * ) &control, sizeof ( CONTROL ) );

@@ -40,15 +40,15 @@ struct NewGeomPars
 {
     bool overrideGeom;
     bool overrideReac;
-    bool computeEjectileELoss;
-    bool computebeamELoss;
+    int computeEjectileELoss;
+    int computeBeamELoss;
 
     void Init()
     {
         overrideGeom = false;
         overrideReac = false;
-        computebeamELoss = true;
-        computeEjectileELoss = true;
+        computeBeamELoss = 1;
+        computeEjectileELoss = 1;
     }
 };
 
@@ -149,8 +149,8 @@ public:
 
     TChain* initialPosChain;
 
-    map<string, TH1F*> hQval_NewGeom;
-    map<string, TH1F*> hEx_NewGeom;
+    map<string, TH2F*> hQval_NewGeom;
+    map<string, TH2F*> hEx_NewGeom;
 
     map<string, TH2F*> hEvsA_SX3_NewGeom;
     map<string, TH2F*> hEvsA_QQQ5_NewGeom;
@@ -162,22 +162,26 @@ public:
     void PrintOutStripsPositions ( );
     void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
     TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
-    void GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
-                                  float qqq5OffX, float qqq5OffY, float qqq5OffZ,
-                                  float sX3OffX, float sX3OffY, float sX3OffZ,
-                                  int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ );
-    string DrawNewGeom ( string histName );
-    void GetBestParameters ( float mean = 4.1, float fwhm = 0.5, string detType = "", string inFileName = "", string betterFitMode = "sigma < bestSigma && chi2 < bestChi2" );
-    TF1* FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ );
+//     void GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
+//                                   float qqq5OffX, float qqq5OffY, float qqq5OffZ,
+//                                   float sX3OffX, float sX3OffY, float sX3OffZ,
+//                                   int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ );
+//     string DrawNewGeom ( string histName );
+//     void GetBestParameters ( float mean = 4.1, float fwhm = 0.5, string detType = "", string inFileName = "", string betterFitMode = "sigma < bestSigma && chi2 < bestChi2" );
+//     TF1* FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ );
     void WriteNewGeomGraphs ( string outFileName = "" );
-    void ReloadNewGeomGraphs ( string outFileName );
+//     void ReloadNewGeomGraphs ( string outFileName );
 
     void GenerateGeomAdjustRootfile ( string filesname, string treename, long long int nEntries, string outfname );
+
+    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, vector<TVector3> qqq5Offsets, vector<TVector3> sx3Offsets, vector<TVector3> targetOffsets );
 
     void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries,
                                   int qqq5OffX, int qqq5OffY, int qqq5OffZ,
                                   int sX3OffX, int sX3OffY, int sX3OffZ,
                                   int targetOffX, int targetOffY, int targetOffZ );
+
+    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, string offsetsList );
 
     // ******************** Calibration Utilities ********************** //
 

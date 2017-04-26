@@ -217,7 +217,7 @@ void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
         {
             for ( int j = 0; j < 12; j++ )
             {
-                for ( int k = 0; k < maxMult; k++ )
+                for ( int k = 1; k < maxMult; k++ )
                 {
                     MakeNewHist ( Form ( "En_%s_vs_Angle_SX3%s%d_mult%d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ),
                                   Form ( "Energy %s vs Angle SX3 %s%d mult %d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ),
@@ -229,10 +229,10 @@ void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
             {
                 std::vector<double> binsEdgesList = GetBinsEdges ( geomInfo, up, false, j, 1 );
 
-                for ( int k = 0; k < maxMult; k++ )
+                for ( int k = 1; k < maxMult; k++ )
                 {
-                    MakeNewHist ( Form ( "En_%s_vs_Strip_QQQ5%s%d_mult%d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ),
-                                  Form ( "Energy %s vs Strip# QQQ5 %s%d mult %d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ), 34, -1, 33, nBinsY, minY, maxY );
+//                     MakeNewHist ( Form ( "En_%s_vs_Strip_QQQ5%s%d_mult%d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ),
+//                                   Form ( "Energy %s vs Strip# QQQ5 %s%d mult %d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ), 34, -1, 33, nBinsY, minY, maxY );
 
                     MakeNewHist ( Form ( "En_%s_vs_Angle_QQQ5%s%d_mult%d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ),
                                   Form ( "Energy %s vs Angle QQQ5 %s%d mult %d", i == 0 ? "front" : "back", up == 0 ? "D" : "U", j, k ),
@@ -240,6 +240,12 @@ void InitEvsAHist ( unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY
                 }
             }
         }
+    }
+
+    for ( int k = 1; k < maxMult; k++ )
+    {
+        MakeNewHist ( Form ( "En_front_vs_Strip_mult%d", k ), Form ( "Energy front vs Strip# mult %d", k ), 500, 0, 500, nBinsY, minY, maxY, false );
+        MakeNewHist ( Form ( "En_back_vs_Strip_mult%d", k ), Form ( "Energy back vs Strip# mult %d", k ), 500, 0, 500, nBinsY, minY, maxY, false );
     }
 }
 
@@ -262,15 +268,14 @@ bool FillEvsAHist ( UserAnalysis* analysis_ )
     {
         if ( analysis_->si.angle != 0 )
         {
+            int globStripID = ToStripID ( analysis_->si.isUpstream, analysis_->si.isBarrel, true, analysis_->si.sector, analysis_->si.strip );
+
             if ( analysis_->si.fEn > 0 )
             {
                 hEvsASectFront->Fill ( analysis_->si.angle, analysis_->si.fEn );
 
-                if ( !analysis_->si.isBarrel )
-                {
-                    TH2F* hEvsStrip = ( TH2F* ) histsMap[Form ( "En_front_vs_Strip_QQQ5%s_mult%d", sectStr.c_str(), analysis_->si.mult )].first;
-                    hEvsStrip->Fill ( analysis_->si.strip, analysis_->si.fEn );
-                }
+                TH2F* hEvsStrip = ( TH2F* ) histsMap[Form ( "En_front_vs_Strip_mult%d", analysis_->si.mult )].first;
+                hEvsStrip->Fill ( globStripID, analysis_->si.fEn );
 
                 filled = true;
             }
@@ -279,11 +284,8 @@ bool FillEvsAHist ( UserAnalysis* analysis_ )
             {
                 hEvsASectBack->Fill ( analysis_->si.angle, analysis_->si.bEn );
 
-                if ( !analysis_->si.isBarrel )
-                {
-                    TH2F* hEvsStrip = ( TH2F* ) histsMap[Form ( "En_back_vs_Strip_QQQ5%s_mult%d", sectStr.c_str(), analysis_->si.mult )].first;
-                    hEvsStrip->Fill ( analysis_->si.strip, analysis_->si.bEn );
-                }
+                TH2F* hEvsStrip = ( TH2F* ) histsMap[Form ( "En_back_vs_Strip_mult%d", analysis_->si.mult )].first;
+                hEvsStrip->Fill ( globStripID, analysis_->si.bEn );
             }
 
             filled = true;
@@ -917,8 +919,8 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     UserAnalysis* analysis = new UserAnalysis();
 
-    analysis->reacInfoPtr = reacInfo;
-    analysis->geomInfoPtr = geomInfo;
+    analysis->reacInfoPtr = ( GoddessReacInfos* ) reacInfo->Clone();
+    analysis->geomInfoPtr = ( GoddessGeomInfos* ) geomInfo->Clone();
 
     TVector3 beamDir ( 0, 0, 1 );
 
@@ -943,13 +945,14 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     char* tryFindStr = new char[512];
 
-    sprintf ( tryFindStr, "*%s*range*_vs_energy*", projStr.c_str() );
+    sprintf ( tryFindStr, "%s_in_%s_%dmg_cm3*range*_vs_energy*", projStr.c_str(), reacInfo->targetType.c_str(), ( int ) reacInfo->targetDensity );
 
     vector<string> tryFindTable = DecodeItemsToTreat ( ( string ) tryFindStr, "system", false );
 
     if ( tryFindTable.size() != 1 )
     {
-        std::cerr << "Requested to compute the energy loss but no stopping power table was given or auto search failed...\n";
+        std::cerr << "Requested to compute the energy loss for " << projStr << " but no stopping power table was given or auto search failed...\n";
+        std::cerr << "Auto search: " << tryFindStr << std::endl;
         return;
     }
 
@@ -957,9 +960,9 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     double beamEffThickness = GetEffectiveThickness ( beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
 
-    double localBeamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001, "Interpolation" );
-    cout << "Beam Energy after computing energy loss: " << localBeamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
-    analysis->reacInfoPtr->beamEk = localBeamEk;
+    analysis->reacInfoPtr->beamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001,
+                                    reacInfo->targetType,  reacInfo->targetDensity, "./", "Interpolation" );
+    cout << "Beam Energy after computing energy loss: " << analysis->reacInfoPtr->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
 
     int currTreeNum = 0;
 
@@ -978,9 +981,12 @@ void FillUserHists ( long long int maxEvents = 0 )
             geomInfo = ( GoddessGeomInfos* ) uChain->GetFile()->FindObjectAny ( "GoddessGeom" );
             reacInfo = ( GoddessReacInfos* ) uChain->GetFile()->FindObjectAny ( "GoddessReac" );
 
-            localBeamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001 );
-            cout << "Beam Energy after computing energy loss: " << localBeamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
-            analysis->reacInfoPtr->beamEk = localBeamEk;
+            analysis->reacInfoPtr = ( GoddessReacInfos* ) reacInfo->Clone();
+            analysis->geomInfoPtr = ( GoddessGeomInfos* ) geomInfo->Clone();
+
+            analysis->reacInfoPtr->beamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001,
+                                            reacInfo->targetType,  reacInfo->targetDensity, "./", "Interpolation" );
+            cout << "Beam Energy after computing energy loss: " << analysis->reacInfoPtr->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
         }
 
         ResetHistsStates();
@@ -1037,6 +1043,7 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     return;
 }
+
 
 
 

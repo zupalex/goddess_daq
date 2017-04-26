@@ -158,7 +158,13 @@ void GoddessConfig::ReadConfig ( std::string filename, std::string sx3EnAdjustFN
                     targetType = line.substr ( typePos, foundComa-typePos );
                     targetType = FindAndReplaceInString ( targetType, " ", "" );
 
-                    reacInfos["Target Thickness"] = std::stof ( line.substr ( thicknessPos ) );
+                    foundComa = line.find_first_of ( ",", thicknessPos );
+
+                    reacInfos["Target Thickness"] = std::stof ( line.substr ( thicknessPos, foundComa-thicknessPos ) );
+
+                    std::size_t densityPos = line.find_first_of ( "0123456789.", line.find ( "Density" ) );
+
+                    reacInfos["Target Density"] = std::stof ( line.substr ( densityPos ) );
                 }
 
                 std::cout << "Z = " << reacInfos[infoType_ + " Charge"] << " , A = " << reacInfos[infoType_ + " Mass"] << " , Atomic Mass = " << reacInfos[infoType_ + " Atomic Mass"];

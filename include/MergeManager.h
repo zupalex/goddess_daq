@@ -57,8 +57,8 @@ public:
     int key;
 };
 
-// In get_a_seed.c
-int get_a_seed ( unsigned int *seed );
+// In GetASeed.c
+int GetASeed ( unsigned int *seed );
 
 void CheckNoArgs ( int required, int actual, string str );
 

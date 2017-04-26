@@ -20,221 +20,21 @@
 #include <stddef.h>
 #include <zlib.h>
 
-#include "Rtypes.h"
-#include "TROOT.h"
-#include "TFile.h"
-#include "TRandom.h"
-#include "TH1.h"
-#include "TDirectory.h"
-
-#include "TMath.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TTree.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TObjArray.h"
-#include "TObject.h"
-#include "TKey.h"
-#include "TSystem.h"
-#include "TCutG.h"
-
-#include "TMapFile.h"
-
 #include "GEBSort.h"
 #include "GTMerge.h"
-#include "veto_pos.h"
-// #include "ctk.h"
+
+#include "DGSProcessor.h"
+#include "GODProcessor.h"
 
 #include "GoddessConfig.h"
 #include "GoddessStruct.h"
-#include "gdecomp.h"
 
-#define STRLEN 256
-#define MAXDETNO 200
-#define MAXDETPOS 120
-#define MAXCRYSTALNO 3
-#define MAXNOSEG 9
-#define NUMAGATAPOS 180
-#define MAXMODNO 60
-
-#define GEB_TYPE_DECOMP         1
-#define GEB_TYPE_RAW            2
-#define GEB_TYPE_TRACK          3
-#define GEB_TYPE_BGS            4
-#define GEB_TYPE_S800_RAW       5
-#define GEB_TYPE_NSCLnonevent   6
-#define GEB_TYPE_GT_SCALER      7
-#define GEB_TYPE_GT_MOD29       8
-#define GEB_TYPE_S800PHYSDATA   9
-#define GEB_TYPE_NSCLNONEVTS   10
-#define GEB_TYPE_G4SIM         11
-#define GEB_TYPE_CHICO         12
-#define GEB_TYPE_DGS           14
-#define GEB_TYPE_DGSTRIG       15
-#define GEB_TYPE_DFMA          16
-#define GEB_TYPE_PHOSWICH      17
-#define GEB_TYPE_PHOSWICHAUX   18
-#define GEB_TYPE_AGOD          19
-
-#define MAX_GEB_TYPE 20
-
-using std::string;
-
-class GoddessData; // forward declaration
-
-class PARS
-{
-private:
-
-public:
-    PARS();
-    virtual ~PARS();
-
-    char ConfigFile[STRLEN];
-    char GeomFile[STRLEN];
-
-    std::string sx3EnAdjustFile;
-    std::string qqq5EnAdjustFile;
-
-    short noCalib;
-    bool noMapping;
-    bool noHists;
-    unsigned short ignoreThresholds;
-    unsigned short siDetailLvl;
-
-    std::string userFilter;
-    std::string triggerMode;
-    std::ofstream cleanedMerged;
-
-    char ROOTFile[STRLEN];
-
-    unsigned long long int nEvents;
-
-    char ROOTFileOption[STRLEN];
-    char GTSortInputFile[STRLEN];
-    int UseShareMemFile;
-    unsigned int StartMapAddress;
-    char ShareMemFile[STRLEN];
-    int InputSrc;
-    int HaveRootFileName;
-    int WeWereSignalled;
-    int UseRootFile, SizeShareMemFile;
-    int UpdateRootFile;
-    char spname[STRLEN];
-    unsigned int firstEvent;
-    int GSudpPort;
-    unsigned int NumToPrint;
-    int DumpEvery;
-    TFile* f1;
-    TTree* mainTree;
-    TDirectory* histDir;
-    TDirectory* treeDir;
-    TList* wlist;
-    unsigned long long int curTS;
-    long long int dTS;
-    long long int nbytes;
-    unsigned int CurEvNo;
-    char pHost[16];
-    int grouping;
-    int type;
-    int enabled[MAXDETNO + 1];
-    float CCcal_gain[MAXDETNO + 1];
-    float CCcal_offset[MAXDETNO + 1];
-    float SEGcal_gain[MAXDETPOS + 1][MAXCRYSTALNO + 1];
-    float SEGcal_offset[MAXDETPOS + 1][MAXCRYSTALNO + 1];
-    float timeout;
-    float crmat[MAXDETPOS + 1][MAXCRYSTALNO + 1][4][4];
-    float detpolang[MAXDETPOS + 1];
-    float beta;
-    int GGMAX;
-    int modwrite;
-    unsigned int tsnumwrites;
-    float fomlo[MAXNOSEG];
-    float fomhi[MAXNOSEG];
-    int ndetlimlo;
-    int ndetlimhi;
-    float beamdir[3];
-    int nocrystaltoworldrot;
-    int multlo;
-    int multhi;
-    int requiretracked;
-    float  modCCang[MAXMODNO + 1][4];
-    float  modCCdopfac[MAXDETNO];
-    int AGATA_data;
-    double TrX[NUMAGATAPOS], TrY[NUMAGATAPOS], TrZ[NUMAGATAPOS];
-    double rotxx[NUMAGATAPOS], rotxy[NUMAGATAPOS], rotxz[NUMAGATAPOS];
-    double rotyx[NUMAGATAPOS], rotyy[NUMAGATAPOS], rotyz[NUMAGATAPOS];
-    double rotzx[NUMAGATAPOS], rotzy[NUMAGATAPOS], rotzz[NUMAGATAPOS];
-    int numgggates;
-    int gg_gate_pos[100];
-    int gg_gate_width[100];
-    int vetoSpots;
-    char vetoSpotsfn[128];
-    float vetocutfac[VETO_NZ];
-    float vetoecut;
-    float target_x, target_y, target_z;
-    float maxsnglintrE;
-    float maxsnglintrEFOM;
-    char AGATA_data_fn[512];
-};
-
-// struct GEBDATA
-// {
-//     int type; /* type of data following */
-//     int length;
-//     unsigned long long timestamp;
-// };
-
-class GEB_EVENT
-{
-private:
-
-public:
-    GEB_EVENT();
-    GEB_EVENT ( int maxGebs_ );
-    virtual ~GEB_EVENT();
-
-    int maxGebs;
-    std::vector<GEBDATA*> ptgd;
-    std::vector<char*> ptinp;
-};
-
-// In time_stamp.c
-int time_stamp();
-
-// In bin_dgs.c
-int sup_dgs();
-void getcal ( char* file );
-int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* theDGSEvent );
-int bin_dgs ( GEB_EVENT* GEB_event );
-void SetBeta();
-
-// In bin_dgod.c
-int DFMAEvDecompose_v3 ( unsigned int* ev, int len, DFMAEVENT* theDFMAEvent );
-int sup_dgod();
-int bin_dgod ( GEB_EVENT* GEB_event );
-
-// In bin_agod.c
-void AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theAGODEvent );
-void sup_agod();
-int bin_agod ( GEB_EVENT* GEB_event );
-
-// In bin_god.c
-void sup_god();
-int bin_god ( GEB_EVENT* gebEvt );
+#include "GoddessData.h"
 
 // In ProcessManagers.cxx
 int GebTypeStr ( int type, char str[] );
 void CheckNoArgs ( int required, int actual, char* str );
 void UPDSSHMEM ( time_t& t1, time_t& t2, TMapFile* mfile, char* shareMemFile );
-float findAzimuthFromCartesian ( float xx, float yy );
-float findPolarFromCartesian ( float xx, float yy, float zz, float* rr );
-
-TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2 );
-TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi );
-TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi );
-TH1D* make1D ( const char* txt, int xln, int xlo, int xhi );
 
 class SortManager
 {
@@ -272,20 +72,24 @@ public:
     GEBDATA* buffHeader[MAXCOINEV];
     char* buffData[MAXCOINEV];
 
-    GEB_EVENT* GEB_event;
+    GEB_EVENT* gebEvt;
     GEB_EVENT* overflowGEBEv;
 
-    DFMAEVENT DFMAEvent[MAXCOINEV];
+    DFMAEVENT dfmaEvt[MAXCOINEV];
     unsigned int numDGOD;
 
-    AGODEVENT AGODEvent[MAXCOINEV];
+    AGODEVENT agodEvt[MAXCOINEV];
     unsigned int numAGOD;
     unsigned long long lastTS;
 
-    DGSEVENT DGSEvent[MAXCOINEV];
-    int tlkup[NCHANNELS];
-    int tid[NCHANNELS];
+    GODProcessor* theGODProcessor;
+
+    int* tlkup;
+    int* tid;
     int ng;
+
+    DGSProcessor* theDGSProcessor;
+    DGSEVENT dgsEvt[MAXCOINEV];
 
     GoddessData* godData;
 

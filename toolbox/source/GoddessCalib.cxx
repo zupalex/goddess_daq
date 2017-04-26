@@ -3269,11 +3269,12 @@ TF1* GoddessCalib::FitQVal ( TH1F* hist, vector< string > mean, float fwhm_min, 
         for ( unsigned int i = 0; i < mean.size(); i++ )
         {
             cout << "Peak #" << std::setw ( 2 ) << std::left << i << " : ";
-            if ( dependantFrom[i] == -1 ) cout << fitFunc->GetParameter ( 4 + 2*i ) << " MeV\n";
+            if ( dependantFrom[i] == -1 ) cout << fitFunc->GetParameter ( 4 + 2*i ) << " +/- " << fitFunc->GetParError ( 4 + 2*i ) << " MeV\n";
             else
             {
-                cout << fitFunc->GetParameter ( 4 + dependantFrom[i]*i ) + fitFunc->GetParameter ( 4 + 2*i ) << " MeV ( Depends from Peak #" << dependantFrom[i] << " : ";
-                cout << " energy difference = " << fabs ( fitFunc->GetParameter ( 4 + 2*i ) );
+                cout << fitFunc->GetParameter ( 4 + dependantFrom[i]*i ) + fitFunc->GetParameter ( 4 + 2*i );
+                cout << " +/- " << fitFunc->GetParError ( 4 + dependantFrom[i]*i ) + fitFunc->GetParError ( 4 + 2*i ) << " MeV ( Depends from Peak #" << dependantFrom[i] << " : ";
+                cout << " energy difference = " << fabs ( fitFunc->GetParameter ( 4 + 2*i ) ) << " +/- " << fitFunc->GetParError ( 4 + 2*i );
                 cout << " / Ratio = " << fitFunc->GetParameter ( 3 + 2*i ) / fitFunc->GetParameter ( 3 + dependantFrom[i]*i ) << " )\n";
             }
         }
@@ -3915,7 +3916,7 @@ void GoddessCalib::SetNewGeomMode ( bool geomOR, bool reacOR, bool beamELoss, bo
 {
     nGP.overrideGeom = geomOR;
     nGP.overrideReac = reacOR;
-    nGP.computebeamELoss = beamELoss;
+    nGP.computeBeamELoss = beamELoss;
     nGP.computeEjectileELoss = ejecELoss;
 }
 
@@ -3931,7 +3932,7 @@ void GoddessCalib::SetReacOverride ( bool reacOR )
 
 void GoddessCalib::SetComputeBeamELoss ( bool beamELoss )
 {
-    nGP.computebeamELoss = beamELoss;
+    nGP.computeBeamELoss = beamELoss;
 }
 
 void GoddessCalib::SetComputeEjecELoss ( bool ejecELoss )
@@ -4050,12 +4051,9 @@ void GoddessCalib::GenerateGeomAdjustRootfile ( string filesname, string treenam
     return;
 }
 
-void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries,
-        int qqq5OffX, int qqq5OffY, int qqq5OffZ, int sX3OffX, int sX3OffY, int sX3OffZ, int targetOffX, int targetOffY, int targetOffZ )
+void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, vector< TVector3 > qqq5Offsets, vector< TVector3 > sx3Offsets, vector< TVector3 > targetOffsets )
 {
     if ( initialPosChain == nullptr ) return;
-
-    string computeELossStr = nGP.computeEjectileELoss ? "" : "_no_EnLoss";
 
     TFile* inFile = new TFile ( filename.c_str(), "read" );
 
@@ -4126,234 +4124,269 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
     targetLadderDir.SetTheta ( geomInfo->targetLadderAngle*TMath::DegToRad() );
     targetLadderDir.SetPhi ( TMath::PiOver2() );
 
-    TVector3 totQQQ5Offset ( ( qqq5OffX-targetOffX ) *0.01, ( qqq5OffY-targetOffY ) *0.01, ( qqq5OffZ-targetOffZ ) *0.01 );
-    TVector3 totSX3Offset ( ( sX3OffX-targetOffX ) *0.01, ( sX3OffY-targetOffY ) *0.01, ( sX3OffZ-targetOffZ ) *0.01 );
-
     char qqq5SectAliases[4] = {'A', 'B', 'C', 'D'};
 
-    TVector3 qqq5sPos[2][4];
-    //     TVector3 sX3sPos[2][12];
+    GoddessReacInfos* localReacInfo = ( GoddessReacInfos* ) reacInfo->Clone();
+
+    if ( nGP.computeBeamELoss )
+    {
+        double beamEffThickness = GetEffectiveThickness ( beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), localReacInfo->targetThickness );
+
+        localReacInfo->beamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", localReacInfo->beamA, localReacInfo->beamZ, localReacInfo->beamEk, beamEffThickness, 0.001,
+                                localReacInfo->targetType, localReacInfo->targetDensity, "./", "Interpolation" );
+
+        cout << "Beam Energy after computing energy loss: " << localReacInfo->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
+    }
 
     double qqq5FstStripWidth = geomInfo->qqq5FirstStripWidth;
     double qqq5DeltaPitch = geomInfo->qqq5DeltaPitch;
 
-    double origBeamEk = reacInfo->beamEk;
-    double localBeamEk = reacInfo->beamEk;
-
-    if ( nGP.computebeamELoss )
-    {
-        double beamEffThickness = GetEffectiveThickness ( beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
-
-        localBeamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001, "Interpolation" );
-
-        cout << "Beam Energy after computing energy loss: " << localBeamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
-
-        reacInfo->beamEk = localBeamEk;
-    }
-
     TVector3 targetPos = geomInfo->GetOffset ( "Target Offset" );
-
     cout << "Target Offset read from file: ( " << targetPos.X() << " , " << targetPos.Y() << " , " << targetPos.Z() << " ) \n";
-
-    string sX3OffXStr, sX3OffYStr, sX3OffZStr, qqq5OffXStr, qqq5OffYStr, qqq5OffZStr, targetOffXStr, targetOffYStr, targetOffZStr;
-
-    sX3OffXStr = GetNameCompliantStr ( sX3OffX );
-    sX3OffYStr = GetNameCompliantStr ( sX3OffY );
-    sX3OffZStr = GetNameCompliantStr ( sX3OffZ );
-    qqq5OffXStr = GetNameCompliantStr ( qqq5OffX );
-    qqq5OffYStr = GetNameCompliantStr ( qqq5OffY );
-    qqq5OffZStr = GetNameCompliantStr ( qqq5OffZ );
-    targetOffXStr = GetNameCompliantStr ( targetOffX );
-    targetOffYStr = GetNameCompliantStr ( targetOffY );
-    targetOffZStr = GetNameCompliantStr ( targetOffZ );
 
     cout << "Will apply the following gain: SuperX3 = " << reacInfo->sX3EnGain << " / QQQ5 = " << reacInfo->qqq5EnGain << "\n";
 
-    for ( int up = 0; up < 2; up++ )
+    vector<string> sX3OffXStr, sX3OffYStr, sX3OffZStr, qqq5OffXStr, qqq5OffYStr, qqq5OffZStr, targetOffXStr, targetOffYStr, targetOffZStr;
+
+    int startBELiter;
+    switch ( nGP.computeBeamELoss )
     {
-        for ( int bar = 0; bar < 2; bar++ )
+    case 0:
+        startBELiter = 0;
+    case 1:
+        startBELiter = 1;
+    case 2:
+        startBELiter = 0;
+    }
+
+    int maxBELiter;
+    switch ( nGP.computeBeamELoss )
+    {
+    case 0:
+        maxBELiter = 0;
+    case 1:
+        maxBELiter = 1;
+    case 2:
+        maxBELiter = 1;
+    }
+
+    int startEELiter;
+    switch ( nGP.computeEjectileELoss )
+    {
+    case 0:
+        startEELiter = 0;
+    case 1:
+        startEELiter = 1;
+    case 2:
+        startEELiter = 0;
+    }
+
+    int maxEELiter;
+    switch ( nGP.computeEjectileELoss )
+    {
+    case 0:
+        maxEELiter = 0;
+    case 1:
+        maxEELiter = 1;
+    case 2:
+        maxEELiter = 1;
+    }
+
+    // sector ID in this case are sector number + 4 if superX3 + 16 if upstream
+    vector<int> ignoreSectorsList = {0, 1, 2, 3, 4+0, 4+1, 4+2, 4+3, 4+6, 4+8, 4+9, 4+10, 4+11, 16+4+1, 16+4+2, 16+4+3, 16+4+4, 16+4+5, 16+4+6, 16+4+7, 16+4+8, 16+4+10};
+
+    bool fillQQQ5Pos = true;
+    bool fillSX3Pos = true;
+
+    TVector3 qqq5sPos[2][4];
+    TVector3 sX3sPos[2][12];
+
+    for ( unsigned int offi = 0; offi < qqq5Offsets.size(); offi++ )
+    {
+        int sX3OffX = sx3Offsets[offi].X(), sX3OffY = sx3Offsets[offi].Y(), sX3OffZ = sx3Offsets[offi].Z();
+        int qqq5OffX = qqq5Offsets[offi].X(), qqq5OffY = qqq5Offsets[offi].Y(), qqq5OffZ = qqq5Offsets[offi].Z();
+        int targetOffX = targetOffsets[offi].X(), targetOffY = targetOffsets[offi].Y(), targetOffZ = targetOffsets[offi].Z();
+
+        sX3OffXStr.push_back ( GetNameCompliantStr ( sX3OffX ) );
+        sX3OffYStr.push_back ( GetNameCompliantStr ( sX3OffY ) );
+        sX3OffZStr.push_back ( GetNameCompliantStr ( sX3OffZ ) );
+        qqq5OffXStr.push_back ( GetNameCompliantStr ( qqq5OffX ) );
+        qqq5OffYStr.push_back ( GetNameCompliantStr ( qqq5OffY ) );
+        qqq5OffZStr.push_back ( GetNameCompliantStr ( qqq5OffZ ) );
+        targetOffXStr.push_back ( GetNameCompliantStr ( targetOffX ) );
+        targetOffYStr.push_back ( GetNameCompliantStr ( targetOffY ) );
+        targetOffZStr.push_back ( GetNameCompliantStr ( targetOffZ ) );
+
+        for ( int belItr = startBELiter; belItr <= maxBELiter; belItr++ )
         {
-            int maxSector = ( bar ? 12 : 4 );
-
-            for ( int sect = 0; sect < maxSector; sect++ )
+            for ( int eelItr = startEELiter; eelItr <= maxEELiter; eelItr++ )
             {
-                if ( bar == 1 )
+                string computeELossStr = belItr ? "" : "_no_BeamEnLoss";
+                computeELossStr += eelItr ? "" : "_no_EjecEnLoss";
+
+                GoddessReacInfos* gri;
+
+                if ( belItr == 0 ) gri = reacInfo;
+                else gri = localReacInfo;
+
+                string histKey = Form ( "QVal_vs_Strips_QQQ5_mod_%s_%s_%s_%d_SX3_mod_%s_%s_%s_%d_target_off_%s_%s_%s_beamEk_%d%s",
+                                        qqq5OffXStr[offi].c_str(), qqq5OffYStr[offi].c_str(), qqq5OffZStr[offi].c_str(), RoundValue ( gri->qqq5EnGain*100 ),
+                                        sX3OffXStr[offi].c_str(), sX3OffYStr[offi].c_str(), sX3OffZStr[offi].c_str(), RoundValue ( gri->sX3EnGain*100 ),
+                                        targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                        RoundValue ( gri->beamEk ), computeELossStr.c_str() );
+
+                if ( hQval_NewGeom.find ( histKey ) == hQval_NewGeom.end() )
                 {
-                    string histKey = Form ( "EvsA_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( up ? "U" : "D" ), sect,
-                                            sX3OffXStr.c_str(), sX3OffYStr.c_str(), sX3OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->sX3EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hEvsA_SX3_NewGeom.find ( histKey ) == hEvsA_SX3_NewGeom.end() )
-                    {
-                        hEvsA_SX3_NewGeom[histKey] = new TH2F ( histKey.c_str(),
-                                                                Form ( "Energy vs. Angle new geom SuperX3 %s%d mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f"
-                                                                        "SX3 Gain Adjust: %4.2f %s",
-                                                                        ( up ? "U" : "D" ), sect, sX3OffX, sX3OffY ,sX3OffZ, targetOffX, targetOffY, targetOffZ,
-                                                                        localBeamEk, reacInfo->sX3EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                                                1800, 0, 180, 1500, 0, 15 );
-                    }
-                    hEvsA_SX3_NewGeom[histKey]->Reset();
-
-                    histKey = Form ( "QVal_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( up ? "U" : "D" ), sect,
-                                     sX3OffXStr.c_str(), sX3OffYStr.c_str(), sX3OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                     RoundValue ( localBeamEk ), RoundValue ( reacInfo->sX3EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hQval_NewGeom.find ( histKey ) == hQval_NewGeom.end() )
-                    {
-                        hQval_NewGeom[histKey] = new TH1F ( histKey.c_str(),
-                                                            Form ( "Q-Value new geom SuperX3 %s%d mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f"
-                                                                    "/ SX3 Gain Adjust: %4.2f %s",
-                                                                    ( up ? "U" : "D" ), sect, sX3OffX, sX3OffY ,sX3OffZ, targetOffX, targetOffY, targetOffZ,
-                                                                    localBeamEk, reacInfo->sX3EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                                            800, -20, 20 );
-                    }
-                    hQval_NewGeom[histKey]->Reset();
-
-                    histKey = Form ( "Ex_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( up ? "U" : "D" ), sect,
-                                     sX3OffXStr.c_str(), sX3OffYStr.c_str(), sX3OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                     RoundValue ( localBeamEk ), RoundValue ( reacInfo->sX3EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hEx_NewGeom.find ( histKey ) == hEx_NewGeom.end() )
-                    {
-                        hEx_NewGeom[histKey] = new TH1F ( histKey.c_str(),
-                                                          Form ( "Excitation Energy new geom SuperX3 %s%d mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f"
-                                                                  "/ SX3 Gain Adjust: %4.2f %s",
-                                                                  ( up ? "U" : "D" ), sect, sX3OffX, sX3OffY ,sX3OffZ, targetOffX, targetOffY, targetOffZ,
-                                                                  localBeamEk, reacInfo->sX3EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                                          800, -20, 20 );
-                    }
-                    hEx_NewGeom[histKey]->Reset();
+                    hQval_NewGeom[histKey] = new TH2F ( histKey.c_str(),
+                                                        Form ( "Q-Value new geom vs. Strips / QQQ5 mod X: %d, Y: %d, Z: %d, gain: %4.2f / SuperX3 mod X: %d, Y: %d, Z: %d, gain: %4.2f /"
+                                                                "target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / %s",
+                                                                qqq5OffX, qqq5OffY ,qqq5OffZ, gri->qqq5EnGain, sX3OffX, sX3OffY ,sX3OffZ, gri->sX3EnGain, targetOffX, targetOffY, targetOffZ,
+                                                                gri->beamEk, nGP.computeEjectileELoss ? "" : "ignore ejectile energy loss" ),
+                                                        500, 0, 500, 800, -20, 20 );
                 }
-                else
+                hQval_NewGeom[histKey]->Reset();
+
+                histKey = Form ( "Ex_vs_Strips_QQQ5_mod_%s_%s_%s_%d_SX3_mod_%s_%s_%s_%d_target_off_%s_%s_%s_beamEk_%d%s",
+                                 qqq5OffXStr[offi].c_str(), qqq5OffYStr[offi].c_str(), qqq5OffZStr[offi].c_str(), RoundValue ( gri->qqq5EnGain*100 ),
+                                 sX3OffXStr[offi].c_str(), sX3OffYStr[offi].c_str(), sX3OffZStr[offi].c_str(), RoundValue ( gri->sX3EnGain*100 ),
+                                 targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                 RoundValue ( gri->beamEk ), computeELossStr.c_str() );
+
+                if ( hEx_NewGeom.find ( histKey ) == hEx_NewGeom.end() )
                 {
-                    //                     cout << "------ Preparing histogram for " << ( bar ? "SuperX3" : "QQQ5" ) << " " << ( up ? "U" : "D" ) << sect << " ------\n";
-
-                    qqq5sPos[up][sect] = GetDetPos ( geomInfo, up, bar, sect, 1 );
-
-
-
-                    double* qqq5BinsEdges;
-
-                    std::list<double> binsEdgesList;
-                    binsEdgesList.clear();
-
-                    TVector3 lowEdge = qqq5sPos[up][sect];
-                    double midDetPhi = lowEdge.Phi();
-
-                    //                     cout << "Position of the low edge of the first strip is: ( " << lowEdge.X() << " , " << lowEdge.Y() << " , " << lowEdge.Z() << " ) \n";
-                    //                     cout << "Phi angle is: " << midDetPhi * TMath::RadToDeg() << "\n";
-
-                    for ( int i = 0; i < 33; i++ )
-                    {
-                        if ( i>0 )
-                        {
-                            TVector3 toNextStrip ( 0, qqq5FstStripWidth - ( i-1 ) *qqq5DeltaPitch , 0 );
-                            toNextStrip.SetPhi ( midDetPhi );
-
-                            lowEdge += toNextStrip;
-                        }
-
-                        double thetaEdge = ( lowEdge + totQQQ5Offset ).Angle ( beamDir ) * TMath::RadToDeg();
-
-                        binsEdgesList.push_back ( thetaEdge );
-
-                        for ( int j = 0; j < 4; j++ )
-                        {
-                            lowEdge.SetPhi ( midDetPhi - 3./16. * TMath::Pi() + j/8. * TMath::Pi() );
-
-                            thetaEdge = ( lowEdge + totQQQ5Offset ).Angle ( beamDir ) * TMath::RadToDeg();
-
-                            binsEdgesList.push_back ( thetaEdge );
-                        }
-
-                        lowEdge.SetPhi ( midDetPhi );
-                    }
-
-//                     cout << "List of bin edges done... " << binsEdgesList.size() << " elements\n";
-
-//                     cout << "Removing duplicates...\n";
-                    binsEdgesList.unique ( CheckValProxFunc ( 0.05 ) );
-//                     cout << "Duplicates removed... new size: " << binsEdgesList.size() << " elements\n";
-
-//                     cout << "Sorting it...\n";
-                    binsEdgesList.sort();
-//                     cout << "Sorting done...\n";
-
-
-                    qqq5BinsEdges = new double[binsEdgesList.size()];
-                    unsigned int counter = 0;
-
-                    //                     cout << "Filling the final bins edges array of size " << binsEdgesList.size() <<" ...\n";
-
-                    for ( auto listItr = binsEdgesList.begin(); listItr != binsEdgesList.end(); listItr++ )
-                    {
-                        qqq5BinsEdges[counter] = *listItr;
-                        //                         cout << "Bin #" << counter << " : " << qqq5BinsEdges[counter] << endl;
-                        counter++;
-                    }
-
-                    string histKey = Form ( "EvsA_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
-                                            qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hEvsA_QQQ5_NewGeom.find ( histKey ) == hEvsA_QQQ5_NewGeom.end() )
-                    {
-                        hEvsA_QQQ5_NewGeom[histKey] = new TH2F ( ( histKey ).c_str(),
-                                Form ( "Energy vs. Angle new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / QQQ5 Gain Adjust: %4.2f %s",
-                                       ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ,
-                                       localBeamEk, reacInfo->qqq5EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                binsEdgesList.size()-1, qqq5BinsEdges, 1500, 0, 15 );
-                    }
-                    hEvsA_QQQ5_NewGeom[histKey]->Reset();
-
-                    histKey = Form ( "QVal_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
-                                     qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                     RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hQval_NewGeom.find ( histKey ) == hQval_NewGeom.end() )
-                    {
-                        hQval_NewGeom[histKey] = new TH1F ( histKey.c_str(),
-                                                            Form ( "Q-Value new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / QQQ5 Gain Adjust: %4.2f %s",
-                                                                    ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ,
-                                                                    localBeamEk, reacInfo->qqq5EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                                            800, -20, 20 );
-                    }
-                    hQval_NewGeom[histKey]->Reset();
-
-                    histKey = Form ( "Ex_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
-                                     qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                     RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hEx_NewGeom.find ( histKey ) == hEx_NewGeom.end() )
-                    {
-                        hEx_NewGeom[histKey] = new TH1F ( histKey.c_str(),
-                                                          Form ( "Excitation Energy new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / QQQ5 Gain Adjust: %4.2f %s",
-                                                                  ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ,
-                                                                  localBeamEk, reacInfo->qqq5EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                                          800, -20, 20 );
-                    }
-                    hEx_NewGeom[histKey]->Reset();
-
-                    histKey = Form ( "QVal_vs_Strip_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
-                                     qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                                     RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
-
-                    if ( hQvalvsStrip_QQQ5_NewGeom.find ( histKey ) == hQvalvsStrip_QQQ5_NewGeom.end() )
-                    {
-                        hQvalvsStrip_QQQ5_NewGeom[histKey] = new TH2F ( histKey.c_str(),
-                                Form ( "Q-Value vs. Strip# new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / QQQ5 Gain Adjust: %4.2f %s",
-                                       ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ,
-                                       localBeamEk, reacInfo->qqq5EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
-                                32, 0, 32, 800, -20, 20 );
-                    }
-                    hQvalvsStrip_QQQ5_NewGeom[histKey]->Reset();
+                    hEx_NewGeom[histKey] = new TH2F ( histKey.c_str(),
+                                                      Form ( "Excitation Energy new geom vs. Strips / QQQ5 mod X: %d, Y: %d, Z: %d, gain: %4.2f / SuperX3 mod X: %d, Y: %d, Z: %d, gain: %4.2f /"
+                                                              "target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / %s",
+                                                              qqq5OffX, qqq5OffY ,qqq5OffZ, gri->qqq5EnGain, sX3OffX, sX3OffY ,sX3OffZ, gri->sX3EnGain, targetOffX, targetOffY, targetOffZ,
+                                                              gri->beamEk, nGP.computeEjectileELoss ? "" : "ignore ejectile energy loss" ),
+                                                      500, 0, 500, 800, -20, 20 );
                 }
+                hEx_NewGeom[histKey]->Reset();
+
+                for ( int up = 0; up < 2; up++ )
+                {
+                    for ( int bar = 0; bar < 2; bar++ )
+                    {
+                        int maxSector = ( bar ? 12 : 4 );
+
+                        for ( int sect = 0; sect < maxSector; sect++ )
+                        {
+                            int sectorID = up*16+bar*4+sect;
+
+                            if ( std::find ( ignoreSectorsList.begin(), ignoreSectorsList.end(), sectorID ) != ignoreSectorsList.end() ) continue;
+
+                            if ( bar == 1 )
+                            {
+                                if ( fillSX3Pos )
+                                {
+                                    sX3sPos[up][sect] = GetDetPos ( geomInfo, up, bar, sect, 1 );
+                                    fillSX3Pos = false;
+                                }
+
+                                histKey = Form ( "EvsA_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( up ? "U" : "D" ), sect,
+                                                 sX3OffXStr[offi].c_str(), sX3OffYStr[offi].c_str(), sX3OffZStr[offi].c_str(),
+                                                 targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                                 RoundValue ( gri->beamEk ), RoundValue ( gri->sX3EnGain*100 ), computeELossStr.c_str() );
+
+                                if ( hEvsA_SX3_NewGeom.find ( histKey ) == hEvsA_SX3_NewGeom.end() )
+                                {
+                                    hEvsA_SX3_NewGeom[histKey] = new TH2F ( histKey.c_str(),
+                                                                            Form ( "Energy vs. Angle new geom SuperX3 %s%d mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f"
+                                                                                    "SX3 Gain Adjust: %4.2f %s",
+                                                                                    ( up ? "U" : "D" ), sect, sX3OffX, sX3OffY ,sX3OffZ, targetOffX, targetOffY, targetOffZ,
+                                                                                    gri->beamEk, gri->sX3EnGain, nGP.computeEjectileELoss ? "" : "ignore ejectile energy loss" ),
+                                                                            1800, 0, 180, 1500, 0, 15 );
+                                }
+                                hEvsA_SX3_NewGeom[histKey]->Reset();
+                            }
+                            else
+                            {
+                                //                     cout << "------ Preparing histogram for " << ( bar ? "SuperX3" : "QQQ5" ) << " " << ( up ? "U" : "D" ) << sect << " ------\n";
+
+                                if ( fillQQQ5Pos )
+                                {
+                                    qqq5sPos[up][sect] = GetDetPos ( geomInfo, up, bar, sect, 1 );
+                                    fillQQQ5Pos = false;
+                                }
+
+                                double* qqq5BinsEdges;
+
+                                std::list<double> binsEdgesList;
+                                binsEdgesList.clear();
+
+                                TVector3 lowEdge = qqq5sPos[up][sect];
+                                double midDetPhi = lowEdge.Phi();
+
+                                //                     cout << "Position of the low edge of the first strip is: ( " << lowEdge.X() << " , " << lowEdge.Y() << " , " << lowEdge.Z() << " ) \n";
+                                //                     cout << "Phi angle is: " << midDetPhi * TMath::RadToDeg() << "\n";
+
+                                for ( int i = 0; i < 33; i++ )
+                                {
+                                    TVector3 toNextStrip = qqq5Offsets[offi]*0.01;
+
+                                    if ( i>0 ) toNextStrip += TVector3 ( 0, qqq5FstStripWidth - ( i-1 ) *qqq5DeltaPitch , 0 );
+
+                                    toNextStrip.SetPhi ( midDetPhi );
+
+                                    lowEdge += toNextStrip;
+
+                                    double thetaEdge = ( lowEdge - targetOffsets[offi]*0.01 ).Angle ( beamDir ) * TMath::RadToDeg();
+
+                                    binsEdgesList.push_back ( thetaEdge );
+
+                                    for ( int j = 0; j < 4; j++ )
+                                    {
+                                        lowEdge.SetPhi ( midDetPhi - 3./16. * TMath::Pi() + j/8. * TMath::Pi() );
+
+                                        thetaEdge = ( lowEdge - targetOffsets[offi]*0.01 ).Angle ( beamDir ) * TMath::RadToDeg();
+
+                                        binsEdgesList.push_back ( thetaEdge );
+                                    }
+
+                                    lowEdge.SetPhi ( midDetPhi );
+                                }
+
+                                //                     cout << "List of bin edges done... " << binsEdgesList.size() << " elements\n";
+
+                                //                     cout << "Removing duplicates...\n";
+                                binsEdgesList.unique ( CheckValProxFunc ( 0.05 ) );
+                                //                     cout << "Duplicates removed... new size: " << binsEdgesList.size() << " elements\n";
+
+                                //                     cout << "Sorting it...\n";
+                                binsEdgesList.sort();
+                                //                     cout << "Sorting done...\n";
 
 
+                                qqq5BinsEdges = new double[binsEdgesList.size()];
+                                unsigned int counter = 0;
 
-                string histKey;
+                                //                     cout << "Filling the final bins edges array of size " << binsEdgesList.size() <<" ...\n";
 
-                string sectorStr = bar ? Form ( "%d", sect ) : Form ( "%c", qqq5SectAliases[sect] );
+                                for ( auto listItr = binsEdgesList.begin(); listItr != binsEdgesList.end(); listItr++ )
+                                {
+                                    qqq5BinsEdges[counter] = *listItr;
+                                    //                         cout << "Bin #" << counter << " : " << qqq5BinsEdges[counter] << endl;
+                                    counter++;
+                                }
+
+                                histKey = Form ( "EvsA_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( up ? "U" : "D" ), qqq5SectAliases[sect],
+                                                 qqq5OffXStr[offi].c_str(), qqq5OffYStr[offi].c_str(), qqq5OffZStr[offi].c_str(),
+                                                 targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                                 RoundValue ( gri->beamEk ), RoundValue ( gri->qqq5EnGain*100 ), computeELossStr.c_str() );
+
+                                if ( hEvsA_QQQ5_NewGeom.find ( histKey ) == hEvsA_QQQ5_NewGeom.end() )
+                                {
+                                    hEvsA_QQQ5_NewGeom[histKey] = new TH2F ( ( histKey ).c_str(),
+                                            Form ( "Energy vs. Angle new geom QQQ5 %s%c mod det X: %d, Y: %d, Z: %d / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / QQQ5 Gain Adjust: %4.2f %s",
+                                                   ( up ? "U" : "D" ), qqq5SectAliases[sect], qqq5OffX, qqq5OffY ,qqq5OffZ, targetOffX, targetOffY, targetOffZ,
+                                                   gri->beamEk, gri->qqq5EnGain, nGP.computeEjectileELoss ? "" : "ignore energy loss" ),
+                                            binsEdgesList.size()-1, qqq5BinsEdges, 1500, 0, 15 );
+                                }
+                                hEvsA_QQQ5_NewGeom[histKey]->Reset();
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -4371,18 +4404,18 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
     bool isBarrel;
     bool isUpstream;
     float sector_strip;
-    double energy;
+    double initialEnergy;
+    double correctedEnergy;
+    GoddessReacInfos* gri;
     //     double angle;
     TVector3* pos = new TVector3();
 
     inTree->SetBranchAddress ( "isBarrel", &isBarrel );
     inTree->SetBranchAddress ( "isUpstream", &isUpstream );
     inTree->SetBranchAddress ( "sector_strip", &sector_strip );
-    inTree->SetBranchAddress ( "Energy", &energy );
+    inTree->SetBranchAddress ( "Energy", &initialEnergy );
     //     inTree->SetBranchAddress ( "angle", &angle );
     inTree->SetBranchAddress ( "pos", &pos );
-
-    float minAngleQQQ5U0 = 0;
 
     double qvalGsGs = reacInfo->qValGsGs;
 
@@ -4396,82 +4429,112 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
 
         inTree->GetEntry ( ev );
 
-        TVector3 adjustPos = *pos + ( isBarrel ? totSX3Offset : totQQQ5Offset );
-        float angle = adjustPos.Angle ( beamDir );
-
         unsigned int sector = floor ( sector_strip );
+
+        int sectorID = isUpstream*16+isBarrel*4+sector;
+
+        if ( std::find ( ignoreSectorsList.begin(), ignoreSectorsList.end(), sectorID ) != ignoreSectorsList.end() ) continue;
+
+        //         unsigned int strip = RoundValue ( ( sector_strip-sector ) * 100 );
+
         unsigned int strip = RoundValue ( ( sector_strip-sector ) * 100 );
 
-        if ( nGP.computeEjectileELoss )
+        int globStripID = ToStripID ( isUpstream, isBarrel, true, sector, strip );
+
+        for ( unsigned int offi = 0; offi < qqq5Offsets.size(); offi++ )
         {
-//             if ( !isBarrel && isUpstream )
-//             {
-//                 cout << "*******************************************************\n";
-//                 cout << "QQQ5 U" << sector << " :\n";
-//                 cout << "Position = ( " << adjustPos.X() << " , " << adjustPos.Y() << " , " << adjustPos.Z() << " )\n";
-//                 cout << "Angle with Beam Direction = " << angle*TMath::RadToDeg() << "\n";
-//                 cout << "Theta = " << adjustPos.Theta() *TMath::RadToDeg() << " / Phi = " <<  adjustPos.Phi() *TMath::RadToDeg() << "\n";
-//                 cout << "Angle with target ladder = " << adjustPos.Angle ( targetLadderDir ) *TMath::RadToDeg() << "\n";
-//             }
+            double sectPhi = isBarrel ? sX3sPos[isUpstream][sector].Phi() : qqq5sPos[isUpstream][sector].Phi();
+            double sectTheta = isBarrel ? sX3sPos[isUpstream][sector].Theta() : qqq5sPos[isUpstream][sector].Theta();
 
-            double effThickness = GetEffectiveThickness ( adjustPos.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
-            double estELoss = ComputeEnergyLoss ( energyLossData.first, energyLossData.second, energy/reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation" );
+            TVector3 localOff = isBarrel ? sx3Offsets[offi]*0.01 : qqq5Offsets[offi]*0.01;
 
-//             cout << "Input energy : " << energy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
+            localOff.SetPhi ( sectPhi );
+            localOff.SetTheta ( sectTheta );
 
-            energy += estELoss;
-        }
+            TVector3 adjustPos = *pos + localOff - targetOffsets[offi]*0.01;
 
-        if ( isUpstream && !isBarrel && sector == 0 )
-        {
-            if ( minAngleQQQ5U0 == 0 || angle*TMath::RadToDeg() < minAngleQQQ5U0 ) minAngleQQQ5U0 = angle*TMath::RadToDeg();
-        }
+            float angle = adjustPos.Angle ( beamDir );
 
-        string detKey;
+            correctedEnergy = initialEnergy;
 
-        if ( isBarrel )
-        {
-            float qval = SiDataBase::QValue ( reacInfo, energy*reacInfo->sX3EnGain, angle );
+            if ( nGP.computeEjectileELoss > 0 )
+            {
+                //             if ( !isBarrel && isUpstream )
+                //             {
+                //                 cout << "*******************************************************\n";
+                //                 cout << "QQQ5 U" << sector << " :\n";
+                //                 cout << "Position = ( " << adjustPos.X() << " , " << adjustPos.Y() << " , " << adjustPos.Z() << " ) \n";
+                //                 cout << "Angle with Beam Direction = " << angle*TMath::RadToDeg() << "\n";
+                //                 cout << "Theta = " << adjustPos.Theta() *TMath::RadToDeg() << " / Phi = " <<  adjustPos.Phi() *TMath::RadToDeg() << "\n";
+                //                 cout << "Angle with target ladder = " << adjustPos.Angle ( targetLadderDir ) *TMath::RadToDeg() << "\n";
+                //             }
 
-            detKey = Form ( "_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( isUpstream ? "U" : "D" ), sector,
-                            sX3OffXStr.c_str(), sX3OffYStr.c_str(), sX3OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->sX3EnGain*100 ), computeELossStr.c_str() );
+                double effThickness = GetEffectiveThickness ( adjustPos.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
+                double estELoss = ComputeEnergyLoss ( energyLossData.first, energyLossData.second, initialEnergy/reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation" );
 
-            hQval_NewGeom[ ( "QVal" + detKey ) ]->Fill ( qval );
-            hEx_NewGeom[ ( "Ex" + detKey ) ]->Fill ( qvalGsGs - qval );
+                //             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
 
-            detKey = Form ( "EvsA_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( isUpstream ? "U" : "D" ), sector,
-                            sX3OffXStr.c_str(), sX3OffYStr.c_str(), sX3OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->sX3EnGain*100 ), computeELossStr.c_str() );
+                correctedEnergy += estELoss;
+            }
 
-            hEvsA_SX3_NewGeom[detKey]->Fill ( angle*TMath::RadToDeg(), energy*reacInfo->sX3EnGain );
-        }
-        else
-        {
-            float qval = SiDataBase::QValue ( reacInfo, energy*reacInfo->qqq5EnGain, angle );
+            for ( int belItr = startBELiter; belItr <= maxBELiter; belItr++ )
+            {
+                for ( int eelItr = startEELiter; eelItr <= maxEELiter; eelItr++ )
+                {
+                    double energy;
 
-            detKey = Form ( "_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( isUpstream ? "U" : "D" ), qqq5SectAliases[sector],
-                            qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
+                    if ( eelItr == 1 ) energy = correctedEnergy;
+                    else energy = initialEnergy;
 
-            hQval_NewGeom[ ( "QVal" + detKey ) ]->Fill ( qval );
-            hEx_NewGeom[ ( "Ex" + detKey ) ]->Fill ( qvalGsGs - qval );
+                    string computeELossStr = belItr ? "" : "_no_BeamEnLoss";
+                    computeELossStr += eelItr ? "" : "_no_EjecEnLoss";
 
-            detKey = Form ( "EvsA_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( isUpstream ? "U" : "D" ), qqq5SectAliases[sector],
-                            qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
+                    if ( belItr == 0 ) gri = reacInfo;
+                    else gri = localReacInfo;
 
-            hEvsA_QQQ5_NewGeom[detKey]->Fill ( angle*TMath::RadToDeg(), energy*reacInfo->qqq5EnGain );
+                    string detKey;
 
-            detKey = Form ( "QVal_vs_Strip_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( isUpstream ? "U" : "D" ), qqq5SectAliases[sector],
-                            qqq5OffXStr.c_str(), qqq5OffYStr.c_str(), qqq5OffZStr.c_str(), targetOffXStr.c_str(), targetOffYStr.c_str(), targetOffZStr.c_str(),
-                            RoundValue ( localBeamEk ), RoundValue ( reacInfo->qqq5EnGain*100 ), computeELossStr.c_str() );
+                    float qval;
 
-            hQvalvsStrip_QQQ5_NewGeom[detKey]->Fill ( strip, qval );
+                    if ( isBarrel )
+                    {
+                        qval = SiDataBase::QValue ( gri, energy*gri->sX3EnGain, angle );
+
+                        detKey = Form ( "EvsA_new_geom_SX3%s%d_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_SX3gain_%dpercents%s", ( isUpstream ? "U" : "D" ), sector,
+                                        sX3OffXStr[offi].c_str(), sX3OffYStr[offi].c_str(), sX3OffZStr[offi].c_str(), targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                        RoundValue ( gri->beamEk ), RoundValue ( gri->sX3EnGain*100 ), computeELossStr.c_str() );
+
+                        hEvsA_SX3_NewGeom[detKey]->Fill ( angle*TMath::RadToDeg(), energy*gri->sX3EnGain );
+                    }
+                    else
+                    {
+                        qval = SiDataBase::QValue ( gri, energy*gri->qqq5EnGain, angle );
+
+                        detKey = Form ( "EvsA_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( isUpstream ? "U" : "D" ), qqq5SectAliases[sector],
+                                        qqq5OffXStr[offi].c_str(), qqq5OffYStr[offi].c_str(), qqq5OffZStr[offi].c_str(), targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                        RoundValue ( gri->beamEk ), RoundValue ( gri->qqq5EnGain*100 ), computeELossStr.c_str() );
+
+                        hEvsA_QQQ5_NewGeom[detKey]->Fill ( angle*TMath::RadToDeg(), energy*gri->qqq5EnGain );
+
+                        //                         detKey = Form ( "QVal_vs_Strip_new_geom_QQQ5%s%c_det_off_%s_%s_%s_target_off_%s_%s_%s_beamEk_%d_QQQ5Gain_%dpercents%s", ( isUpstream ? "U" : "D" ), qqq5SectAliases[sector],
+                        //                                         qqq5OffXStr[offi].c_str(), qqq5OffYStr[offi].c_str(), qqq5OffZStr[offi].c_str(), targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                        //                                         RoundValue ( gri->beamEk ), RoundValue ( gri->qqq5EnGain*100 ), computeELossStr.c_str() );
+                        //
+                        //                         hQvalvsStrip_QQQ5_NewGeom[detKey]->Fill ( strip, qval );
+                    }
+
+                    detKey = Form ( "_vs_Strips_QQQ5_mod_%s_%s_%s_%d_SX3_mod_%s_%s_%s_%d_target_off_%s_%s_%s_beamEk_%d%s",
+                                    qqq5OffXStr[offi].c_str(), qqq5OffYStr[offi].c_str(), qqq5OffZStr[offi].c_str(), RoundValue ( gri->qqq5EnGain*100 ),
+                                    sX3OffXStr[offi].c_str(), sX3OffYStr[offi].c_str(), sX3OffZStr[offi].c_str(), RoundValue ( gri->sX3EnGain*100 ),
+                                    targetOffXStr[offi].c_str(), targetOffYStr[offi].c_str(), targetOffZStr[offi].c_str(),
+                                    RoundValue ( gri->beamEk ), computeELossStr.c_str() );
+
+                    hQval_NewGeom[ ( "QVal" + detKey ) ]->Fill ( globStripID, qval );
+                    hEx_NewGeom[ ( "Ex" + detKey ) ]->Fill ( globStripID, qvalGsGs - qval );
+                }
+            }
         }
     }
-
-    reacInfo->beamEk = origBeamEk;
 
     cout << endl;
 
@@ -4480,385 +4543,418 @@ void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, lo
     return;
 }
 
-void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
-        float qqq5OffX, float qqq5OffY, float qqq5OffZ,
-        float sX3OffX, float sX3OffY, float sX3OffZ,
-        int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ )
+void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries,
+        int qqq5OffX, int qqq5OffY, int qqq5OffZ, int sX3OffX, int sX3OffY, int sX3OffZ, int targetOffX, int targetOffY, int targetOffZ )
 {
-    if ( geomInfo == nullptr )
-    {
-        cerr << "Geometry information missing...\n";
-        cerr << "Aborting...\n";
-        return;
-    }
+    vector<TVector3> sx3Offs, qqq5Offs, targOffs;
 
-    if ( reacInfo == nullptr )
-    {
-        cerr << "Reaction information missing...\n";
-        cerr << "Aborting...\n";
-        return;
-    }
+    sx3Offs.push_back ( TVector3 ( sX3OffX, sX3OffY, sX3OffZ ) );
+    qqq5Offs.push_back ( TVector3 ( qqq5OffX, qqq5OffY, qqq5OffZ ) );
+    targOffs.push_back ( TVector3 ( targetOffX, targetOffY, targetOffZ ) );
 
-    lastQQQ5Offsets = {qqq5OffX, qqq5OffY, qqq5OffZ};
-    lastSX3Offsets = {sX3OffX, sX3OffY, sX3OffZ};
-
-    FillStripsPositionsArray ( qqq5OffX, qqq5OffY, qqq5OffZ, sX3OffX, sX3OffY, sX3OffZ );
-
-    ReadConfigCalPars ( configFileName );
-
-    TVector3 targetPos ( 0, 0, 0 );
-
-    TVector3 beamDir ( 0, 0, 1 );
-
-    char qqq5SectAliases[4] = {'A', 'B', 'C', 'D'};
-    //     float qqq5FstStripOffset = 25.2; // mm
-    //     float qqq5FstStripWidth = 2.55; // mm
-
-    unsigned int histsNumber = ( maxModZ - minModZ + 1 ) * ( maxModY - minModY + 1 ) * ( maxModX - minModX + 1 ) * 32;
-    unsigned int counter = 0;
-
-    for ( int up = 0; up < 2; up++ )
-    {
-        for ( int bar = 0; bar < 2; bar++ )
-        {
-            int maxSector = ( bar ? 12 : 4 );
-
-            for ( int sect = 0; sect < maxSector; sect++ )
-            {
-                for ( int modX = minModX; modX <= maxModX; modX++ )
-                {
-                    for ( int modY = minModY; modY <= maxModY; modY++ )
-                    {
-                        for ( int modZ = minModZ; modZ <= maxModZ; modZ++ )
-                        {
-                            if ( counter%100 == 0 ) cout << "Prepared " << std::setw ( 8 ) << counter << " histograms out of " << histsNumber << "\r" << std::flush;
-
-                            string histKey;
-
-                            string sectorStr = bar ? Form ( "%d", sect ) : Form ( "%c", qqq5SectAliases[sect] );
-
-                            histKey = Form ( "QVal_new_geom_%s%s%s_%d_%d_%d", ( bar ? "SX3" : "QQQ5" ), ( up ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ );
-
-                            hQval_NewGeom[histKey] = new TH1F ( histKey.c_str(),
-                                                                Form ( "Q-Value new geom %s %s%s mod target X: %d, Y: %d, Z: %d",
-                                                                        ( bar ? "SX3" : "QQQ5" ), ( up ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ ),
-                                                                800, -20, 20 );
-
-                            counter++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    cout << endl;
-
-    vector<SiDataDetailed>* vectSiData = new vector<SiDataDetailed>;
-
-    chain->SetBranchAddress ( "si", &vectSiData );
-
-    if ( nEntries <= 0 ) nEntries = chain->GetEntries();
-
-    for ( long long int ev = 0; ev < nEntries; ev++ )
-    {
-        if ( ev%10000 == 0 )
-        {
-            cout << "Entry " << std::setw ( 15 ) << ev << " / " << nEntries;
-            cout<< " ( " << std::fixed << std::setprecision ( 2 )  << std::setw ( 6 ) << ( ( float ) ev/nEntries ) * 100. << " % ) \r" << std::flush;
-        }
-
-        chain->GetEntry ( ev );
-
-        if ( vectSiData->size() > 0 )
-        {
-            for ( unsigned int i = 0; i < vectSiData->size(); i++ )
-            {
-                SiDataDetailed siData = vectSiData->at ( i );
-
-                if ( siData.MultLayer ( 1,false ) == 1 )
-                {
-                    int isUpstream = ( int ) siData.isUpstream;
-                    int isBarrel = ( int ) siData.isBarrel;
-
-                    int sector = siData.sector;
-                    int strip = siData.StripMaxLayer ( 1,false );
-                    float energy = siData.ESumLayer ( 1,false );
-
-                    float enear = 0.0, efar = 0.0;
-
-                    if ( energy > 0.0 )
-                    {
-                        if ( isBarrel == 1 )
-                        {
-                            if ( siData.E1.en.p.size() > 0 && siData.E1.en.n.size() > 0 && siData.E1.strip.n[0] == -1 )
-                            {
-                                enear = siData.E1.en.p[0];
-                                efar = siData.E1.en.n[0];
-                            }
-                            else continue;
-                        }
-
-                        TVector3 hitPos = GetFinalHitPosition ( isUpstream, isBarrel, sector, strip, enear, efar );
-
-                        for ( int modX = minModX; modX <= maxModX; modX++ )
-                        {
-                            for ( int modY = minModY; modY <= maxModY; modY++ )
-                            {
-                                for ( int modZ = minModZ; modZ <= maxModZ; modZ++ )
-                                {
-                                    targetPos = TVector3 ( modX, modY, modZ );
-
-                                    float angle = ( hitPos-targetPos ).Angle ( beamDir );
-
-                                    if ( angle != 0 )
-                                    {
-                                        float qval = SiDataBase::QValue ( reacInfo, energy, angle );
-
-                                        string detKey;
-
-                                        string sectorStr = isBarrel ? Form ( "%d", sector ) : Form ( "%c", qqq5SectAliases[sector] );
-
-                                        detKey = Form ( "QVal_new_geom_%s%s%s_%d_%d_%d", ( isBarrel ? "SX3" : "QQQ5" ), ( isUpstream ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ );
-
-                                        hQval_NewGeom[detKey]->Fill ( qval );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    cout << "\n\n";
-
-    return;
+    GetQValWithNewGeometry ( filename, treeName, nEntries, qqq5Offs, sx3Offs, targOffs );
 }
 
-string GoddessCalib::DrawNewGeom ( string histName )
+void GoddessCalib::GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, string offsetsList )
 {
-    string detType;
+    std::ifstream offList;
+    offList.open ( offsetsList.c_str(), std::ios::in );
 
-    if ( histName.find ( "QQQ5" ) != string::npos ) detType = "QQQ5";
-    else if ( histName.find ( "SuperX3" ) != string::npos ) detType = "SX3";
+    vector<TVector3> sx3Offs, qqq5Offs, targetOffs;
 
-    string histType;
-
-    if ( histName.find ( "QVal" ) != string::npos ) histType = "QVal";
-    else if ( histName.find ( "EvsA" ) != string::npos ) histType = "EvsA";
-
-    string modDetX, modDetY, modDetZ;
-    string modTargetX, modTargetY, modTargetZ;
-
-    std::size_t modPos = histName.find_first_of ( " ( " );
-    std::size_t separatorPos = histName.find_first_of ( ",", modPos );
-
-    modDetX = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
-    if ( modDetX[0] == '-' ) modDetX[0] = 'm';
-
-    modPos = separatorPos;
-    separatorPos = histName.find_first_of ( ",", modPos+1 );
-
-    modDetY = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
-    if ( modDetY[0] == '-' ) modDetY[0] = 'm';
-
-    modPos = separatorPos;
-    separatorPos = histName.find_first_of ( " ) ", modPos+1 );
-
-    modDetZ = histName.substr ( modPos+1, separatorPos - ( modPos+1 ) );
-    if ( modDetZ[0] == '-' ) modDetZ[0] = 'm';
-
-    std::size_t firstSpacePos = histName.find_first_of ( " " );
-    firstSpacePos = histName.find_first_of ( " ", firstSpacePos+1 );
-    std::size_t lastSpacePos = histName.find_first_of ( " ", firstSpacePos+1 );
-
-    char isUp = histName[firstSpacePos+1];
-
-    string sector = histName.substr ( firstSpacePos+2, lastSpacePos - ( firstSpacePos+2 ) );
-
-    modPos = histName.find_first_of ( " ( ", modPos );
-    separatorPos = histName.find_first_of ( ",", modPos );
-
-    modTargetX = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
-    if ( modTargetX[0] == '-' ) modTargetX[0] = 'm';
-
-    modPos = separatorPos;
-    separatorPos = histName.find_first_of ( ",", modPos+1 );
-
-    modTargetY = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
-    if ( modTargetY[0] == '-' ) modTargetY[0] = 'm';
-
-    modPos = separatorPos;
-    separatorPos = histName.find_first_of ( " ) ", modPos+1 );
-
-    modTargetZ = histName.substr ( modPos+1, separatorPos - ( modPos+1 ) );
-    if ( modTargetZ[0] == '-' ) modTargetZ[0] = 'm';
-
-    string detKey = Form ( "%s_new_geom_%s%c%s_det_off_%s_%s_%s_target_off_%s_%s_%s", histType.c_str(), detType.c_str(), isUp, sector.c_str(), modDetX.c_str(), modDetY.c_str(), modDetZ.c_str(), modTargetX.c_str(), modTargetY.c_str(), modTargetZ.c_str() );
-
-    if ( histType == "QVal" && hQval_NewGeom.find ( detKey ) != hQval_NewGeom.end() )
+    while ( !offList.eof() )
     {
-        hQval_NewGeom[detKey]->Draw();
-    }
-    else if ( histType == "EvsA" && detType == "QQQ5" && hEvsA_QQQ5_NewGeom.find ( detKey ) != hEvsA_QQQ5_NewGeom.end() )
-    {
-        hEvsA_QQQ5_NewGeom[detKey]->Draw ( "colz" );
-    }
-    else if ( histType == "EvsA" && detType == "SX3" && hEvsA_SX3_NewGeom.find ( detKey ) != hEvsA_SX3_NewGeom.end() )
-    {
-        hEvsA_SX3_NewGeom[detKey]->Draw ( "colz" );
-    }
-    else
-    {
-        TH1F* hist = dynamic_cast<TH1F*> ( gDirectory->FindObjectAny ( detKey.c_str() ) );
+        double sx3Ox, sx3Oy, sx3Oz, qqq5Ox, qqq5Oy, qqq5Oz, targOx, targOy, targOz;
 
-        if ( hist != nullptr )
-        {
-            hQval_NewGeom[detKey] = hist;
+        offList >> qqq5Ox >> qqq5Oy >> qqq5Oz >> sx3Ox >> sx3Oy >> sx3Oz >> targOx >> targOy >> targOz;
 
-            hQval_NewGeom[detKey]->Draw();
-
-            return detKey;
-        }
-        else
-        {
-            cerr<< "Unable to find " << detKey << "\n";
-            cerr << "Histogram specified does not exist!!!\n";
-            cerr << "Valid histogram name examples:\n";
-            cerr << "    \"QVal QQQ5 UB (1,2,1) Target (0,1,1)\"";
-            cerr << "    \"EvsA SuperX3 U0 (0,3,2) Target (2,0,1)\"\n";
-            cerr << "Where the first 3 numbers are the offsets applied to the detector position and the last 3 the ones applied to the target position\n";
-
-            return "";
-        }
+        sx3Offs.push_back ( TVector3 ( sx3Ox, sx3Oy, sx3Oz ) );
+        qqq5Offs.push_back ( TVector3 ( qqq5Ox, qqq5Oy, qqq5Oz ) );
+        targetOffs.push_back ( TVector3 ( targOx, targOy, targOz ) );
     }
 
-    return detKey;
+    GetQValWithNewGeometry ( filename, treeName, nEntries, qqq5Offs, sx3Offs, targetOffs );
 }
 
-void GoddessCalib::GetBestParameters ( float mean, float fwhm, string detType, string inFileName, string betterFitMode )
-{
-    vector<string> detFilters = SplitString ( detType, "," );
-
-    auto mapItr = hQval_NewGeom.begin();
-
-    TFile* inFile = 0;
-    TIterator* fileItr = 0;
-    TList* lOfKey = 0;
-
-    string bestX, bestY, bestZ, bestHistName;
-    float bestChi2 = 0, bestSigma = 0;
-
-    float newChi2, newSigma;
+// void GoddessCalib::GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
+//         float qqq5OffX, float qqq5OffY, float qqq5OffZ,
+//         float sX3OffX, float sX3OffY, float sX3OffZ,
+//         int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ )
+// {
+//     if ( geomInfo == nullptr )
+//     {
+//         cerr << "Geometry information missing...\n";
+//         cerr << "Aborting...\n";
+//         return;
+//     }
 //
-    auto linkMap = MakeLinkMap ( "chi2 bestChi2 sigma bestSigma", newChi2, bestChi2, newSigma, bestSigma );
+//     if ( reacInfo == nullptr )
+//     {
+//         cerr << "Reaction information missing...\n";
+//         cerr << "Aborting...\n";
+//         return;
+//     }
+//
+//     lastQQQ5Offsets = {qqq5OffX, qqq5OffY, qqq5OffZ};
+//     lastSX3Offsets = {sX3OffX, sX3OffY, sX3OffZ};
+//
+//     FillStripsPositionsArray ( qqq5OffX, qqq5OffY, qqq5OffZ, sX3OffX, sX3OffY, sX3OffZ );
+//
+//     ReadConfigCalPars ( configFileName );
+//
+//     TVector3 targetPos ( 0, 0, 0 );
+//
+//     TVector3 beamDir ( 0, 0, 1 );
+//
+//     char qqq5SectAliases[4] = {'A', 'B', 'C', 'D'};
+//     //     float qqq5FstStripOffset = 25.2; // mm
+//     //     float qqq5FstStripWidth = 2.55; // mm
+//
+//     unsigned int histsNumber = ( maxModZ - minModZ + 1 ) * ( maxModY - minModY + 1 ) * ( maxModX - minModX + 1 ) * 32;
+//     unsigned int counter = 0;
+//
+//     for ( int up = 0; up < 2; up++ )
+//     {
+//         for ( int bar = 0; bar < 2; bar++ )
+//         {
+//             int maxSector = ( bar ? 12 : 4 );
+//
+//             for ( int sect = 0; sect < maxSector; sect++ )
+//             {
+//                 for ( int modX = minModX; modX <= maxModX; modX++ )
+//                 {
+//                     for ( int modY = minModY; modY <= maxModY; modY++ )
+//                     {
+//                         for ( int modZ = minModZ; modZ <= maxModZ; modZ++ )
+//                         {
+//                             if ( counter%100 == 0 ) cout << "Prepared " << std::setw ( 8 ) << counter << " histograms out of " << histsNumber << "\r" << std::flush;
+//
+//                             string histKey;
+//
+//                             string sectorStr = bar ? Form ( "%d", sect ) : Form ( "%c", qqq5SectAliases[sect] );
+//
+//                             histKey = Form ( "QVal_new_geom_%s%s%s_%d_%d_%d", ( bar ? "SX3" : "QQQ5" ), ( up ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ );
+//
+//                             hQval_NewGeom[histKey] = new TH1F ( histKey.c_str(),
+//                                                                 Form ( "Q-Value new geom %s %s%s mod target X: %d, Y: %d, Z: %d",
+//                                                                         ( bar ? "SX3" : "QQQ5" ), ( up ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ ),
+//                                                                 800, -20, 20 );
+//
+//                             counter++;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//
+//     cout << endl;
+//
+//     vector<SiDataDetailed>* vectSiData = new vector<SiDataDetailed>;
+//
+//     chain->SetBranchAddress ( "si", &vectSiData );
+//
+//     if ( nEntries <= 0 ) nEntries = chain->GetEntries();
+//
+//     for ( long long int ev = 0; ev < nEntries; ev++ )
+//     {
+//         if ( ev%10000 == 0 )
+//         {
+//             cout << "Entry " << std::setw ( 15 ) << ev << " / " << nEntries;
+//             cout<< " ( " << std::fixed << std::setprecision ( 2 )  << std::setw ( 6 ) << ( ( float ) ev/nEntries ) * 100. << " % ) \r" << std::flush;
+//         }
+//
+//         chain->GetEntry ( ev );
+//
+//         if ( vectSiData->size() > 0 )
+//         {
+//             for ( unsigned int i = 0; i < vectSiData->size(); i++ )
+//             {
+//                 SiDataDetailed siData = vectSiData->at ( i );
+//
+//                 if ( siData.MultLayer ( 1,false ) == 1 )
+//                 {
+//                     int isUpstream = ( int ) siData.isUpstream;
+//                     int isBarrel = ( int ) siData.isBarrel;
+//
+//                     int sector = siData.sector;
+//                     int strip = siData.StripMaxLayer ( 1,false );
+//                     float energy = siData.ESumLayer ( 1,false );
+//
+//                     float enear = 0.0, efar = 0.0;
+//
+//                     if ( energy > 0.0 )
+//                     {
+//                         if ( isBarrel == 1 )
+//                         {
+//                             if ( siData.E1.en.p.size() > 0 && siData.E1.en.n.size() > 0 && siData.E1.strip.n[0] == -1 )
+//                             {
+//                                 enear = siData.E1.en.p[0];
+//                                 efar = siData.E1.en.n[0];
+//                             }
+//                             else continue;
+//                         }
+//
+//                         TVector3 hitPos = GetFinalHitPosition ( isUpstream, isBarrel, sector, strip, enear, efar );
+//
+//                         for ( int modX = minModX; modX <= maxModX; modX++ )
+//                         {
+//                             for ( int modY = minModY; modY <= maxModY; modY++ )
+//                             {
+//                                 for ( int modZ = minModZ; modZ <= maxModZ; modZ++ )
+//                                 {
+//                                     targetPos = TVector3 ( modX, modY, modZ );
+//
+//                                     float angle = ( hitPos-targetPos ).Angle ( beamDir );
+//
+//                                     if ( angle != 0 )
+//                                     {
+//                                         float qval = SiDataBase::QValue ( reacInfo, energy, angle );
+//
+//                                         string detKey;
+//
+//                                         string sectorStr = isBarrel ? Form ( "%d", sector ) : Form ( "%c", qqq5SectAliases[sector] );
+//
+//                                         detKey = Form ( "QVal_new_geom_%s%s%s_%d_%d_%d", ( isBarrel ? "SX3" : "QQQ5" ), ( isUpstream ? "U" : "D" ), sectorStr.c_str(), modX, modY, modZ );
+//
+//                                         hQval_NewGeom[detKey]->Fill ( qval );
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//
+//     cout << "\n\n";
+//
+//     return;
+// }
 
-    TH1F* hist = 0;
+// string GoddessCalib::DrawNewGeom ( string histName )
+// {
+//     string detType;
+//
+//     if ( histName.find ( "QQQ5" ) != string::npos ) detType = "QQQ5";
+//     else if ( histName.find ( "SuperX3" ) != string::npos ) detType = "SX3";
+//
+//     string histType;
+//
+//     if ( histName.find ( "QVal" ) != string::npos ) histType = "QVal";
+//     else if ( histName.find ( "EvsA" ) != string::npos ) histType = "EvsA";
+//
+//     string modDetX, modDetY, modDetZ;
+//     string modTargetX, modTargetY, modTargetZ;
+//
+//     std::size_t modPos = histName.find_first_of ( " ( " );
+//     std::size_t separatorPos = histName.find_first_of ( ",", modPos );
+//
+//     modDetX = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
+//     if ( modDetX[0] == '-' ) modDetX[0] = 'm';
+//
+//     modPos = separatorPos;
+//     separatorPos = histName.find_first_of ( ",", modPos+1 );
+//
+//     modDetY = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
+//     if ( modDetY[0] == '-' ) modDetY[0] = 'm';
+//
+//     modPos = separatorPos;
+//     separatorPos = histName.find_first_of ( " ) ", modPos+1 );
+//
+//     modDetZ = histName.substr ( modPos+1, separatorPos - ( modPos+1 ) );
+//     if ( modDetZ[0] == '-' ) modDetZ[0] = 'm';
+//
+//     std::size_t firstSpacePos = histName.find_first_of ( " " );
+//     firstSpacePos = histName.find_first_of ( " ", firstSpacePos+1 );
+//     std::size_t lastSpacePos = histName.find_first_of ( " ", firstSpacePos+1 );
+//
+//     char isUp = histName[firstSpacePos+1];
+//
+//     string sector = histName.substr ( firstSpacePos+2, lastSpacePos - ( firstSpacePos+2 ) );
+//
+//     modPos = histName.find_first_of ( " ( ", modPos );
+//     separatorPos = histName.find_first_of ( ",", modPos );
+//
+//     modTargetX = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
+//     if ( modTargetX[0] == '-' ) modTargetX[0] = 'm';
+//
+//     modPos = separatorPos;
+//     separatorPos = histName.find_first_of ( ",", modPos+1 );
+//
+//     modTargetY = histName.substr ( modPos+1, separatorPos- ( modPos+1 ) );
+//     if ( modTargetY[0] == '-' ) modTargetY[0] = 'm';
+//
+//     modPos = separatorPos;
+//     separatorPos = histName.find_first_of ( " ) ", modPos+1 );
+//
+//     modTargetZ = histName.substr ( modPos+1, separatorPos - ( modPos+1 ) );
+//     if ( modTargetZ[0] == '-' ) modTargetZ[0] = 'm';
+//
+//     string detKey = Form ( "%s_new_geom_%s%c%s_det_off_%s_%s_%s_target_off_%s_%s_%s", histType.c_str(), detType.c_str(), isUp, sector.c_str(), modDetX.c_str(), modDetY.c_str(), modDetZ.c_str(), modTargetX.c_str(), modTargetY.c_str(), modTargetZ.c_str() );
+//
+//     if ( histType == "QVal" && hQval_NewGeom.find ( detKey ) != hQval_NewGeom.end() )
+//     {
+//         hQval_NewGeom[detKey]->Draw();
+//     }
+//     else if ( histType == "EvsA" && detType == "QQQ5" && hEvsA_QQQ5_NewGeom.find ( detKey ) != hEvsA_QQQ5_NewGeom.end() )
+//     {
+//         hEvsA_QQQ5_NewGeom[detKey]->Draw ( "colz" );
+//     }
+//     else if ( histType == "EvsA" && detType == "SX3" && hEvsA_SX3_NewGeom.find ( detKey ) != hEvsA_SX3_NewGeom.end() )
+//     {
+//         hEvsA_SX3_NewGeom[detKey]->Draw ( "colz" );
+//     }
+//     else
+//     {
+//         TH2F* hist = dynamic_cast<TH2F*> ( gDirectory->FindObjectAny ( detKey.c_str() ) );
+//
+//         if ( hist != nullptr )
+//         {
+//             hQval_NewGeom[detKey] = hist;
+//
+//             hQval_NewGeom[detKey]->Draw();
+//
+//             return detKey;
+//         }
+//         else
+//         {
+//             cerr<< "Unable to find " << detKey << "\n";
+//             cerr << "Histogram specified does not exist!!!\n";
+//             cerr << "Valid histogram name examples:\n";
+//             cerr << "    \"QVal QQQ5 UB (1,2,1) Target (0,1,1)\"";
+//             cerr << "    \"EvsA SuperX3 U0 (0,3,2) Target (2,0,1)\"\n";
+//             cerr << "Where the first 3 numbers are the offsets applied to the detector position and the last 3 the ones applied to the target position\n";
+//
+//             return "";
+//         }
+//     }
+//
+//     return detKey;
+// }
 
-    if ( inFileName.empty() ) hist = mapItr->second;
-    else
-    {
-        inFile = new TFile ( inFileName.c_str(),"read" );
-
-        lOfKey = inFile->GetListOfKeys();
-
-        if ( lOfKey != nullptr )
-        {
-            fileItr = lOfKey->MakeIterator();
-            TObject* obj = fileItr->Next();
-
-            hist = dynamic_cast<TH1F*> ( inFile->FindObjectAny ( obj->GetName() ) );
-        }
-    }
-
-    int nHists = inFileName.empty() ? hQval_NewGeom.size() : lOfKey->GetSize();
-    int counter = 0;
-
-    TF1* fitRes;
-
-    while ( hist != nullptr )
-    {
-        if ( counter%100 == 0 )
-        {
-            cout << "Treated " << std::setw ( 8 ) << counter << " / " << nHists;
-            cout << " ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 4 ) << ( float ) counter/nHists*100. << " % )\r" << std::flush;
-        }
-
-        counter++;
-
-        bool skip = true;
-
-        string histName = ( string ) hist->GetName();
-
-        if ( detFilters.size() > 0 )
-        {
-            for ( unsigned int i = 0; i < detFilters.size(); i++ )
-            {
-                if ( histName.find ( detFilters[i].c_str() ) != string::npos )
-                {
-                    skip = false;
-                    break;
-                }
-            }
-        }
-
-        if ( !skip )
-        {
-            fitRes = FitQValGS ( hist, {mean, mean-2}, fwhm, 0, 0, 0 );
-
-            newChi2 = fitRes->GetChisquare();
-            newSigma = fitRes->GetParameter ( 3 );
-
-            bool betterFit;
-
-            if ( bestChi2 == 0 ) betterFit = true;
-            else betterFit = StringFormulaComparator<float> ( betterFitMode, &linkMap );
-
-            if ( betterFit )
-            {
-                bestChi2 = newChi2;
-                bestSigma = newSigma;
-
-                bestHistName = histName;
-
-                std::size_t sepPos = histName.find_first_of ( "_", 14 );
-                std::size_t nextSepPos = histName.find_first_of ( "_", sepPos+1 );
-
-                bestX = histName.substr ( sepPos+1, nextSepPos - ( sepPos+1 ) );
-
-                sepPos = histName.find_first_of ( "_", nextSepPos+1 );
-                nextSepPos = histName.find_first_of ( "_", sepPos+1 );
-
-                bestY = histName.substr ( sepPos+1, nextSepPos - ( sepPos+1 ) );
-
-                sepPos = histName.find_first_of ( "_", nextSepPos+1 );
-
-                bestZ = histName.substr ( sepPos+1 );
-            }
-        }
-
-        if ( inFileName.empty() )
-        {
-            mapItr++;
-            if ( mapItr != hQval_NewGeom.end() ) hist = mapItr->second;
-            else hist = nullptr;
-        }
-        else
-        {
-            TObject* obj = fileItr->Next();
-
-            if ( obj != nullptr ) hist = dynamic_cast<TH1F*> ( inFile->FindObjectAny ( obj->GetName() ) );
-            else hist = nullptr;
-        }
-    }
-
-    cout << endl;
-
-    cout << "Target position yielding to the best fit: ( " << bestX << ", " << bestY << ", " << bestZ << " ) for hist " << bestHistName << "\n\n";
-}
-
+// void GoddessCalib::GetBestParameters ( float mean, float fwhm, string detType, string inFileName, string betterFitMode )
+// {
+//     vector<string> detFilters = SplitString ( detType, "," );
+//
+//     auto mapItr = hQval_NewGeom.begin();
+//
+//     TFile* inFile = 0;
+//     TIterator* fileItr = 0;
+//     TList* lOfKey = 0;
+//
+//     string bestX, bestY, bestZ, bestHistName;
+//     float bestChi2 = 0, bestSigma = 0;
+//
+//     float newChi2, newSigma;
+// //
+//     auto linkMap = MakeLinkMap ( "chi2 bestChi2 sigma bestSigma", newChi2, bestChi2, newSigma, bestSigma );
+//
+//     TH2F* hist = 0;
+//
+//     if ( inFileName.empty() ) hist = mapItr->second;
+//     else
+//     {
+//         inFile = new TFile ( inFileName.c_str(),"read" );
+//
+//         lOfKey = inFile->GetListOfKeys();
+//
+//         if ( lOfKey != nullptr )
+//         {
+//             fileItr = lOfKey->MakeIterator();
+//             TObject* obj = fileItr->Next();
+//
+//             hist = dynamic_cast<TH1F*> ( inFile->FindObjectAny ( obj->GetName() ) );
+//         }
+//     }
+//
+//     int nHists = inFileName.empty() ? hQval_NewGeom.size() : lOfKey->GetSize();
+//     int counter = 0;
+//
+//     TF1* fitRes;
+//
+//     while ( hist != nullptr )
+//     {
+//         if ( counter%100 == 0 )
+//         {
+//             cout << "Treated " << std::setw ( 8 ) << counter << " / " << nHists;
+//             cout << " ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 4 ) << ( float ) counter/nHists*100. << " % )\r" << std::flush;
+//         }
+//
+//         counter++;
+//
+//         bool skip = true;
+//
+//         string histName = ( string ) hist->GetName();
+//
+//         if ( detFilters.size() > 0 )
+//         {
+//             for ( unsigned int i = 0; i < detFilters.size(); i++ )
+//             {
+//                 if ( histName.find ( detFilters[i].c_str() ) != string::npos )
+//                 {
+//                     skip = false;
+//                     break;
+//                 }
+//             }
+//         }
+//
+//         if ( !skip )
+//         {
+//             fitRes = FitQValGS ( hist, {mean, mean-2}, fwhm, 0, 0, 0 );
+//
+//             newChi2 = fitRes->GetChisquare();
+//             newSigma = fitRes->GetParameter ( 3 );
+//
+//             bool betterFit;
+//
+//             if ( bestChi2 == 0 ) betterFit = true;
+//             else betterFit = StringFormulaComparator<float> ( betterFitMode, &linkMap );
+//
+//             if ( betterFit )
+//             {
+//                 bestChi2 = newChi2;
+//                 bestSigma = newSigma;
+//
+//                 bestHistName = histName;
+//
+//                 std::size_t sepPos = histName.find_first_of ( "_", 14 );
+//                 std::size_t nextSepPos = histName.find_first_of ( "_", sepPos+1 );
+//
+//                 bestX = histName.substr ( sepPos+1, nextSepPos - ( sepPos+1 ) );
+//
+//                 sepPos = histName.find_first_of ( "_", nextSepPos+1 );
+//                 nextSepPos = histName.find_first_of ( "_", sepPos+1 );
+//
+//                 bestY = histName.substr ( sepPos+1, nextSepPos - ( sepPos+1 ) );
+//
+//                 sepPos = histName.find_first_of ( "_", nextSepPos+1 );
+//
+//                 bestZ = histName.substr ( sepPos+1 );
+//             }
+//         }
+//
+//         if ( inFileName.empty() )
+//         {
+//             mapItr++;
+//             if ( mapItr != hQval_NewGeom.end() ) hist = mapItr->second;
+//             else hist = nullptr;
+//         }
+//         else
+//         {
+//             TObject* obj = fileItr->Next();
+//
+//             if ( obj != nullptr ) hist = dynamic_cast<TH1F*> ( inFile->FindObjectAny ( obj->GetName() ) );
+//             else hist = nullptr;
+//         }
+//     }
+//
+//     cout << endl;
+//
+//     cout << "Target position yielding to the best fit: ( " << bestX << ", " << bestY << ", " << bestZ << " ) for hist " << bestHistName << "\n\n";
+// }
+/*
 TF1* GoddessCalib::FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ )
 {
     string histName = Form ( "%s (%d,%d,%d)", sectorStr.c_str(), targetX, targetY, targetZ );
@@ -4877,57 +4973,57 @@ TF1* GoddessCalib::FitQValNewGeom ( string sectorStr, int targetX, int targetY, 
     cout << endl;
 
     return fitRes;
-}
+}*/
 
-void GoddessCalib::ReloadNewGeomGraphs ( string inFileName )
-{
-    TFile* inFile = new TFile ( inFileName.c_str(), "read" );
-
-    if ( !inFile->IsOpen() )
-    {
-        cerr << "Failed to open file: " << inFileName;
-        return;
-    }
-
-    auto lOK = inFile->GetListOfKeys();
-
-    if ( lOK != nullptr && lOK->GetSize() > 0 )
-    {
-        cout << "The file contains " << lOK->GetSize() << " histograms...\n";
-        float doPrintoutAt = 0;
-
-        TIterator* itr = lOK->MakeIterator();
-
-        int counter = 0;
-        TObject* fileKey;
-
-        while ( ( fileKey = itr->Next() ) )
-        {
-            float progress = ( float ) counter/lOK->GetSize() * 100.;
-
-            if ( progress >= doPrintoutAt )
-            {
-                cout << "Loaded " << std::setw ( 8 ) << counter << " / " << lOK->GetSize();
-                cout << " ( " << std::setw ( 3 ) << ( int ) progress << " % )\r" << std::flush;
-
-                doPrintoutAt = progress;
-            }
-
-            if ( fileKey != nullptr )
-            {
-                string histKey = ( string ) fileKey->GetName();
-
-                hQval_NewGeom[histKey] = ( TH1F* ) inFile->FindObjectAny ( histKey.c_str() );
-            }
-
-            counter++;
-        }
-    }
-
-    cout << endl;
-
-    return;
-}
+// void GoddessCalib::ReloadNewGeomGraphs ( string inFileName )
+// {
+//     TFile* inFile = new TFile ( inFileName.c_str(), "read" );
+//
+//     if ( !inFile->IsOpen() )
+//     {
+//         cerr << "Failed to open file: " << inFileName;
+//         return;
+//     }
+//
+//     auto lOK = inFile->GetListOfKeys();
+//
+//     if ( lOK != nullptr && lOK->GetSize() > 0 )
+//     {
+//         cout << "The file contains " << lOK->GetSize() << " histograms...\n";
+//         float doPrintoutAt = 0;
+//
+//         TIterator* itr = lOK->MakeIterator();
+//
+//         int counter = 0;
+//         TObject* fileKey;
+//
+//         while ( ( fileKey = itr->Next() ) )
+//         {
+//             float progress = ( float ) counter/lOK->GetSize() * 100.;
+//
+//             if ( progress >= doPrintoutAt )
+//             {
+//                 cout << "Loaded " << std::setw ( 8 ) << counter << " / " << lOK->GetSize();
+//                 cout << " ( " << std::setw ( 3 ) << ( int ) progress << " % )\r" << std::flush;
+//
+//                 doPrintoutAt = progress;
+//             }
+//
+//             if ( fileKey != nullptr )
+//             {
+//                 string histKey = ( string ) fileKey->GetName();
+//
+//                 hQval_NewGeom[histKey] = ( TH1F* ) inFile->FindObjectAny ( histKey.c_str() );
+//             }
+//
+//             counter++;
+//         }
+//     }
+//
+//     cout << endl;
+//
+//     return;
+// }
 
 void GoddessCalib::WriteNewGeomGraphs ( string outFName )
 {
@@ -4953,6 +5049,30 @@ void GoddessCalib::WriteNewGeomGraphs ( string outFName )
     {
         itr->second->Write();
         itr++;
+    }
+
+    auto itr2 = hEx_NewGeom.begin();
+
+    while ( itr2 != hEx_NewGeom.end() )
+    {
+        itr2->second->Write();
+        itr2++;
+    }
+
+    auto itr3 = hEvsA_SX3_NewGeom.begin();
+
+    while ( itr3 != hEvsA_SX3_NewGeom.end() )
+    {
+        itr3->second->Write();
+        itr3++;
+    }
+
+    auto itr4 = hEvsA_QQQ5_NewGeom.begin();
+
+    while ( itr4 != hEvsA_QQQ5_NewGeom.end() )
+    {
+        itr4->second->Write();
+        itr4++;
     }
 
     outf->Close();
@@ -5034,6 +5154,13 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
+
+
+
+
+
+
+
 
 
 

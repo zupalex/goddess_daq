@@ -525,6 +525,8 @@ GoddessReacInfos::GoddessReacInfos ( std::map< std::string, double > reacInfos_ 
     qValGsGs = reacInfos_["Reaction Q-Value"];
 
     targetThickness = reacInfos_["Target Thickness"];
+    
+    targetDensity = reacInfos_["Target Density"];
 
     if ( reacInfos_.find ( "QQQ5 Gain Mod" ) != reacInfos_.end() ) qqq5EnGain = reacInfos_["QQQ5 Gain Mod"];
     else qqq5EnGain = 1.0;
@@ -549,6 +551,7 @@ void GoddessReacInfos::DumpInfo()
     std::cout << "Reaction Q-Value: " << qValGsGs << "\n";
     std::cout << "Target Type: " << targetType << "\n";
     std::cout << "Target Tickness: " << targetThickness << "\n";
+    std::cout << "Target Density: " << targetDensity << "\n";
     std::cout << "QQQ5 gain modifier: " << qqq5EnGain << "\n";
     std::cout << "SuperX3 gain modifier: " << sX3EnGain << "\n";
 }

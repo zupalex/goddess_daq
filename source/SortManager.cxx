@@ -15,7 +15,7 @@ void UPDSSHMEM ( time_t& t1, time_t& t2, TMapFile* mfile, char* shareMemFile )
     printf ( "update time: %li seconds ", t2 - t1 );
     printf ( "at %7.2f Mbytes/sec\n", ( float ) mfile->GetSize() / ( t2 - t1 ) / 1000000.0 );
     printf ( "to mapfile [%s] on ",shareMemFile );
-    time_stamp();
+    GetLocalTimeAndDate ( true );
     fflush ( stdout );
 
     return;
@@ -32,25 +32,6 @@ void CheckNoArgs ( int required, int actual, char* str )
         printf ( "Please fix and try again, quitting...\n" );
         exit ( 0 );
     }
-}
-
-float findPolarFromCartesian ( float xx, float yy, float zz, float* rr )
-{
-    float d1;
-
-    *rr = sqrtf ( xx * xx + yy * yy + zz * zz );
-    d1 = acosf ( zz / *rr );
-
-    return d1;
-}
-
-float findAzimuthFromCartesian ( float xx, float yy )
-{
-    float d1;
-
-    d1 = atan2f ( yy, xx );
-
-    return d1;
 }
 
 int GebTypeStr ( int type, char str[] )
@@ -136,103 +117,6 @@ int GebTypeStr ( int type, char str[] )
 
 }
 
-TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2 )
-{
-    TH2F* tmppt;
-
-    if ( !SortManager::sinstance()->execParams->UpdateRootFile )
-    {
-        tmppt = new TH2F ( str1, str2, n1, lo1, hi1, n2, lo2, hi2 );
-        printf ( "Created Object \"%s\", %p\n", str1, ( void* ) tmppt );
-    }
-    else
-    {
-        tmppt = ( TH2F* ) gROOT->FindObject ( str1 );
-        printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
-    };
-
-    return tmppt;
-}
-
-TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi )
-{
-    char* str = ( char* ) calloc ( STRLEN, sizeof ( char ) );;
-    strcpy ( str, txt );
-    TH2F* h2D;
-
-//sprintf(str,txt);
-    h2D = mkTH2F ( str, str, xln, xlo, xhi, yln, ylo, yhi );
-
-    return h2D;
-}
-
-TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi )
-{
-    TH1D* tmppt;
-
-    if ( !SortManager::sinstance()->execParams->UpdateRootFile )
-    {
-        tmppt = new TH1D ( str1, str2, nn, lo, hi );
-        printf ( "Created Object \"%s\", %p\n, \"%s\"", str1, ( void* ) tmppt, str2 );
-    }
-    else
-    {
-        tmppt = ( TH1D* ) gROOT->FindObject ( str1 );
-        printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
-    }
-
-    return tmppt;
-}
-
-TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
-{
-    char* str = ( char* ) calloc ( STRLEN, sizeof ( char ) );
-    strcpy ( str, txt );
-    double xlod, xhid;
-    TH1D* h1D;
-
-    xlod = xlo;
-    xhid = xhi;
-
-    h1D = mkTH1D ( str, str, xln, xlod, xhid );
-    return h1D;
-}
-
-// --------------------- PARS ---------------------- //
-
-PARS::PARS()
-{
-
-}
-
-PARS::~PARS()
-{
-
-}
-
-// --------------------- GEB_EVENT ---------------------- //
-
-GEB_EVENT::GEB_EVENT()
-{
-    ptgd.clear();
-    ptinp.clear();
-
-    maxGebs = MAXGEBS;
-}
-
-GEB_EVENT::GEB_EVENT ( int maxGebs_ )
-{
-    ptgd.clear();
-    ptinp.clear();
-
-    maxGebs = maxGebs_;
-}
-
-GEB_EVENT::~GEB_EVENT()
-{
-
-}
-
 // --------------------- SortManager ---------------------- //
 
 SortManager* SortManager::s_instance = nullptr;
@@ -256,7 +140,7 @@ SortManager::SortManager()
     ii = 0;
     nbadTS = 0;
 
-    GEB_event = new GEB_EVENT();
+    gebEvt = new GEB_EVENT();
     overflowGEBEv = new GEB_EVENT();
 
     for ( int i = 0; i < MAXCOINEV; i++ )
@@ -264,10 +148,45 @@ SortManager::SortManager()
         buffHeader[i] = new GEBDATA;
         buffData[i] = new char[50000];
 
-//         DFMAEvent[i] = new DFMAEVENT;
-//         AGODEvent[i] = new AGODEVENT;
-//         DGSEvent[i] = new DGSEVENT;
+//         dfmaEvt[i] = new DFMAEVENT;
+//         agodEvt[i] = new AGODEVENT;
+//         dgsEvt[i] = new DGSEVENT;
     }
+
+    tlkup = new int[NCHANNELS];
+    tid = new int[NCHANNELS];
+
+    for ( int i = 0; i < NCHANNELS; i++ )
+    {
+        tlkup[i] = NOTHING;
+        tid[i] = NOTHING;
+    }
+
+    /* -------------------- */
+    /* read in the map file */
+    /* -------------------- */
+
+    char  str[STRLEN];
+    int i1, i2, i7, i8;
+    std::FILE* fp;
+
+    fp = fopen ( "map.dat", "r" );
+    if ( fp == NULL ) printf ( "need a \"map.dat\" file to run\n" );
+
+    printf ( "\nmapping - started\n" );
+
+    i2 = fscanf ( fp, "\n%i %i %i %s", &i1, &i7, &i8, str );
+    printf ( "%i %i %i %s\n", i1, i7, i8, str );
+    while ( i2 == 4 )
+    {
+        tlkup[i1] = i7;
+        tid[i1] = i8;
+        i2 = fscanf ( fp, "\n%i %i %i %s", &i1, &i7, &i8, str );
+        //printf ("%i %i %i %s\n", i1, i7, i8, str);
+    };
+    fclose ( fp );
+
+    printf ( "\nmapping - complete!!\n" );
 }
 
 SortManager::~SortManager()
@@ -288,7 +207,7 @@ SortManager* SortManager::sinstance()
 void SortManager::signal_catcher ( int sigval )
 {
     printf ( "\nGSSort/GEBacq received signal <%i> on ", sigval );
-    time_stamp();
+    GetLocalTimeAndDate ( true );
     s_instance->execParams->WeWereSignalled = TRUE;
     fflush ( stdout );
 }
@@ -296,7 +215,7 @@ void SortManager::signal_catcher ( int sigval )
 int SortManager::ShowStatus()
 {
     printf ( "read %i events; ", ( execParams->CurEvNo - execParams->firstEvent ) );
-    printf ( "Pars.beta=%6.4f; ", ( float ) execParams->beta );
+    printf ( "pars.beta=%6.4f; ", ( float ) execParams->beta );
     printf ( "time since last update %i seconds\n", ( int ) tdmp );
     printf ( "CommandFileName=\"%s\"\n", CommandFileName );
     fflush ( stdout );
@@ -620,20 +539,20 @@ int SortManager::GEBGetEv ( )
     unsigned long long int TS;
     long long int dTS;
 
-    GEB_event->ptgd.clear();
-    GEB_event->ptinp.clear();
+    gebEvt->ptgd.clear();
+    gebEvt->ptinp.clear();
 
     int coincCounter = 0;
 
     bool startFilling = false;
-    
-    if(execParams->triggerMode == "free") startFilling = true;
+
+    if ( execParams->triggerMode == "free" ) startFilling = true;
 
     while ( !inData.eof() && coincCounter < MAXCOINEV )
     {
         if ( overflowGEBEv->ptgd.size() > 1 )
         {
-            std::cerr << "ERROR: The GEB_event overflow contains more than 1 element!\n";
+            std::cerr << "ERROR: The gebEvt overflow contains more than 1 element!\n";
 
             return -1;
         }
@@ -647,8 +566,8 @@ int SortManager::GEBGetEv ( )
 
                 memcpy ( buffData[coincCounter], overflowGEBEv->ptinp[0], overflowGEBEv->ptgd[0]->length );
 
-                GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
-                GEB_event->ptinp.push_back ( buffData[coincCounter] );
+                gebEvt->ptgd.push_back ( buffHeader[coincCounter] );
+                gebEvt->ptinp.push_back ( buffData[coincCounter] );
 
                 startFilling = true;
             }
@@ -669,7 +588,7 @@ int SortManager::GEBGetEv ( )
 
         totBytesRead += sizeof ( GEBDATA );
 
-        if ( GEB_event->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
+        if ( gebEvt->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
         {
             printf ( "read initial payload of siz=%li\n", inData.gcount() );
             fflush ( stdout );
@@ -694,7 +613,7 @@ int SortManager::GEBGetEv ( )
 
         execParams->nbytes += inData.gcount();
 
-        if ( GEB_event->ptgd.size() == 0 ) execParams->curTS = buffHeader[coincCounter]->timestamp;
+        if ( gebEvt->ptgd.size() == 0 ) execParams->curTS = buffHeader[coincCounter]->timestamp;
 
         TS = buffHeader[coincCounter]->timestamp;
 
@@ -704,16 +623,16 @@ int SortManager::GEBGetEv ( )
         {
             if ( nbadTS < 100 )
             {
-                std::cerr << "batflag:: TS<Pars.curTS, reset it at event # " << execParams->CurEvNo << "\n";
-                std::cerr << "TS=" << TS << ", Pars.curTS=" << execParams->curTS << ", DT=" << TS - execParams->curTS << "\n";
-                printf ( "batflag:: TS<Pars.curTS, reset it at event # %i\n", execParams->CurEvNo );
-                printf ( "TS=%lli, Pars.curTS=%lli, DT=%lli\n", TS, execParams->curTS, TS - execParams->curTS );
+                std::cerr << "batflag:: TS<pars.curTS, reset it at event # " << execParams->CurEvNo << "\n";
+                std::cerr << "TS=" << TS << ", pars.curTS=" << execParams->curTS << ", DT=" << TS - execParams->curTS << "\n";
+                printf ( "batflag:: TS<pars.curTS, reset it at event # %i\n", execParams->CurEvNo );
+                printf ( "TS=%lli, pars.curTS=%lli, DT=%lli\n", TS, execParams->curTS, TS - execParams->curTS );
                 fflush ( stdout );
             }
             execParams->curTS = TS;
             if ( nbadTS < 100 )
             {
-                printf ( "new Pars.curTS=%lli\n", execParams->curTS );
+                printf ( "new pars.curTS=%lli\n", execParams->curTS );
                 printf ( "we have read %lli bytes so far\n", execParams->nbytes );
             }
             nbadTS++;
@@ -737,15 +656,15 @@ int SortManager::GEBGetEv ( )
             if ( startFilling )
             {
 //             std::cerr << "..........................\n";
-//             std::cerr << "Should push back in GEB_event:\n";
+//             std::cerr << "Should push back in gebEvt:\n";
 //             std::cerr << "---> type: " << buffHeader->type << "\n";
 //             std::cerr << "---> length: " << buffHeader->length << "\n";
 //             std::cerr << "---> timestamp: " << buffHeader->timestamp << "\n";
 
-                GEB_event->ptgd.push_back ( buffHeader[coincCounter] );
-                GEB_event->ptinp.push_back ( buffData[coincCounter] );
+                gebEvt->ptgd.push_back ( buffHeader[coincCounter] );
+                gebEvt->ptinp.push_back ( buffData[coincCounter] );
 
-//             std::cerr << "Pushed back in GEB_event:\n";
+//             std::cerr << "Pushed back in gebEvt:\n";
 //             std::cerr << "---> type: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->type << "\n";
 //             std::cerr << "---> length: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->length << "\n";
 //             std::cerr << "---> timestamp: " << GEV_event->ptgd[GEV_event->ptgd.size()-1]->timestamp << "\n";
@@ -843,7 +762,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     printf ( "\n" );
     printf ( "GEBsort running on: " );
-    time_stamp();
+    GetLocalTimeAndDate ( true );
     printf ( "\n" );
 
     /*------------*/
@@ -1129,7 +1048,7 @@ int SortManager::GEBacq ( char* ChatFileName )
         else targetStr_ = "*";
 
         double beamERemaining = TryGetRemainingEnergy ( "mass_db.dat", gConfig->reacInfos["Beam Mass"], gConfig->reacInfos["Beam Charge"], gConfig->reacInfos["Beam Energy"],
-                                gConfig->reacInfos["Target Thickness"]/2., 0.01, targetStr_, 0, "./ranges_tables", "Interpolation" );
+                                gConfig->reacInfos["Target Thickness"]/2., 0.01, targetStr_, gConfig->reacInfos["Target Density"], "./ranges_tables", "Interpolation" );
 
         float bMass;
 
@@ -1233,19 +1152,23 @@ int SortManager::GEBacq ( char* ChatFileName )
     }
     /* spectra for different types of data */
 
+    theDGSProcessor = new DGSProcessor ( 110, tlkup, tid, &ng, execParams );
+    theDGSProcessor->SupDGS ( execParams->noHists );
 
-    sup_dgs();
     if ( !execParams->noHists ) execParams->histDir->cd();
-//     //sup_dfma ();
-//     //execParams->histDir->cd();
-    sup_dgod();
+
+    theGODProcessor = new GODProcessor ( tlkup, tid, &ng, execParams, gConfig, &numDGOD, &numAGOD, &lastTS );
+    theGODProcessor->SupDGOD();
+
     if ( !execParams->noHists ) execParams->histDir->cd();
-    sup_agod();
+
+    theGODProcessor->SupAGOD();
+
     if ( !execParams->noHists ) execParams->histDir->cd();
-    sup_god();
+
+    theGODProcessor->SupGOD();
+
     if ( !execParams->noHists ) execParams->histDir->cd();
-//     //sup_phoswich ();
-//     sup_template();
 
     if ( !execParams->noHists ) execParams->f1->SetCompressionLevel ( 0 );
     if ( !execParams->noHists ) execParams->histDir->Write ( 0, TObject::kOverwrite );
@@ -1394,32 +1317,32 @@ int SortManager::GEBacq ( char* ChatFileName )
         st = GEBGetEv ( );
 
 //         std::cerr << "------- Exiting GEBGetEv -------\n";
-//         for ( int i = 0; i < GEB_event->ptgd.size(); i++ )
+//         for ( int i = 0; i < gebEvt->ptgd.size(); i++ )
 //         {
-//             std::cerr << "---> type: " << GEB_event->ptgd[i]->type << "\n";
-//             std::cerr << "---> length: " << GEB_event->ptgd[i]->length << "\n";
-//             std::cerr << "---> timestamp: " << GEB_event->ptgd[i]->timestamp << "\n";
+//             std::cerr << "---> type: " << gebEvt->ptgd[i]->type << "\n";
+//             std::cerr << "---> length: " << gebEvt->ptgd[i]->length << "\n";
+//             std::cerr << "---> timestamp: " << gebEvt->ptgd[i]->timestamp << "\n";
 //             std::cerr << "....................\n";
 //         }
 
 
 //         printf ( "st=%i\n", st );
-//         printf ( "GEB_event mult =%i\n", GEB_event->ptgd.size() );
+//         printf ( "gebEvt mult =%i\n", gebEvt->ptgd.size() );
 //         fflush ( stdout );
 //         if ( 1 )
 //         {
 //             exit ( 0 );
 //         }
 
-        if ( GEB_event->ptgd.size() > 0 )
+        if ( gebEvt->ptgd.size() > 0 )
         {
-            tcur = GEB_event->ptgd[0]->timestamp;
+            tcur = gebEvt->ptgd[0]->timestamp;
 
             /* count data types */
 
             firtsTSinEvent = LLONG_MAX;
 
-            for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+            for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
             {
                 if ( execParams->CurEvNo < execParams->tsnumwrites )
                 {
@@ -1428,34 +1351,34 @@ int SortManager::GEBacq ( char* ChatFileName )
                         fprintf ( TSfile, "\n" );
                     }
 
-                    GebTypeStr ( GEB_event->ptgd[i]->type, str );
-                    fprintf ( TSfile, "%4i/%2i: (%2i,%s) TS=%20lli; ", execParams->CurEvNo, i, GEB_event->ptgd[i]->type, str,
-                              GEB_event->ptgd[i]->timestamp );
+                    GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                    fprintf ( TSfile, "%4i/%2i: (%2i,%s) TS=%20lli; ", execParams->CurEvNo, i, gebEvt->ptgd[i]->type, str,
+                              gebEvt->ptgd[i]->timestamp );
 
-                    fprintf ( TSfile, "dT=%lli\n", GEB_event->ptgd[i]->timestamp - TSprev );
+                    fprintf ( TSfile, "dT=%lli\n", gebEvt->ptgd[i]->timestamp - TSprev );
 
-                    TSprev = GEB_event->ptgd[i]->timestamp;
+                    TSprev = gebEvt->ptgd[i]->timestamp;
                 }
 
-                if ( GEB_event->ptgd[i]->type > 0 && GEB_event->ptgd[i]->type < MAX_GEB_TYPE )
+                if ( gebEvt->ptgd[i]->type > 0 && gebEvt->ptgd[i]->type < MAX_GEB_TYPE )
                 {
-                    typehit[GEB_event->ptgd[i]->type]++;
+                    typehit[gebEvt->ptgd[i]->type]++;
                 }
 
-                if ( GEB_event->ptgd[i]->timestamp < firtsTSinEvent )
+                if ( gebEvt->ptgd[i]->timestamp < firtsTSinEvent )
                 {
-                    firtsTSinEvent = GEB_event->ptgd[i]->timestamp;
+                    firtsTSinEvent = gebEvt->ptgd[i]->timestamp;
                 }
             }
 
             /* fill dtbtev spectrum */
 
-            for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+            for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
             {
-                dTS = GEB_event->ptgd[i]->timestamp - firtsTSinEvent;
+                dTS = gebEvt->ptgd[i]->timestamp - firtsTSinEvent;
                 d1 = ( double ) dTS;
                 //if (d1 >= (double) 0 && d1 < RATELEN)
-                //dtbtev->Fill (d1, GEB_event.ptgd[i]->type, 1);
+                //dtbtev->Fill (d1, gebEvt.ptgd[i]->type, 1);
             }
 
             /* statistics */
@@ -1476,11 +1399,11 @@ int SortManager::GEBacq ( char* ChatFileName )
             if ( execParams->CurEvNo <= execParams->NumToPrint )
             {
                 printf ( "\n+++++++++++++++++++++++++++++++\n" );
-                printf ( "*start event # %i with multiplicity %lu looks like this:\n", execParams->CurEvNo, GEB_event->ptgd.size() );
-                for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+                printf ( "*start event # %i with multiplicity %lu looks like this:\n", execParams->CurEvNo, gebEvt->ptgd.size() );
+                for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
                 {
-                    GebTypeStr ( GEB_event->ptgd[i]->type, str );
-                    printf ( "%2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str, GEB_event->ptgd[i]->timestamp );
+                    GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                    printf ( "%2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp );
                 }
             }
 
@@ -1493,20 +1416,20 @@ int SortManager::GEBacq ( char* ChatFileName )
                 printf ( "+++++++++++++++++++++++++++++++\n" );
             }
 
-            bin_dgs ( GEB_event );
-            bin_dgod ( GEB_event );
-            bin_agod ( GEB_event );
+            theDGSProcessor->BinDgs ( gebEvt, dgsEvt );
+            theGODProcessor->BinDGOD ( gebEvt, dfmaEvt, dgsEvt );
+            theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt );
 
-            if ( bin_god ( GEB_event ) )
+            if ( theGODProcessor->BinGOD ( gebEvt, agodEvt, dfmaEvt, dgsEvt ) )
             {
                 userFlagedEvtCounter++;
 
                 if ( execParams->userFilter != "none" )
                 {
-                    for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+                    for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
                     {
-                        execParams->cleanedMerged.write ( ( char* ) GEB_event->ptgd[i], sizeof ( GEBDATA ) );
-                        execParams->cleanedMerged.write ( GEB_event->ptinp[i], GEB_event->ptgd[i]->length );
+                        execParams->cleanedMerged.write ( ( char* ) gebEvt->ptgd[i], sizeof ( GEBDATA ) );
+                        execParams->cleanedMerged.write ( gebEvt->ptinp[i], gebEvt->ptgd[i]->length );
                     }
                 }
             }
@@ -1597,7 +1520,7 @@ int SortManager::GEBacq ( char* ChatFileName )
                             hhtemp->Reset();
                         }
                         printf ( "all spectra were zapped @ " );
-                        time_stamp();
+                        GetLocalTimeAndDate ( true );
                         fflush ( stdout );
 
                         /* update */
@@ -1627,7 +1550,7 @@ int SortManager::GEBacq ( char* ChatFileName )
                             mfile->Update ( hhtemp );
                         }
                         printf ( "spectrum %s zapped @ ", execParams->spname );
-                        time_stamp();
+                        GetLocalTimeAndDate ( true );
                         fflush ( stdout );
                         /* update */
                     }
@@ -1771,7 +1694,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     ShowStatus();
 
-    //exit_dfma();
+    //ExitDFMA();
 
     /* done */
 
@@ -1813,7 +1736,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 //     exit_mode2();
 
     printf ( "\n ** GEBSort is done at " );
-    time_stamp();
+    GetLocalTimeAndDate ( true );
     printf ( "\n" );
     return ( 0 );
 

@@ -22,7 +22,7 @@ LiquidScint.cxx ORRUBADictionary.cxx)
 
 add_library(ORRUBA_OBJECT OBJECT ${ORRUBA_SOURCES})
 add_library(ORRUBA SHARED $<TARGET_OBJECTS:ORRUBA_OBJECT>)
-target_link_libraries(ORRUBA GoddessStruct GoddessToolboxLib)
+target_link_libraries(ORRUBA GoddessStruct)
 
 install(TARGETS ORRUBA GoddessStruct DESTINATION ${CMAKE_INSTALL_PREFIX})
 

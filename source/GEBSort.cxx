@@ -3,6 +3,70 @@
 using std::string;
 using std::vector;
 
+TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool doUpdate )
+{
+    TH2F* tmppt;
+
+    if ( doUpdate )
+    {
+        tmppt = new TH2F ( str1, str2, n1, lo1, hi1, n2, lo2, hi2 );
+        printf ( "Created Object \"%s\", %p\n", str1, ( void* ) tmppt );
+    }
+    else
+    {
+        tmppt = ( TH2F* ) gROOT->FindObject ( str1 );
+        printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
+    };
+
+    return tmppt;
+}
+
+TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi )
+{
+    char* str = ( char* ) calloc ( STRLEN, sizeof ( char ) );;
+    strcpy ( str, txt );
+    TH2F* h2D;
+
+//sprintf(str,txt);
+    h2D = mkTH2F ( str, str, xln, xlo, xhi, yln, ylo, yhi );
+
+    return h2D;
+}
+
+TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi, bool doUpdate )
+{
+    TH1D* tmppt;
+
+    if ( doUpdate )
+    {
+        tmppt = new TH1D ( str1, str2, nn, lo, hi );
+        printf ( "Created Object \"%s\", %p\n, \"%s\"", str1, ( void* ) tmppt, str2 );
+    }
+    else
+    {
+        tmppt = ( TH1D* ) gROOT->FindObject ( str1 );
+        printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
+    }
+
+    return tmppt;
+}
+
+TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
+{
+    char* str = ( char* ) calloc ( STRLEN, sizeof ( char ) );
+    strcpy ( str, txt );
+    double xlod, xhid;
+    TH1D* h1D;
+
+    xlod = xlo;
+    xhid = xhi;
+
+    h1D = mkTH1D ( str, str, xln, xlod, xhid );
+    return h1D;
+}
+
+// ******************************************************************************************** //
+
 int main ( int argc, char** argv )
 {
     /*--------------*/
@@ -10,7 +74,7 @@ int main ( int argc, char** argv )
     /*--------------*/
 
     SortManager* theSortManager = SortManager::sinstance();
-    PARS* Pars = theSortManager->execParams;
+    PARS* pars= theSortManager->execParams;
 
     int j, i, HaveChatFile = 0;
     char* p;
@@ -31,49 +95,49 @@ int main ( int argc, char** argv )
 
     /* initialize */
 
-    Pars->noCalib = 0;
-    Pars->ignoreThresholds = 0;
-    Pars->siDetailLvl = 1;
-    Pars->noMapping = false;
-    Pars->noHists = false;
-    Pars->userFilter = "";
-    Pars->triggerMode = "default";
-    Pars->InputSrc = NOTDEF;
-    Pars->HaveRootFileName = 0;
+    pars->noCalib = 0;
+    pars->ignoreThresholds = 0;
+    pars->siDetailLvl = 1;
+    pars->noMapping = false;
+    pars->noHists = false;
+    pars->userFilter = "";
+    pars->triggerMode = "default";
+    pars->InputSrc = NOTDEF;
+    pars->HaveRootFileName = 0;
 
-    strcpy ( Pars->ConfigFile, "Uninitialized" );
-    strcpy ( Pars->GeomFile, "goddess.geom" );
-    sprintf ( Pars->ROOTFileOption, "UNDEFINED" );
+    strcpy ( pars->ConfigFile, "Uninitialized" );
+    strcpy ( pars->GeomFile, "goddess.geom" );
+    sprintf ( pars->ROOTFileOption, "UNDEFINED" );
 
-    Pars->sx3EnAdjustFile = "";
-    Pars->qqq5EnAdjustFile = "";
+    pars->sx3EnAdjustFile = "";
+    pars->qqq5EnAdjustFile = "";
 
-    Pars->GGMAX = 2000;
-    Pars->ndetlimlo = 1;
-    Pars->ndetlimhi = 8;
-    Pars->fomlo[1] = 0;
-    Pars->fomhi[1] = 2.0;
-    Pars->UpdateRootFile = 0;
-    Pars->UseShareMemFile = FALSE;
-    Pars->StartMapAddress = 0;
-    sprintf ( Pars->ShareMemFile, "GTSort.map" );
+    pars->GGMAX = 2000;
+    pars->ndetlimlo = 1;
+    pars->ndetlimhi = 8;
+    pars->fomlo[1] = 0;
+    pars->fomhi[1] = 2.0;
+    pars->UpdateRootFile = 0;
+    pars->UseShareMemFile = FALSE;
+    pars->StartMapAddress = 0;
+    sprintf ( pars->ShareMemFile, "GTSort.map" );
 
     for ( i = 0; i < MAXDETNO; i++ )
     {
-        Pars->CCcal_offset[i] = 0;
-        Pars->CCcal_gain[i] = 1.0;
+        pars->CCcal_offset[i] = 0;
+        pars->CCcal_gain[i] = 1.0;
     }
     for ( i = 0; i < MAXDETPOS; i++ )
     {
         for ( j = 0; j <= MAXCRYSTALNO; j++ )
         {
-            Pars->SEGcal_gain[i][j] = 1.0;
-            Pars->SEGcal_offset[i][j] = 0.0;
+            pars->SEGcal_gain[i][j] = 1.0;
+            pars->SEGcal_offset[i][j] = 0.0;
         }
     }
 
     /*--------------------*/
-    /* Parse command line */
+    /* parse command line */
     /* and call GEBacq     */
     /*--------------------*/
 
@@ -120,30 +184,30 @@ int main ( int argc, char** argv )
                 if ( strcmp ( "disk", str2 ) == 0 )
                 {
                     strcpy ( str3, argv[j++] );
-//                strcpy (Pars->ROOTFileOption, argv[j++]);
+//                strcpy (pars->ROOTFileOption, argv[j++]);
                     printf ( "will take input from disk\n" );
-                    strcpy ( Pars->GTSortInputFile, str3 );
-                    Pars->InputSrc = DISK;
+                    strcpy ( pars->GTSortInputFile, str3 );
+                    pars->InputSrc = DISK;
                     fflush ( stdout );
                 }
                 else if ( strcmp ( "geb", str2 ) == 0 )
                 {
-                    strcpy ( Pars->pHost, argv[j++] );
-                    Pars->grouping = atol ( argv[j++] );
-                    Pars->type = atol ( argv[j++] );
-                    Pars->timeout = ( float ) atof ( argv[j++] );
+                    strcpy ( pars->pHost, argv[j++] );
+                    pars->grouping = atol ( argv[j++] );
+                    pars->type = atol ( argv[j++] );
+                    pars->timeout = ( float ) atof ( argv[j++] );
 
-                    printf ( "Pars->pHost=%s\n", Pars->pHost );
-                    printf ( "Pars->grouping=%i\n", Pars->grouping );
-                    printf ( "Pars->type=%i\n", Pars->type );
-                    printf ( "Pars->timeout=%f\n", Pars->timeout );
-                    Pars->InputSrc = GEB;
-//                strcpy (Pars->ROOTFileOption, argv[j++]);
-                    printf ( "root file option: %s\n", Pars->ROOTFileOption );
+                    printf ( "pars->pHost=%s\n", pars->pHost );
+                    printf ( "pars->grouping=%i\n", pars->grouping );
+                    printf ( "pars->type=%i\n", pars->type );
+                    printf ( "pars->timeout=%f\n", pars->timeout );
+                    pars->InputSrc = GEB;
+//                strcpy (pars->ROOTFileOption, argv[j++]);
+                    printf ( "root file option: %s\n", pars->ROOTFileOption );
 #if(HAVE_VXWORKS==0)
                     printf ( "oppsie... you cannot specify this option unless\n" );
                     printf ( "you have #define HAVE_VXWORKS 1 in GEBSort.h\n" );
-                    printf ( "and ahev a VxWorks license, quit\n" );
+                    printf ( "and have a VxWorks license, quit\n" );
                     exit ( 0 );
 #endif
                 }
@@ -161,8 +225,8 @@ int main ( int argc, char** argv )
             else if ( ( p = strstr ( argv[j], "-nevent" ) ) != NULL )
             {
                 j++;
-                sscanf ( argv[j++], "%llu", &Pars->nEvents );
-                printf ( "Overriding the amount of events which will be treated: %llu\n", Pars->nEvents );
+                sscanf ( argv[j++], "%llu", &pars->nEvents );
+                printf ( "Overriding the amount of events which will be treated: %llu\n", pars->nEvents );
             }
             else if ( ( p = strstr ( argv[j], "-chat" ) ) != NULL )
             {
@@ -180,37 +244,37 @@ int main ( int argc, char** argv )
             else if ( ( p = strstr ( argv[j], "-config" ) ) != NULL )
             {
                 j++;
-                strcpy ( Pars->ConfigFile, argv[j++] );
-                printf ( "will read config file from: %s ...\n", Pars->ConfigFile );
+                strcpy ( pars->ConfigFile, argv[j++] );
+                printf ( "will read config file from: %s ...\n", pars->ConfigFile );
             }
             else if ( ( p = strstr ( argv[j], "-geom" ) ) != NULL )
             {
                 j++;
-                strcpy ( Pars->GeomFile, argv[j++] );
-                printf ( "will read geometry from: %s ...\n", Pars->GeomFile );
+                strcpy ( pars->GeomFile, argv[j++] );
+                printf ( "will read geometry from: %s ...\n", pars->GeomFile );
             }
             else if ( ( p = strstr ( argv[j], "-sx3enadjust" ) ) != NULL )
             {
                 j++;
-                Pars->sx3EnAdjustFile = ( string ) argv[j++];
-                printf ( "will apply a correction to the SX3 energies based on the following file: %s ...\n", Pars->sx3EnAdjustFile.c_str() );
+                pars->sx3EnAdjustFile = ( string ) argv[j++];
+                printf ( "will apply a correction to the SX3 energies based on the following file: %s ...\n", pars->sx3EnAdjustFile.c_str() );
             }
             else if ( ( p = strstr ( argv[j], "-qqq5enadjust" ) ) != NULL )
             {
                 j++;
-                Pars->qqq5EnAdjustFile = ( string ) argv[j++];
-                printf ( "will apply a correction to the QQQ5 energies based on the following file: %s ...\n", Pars->qqq5EnAdjustFile.c_str() );
+                pars->qqq5EnAdjustFile = ( string ) argv[j++];
+                printf ( "will apply a correction to the QQQ5 energies based on the following file: %s ...\n", pars->qqq5EnAdjustFile.c_str() );
             }
             else if ( ( p = strstr ( argv[j], "-nocalib" ) ) != NULL )
             {
                 j++;
-                sscanf ( argv[j++], "%hd", &Pars->noCalib );
+                sscanf ( argv[j++], "%hd", &pars->noCalib );
 
-                if ( Pars->noCalib > 0 )
+                if ( pars->noCalib > 0 )
                 {
                     string outMessage;
 
-                    switch ( Pars->noCalib )
+                    switch ( pars->noCalib )
                     {
                     case -1:
                         outMessage = "no sorted tree will be written to the file";
@@ -229,11 +293,11 @@ int main ( int argc, char** argv )
             else if ( ( p = strstr ( argv[j], "-siDetailLvl" ) ) != NULL )
             {
                 j++;
-                sscanf ( argv[j++], "%hu", &Pars->siDetailLvl );
+                sscanf ( argv[j++], "%hu", &pars->siDetailLvl );
 
                 string outMessage;
 
-                switch ( Pars->siDetailLvl )
+                switch ( pars->siDetailLvl )
                 {
                 case 0:
                     outMessage = "The si branch won't be written to the rootfile!!!!!";
@@ -251,13 +315,13 @@ int main ( int argc, char** argv )
             else if ( ( p = strstr ( argv[j], "-ignorethrs" ) ) != NULL )
             {
                 j++;
-                sscanf ( argv[j++], "%hu", &Pars->ignoreThresholds );
+                sscanf ( argv[j++], "%hu", &pars->ignoreThresholds );
 
-                if ( Pars->ignoreThresholds > 0 )
+                if ( pars->ignoreThresholds > 0 )
                 {
                     string outMessage;
 
-                    switch ( Pars->noCalib )
+                    switch ( pars->noCalib )
                     {
                     case 1:
                         outMessage = "Thresholds won't be applied to the raw and/or sorted tree(s)";
@@ -274,13 +338,13 @@ int main ( int argc, char** argv )
             {
                 j++;
                 printf ( "raw tree with the pairs <channel, value> will be added to the file\n" );
-                Pars->noMapping = true;
+                pars->noMapping = true;
             }
             else if ( ( p = strstr ( argv[j], "-nohists" ) ) != NULL )
             {
                 j++;
                 printf ( "No pre-made histograms will be generated and written to the file\n" );
-                Pars->noHists = true;
+                pars->noHists = true;
             }
             else if ( ( p = strstr ( argv[j], "-userfilter" ) ) != NULL )
             {
@@ -288,7 +352,7 @@ int main ( int argc, char** argv )
                 char filteredName[500];
                 strcpy ( filteredName, argv[j++] );
 
-                Pars->userFilter = filteredName;
+                pars->userFilter = filteredName;
 
                 printf ( "The UserEventFilter will be applied to generate the root file\n" );
             }
@@ -298,30 +362,30 @@ int main ( int argc, char** argv )
                 char trigMode[500];
                 strcpy ( trigMode, argv[j++] );
 
-                Pars->triggerMode = trigMode;
+                pars->triggerMode = trigMode;
 
                 printf ( "The TRIGGER MODE is %s\n", trigMode );
             }
             else if ( ( p = strstr ( argv[j], "-rootfile" ) ) != NULL )
             {
                 j++;
-                strcpy ( Pars->ROOTFile, argv[j++] );
+                strcpy ( pars->ROOTFile, argv[j++] );
                 printf ( "rootfile name specified on command line\n" );
-                printf ( "__will store spectra in rootfile: %s\n", Pars->ROOTFile );
-                Pars->HaveRootFileName = 1;
-                Pars->UseRootFile = 1;
+                printf ( "__will store spectra in rootfile: %s\n", pars->ROOTFile );
+                pars->HaveRootFileName = 1;
+                pars->UseRootFile = 1;
                 if ( ( p = strstr ( argv[j], "RECREATE" ) ) != NULL )
                 {
-                    Pars->UpdateRootFile = FALSE;
+                    pars->UpdateRootFile = FALSE;
                     printf ( "will recreate root file\n" );
-                    sprintf ( Pars->ROOTFileOption, "RECREATE" );
+                    sprintf ( pars->ROOTFileOption, "RECREATE" );
                     j++;
                 }
                 else if ( ( p = strstr ( argv[j], "UPDATE" ) ) != NULL )
                 {
-                    Pars->UpdateRootFile = TRUE;
+                    pars->UpdateRootFile = TRUE;
                     printf ( "will update root file\n" );
-                    sprintf ( Pars->ROOTFileOption, "UPDATE" );
+                    sprintf ( pars->ROOTFileOption, "UPDATE" );
                     j++;
                 }
                 else
@@ -333,14 +397,14 @@ int main ( int argc, char** argv )
             else if ( ( p = strstr ( argv[j], "-mapfile" ) ) != NULL )
             {
                 j++;
-                Pars->UseRootFile = 0;
-                strcpy ( Pars->ShareMemFile, argv[j++] );
-                sscanf ( argv[j++], "%i", &Pars->SizeShareMemFile );
-                printf ( "will use shared memory file: %s\n", Pars->ShareMemFile );
-                printf ( "__of max size: %i bytes\n", Pars->SizeShareMemFile );
-                Pars->UseShareMemFile = 1;
-                sscanf ( argv[j++], "0x%x", &Pars->StartMapAddress );
-                printf ( "will start shared mem at address: 0x%8.8x\n", Pars->StartMapAddress );
+                pars->UseRootFile = 0;
+                strcpy ( pars->ShareMemFile, argv[j++] );
+                sscanf ( argv[j++], "%i", &pars->SizeShareMemFile );
+                printf ( "will use shared memory file: %s\n", pars->ShareMemFile );
+                printf ( "__of max size: %i bytes\n", pars->SizeShareMemFile );
+                pars->UseShareMemFile = 1;
+                sscanf ( argv[j++], "0x%x", &pars->StartMapAddress );
+                printf ( "will start shared mem at address: 0x%8.8x\n", pars->StartMapAddress );
 //if(1)exit(0);
             }
             else
@@ -354,16 +418,16 @@ int main ( int argc, char** argv )
                     fflush ( stdout );
                 }
                 printf ( "]\non " );
-                time_stamp();
+                GetLocalTimeAndDate ( true );
                 exit ( 0 );
 
             }
         };
 
     /* checking if the config file has been specified. If not then we auto-assign a config file based on the run number */
-    if ( strcmp ( Pars->ConfigFile, "Uninitialized" ) == 0 )
+    if ( strcmp ( pars->ConfigFile, "Uninitialized" ) == 0 )
     {
-        string inFileName = Pars->GTSortInputFile;
+        string inFileName = pars->GTSortInputFile;
 
         short inRunPos1 = inFileName.find ( "run", 0 ) + 3;
         short inRunPos2 = inFileName.find ( ".gtd", 0 );
@@ -387,7 +451,7 @@ int main ( int argc, char** argv )
 
         char backupConf[128];
 
-        if ( strcmp ( Pars->ConfigFile, "Uninitialized" ) == 0 ) std::cerr << "Starting auto config file picker..." << std::endl;
+        if ( strcmp ( pars->ConfigFile, "Uninitialized" ) == 0 ) std::cerr << "Starting auto config file picker..." << std::endl;
 
         for ( unsigned short fItr = 0; fItr < configFileList.size(); fItr++ )
         {
@@ -404,7 +468,7 @@ int main ( int argc, char** argv )
 
             if ( treatedRun >= lowBound && treatedRun <= upBound )
             {
-                strcpy ( Pars->ConfigFile, ( configFileList[fItr].substr ( 2, sdRunEndPos + 5 ) ).c_str() ); // the last character we want is at the position sdRunEndPos + 7 but we start from position 2...
+                strcpy ( pars->ConfigFile, ( configFileList[fItr].substr ( 2, sdRunEndPos + 5 ) ).c_str() ); // the last character we want is at the position sdRunEndPos + 7 but we start from position 2...
 
                 std::cerr << "matching!" << std::endl;
 
@@ -416,17 +480,17 @@ int main ( int argc, char** argv )
             if ( configFileList[fItr] == "goddess.config" ) strcpy ( backupConf, "goddess.config" );
         }
 
-        if ( strcmp ( Pars->ConfigFile, "Uninitialized" ) == 0 )
+        if ( strcmp ( pars->ConfigFile, "Uninitialized" ) == 0 )
         {
             std::cerr << "UNABLED TO RETRIEVE CONFIG FILE AUTOMATICALLY" << std::endl;
             std::cerr << "SPECIFY IT OR CHECK THAT ONE EXISTS FOR THE RUN YOU'RE TRYING TO TREAT" << std::endl;
             std::cerr << "Will now try to load the default config file \"goddess.config\"" << std::endl;
 
-            if ( strcmp ( backupConf, "goddess.config" ) ) strcpy ( Pars->ConfigFile, "goddess.config" );
+            if ( strcmp ( backupConf, "goddess.config" ) ) strcpy ( pars->ConfigFile, "goddess.config" );
             else return -1;
         }
 
-        printf ( "\nwill read config file from: %s ...\n", Pars->ConfigFile );
+        printf ( "\nwill read config file from: %s ...\n", pars->ConfigFile );
 
     }
 

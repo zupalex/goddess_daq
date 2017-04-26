@@ -73,7 +73,7 @@ typedef struct TRACK_STRUCT
 
 /* parameters */
 
-extern PARS Pars;
+extern PARS pars;
 
 /*-----------------------------------------------------*/
 
@@ -120,13 +120,13 @@ sup_mode1()
     //int i; //unused
     unsigned int seed;
 
-    if ( !Pars.noHists )
+    if ( !pars.noHists )
     {
         TH1D* mkTH1D ( char*, char*, int, double, double );
         TH2F* mkTH2F ( char*, char*, int, double, double, int, double, double );
     }
 
-    int get_a_seed ( unsigned int* );
+    int GetASeed ( unsigned int* );
 
     //gDirectory->mkdir("bin_mode1")->cd();
 
@@ -226,7 +226,7 @@ sup_mode1()
 
     //sprintf (str1, "gg");
     //sprintf (str2, "tracked gg matrix");
-    //gg = mkTH2F (str1, str2, Pars.GGMAX, 1, Pars.GGMAX, Pars.GGMAX, 1, Pars.GGMAX);
+    //gg = mkTH2F (str1, str2, pars.GGMAX, 1, pars.GGMAX, pars.GGMAX, 1, pars.GGMAX);
     //sprintf (str1, "g1");
     //gg->SetXTitle (str1);
     //sprintf (str1, "g2");
@@ -235,7 +235,7 @@ sup_mode1()
 
     //sprintf (str1, "ndet_e");
     //sprintf (str2, "interaction points vs gamma Energy");
-    //ndet_e = mkTH2F (str1, str2, 9, 1, 10, Pars.GGMAX, 1, (double) Pars.GGMAX);
+    //ndet_e = mkTH2F (str1, str2, 9, 1, 10, pars.GGMAX, 1, (double) pars.GGMAX);
     //sprintf (str1, "ndet");
     //ndet_e->SetXTitle (str1);
     //sprintf (str1, "e");
@@ -243,7 +243,7 @@ sup_mode1()
 
     //sprintf (str1, "rad_e");
     //sprintf (str2, "rad_e");
-    //rad_e = mkTH2F (str1, str2, 2048, 0, 300, Pars.GGMAX, 1, Pars.GGMAX);
+    //rad_e = mkTH2F (str1, str2, 2048, 0, 300, pars.GGMAX, 1, pars.GGMAX);
     //sprintf (str1, "radius");
     //rad_e->SetXTitle (str1);
     //sprintf (str1, "E (keV)");
@@ -268,10 +268,10 @@ sup_mode1()
 
 //  printf (" we have define the following spectra:\n");
 
-//  Pars.wlist = gDirectory->GetList ();
-//  Pars.wlist->Print ();
+//  pars.wlist = gDirectory->GetList ();
+//  pars.wlist->Print ();
 
-    get_a_seed ( &seed );
+    GetASeed ( &seed );
     srand ( seed );
 
     return ( 0 );
@@ -280,7 +280,7 @@ sup_mode1()
 /* ----------------------------------------------------------------- */
 
 int
-bin_mode1 ( GEB_EVENT* GEB_event )
+bin_mode1 ( GEB_EVENT* gebEvt )
 {
 
     /* declarations */
@@ -308,7 +308,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
     float e_good[40];
     int ener_l[40], ener_h[40];
     //num_sp1 = 1;
-    //numgate = Pars.numgggates;
+    //numgate = pars.numgggates;
 
 
     /* prototypes */
@@ -319,7 +319,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
 
 
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "--------------------\nentered bin_mode1:\n" );
     }
@@ -328,13 +328,13 @@ bin_mode1 ( GEB_EVENT* GEB_event )
     /* find the number of tracked headers in event */
 
     nMode1 = 0;
-    for ( i = 0; i < GEB_event->mult; i++ )
+    for ( i = 0; i < gebEvt->mult; i++ )
     {
-        if ( GEB_event->ptgd[i]->type == GEB_TYPE_TRACK )
+        if ( gebEvt->ptgd[i]->type == GEB_TYPE_TRACK )
         {
             nMode1++;
         }
-        if ( GEB_event->ptgd[i]->type == GEB_TYPE_DECOMP )
+        if ( gebEvt->ptgd[i]->type == GEB_TYPE_DECOMP )
         {
             nMode2++;
         }
@@ -350,17 +350,17 @@ bin_mode1 ( GEB_EVENT* GEB_event )
     /* process mode 1 data */
 
     nMode1 = 0;
-    for ( i = 0; i < GEB_event->mult; i++ )
+    for ( i = 0; i < gebEvt->mult; i++ )
     {
 
-        if ( GEB_event->ptgd[i]->type == GEB_TYPE_TRACK )
+        if ( gebEvt->ptgd[i]->type == GEB_TYPE_TRACK )
         {
 
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( pars.CurEvNo <= pars.NumToPrint )
             {
-                GebTypeStr ( GEB_event->ptgd[i]->type, str );
-                printf ( "bin_mode1, %2i> %2i, %s, TS=%lli;\n", i, GEB_event->ptgd[i]->type, str,
-                         GEB_event->ptgd[i]->timestamp );
+                GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                printf ( "bin_mode1, %2i> %2i, %s, TS=%lli;\n", i, gebEvt->ptgd[i]->type, str,
+                         gebEvt->ptgd[i]->timestamp );
             }
 
             /* mode 1 rate spectrum, x=minute, y=Hz */
@@ -368,29 +368,29 @@ bin_mode1 ( GEB_EVENT* GEB_event )
             if ( firsttime )
             {
                 firsttime = 0;
-                t0 = GEB_event->ptgd[i]->timestamp;
+                t0 = gebEvt->ptgd[i]->timestamp;
             };
-            d1 = ( double ) ( GEB_event->ptgd[i]->timestamp - t0 );
+            d1 = ( double ) ( gebEvt->ptgd[i]->timestamp - t0 );
             d1 /= 100000000;
             d1 /= 60;
-            if ( !Pars.noHists && d1 > 0 && d1 < ( double ) RATELEN )
+            if ( !pars.noHists && d1 > 0 && d1 < ( double ) RATELEN )
                 //rate_mode1->Fill (d1, 1 / 60.0);
             {
                 nMode1++;
             }
 
-            grh = ( TRACKED_GAMMA_HIT* ) GEB_event->ptinp[i];
+            grh = ( TRACKED_GAMMA_HIT* ) gebEvt->ptinp[i];
 
-            //if ( !Pars.noHists ) gmult->Fill (grh->ngam, 1);
+            //if ( !pars.noHists ) gmult->Fill (grh->ngam, 1);
 
             /* check for multiplicity requirements */
 
-            if ( grh->ngam < Pars.multlo || grh->ngam > Pars.multhi )
+            if ( grh->ngam < pars.multlo || grh->ngam > pars.multhi )
             {
                 return ( 0 );
             }
 
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( pars.CurEvNo <= pars.NumToPrint )
             {
                 printf ( "ngam=%i\n", grh->ngam );
                 for ( j = 0; j < grh->ngam; j++ )
@@ -405,27 +405,27 @@ bin_mode1 ( GEB_EVENT* GEB_event )
             for ( j = 0; j < grh->ngam; j++ )
                 if ( grh->gr[j].tracked )
                     if ( grh->gr[j].ndet == 1 )
-                        if ( grh->gr[j].esum > Pars.maxsnglintrE )
+                        if ( grh->gr[j].esum > pars.maxsnglintrE )
                         {
-                            grh->gr[j].fom = Pars.maxsnglintrEFOM;
+                            grh->gr[j].fom = pars.maxsnglintrEFOM;
                         }
 
             /* find doppler correction factors */
 
-            if ( Pars.beta >= 0.000 )
+            if ( pars.beta >= 0.000 )
             {
                 for ( j = 0; j < grh->ngam; j++ )
                     if ( grh->gr[j].tracked )
                     {
 
                         /* note: x,y,z and rr are in mm */
-                        /* so are Pars.target_x|y|z */
+                        /* so are pars.target_x|y|z */
 
                         /* find normalized vector from target position */
 
-                        rr = ( grh->gr[j].x0 - Pars.target_x ) * ( grh->gr[j].x0 - Pars.target_x )
-                             + ( grh->gr[j].y0 - Pars.target_y ) * ( grh->gr[j].y0 - Pars.target_y )
-                             + ( grh->gr[j].z0 - Pars.target_z ) * ( grh->gr[j].z0 - Pars.target_z );
+                        rr = ( grh->gr[j].x0 - pars.target_x ) * ( grh->gr[j].x0 - pars.target_x )
+                             + ( grh->gr[j].y0 - pars.target_y ) * ( grh->gr[j].y0 - pars.target_y )
+                             + ( grh->gr[j].z0 - pars.target_z ) * ( grh->gr[j].z0 - pars.target_z );
                         rr = sqrtf ( rr );
 
                         /* bin rr but in cm */
@@ -433,17 +433,17 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                         if ( j == 0 )
                             if ( rr / 10 > RMIN && rr / 10 < RMAX )
                             {
-                                //if ( !Pars.noHists ) radius_first->Fill ((double) rr / 10, 1);
+                                //if ( !pars.noHists ) radius_first->Fill ((double) rr / 10, 1);
                                 //need to make sure the following if statment is supposed to control the evsr Fill
                                 if ( grh->gr[j].esum > 0 && grh->gr[j].esum < MEDIUMLEN ) {};
-                                //if ( !Pars.noHists ) evsr_first->Fill ((double) rr / 10, grh->gr[j].esum);
+                                //if ( !pars.noHists ) evsr_first->Fill ((double) rr / 10, grh->gr[j].esum);
                             };
 
                         /* dot with beam direction */
 
-                        dp = ( ( grh->gr[j].x0 - Pars.target_x ) * Pars.beamdir[0] +
-                               ( grh->gr[j].y0 - Pars.target_y ) * Pars.beamdir[1] +
-                               ( grh->gr[j].z0 - Pars.target_z ) * Pars.beamdir[2] ) / rr;
+                        dp = ( ( grh->gr[j].x0 - pars.target_x ) * pars.beamdir[0] +
+                               ( grh->gr[j].y0 - pars.target_y ) * pars.beamdir[1] +
+                               ( grh->gr[j].z0 - pars.target_z ) * pars.beamdir[2] ) / rr;
 
                         /* find polar angle and bin it */
 
@@ -456,31 +456,31 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                             dp = 1.0;
                         }
                         polang[j] = acosf ( dp );
-                        //if ( !Pars.noHists ) polangle->Fill (polang[j] / M_PI * 180, 1);
+                        //if ( !pars.noHists ) polangle->Fill (polang[j] / M_PI * 180, 1);
 
-                        if ( grh->gr[j].ndet >= Pars.ndetlimlo && grh->gr[j].ndet <= Pars.ndetlimhi )
+                        if ( grh->gr[j].ndet >= pars.ndetlimlo && grh->gr[j].ndet <= pars.ndetlimhi )
                         {
                             d1 = ( double ) ( grh->gr[j].esum );
                             if ( d1 < 0 )
                             {
                                 d1 = 0;
                             }
-                            if ( d1 > Pars.GGMAX )
+                            if ( d1 > pars.GGMAX )
                             {
-                                d1 = Pars.GGMAX - 1;
+                                d1 = pars.GGMAX - 1;
                             }
 
-                            //if ( !Pars.noHists ) rad_e->Fill (rr, d1, 1.0);
+                            //if ( !pars.noHists ) rad_e->Fill (rr, d1, 1.0);
                         };
 
                         /* find a bin doppler factor */
 
-                        rr = 1.0 - Pars.beta * Pars.beta;
-                        doppler_factor[j] = sqrt ( rr ) / ( 1.0 - Pars.beta * cos ( polang[j] ) );
+                        rr = 1.0 - pars.beta * pars.beta;
+                        doppler_factor[j] = sqrt ( rr ) / ( 1.0 - pars.beta * cos ( polang[j] ) );
                         if ( doppler_factor[j] > MINDOPFAC && doppler_factor[j] < MAXDOPFAC )
-                            //if ( !Pars.noHists ) dopfac->Fill (doppler_factor[j], 1);
+                            //if ( !pars.noHists ) dopfac->Fill (doppler_factor[j], 1);
 
-                            if ( Pars.CurEvNo <= Pars.NumToPrint )
+                            if ( pars.CurEvNo <= pars.NumToPrint )
                             {
                                 printf ( "doppler_factor[%i]=%f\n", j, doppler_factor[j] );
                             }
@@ -492,17 +492,17 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                     if ( grh->gr[j].tracked )
                     {
 
-                        //if ( !Pars.noHists ) ecos_raw->Fill (grh->gr[j].esum, cos (polang[j]));
+                        //if ( !pars.noHists ) ecos_raw->Fill (grh->gr[j].esum, cos (polang[j]));
 
-                        if ( Pars.CurEvNo <= Pars.NumToPrint )
+                        if ( pars.CurEvNo <= pars.NumToPrint )
                             printf ( "dopler correction: esum %f e0 %f e1 %f -> ", grh->gr[j].esum, grh->gr[j].e0,
                                      grh->gr[j].e1 );
 
                         grh->gr[j].esum /= doppler_factor[j];
-                        //if ( !Pars.noHists ) ecos_dopcor->Fill (grh->gr[j].esum, cos (polang[j]));
+                        //if ( !pars.noHists ) ecos_dopcor->Fill (grh->gr[j].esum, cos (polang[j]));
                         grh->gr[j].e0 /= doppler_factor[j];
                         grh->gr[j].e1 /= doppler_factor[j];
-                        if ( Pars.CurEvNo <= Pars.NumToPrint )
+                        if ( pars.CurEvNo <= pars.NumToPrint )
                         {
                             printf ( "%f %f %f\n", grh->gr[j].esum, grh->gr[j].e0, grh->gr[j].e1 );
                         }
@@ -510,7 +510,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                     };
             };
 
-            if ( Pars.CurEvNo <= Pars.NumToPrint )
+            if ( pars.CurEvNo <= pars.NumToPrint )
             {
                 print_tracked_gamma_rays ( stdout, grh );
             }
@@ -519,11 +519,11 @@ bin_mode1 ( GEB_EVENT* GEB_event )
 
             for ( j = 0; j < grh->ngam; j++ )
                 if ( grh->gr[j].tracked )
-                    if ( grh->gr[j].ndet >= Pars.ndetlimlo && grh->gr[j].ndet <= Pars.ndetlimhi )
+                    if ( grh->gr[j].ndet >= pars.ndetlimlo && grh->gr[j].ndet <= pars.ndetlimhi )
                     {
                         //if (grh->gr[j].ndet < 10)
-                        //if (grh->gr[j].esum < Pars.GGMAX)
-                        //if ( !Pars.noHists ) ndet_e->Fill ((double) grh->gr[j].ndet, (double) grh->gr[j].esum, 1);
+                        //if (grh->gr[j].esum < pars.GGMAX)
+                        //if ( !pars.noHists ) ndet_e->Fill ((double) grh->gr[j].ndet, (double) grh->gr[j].esum, 1);
                     };
 
 
@@ -541,7 +541,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
 
                     /* update */
 
-                    if ( Pars.CurEvNo <= Pars.NumToPrint )
+                    if ( pars.CurEvNo <= pars.NumToPrint )
                     {
                         printf ( "aziAng=%6.2f\n", aziAng / M_PI * 180 );
                         printf ( "polAng=%6.2f\n", polAng / M_PI * 180 );
@@ -551,7 +551,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
 
                     //  if (sX > -180 && sX < 180)
                     //    if (sY > 0 && sY < 180)
-                    //      //if ( !Pars.noHists ) SMAP_firsthits->Fill (sX, sY, 1);
+                    //      //if ( !pars.noHists ) SMAP_firsthits->Fill (sX, sY, 1);
                 };
 
 
@@ -564,16 +564,16 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                     d1 = ( double ) ( grh->gr[j].esum );
                     //if ( grh->gr[j].fom < 2.0 && grh->gr[j].fom >= 0 )
                     //if ( d1 > 0 && d1 < LONGLEN )
-                    //if ( grh->gr[j].ndet >= Pars.ndetlimlo && grh->gr[j].ndet <= Pars.ndetlimhi )
+                    //if ( grh->gr[j].ndet >= pars.ndetlimlo && grh->gr[j].ndet <= pars.ndetlimhi )
                     //{
 
-                    //if ( !Pars.noHists ) fomXe->Fill (d1, grh->gr[j].fom, 1);
+                    //if ( !pars.noHists ) fomXe->Fill (d1, grh->gr[j].fom, 1);
 //                        printf("*** %f %f\n", (float)d1, (float)grh->gr[j].fom);
 
-                    //if ( !Pars.noHists )
+                    //if ( !pars.noHists )
                     //{
-                    //if ( grh->gr[j].fom >= Pars.fomlo[grh->gr[j].ndet] )
-                    //if ( grh->gr[j].fom <= Pars.fomhi[grh->gr[j].ndet] )
+                    //if ( grh->gr[j].fom >= pars.fomlo[grh->gr[j].ndet] )
+                    //if ( grh->gr[j].fom <= pars.fomhi[grh->gr[j].ndet] )
                     //{
                     //sumTrackE->Fill (d1, 1);
                     //if (grh->ngam < MAXNGAM)
@@ -585,7 +585,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
 
             /* fom spectrum */
 
-            if ( !Pars.noHists )
+            if ( !pars.noHists )
             {
                 /*for ( j = 0; j < grh->ngam; j++ )
                     if ( grh->gr[j].tracked )
@@ -607,7 +607,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
             d2 /= 1000;
             rn = ( float ) rand() / RAND_MAX;
             d1 = ( grh->ngam + ( rn - 0.5 ) );
-            /*if ( !Pars.noHists )
+            /*if ( !pars.noHists )
             {
                 if ( d1 > ( double ) 0 && d1 < ( double ) MAXK )
                     if ( d2 > ( double ) 0 && d2 < ( double ) MAXH )
@@ -630,9 +630,9 @@ bin_mode1 ( GEB_EVENT* GEB_event )
             {
                 for ( k = 0; k < grh->ngam; k++ )
                     if ( grh->gr[k].tracked )
-                        if ( grh->gr[k].ndet >= Pars.ndetlimlo && grh->gr[k].ndet <= Pars.ndetlimhi )
-                            if ( grh->gr[k].fom >= Pars.fomlo[grh->gr[k].ndet] && grh->gr[k].fom <= Pars.fomhi[grh->gr[k].ndet] )
-                                if ( grh->gr[k].ndet >= Pars.ndetlimlo && grh->gr[k].ndet <= Pars.ndetlimhi )
+                        if ( grh->gr[k].ndet >= pars.ndetlimlo && grh->gr[k].ndet <= pars.ndetlimhi )
+                            if ( grh->gr[k].fom >= pars.fomlo[grh->gr[k].ndet] && grh->gr[k].fom <= pars.fomhi[grh->gr[k].ndet] )
+                                if ( grh->gr[k].ndet >= pars.ndetlimlo && grh->gr[k].ndet <= pars.ndetlimhi )
                                 {
 
                                     d3 = ( double ) grh->gr[k].esum;
@@ -653,10 +653,10 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                 gate_spe[jj] = 0;
             };
 
-            for ( ii = 0; ii < Pars.numgggates; ii++ )
+            for ( ii = 0; ii < pars.numgggates; ii++ )
             {
-                ener_l[ii] = Pars.gg_gate_pos[ii] - Pars.gg_gate_width[ii];
-                ener_h[ii] = Pars.gg_gate_pos[ii] + Pars.gg_gate_width[ii];
+                ener_l[ii] = pars.gg_gate_pos[ii] - pars.gg_gate_width[ii];
+                ener_h[ii] = pars.gg_gate_pos[ii] + pars.gg_gate_width[ii];
 
                 for ( jj = ener_l[ii]; jj < ener_h[ii]; jj++ )
                 {
@@ -695,7 +695,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                     e1 = ( int ) e_good[ii];
                     if ( newgat == 1 )
                     {
-                        if ( !Pars.noHists && gate_spe[e1] == 0 )
+                        if ( !pars.noHists && gate_spe[e1] == 0 )
                         {
                             //TrackE_1gate->Fill ((double) e1, 1);
                         };
@@ -705,7 +705,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                 {
                     e1 = ( int ) e_good[ii];
                     //if (newgat >= 2)
-                    //if ( !Pars.noHists ) TrackE_1gate->Fill ((double) e1, 1);
+                    //if ( !pars.noHists ) TrackE_1gate->Fill ((double) e1, 1);
                 };
 // double gates
 
@@ -716,7 +716,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                     {
                         if ( gate_spe[e1] == 0 )
                         {
-                            //if ( !Pars.noHists ) TrackE_2gates->Fill ((double) e1, 1);
+                            //if ( !pars.noHists ) TrackE_2gates->Fill ((double) e1, 1);
                         };
                     };
                 };
@@ -724,7 +724,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                 {
                     e1 = ( int ) e_good[ii];
                     //if (newgat >= 3)
-                    //if ( !Pars.noHists ) TrackE_2gates->Fill ((double) e1, 1);
+                    //if ( !pars.noHists ) TrackE_2gates->Fill ((double) e1, 1);
 
                 };
 
@@ -733,7 +733,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                     e1 = ( int ) e_good[ii];
                     if ( newgat == 3 )
                     {
-                        if ( !Pars.noHists && gate_spe[e1] == 0 )
+                        if ( !pars.noHists && gate_spe[e1] == 0 )
                         {
                             //TrackE_3gates->Fill ((double) e1, 1);
                         };
@@ -742,7 +742,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                 for ( ii = 0; ii < imult; ii++ )
                 {
                     e1 = ( int ) e_good[ii];
-                    if ( !Pars.noHists && newgat >= 4 )
+                    if ( !pars.noHists && newgat >= 4 )
                     {
 
                         //TrackE_3gates->Fill ((double) e1, 1);
@@ -758,15 +758,15 @@ bin_mode1 ( GEB_EVENT* GEB_event )
             if ( grh->ngam >= 2 )
                 for ( k = 0; k < grh->ngam; k++ )
                     if ( grh->gr[k].tracked )
-                        if ( grh->gr[k].ndet >= Pars.ndetlimlo && grh->gr[k].ndet <= Pars.ndetlimhi )
-                            if ( grh->gr[k].fom >= Pars.fomlo[grh->gr[k].ndet] && grh->gr[k].fom <= Pars.fomhi[grh->gr[k].ndet] )
-                                if ( grh->gr[k].ndet >= Pars.ndetlimlo && grh->gr[k].ndet <= Pars.ndetlimhi )
+                        if ( grh->gr[k].ndet >= pars.ndetlimlo && grh->gr[k].ndet <= pars.ndetlimhi )
+                            if ( grh->gr[k].fom >= pars.fomlo[grh->gr[k].ndet] && grh->gr[k].fom <= pars.fomhi[grh->gr[k].ndet] )
+                                if ( grh->gr[k].ndet >= pars.ndetlimlo && grh->gr[k].ndet <= pars.ndetlimhi )
                                     for ( l = k + 1; l < grh->ngam; l++ )
                                         if ( grh->gr[l].tracked )
-                                            if ( grh->gr[l].ndet >= Pars.ndetlimlo && grh->gr[l].ndet <= Pars.ndetlimhi )
-                                                if ( grh->gr[l].fom >= Pars.fomlo[grh->gr[l].ndet]
-                                                        && grh->gr[l].fom <= Pars.fomhi[grh->gr[l].ndet] )
-                                                    if ( grh->gr[l].ndet >= Pars.ndetlimlo && grh->gr[l].ndet <= Pars.ndetlimhi )
+                                            if ( grh->gr[l].ndet >= pars.ndetlimlo && grh->gr[l].ndet <= pars.ndetlimhi )
+                                                if ( grh->gr[l].fom >= pars.fomlo[grh->gr[l].ndet]
+                                                        && grh->gr[l].fom <= pars.fomhi[grh->gr[l].ndet] )
+                                                    if ( grh->gr[l].ndet >= pars.ndetlimlo && grh->gr[l].ndet <= pars.ndetlimhi )
                                                     {
 
                                                         d1 = ( double ) grh->gr[k].esum;
@@ -774,9 +774,9 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                                                         {
                                                             d1 = 0;
                                                         }
-                                                        if ( d1 > Pars.GGMAX )
+                                                        if ( d1 > pars.GGMAX )
                                                         {
-                                                            d1 = Pars.GGMAX;
+                                                            d1 = pars.GGMAX;
                                                         }
 
                                                         d2 = ( double ) grh->gr[l].esum;
@@ -784,18 +784,18 @@ bin_mode1 ( GEB_EVENT* GEB_event )
                                                         {
                                                             d2 = 0;
                                                         }
-                                                        if ( d2 > Pars.GGMAX )
+                                                        if ( d2 > pars.GGMAX )
                                                         {
-                                                            d2 = Pars.GGMAX;
+                                                            d2 = pars.GGMAX;
                                                         }
 
-                                                        //if ( !Pars.noHists ) gg->Fill (d1, d2, 1.0);
-                                                        //if ( !Pars.noHists ) gg->Fill (d2, d1, 1.0);
+                                                        //if ( !pars.noHists ) gg->Fill (d1, d2, 1.0);
+                                                        //if ( !pars.noHists ) gg->Fill (d2, d1, 1.0);
 
                                                     };
 
 
-        };                      /* if (GEB_event->ptgd[i]->type == GEB_TYPE_TRACK) */
+        };                      /* if (gebEvt->ptgd[i]->type == GEB_TYPE_TRACK) */
 
     };
 
@@ -803,7 +803,7 @@ bin_mode1 ( GEB_EVENT* GEB_event )
 
     /* done */
 
-    if ( Pars.CurEvNo <= Pars.NumToPrint )
+    if ( pars.CurEvNo <= pars.NumToPrint )
     {
         printf ( "exit bin_mode1\n" );
     }

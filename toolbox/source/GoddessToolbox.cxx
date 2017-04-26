@@ -4,7 +4,7 @@
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
 
-string GetLocalTimeAndDate()
+string GetLocalTimeAndDate ( bool doPrint )
 {
     time_t t = time ( nullptr );
     struct tm* localt = localtime ( &t );
@@ -13,10 +13,14 @@ string GetLocalTimeAndDate()
 
     sprintf ( timeAndDate, "%s", asctime ( localt ) );
 
-    return ( string ) timeAndDate;
+    string timeAndDateStr = FindAndReplaceInString ( timeAndDate, "\n", "" );
+
+    if ( doPrint ) cout << timeAndDateStr << endl;
+
+    return timeAndDateStr;
 }
 
-string GetCurrentYear()
+string GetCurrentYear ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -24,10 +28,14 @@ string GetCurrentYear()
 
     string currYear = timeAndDate.substr ( lastSpace+1 );
 
-    return FindAndReplaceInString ( currYear, "\n", "" );
+    currYear = FindAndReplaceInString ( currYear, "\n", "" );
+
+    if ( doPrint ) std::cout << currYear << endl;
+
+    return currYear;
 }
 
-string GetCurrentDayName()
+string GetCurrentDayName ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -35,10 +43,12 @@ string GetCurrentDayName()
 
     string currDay = timeAndDate.substr ( 0, firstSpace );
 
+    if ( doPrint ) std::cout << currDay << endl;
+
     return currDay;
 }
 
-string GetCurrentMonthName()
+string GetCurrentMonthName ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -47,10 +57,12 @@ string GetCurrentMonthName()
 
     string currMonth = timeAndDate.substr ( firstSpace+1, secSpace-firstSpace-1 );
 
+    if ( doPrint ) std::cout << currMonth << endl;
+
     return currMonth;
 }
 
-int GetCurrentDayNum()
+int GetCurrentDayNum ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -58,6 +70,8 @@ int GetCurrentDayNum()
     size_t nextSpace = timeAndDate.find_first_of ( " ", firstNum+1 );
 
     string currDayNum = timeAndDate.substr ( firstNum, firstNum-nextSpace );
+
+    if ( doPrint ) std::cout << currDayNum << endl;
 
     return std::stoi ( currDayNum );
 }
@@ -81,7 +95,7 @@ int GetCurrentMonthNum()
     else return 0;
 }
 
-int GetCurrentHour()
+int GetCurrentHour ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -91,10 +105,12 @@ int GetCurrentHour()
 
     string currHour = timeAndDate.substr ( nextSpace+1, firstSemicolon-nextSpace-1 );
 
+    if ( doPrint ) std::cout << currHour << endl;
+
     return std::stoi ( currHour );
 }
 
-int GetCurrentMinute()
+int GetCurrentMinute ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -103,10 +119,12 @@ int GetCurrentMinute()
 
     string currMinute = timeAndDate.substr ( firstSemicolon+1, secSemicolon-firstSemicolon-1 );
 
+    if ( doPrint ) std::cout << currMinute << endl;
+
     return std::stoi ( currMinute );
 }
 
-int GetCurrentSecond()
+int GetCurrentSecond ( bool doPrint )
 {
     string timeAndDate = GetLocalTimeAndDate();
 
@@ -115,6 +133,8 @@ int GetCurrentSecond()
     size_t nextSpace = timeAndDate.find_first_of ( " ", secSemicolon+1 );
 
     string currMinute = timeAndDate.substr ( secSemicolon+1, nextSpace-secSemicolon-1 );
+
+    if ( doPrint ) std::cout << currMinute << endl;
 
     return std::stoi ( currMinute );
 }
@@ -287,7 +307,7 @@ std::vector<std::string> DecodeTags ( std::string tagsStr )
     return tags;
 }
 
-vector< string > GetDirContent ( string dirName, string mode, string fileExt, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith, bool caseSensitive )
+vector< string > GetDirContent ( string dirName, string mode, string endWith, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith, bool caseSensitive )
 {
     std::vector<std::string> fileList, mustAllTags, cantTags, mustOneOfTags;
 
@@ -423,7 +443,7 @@ vector< string > GetDirContent ( string dirName, string mode, string fileExt, st
 
         if ( startWith.empty() || ( !startWith.empty() && std::search ( entName.begin(), entName.end(), startWith.begin(), startWith.end(), ignoreCharCasePred ( caseSensitive ) ) == entName.begin() ) )
         {
-            if ( fileExt.empty() || ( !fileExt.empty() && std::search ( entName.begin(), entName.end(), fileExt.begin(), fileExt.end(), ignoreCharCasePred ( caseSensitive ) ) != entName.end() ) )
+            if ( endWith.empty() || ( !endWith.empty() && std::search ( entName.begin(), entName.end(), endWith.begin(), endWith.end(), ignoreCharCasePred ( caseSensitive ) ) == entName.end() - endWith.length() ) )
             {
                 bool mustAllFlag = true, cantFlag = false, mustOneOfFlag = ( mustOneOfTags.size() > 0 ? false : true );
 
@@ -501,6 +521,7 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
     std::vector<std::tuple<std::size_t, char, std::size_t>> sChars;
 
     std::string fStartWith;
+    std::string fEndWith;
     std::string fMustHaveAll;
     std::string fMustHaveOneOf;
 
@@ -585,15 +606,10 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
         {
             fNameParts.push_back ( itemsString.substr ( startPos, itemsString.length() ) );
 
-            fMustHaveAll += itemsString.substr ( startPos, itemsString.length() );
-            fMustHaveAll += " ";
-
-            //             std::cout << "new must all tag: " << itemsString.substr ( startPos, itemsString.length() ) << "\n";
-
-            //             std::cout << "new name part: " << itemsString.substr ( startPos, special - startPos ) << "\n";
+            fEndWith += itemsString.substr ( startPos, itemsString.length() );
         }
 
-        files = GetDirContent ( path, mode, "", fMustHaveAll, "", fMustHaveOneOf, fStartWith, caseSensitive );
+        files = GetDirContent ( path, mode, fEndWith, fMustHaveAll, "", fMustHaveOneOf, fStartWith, caseSensitive );
     }
 
     return files;
@@ -1284,4 +1300,49 @@ void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, i
     atomicMass *= 1e-6;
 
     return;
+}
+
+//_______________________________________________________________________________________________________________________________________________//
+//_________________________________________GEOMETRY AND TRIGONOMETRY FUNCTIONS & UTILITIES_______________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+float findPolarFromCartesian ( float xx, float yy, float zz, float* rr )
+{
+    float d1;
+
+    *rr = sqrtf ( xx * xx + yy * yy + zz * zz );
+    d1 = acosf ( zz / *rr );
+
+    return d1;
+}
+
+float findAzimuthFromCartesian ( float xx, float yy )
+{
+    float d1;
+
+    d1 = atan2f ( yy, xx );
+
+    return d1;
+}
+
+int GetASeed ( unsigned int *seed )
+{
+    /* delarations */
+
+    struct timeval tp;
+    int i;
+    unsigned short int i1;
+
+    /* make the random seed */
+
+    for ( i = 0; i < 31; i++ )
+    {
+        gettimeofday ( &tp, NULL );
+        i1 = ( unsigned int ) tp.tv_usec;
+        i1 &= 0x0001;
+        *seed += i1 << i;
+    };
+    /* printf("GetASeed:: %i\n", *seed); */
+
+    return 0;
 }

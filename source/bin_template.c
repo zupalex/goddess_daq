@@ -42,7 +42,7 @@ typedef struct TRACK_STRUCT
 
 /* parameters */
 
-extern PARS Pars;
+extern PARS pars;
 
 
 /*-----------------------------------------------------*/
@@ -59,8 +59,8 @@ sup_template ()
 
   printf (" we have define the following spectra:\n");
 
-  Pars.wlist = gDirectory->GetList ();
-  Pars.wlist->Print ();
+  pars.wlist = gDirectory->GetList ();
+  pars.wlist->Print ();
 
   return(0);
 
@@ -69,7 +69,7 @@ sup_template ()
 /* ----------------------------------------------------------------- */
 
 int
-bin_template (GEB_EVENT * GEB_event)
+bin_template (GEB_EVENT * gebEvt)
 {
 
   /* declarations */
@@ -83,23 +83,23 @@ bin_template (GEB_EVENT * GEB_event)
 
 if(1)return(0);
 
-  if (Pars.CurEvNo <= Pars.NumToPrint)
+  if (pars.CurEvNo <= pars.NumToPrint)
     printf ("entered bin_template:\n");
 
 
   /* loop through the coincidence event and fish out GEB_TYPE_DGS data */
 
-  for (i = 0; i < GEB_event->mult; i++)
+  for (i = 0; i < gebEvt->mult; i++)
     {
 
-      if (GEB_event->ptgd[i]->type == GEB_TYPE_DGS)
+      if (gebEvt->ptgd[i]->type == GEB_TYPE_DGS)
         {
 
-          if (Pars.CurEvNo <= Pars.NumToPrint)
+          if (pars.CurEvNo <= pars.NumToPrint)
             {
-              GebTypeStr (GEB_event->ptgd[i]->type, str);
-              printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, GEB_event->ptgd[i]->type, str,
-                      GEB_event->ptgd[i]->timestamp);
+              GebTypeStr (gebEvt->ptgd[i]->type, str);
+              printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str,
+                      gebEvt->ptgd[i]->timestamp);
             }
 
         };
@@ -108,7 +108,7 @@ if(1)return(0);
 
   /* done */
 
-  if (Pars.CurEvNo <= Pars.NumToPrint)
+  if (pars.CurEvNo <= pars.NumToPrint)
     printf ("exit bin_template\n");
 
   return (0);

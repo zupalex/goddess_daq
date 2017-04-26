@@ -1,46 +1,48 @@
-// UserEventFilterTemplate version 161024 //
+// UserEventFilterTemplate version 170426 //
 
 #include <iostream>
 
-#include "SortManager.h"
+#include "GoddessData.h"
 
-bool SortManager::GetWriteEventFlag()
+bool GoddessData::GetWriteEventFlag ( GEB_EVENT* gebEvt )
 {
+    ( void ) gebEvt;
+
     bool flag = false;
 
-//     if ( GEB_event->ptgd.size() > 0 )
+//     if ( gebEvt->ptgd.size() > 0 )
 //     {
-//         for ( unsigned int i = 0; i < GEB_event->ptgd.size(); i++ )
+//         for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
 //         {
-//             if ( GEB_event->ptgd[i]->type == 16 )
+//             if ( gebEvt->ptgd[i]->type == 16 )
 //             {
 //                 return false;
 //             }
 //         }
 //     }
 
-//     if ( gammaDets->size() > 0 )
+//     if ( gamData->size() > 0 )
 //     {
-// 
+//
 //     }
-// 
-    if ( siDets->size() > 0 )
+//
+    if ( siData->size() > 0 )
     {
-        for ( auto itr = siDets->begin(); itr != siDets->end(); itr++ )
+        for ( auto itr = siData->begin(); itr != siData->end(); itr++ )
         {
-            SiDataBase siData = *itr;
+            SiDataBase siDatum = *itr;
 
-            if ( siData.isBarrel && siData.isUpstream )
+            if ( siDatum.isBarrel && siDatum.isUpstream )
             {
                 flag = true;
                 break;
             }
         }
     }
-// 
-//     if ( ionChamber->size() > 0 )
+//
+//     if ( ionData->size() > 0 )
 //     {
-// 
+//
 //     }
 
 //     flag = true;
