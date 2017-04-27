@@ -17,7 +17,6 @@
 #include "TSystem.h"
 #include "TCutG.h"
 #include "TTree.h"
-#include "gdecomp.h"
 #include "limits.h"
 
 #include "GEBSort.h"

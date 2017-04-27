@@ -145,7 +145,7 @@ SortManager::SortManager()
 
     for ( int i = 0; i < MAXCOINEV; i++ )
     {
-        buffHeader[i] = new GEBDATA;
+        buffHeader[i] = new GebData;
         buffData[i] = new char[50000];
 
 //         dfmaEvt[i] = new DFMAEVENT;
@@ -578,15 +578,15 @@ int SortManager::GEBGetEv ( )
             coincCounter++;
         }
 
-        inData.read ( ( char* ) buffHeader[coincCounter], sizeof ( GEBDATA ) );
+        inData.read ( ( char* ) buffHeader[coincCounter], sizeof ( GebData ) );
 
-        if ( inData.gcount() != sizeof ( GEBDATA ) || inData.fail() )
+        if ( inData.gcount() != sizeof ( GebData ) || inData.fail() )
         {
-            printf ( "failed to read %lu bytes for header, got %li\n", sizeof ( GEBDATA ), inData.gcount() );
+            printf ( "failed to read %lu bytes for header, got %li\n", sizeof ( GebData ), inData.gcount() );
             return 1;
         }
 
-        totBytesRead += sizeof ( GEBDATA );
+        totBytesRead += sizeof ( GebData );
 
         if ( gebEvt->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
         {
@@ -921,7 +921,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
         /* find the very first GEB header to find start TS */
 
-        inData.read ( ( char* ) buffHeader[0], sizeof ( GEBDATA ) );
+        inData.read ( ( char* ) buffHeader[0], sizeof ( GebData ) );
 
         printf ( "siz=%li;", inData.gcount() );
         printf ( "ptgd[i]->type=%2i; ", buffHeader[0]->type );
@@ -1153,7 +1153,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     /* spectra for different types of data */
 
     theDGSProcessor = new DGSProcessor ( 110, tlkup, tid, &ng, execParams );
-    theDGSProcessor->SupDGS ( execParams->noHists );
+    theDGSProcessor->SupDGS ();
 
     if ( !execParams->noHists ) execParams->histDir->cd();
 
@@ -1428,7 +1428,7 @@ int SortManager::GEBacq ( char* ChatFileName )
                 {
                     for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
                     {
-                        execParams->cleanedMerged.write ( ( char* ) gebEvt->ptgd[i], sizeof ( GEBDATA ) );
+                        execParams->cleanedMerged.write ( ( char* ) gebEvt->ptgd[i], sizeof ( GebData ) );
                         execParams->cleanedMerged.write ( gebEvt->ptinp[i], gebEvt->ptgd[i]->length );
                     }
                 }

@@ -388,18 +388,23 @@ void GoddessAnalysis::AddFileToTreat ( TFile* inFile, std::string treeName )
         return;
     }
 
+    string fileName = inFile->GetName();
+    string dirName = userTree->GetDirectory()->GetName();
+
+    string finalTreeName = ( fileName == dirName ) ? treeName : ( dirName + "/" + treeName );
+
     if ( userChain == NULL )
     {
         std::cout << "Initializing the user TChain...\n";
 
-        userChain = new TChain ( treeName.c_str() );
+        userChain = new TChain ( finalTreeName.c_str() );
     }
 
-    std::cout << "Found tree " << treeName << " in the file " << inFile->GetName() << "\n";
+    std::cout << "Found tree " << finalTreeName << " in the file " << inFile->GetName() << "\n";
 
-    if ( treeName != ( std::string ) userChain->GetName() )
+    if ( finalTreeName != ( std::string ) userChain->GetName() )
     {
-        std::cerr << "Cannot add " << treeName << " to the chain. Trees have different sctructure...\n";
+        std::cerr << "Cannot add " << finalTreeName << " to the chain. Trees have different sctructure...\n";
 
         return;
     }

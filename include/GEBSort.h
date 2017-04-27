@@ -37,7 +37,7 @@
 
 #include "TMapFile.h"
 
-#include "gdecomp.h"
+#include "GTMerge.h"
 
 #define TAPE 0
 #define NET  1
@@ -232,13 +232,13 @@ public:
     virtual ~GEB_EVENT() {}
 
     int maxGebs;
-    std::vector<GEBDATA*> ptgd;
+    std::vector<GebData*> ptgd;
     std::vector<char*> ptinp;
 };
 
-TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool doUpdate = false );
+TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool recreate = false );
 TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi );
-TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi, bool doUpdate = false );
+TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi, bool recreate = false );
 TH1D* make1D ( const char* txt, int xln, int xlo, int xhi );
 
 #endif

@@ -5,9 +5,6 @@
 #include "TFile.h"
 #include "TMath.h"
 
-//GEBSort Headers
-#include "gdecomp.h"
-
 //GODDESS Headers
 #include "Detector.h"
 #include "QQQ5.h"

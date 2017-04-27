@@ -24,7 +24,7 @@ InDataInfo::InDataInfo ( std::ifstream* istream_ )
 
 EVENT::EVENT()
 {
-    gd = new GEBDATA;
+    gd = new GebData;
     payload = new char[50000];
     key = -1;
 }
@@ -93,7 +93,7 @@ std::pair< unsigned int, unsigned long long int > MergeManager::GetSizeAndBytesC
 
             for ( unsigned int m = 0; m < ofItr->second->size(); m++ )
             {
-                bufferBytesCount += sizeof ( GEBDATA ) + ofItr->second->at ( m )->second->gd->length;
+                bufferBytesCount += sizeof ( GebData ) + ofItr->second->at ( m )->second->gd->length;
             }
         }
     }
@@ -106,7 +106,7 @@ std::pair< unsigned int, unsigned long long int > MergeManager::GetSizeAndBytesC
 
             for ( unsigned int m = 0; m < ofItr->second->size(); m++ )
             {
-                bufferBytesCount += sizeof ( GEBDATA ) + ofItr->second->at ( m )->gd->length;
+                bufferBytesCount += sizeof ( GebData ) + ofItr->second->at ( m )->gd->length;
             }
         }
     }

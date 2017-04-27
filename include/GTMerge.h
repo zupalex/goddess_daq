@@ -62,6 +62,60 @@
 
 #define STRLEN 256
 
+
+//**** TO CHECK *************//
+
+#define MAXDATASIZE 20000
+
+#define SUMS_FILE   "precalc.dat"       /* file containing precalculated sums */
+
+#define GRID_PTS   228254  /* CHANGEME number of grid points in the basis */
+#define GRID_SEGS  37      /* number of signals calculated for each basis point */
+#define MEAS_SEGS  37      /* number of signals measured for each event */
+#define TIME_STEPS 50      /* number of time steps calculated/measured for each segment */
+#define TOT_SEGS   36      /* total number of segments in crystal */
+#define MAX_AGS    1000  /* CHANGEME max. no. of points in coarse grid for AGS */
+
+#define MAX_SEGS   8              /* max. number of segments to take in events */
+#define MAX_PARS   (8*MAX_SEGS+1) /* max. number of parameters to fit */
+#define MAX_INTPTS (2*MAX_SEGS)   /* max. number of interaction points */
+#define SSEG       TOT_SEGS       /* range of seg in basis grid */
+#define SRAD       34             /* range of r in basis grid */
+#define SPHI       13             /* range of phi in basis grid */
+#define SZZZ       22             /* range of z in basis grid */
+
+#define COAL_DIST_DEFAULT 2.0
+
+#define GEB_TYPE_DECOMP         1
+#define GEB_TYPE_RAW            2
+#define GEB_TYPE_TRACK          3
+#define GEB_TYPE_BGS            4
+#define GEB_TYPE_S800_RAW       5
+#define GEB_TYPE_NSCLnonevent   6
+#define GEB_TYPE_GT_SCALER      7
+#define GEB_TYPE_GT_MOD29       8
+#define GEB_TYPE_S800PHYSDATA   9
+#define GEB_TYPE_NSCLNONEVTS   10
+#define GEB_TYPE_G4SIM         11
+#define GEB_TYPE_CHICO         12
+#define GEB_TYPE_DGS           14
+#define GEB_TYPE_DGSTRIG       15
+#define GEB_TYPE_DFMA          16
+#define GEB_TYPE_PHOSWICH      17
+#define GEB_TYPE_PHOSWICHAUX   18
+#define GEB_TYPE_AGOD          19
+
+#define MAX_GEB_TYPE           20
+
+// Binary data format
+
+struct GebData
+{
+    int type; /* type of data following */
+    int length;
+    unsigned long long timestamp;
+};
+
 /*---------------*/
 /* single events */
 /*---------------*/

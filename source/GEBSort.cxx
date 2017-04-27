@@ -3,20 +3,22 @@
 using std::string;
 using std::vector;
 
-TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool doUpdate )
+TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool recreate )
 {
-    TH2F* tmppt;
+    TH2F* tmppt = nullptr;
 
-    if ( doUpdate )
+    if ( !recreate )
+    {
+        tmppt = ( TH2F* ) gROOT->FindObject ( str1 );
+
+        if ( tmppt != nullptr ) printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
+    }
+
+    if ( tmppt == nullptr )
     {
         tmppt = new TH2F ( str1, str2, n1, lo1, hi1, n2, lo2, hi2 );
         printf ( "Created Object \"%s\", %p\n", str1, ( void* ) tmppt );
     }
-    else
-    {
-        tmppt = ( TH2F* ) gROOT->FindObject ( str1 );
-        printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
-    };
 
     return tmppt;
 }
@@ -33,19 +35,21 @@ TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int
     return h2D;
 }
 
-TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi, bool doUpdate )
+TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi, bool recreate )
 {
-    TH1D* tmppt;
+    TH1D* tmppt = nullptr;
 
-    if ( doUpdate )
+    if ( !recreate )
+    {
+        tmppt = ( TH1D* ) gROOT->FindObject ( str1 );
+
+        if ( tmppt != nullptr ) printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
+    }
+
+    if ( tmppt == nullptr )
     {
         tmppt = new TH1D ( str1, str2, nn, lo, hi );
         printf ( "Created Object \"%s\", %p\n, \"%s\"", str1, ( void* ) tmppt, str2 );
-    }
-    else
-    {
-        tmppt = ( TH1D* ) gROOT->FindObject ( str1 );
-        printf ( "Found Object \"%s\", %p\n", str1, ( void* ) tmppt );
     }
 
     return tmppt;

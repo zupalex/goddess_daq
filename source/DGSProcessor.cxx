@@ -1,5 +1,3 @@
-#include "gdecomp.h"
-
 #include "GammasphereAngles.h"
 
 #include "DGSProcessor.h"
@@ -78,13 +76,13 @@ void DGSProcessor::GetCal ( char* file )
     fclose ( fp );
 }
 
-int DGSProcessor::SupDGS ( bool generateHists )
+int DGSProcessor::SupDGS ()
 {
     /* declarations */
 
     char file_name[] = "./dgscal.dat";      // place this is sort directory
 
-    if ( generateHists )
+    if ( !pars->noHists )
     {
         gDirectory->mkdir ( "dgs" )->cd();
 
@@ -451,7 +449,7 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
         if ( thedgsEvt[i].tpe == GE )
         {
             int gsid = thedgsEvt[i].tid;
-            if ( !pars->noHists ) hGeCounter->Fill ( ( int ) ( ( thedgsEvt[0].event_timestamp - EvTimeStam0 ) / 100000000 ), gsid );
+//             if ( !pars->noHists ) hGeCounter->Fill ( ( int ) ( ( thedgsEvt[0].event_timestamp - EvTimeStam0 ) / 100000000 ), gsid );
             Energy = ( ( float ) ( thedgsEvt[i].post_rise_energy ) - ( float ) ( thedgsEvt[i].pre_rise_energy ) * ehiPZ[gsid] ) / M * ehigain[gsid];
             Energy = Energy - float ( thedgsEvt[i].base_sample ) * ( 1. - ehiPZ[gsid] ) * ehigain[gsid] + ehioffset[gsid];
 
@@ -471,7 +469,7 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
                 if ( thedgsEvt[j].tpe == BGO && thedgsEvt[j].tid == gsid )    // BGO & GE in coincidence
                 {
                     tdiff = ( int ) ( thedgsEvt[i].event_timestamp - thedgsEvt[j].event_timestamp );
-                    if ( !pars->noHists ) hGeBGO_DT->Fill ( tdiff, gsid );
+//                     if ( !pars->noHists ) hGeBGO_DT->Fill ( tdiff, gsid );
                     if ( abs ( tdiff ) <= 50 )
                     {
                         thedgsEvt[i].flag = 1;    // Mark as Dirty Ge
@@ -481,7 +479,7 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
         }
         else if ( thedgsEvt[i].tpe == BGO )
         {
-            if ( !pars->noHists ) hBGOCounter->Fill ( ( int ) ( ( thedgsEvt[0].event_timestamp - EvTimeStam0 ) / 100000000 ), thedgsEvt[i].tid );
+//             if ( !pars->noHists ) hBGOCounter->Fill ( ( int ) ( ( thedgsEvt[0].event_timestamp - EvTimeStam0 ) / 100000000 ), thedgsEvt[i].tid );
             thedgsEvt[i].ehi = ( float ) ( thedgsEvt[i].post_rise_energy ) - ( float ) ( thedgsEvt[i].pre_rise_energy );
         }
         else if ( thedgsEvt[i].tpe == SIDE )
@@ -494,37 +492,37 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
 
     /* Energy Histogram loop */
 
-    for ( int i = 0; i < *ng; i++ )
-    {
-        if ( !pars->noHists&& thedgsEvt[i].tpe == GE )
-        {
-            int e = ( int ) thedgsEvt[i].ehi;
-            int gsid = thedgsEvt[i].tid;
-
-            hEhiRaw->Fill ( e, gsid );
-            if ( thedgsEvt[i].flag == 0 )
-            {
-                hEhiCln->Fill ( e, gsid );
-            }
-            if ( thedgsEvt[i].flag == 1 )
-            {
-                hEhiDrty->Fill ( e, gsid );
-            }
-        }
-    }
-
-    /* Histogram's for PZ and baseline correction */
-
-    for ( int i = 0; i < *ng; i++ )
-    {
-        if ( !pars->noHists && thedgsEvt[i].tpe == GE )
-        {
-            int gsid = thedgsEvt[i].tid;
-
-            hTrB->Fill ( thedgsEvt[i].baseline, gsid );
-            hFwB->Fill ( thedgsEvt[i].base_sample, gsid );;
-        }
-    }
+//     for ( int i = 0; i < *ng; i++ )
+//     {
+//         if ( !pars->noHists&& thedgsEvt[i].tpe == GE )
+//         {
+//             int e = ( int ) thedgsEvt[i].ehi;
+//             int gsid = thedgsEvt[i].tid;
+//
+//             hEhiRaw->Fill ( e, gsid );
+//             if ( thedgsEvt[i].flag == 0 )
+//             {
+//                 hEhiCln->Fill ( e, gsid );
+//             }
+//             if ( thedgsEvt[i].flag == 1 )
+//             {
+//                 hEhiDrty->Fill ( e, gsid );
+//             }
+//         }
+//     }
+//
+//     /* Histogram's for PZ and baseline correction */
+//
+//     for ( int i = 0; i < *ng; i++ )
+//     {
+//         if ( !pars->noHists && thedgsEvt[i].tpe == GE )
+//         {
+//             int gsid = thedgsEvt[i].tid;
+//
+//             hTrB->Fill ( thedgsEvt[i].baseline, gsid );
+//             hFwB->Fill ( thedgsEvt[i].base_sample, gsid );;
+//         }
+//     }
 
     /* debug list the gamma rays we found */
 

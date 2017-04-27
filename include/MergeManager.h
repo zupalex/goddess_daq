@@ -25,8 +25,6 @@
 
 #include "GTMerge.h"
 
-#include "gdecomp.h"
-
 using std::string;
 
 class InDataInfo
@@ -52,7 +50,7 @@ public:
     EVENT();
     ~EVENT();
 
-    GEBDATA* gd;
+    GebData* gd;
     char* payload;
     int key;
 };

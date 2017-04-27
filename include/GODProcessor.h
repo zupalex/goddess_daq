@@ -8,7 +8,6 @@
 #include "TH1F.h"
 #include "TH2F.h"
 
-#include "gdecomp.h"
 #include "GEBSort.h"
 #include "GTMerge.h"
 

@@ -45,7 +45,7 @@ public:
     int* ng;
 
     void GetCal ( char* file );
-    int SupDGS ( bool generateHists = false );
+    int SupDGS ();
 
     int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* thedgsEvt );
     int BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt );

@@ -21,8 +21,6 @@
 #include "sys/sysinfo.h"
 #endif
 
-#include "gdecomp.h"
-#include "GTMerge.h"
 #include "MergeManager.h"
 
 using std::string;
@@ -115,9 +113,9 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
 
     siz = bread ( inFile->istream, ( char * ) bufEvent->gd, &bread_pos[storeNo], bread_buf[storeNo], &bread_bufsiz[storeNo] );
 
-    if ( siz != sizeof ( GEBDATA ) )
+    if ( siz != sizeof ( GebData ) )
     {
-        printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GEBDATA ), siz );
+        printf ( "failed to read %lu bytes for header, got %i\n", sizeof ( GebData ), siz );
         return nullptr;
     }
 
@@ -128,7 +126,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
 
     if ( printDebug ) std::cerr << "*** Reading the header...\n";
 
-    ( * ( inFile->istream ) ).read ( ( char* ) bufEvent->gd, sizeof ( GEBDATA ) );
+    ( * ( inFile->istream ) ).read ( ( char* ) bufEvent->gd, sizeof ( GebData ) );
 
     if ( printDebug )
     {
@@ -137,7 +135,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
         std::cerr << "   - timestamp is " << bufEvent->gd->timestamp << "\n";
     }
 
-    if ( ( inFile->istream )->gcount() != sizeof ( GEBDATA ) || ( inFile->istream )->eof() )
+    if ( ( inFile->istream )->gcount() != sizeof ( GebData ) || ( inFile->istream )->eof() )
     {
         if ( inFile->istream->eof() )
         {
@@ -153,7 +151,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
                      ( inFile->istream->gcount() == 0 ? "" : " after reading the header" ), bufEvent->gd->timestamp );
         }
 
-        printf ( "File #%i (%s): failed to read %lu bytes for header, got %li\n", inFile->fileNum, ( inFile->fileName ).c_str(), sizeof ( GEBDATA ), ( inFile->istream )->gcount() );
+        printf ( "File #%i (%s): failed to read %lu bytes for header, got %li\n", inFile->fileNum, ( inFile->fileName ).c_str(), sizeof ( GebData ), ( inFile->istream )->gcount() );
 
         theMergeManager->RemoveFromInputList ( inFile->fileName );
 
@@ -168,7 +166,7 @@ EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEvent, bool printInfo )
 
     if ( printDebug ) std::cerr << "Header looks fine... Filling some stats...\n";
 
-    theMergeManager->readBytesCount += sizeof ( GEBDATA );
+    theMergeManager->readBytesCount += sizeof ( GebData );
 
     nstat->inbytes += ( inFile->istream )->gcount();
     control.filesiz[storeNo] += ( inFile->istream )->gcount();
@@ -1102,7 +1100,7 @@ int main ( int argc, char **argv )
                                 {
                                     weirdTsCounter++;
 
-                                    ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
+                                    ignoredBytesCount += sizeof ( GebData ) + newEv->gd->length;
 
                                     printf ( "\nWeird Timestamp at loop #%llu  / event #%llu (file: %s) => Previous: %llu --- Current: %llu ... \n",
                                              theMergeManager->loopCounter, evCounter,input->fileName.c_str(), lastEvtItr->first, newEv->gd->timestamp );
@@ -1132,7 +1130,7 @@ int main ( int argc, char **argv )
                                 }
                                 else
                                 {
-                                    int rewindCount = sizeof ( GEBDATA ) + testNextEv->gd->length;
+                                    int rewindCount = sizeof ( GebData ) + testNextEv->gd->length;
                                     theMergeManager->readBytesCount -= rewindCount;
 
                                     input->istream->seekg ( -rewindCount, std::ios::cur );
@@ -1242,7 +1240,7 @@ int main ( int argc, char **argv )
                             {
                                 weirdTsCounter++;
 
-                                ignoredBytesCount += sizeof ( GEBDATA ) + newEv->gd->length;
+                                ignoredBytesCount += sizeof ( GebData ) + newEv->gd->length;
 
                                 printf ( "\nWeird Timestamp at loop #%llu  / event #%llu (file: %s) => Previous: %llu --- Current: %llu ... \n",
                                          theMergeManager->loopCounter, evCounter,input->fileName.c_str(), lastEvtItr->first, newEv->gd->timestamp );
@@ -1272,7 +1270,7 @@ int main ( int argc, char **argv )
                             }
                             else
                             {
-                                int rewindCount = sizeof ( GEBDATA ) + testNextEv->gd->length;
+                                int rewindCount = sizeof ( GebData ) + testNextEv->gd->length;
                                 theMergeManager->readBytesCount -= rewindCount;
 
                                 input->istream->seekg ( -rewindCount, std::ios::cur );
@@ -1412,7 +1410,7 @@ int main ( int argc, char **argv )
 //                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
 //                     int evtLength = readItr->second->at ( m )->gd->length;
 //
-//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GEBDATA ) );
+//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GebData ) );
 //                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->payload, evtLength );
 //
 //                     unusedEventsCAKeys.push_back ( readItr->second->at ( m )->key );
@@ -1432,7 +1430,7 @@ int main ( int argc, char **argv )
 //                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
 //                     int evtLength = readItr->second->at ( m )->gd->length;
 //
-//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GEBDATA ) );
+//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GebData ) );
 //                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->payload, evtLength );
 
 //                     unusedEventsCAKeys.push_back ( readItr->second->at ( m )->key );
@@ -1452,7 +1450,7 @@ int main ( int argc, char **argv )
 //                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
                     int evtLength = readItr->second->at ( m )->gd->length;
 
-                    theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GEBDATA ) );
+                    theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GebData ) );
                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->payload, evtLength );
 
                     unusedEventsCAKeys.push_back ( readItr->second->at ( m )->key );

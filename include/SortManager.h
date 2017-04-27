@@ -69,7 +69,7 @@ public:
 
     static void signal_catcher ( int sigval );
 
-    GEBDATA* buffHeader[MAXCOINEV];
+    GebData* buffHeader[MAXCOINEV];
     char* buffData[MAXCOINEV];
 
     GEB_EVENT* gebEvt;
