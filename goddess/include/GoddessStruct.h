@@ -79,10 +79,13 @@ public:
     float beamAtomicMass;
     unsigned int targetZ;
     unsigned int targetA;
+    float targetAtomicMass;
     unsigned int ejecZ;
     unsigned int ejecA;
+    float ejecAtomicMass;
     unsigned int recoilZ;
     unsigned int recoilA;
+    float recoilAtomicMass;
 
     float beamEk; // MeV
     float qValGsGs; // MeV the reaction Q-Value from G.S. to G.S.

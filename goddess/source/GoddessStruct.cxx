@@ -229,10 +229,10 @@ float SiDataBase::QValue ( GoddessReacInfos* rInfos_, float energy_, float angle
 
         if ( angle_ != 0 )
         {
-            float mbeam = rInfos_->beamA * amu;  // MeV
-            float mrecoil = ( rInfos_->recoilA == 0 ? ( rInfos_->beamA + rInfos_->targetA - rInfos_->ejecA ) * amu : rInfos_->recoilA * amu );  // MeV
+            float mbeam = rInfos_->beamAtomicMass * amu;  // MeV
+            float mrecoil = ( rInfos_->recoilAtomicMass == 0 ? ( rInfos_->beamA + rInfos_->targetA - rInfos_->ejecA ) * amu : rInfos_->recoilAtomicMass * amu );  // MeV
 
-            float mejec = rInfos_->ejecA * amu;
+            float mejec = rInfos_->ejecAtomicMass * amu;
 
             Qval = ( 1+mejec/mrecoil ) * ( energy_ ) -
                    ( 1 - mbeam/mrecoil ) * ( rInfos_->beamEk ) -
@@ -513,6 +513,8 @@ GoddessReacInfos::GoddessReacInfos ( std::map< std::string, double > reacInfos_ 
     ejecA = reacInfos_["Ejectile Mass"];
 
     beamAtomicMass = reacInfos_["Beam Atomic Mass"];
+    targetAtomicMass = reacInfos_["Target Atomic Mass"];
+    ejecAtomicMass = reacInfos_["Ejectile Atomic Mass"];
 
     if ( reacInfos_.find ( "Recoil Charge" ) != reacInfos_.end() ) recoilZ = reacInfos_["Recoil Charge"];
     else recoilZ = beamZ + targetZ - ejecZ;
@@ -520,12 +522,25 @@ GoddessReacInfos::GoddessReacInfos ( std::map< std::string, double > reacInfos_ 
     if ( reacInfos_.find ( "Recoil Mass" ) != reacInfos_.end() ) recoilA = reacInfos_["Recoil Mass"];
     else recoilA = beamA + targetA - ejecA;
 
+    if ( reacInfos_.find ( "Recoil Atomic Mass" ) != reacInfos_.end() ) recoilAtomicMass = reacInfos_["Recoil Atomic Mass"];
+    else
+    {
+        std::ifstream mdb ( "mass_db.dat" );
+
+        string recAtomicForm;
+        GetAtomicFormula ( mdb, recoilA, recoilZ, recAtomicForm );
+
+        int dummyA, dummyZ;
+
+        DecodeAtomicFormula ( mdb, recAtomicForm, dummyA, dummyZ, recoilAtomicMass );
+    }
+
     beamEk = reacInfos_["Beam Energy"];
 
     qValGsGs = reacInfos_["Reaction Q-Value"];
 
     targetThickness = reacInfos_["Target Thickness"];
-    
+
     targetDensity = reacInfos_["Target Density"];
 
     if ( reacInfos_.find ( "QQQ5 Gain Mod" ) != reacInfos_.end() ) qqq5EnGain = reacInfos_["QQQ5 Gain Mod"];

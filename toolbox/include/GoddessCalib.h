@@ -2,6 +2,11 @@
 #define __GODDESSCALIB__
 
 #include "GoddessAnalysis.h"
+#include <stack>
+#include "TSpectrum.h"
+#include <pthread.h>
+#include <mutex>
+#include<condition_variable>
 
 const int minModEndcaps = 40;
 const int maxModEndcaps = 160;
@@ -16,41 +21,13 @@ extern vector<std::map<int, TH1F*>> hQVal_QQQ5UB;
 extern vector<std::map<int, TH1F*>> hQVal_QQQ5UC;
 extern vector<std::map<int, TH1F*>> hQVal_QQQ5UD;
 
-extern TH2F* hEn_vs_strip_QQQ5UA;
-extern TH2F* hEn_vs_strip_QQQ5UB;
-extern TH2F* hEn_vs_strip_QQQ5UC;
-extern TH2F* hEn_vs_strip_QQQ5UD;
+TF1* FitQValGS ( TH1* hist, vector<float> mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0, bool verbose = false );
+TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, bool verbose );
 
-extern TH2F* hQval_vs_strip_QQQ5UA;
-extern TH2F* hQval_vs_strip_QQQ5UB;
-extern TH2F* hQval_vs_strip_QQQ5UC;
-extern TH2F* hQval_vs_strip_QQQ5UD;
+extern map<string, string> stoppingPowerTable;
 
-extern TH2F* hEn_vs_strip_QQQ5UA_mod;
-extern TH2F* hEn_vs_strip_QQQ5UB_mod;
-extern TH2F* hEn_vs_strip_QQQ5UC_mod;
-extern TH2F* hEn_vs_strip_QQQ5UD_mod;
-
-extern TH2F* hQval_vs_strip_QQQ5UA_mod;
-extern TH2F* hQval_vs_strip_QQQ5UB_mod;
-extern TH2F* hQval_vs_strip_QQQ5UC_mod;
-extern TH2F* hQval_vs_strip_QQQ5UD_mod;
-
-struct NewGeomPars
-{
-    bool overrideGeom;
-    bool overrideReac;
-    int computeEjectileELoss;
-    int computeBeamELoss;
-
-    void Init()
-    {
-        overrideGeom = false;
-        overrideReac = false;
-        computeBeamELoss = 1;
-        computeEjectileELoss = 1;
-    }
-};
+extern map<string, std::pair<float, float>> configCalPars;
+void ReadConfigCalPars ( string configFileName );
 
 class GoddessCalib : public GoddessAnalysis
 {
@@ -60,6 +37,8 @@ private:
     static GoddessCalib* s_instance;
     TGMainFrame* controlFrame;
     pthread_t checkThread;
+
+    void InitGUI();
 
 public:
     virtual ~GoddessCalib();
@@ -132,60 +111,7 @@ public:
     string outFileName;
     string GetAutoOutFileName ( string baseName );
 
-    map<string, std::pair<float, float>> configCalPars;
-    void ReadConfigCalPars ( string configFileName );
-
-    SolidVector orrubaStripsPos[2][2][12][32];
-
-    // ******************* Geometry Utilities ************************** //
-
-    NewGeomPars nGP;
-
-    void SetNewGeomMode ( bool geomOR, bool reacOR, bool beamELoss, bool ejecELoss );
-    void SetGeomOverride ( bool geomOR );
-    void SetReacOverride ( bool reacOR );
-    void SetComputeBeamELoss ( bool beamELoss );
-    void SetComputeEjecELoss ( bool ejecELoss );
-
-    TChain* initialPosChain;
-
-    map<string, TH2F*> hQval_NewGeom;
-    map<string, TH2F*> hEx_NewGeom;
-
-    map<string, TH2F*> hEvsA_SX3_NewGeom;
-    map<string, TH2F*> hEvsA_QQQ5_NewGeom;
-
-    map<string, TH2F*> hQvalvsStrip_QQQ5_NewGeom;
-
-    vector<float> lastQQQ5Offsets, lastSX3Offsets;
-
-    void PrintOutStripsPositions ( );
-    void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
-    TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
-//     void GetQValWithNewGeometry ( TChain* chain, string configFileName, long long int nEntries,
-//                                   float qqq5OffX, float qqq5OffY, float qqq5OffZ,
-//                                   float sX3OffX, float sX3OffY, float sX3OffZ,
-//                                   int minModX, int maxModX, int minModY, int maxModY, int minModZ, int maxModZ );
-//     string DrawNewGeom ( string histName );
-//     void GetBestParameters ( float mean = 4.1, float fwhm = 0.5, string detType = "", string inFileName = "", string betterFitMode = "sigma < bestSigma && chi2 < bestChi2" );
-//     TF1* FitQValNewGeom ( string sectorStr, int targetX, int targetY, int targetZ );
-    void WriteNewGeomGraphs ( string outFileName = "" );
-//     void ReloadNewGeomGraphs ( string outFileName );
-
-    void GenerateGeomAdjustRootfile ( string filesname, string treename, long long int nEntries, string outfname );
-
-    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, vector<TVector3> qqq5Offsets, vector<TVector3> sx3Offsets, vector<TVector3> targetOffsets );
-
-    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries,
-                                  int qqq5OffX, int qqq5OffY, int qqq5OffZ,
-                                  int sX3OffX, int sX3OffY, int sX3OffZ,
-                                  int targetOffX, int targetOffY, int targetOffZ );
-
-    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, string offsetsList );
-
     // ******************** Calibration Utilities ********************** //
-
-    map<string, string> stoppingPowerTable;
 
     map<string, map<unsigned short, vector<double>>> resStripsCalMap;
     map<string, vector<double>> endcapsStripsCalMap;
@@ -267,36 +193,9 @@ public:
 
     // ---------------------- QQQ5 stuffs -------------------------------- //
 
-    TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, int modCoeff_ = 100 );
-
-    TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, double modCoeffs[32] );
-
-    TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, vector<double> modCoeffs );
-
-    TH1F* AddAllStrips ( vector<std::map<int, TH1F*>>* hists, string sector );
-
-    TF1* FitQValGS ( TH1F* hist, vector<float> mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0, bool verbose = false );
-    TF1* FitQVal ( TH1F* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, bool verbose );
-
-    TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, int modCoeff_ = 100 );
-
-    TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, double modCoeffs[32] );
-
-    TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, vector<double> modCoeffs );
-
-    TH2F* GetQvalVsStrip ( vector<std::map<int, TH1F*>>* src, TH2F* dest, string sector );
-
-    void InitSiEnergySpectra ( unsigned int nBins, int binMin, int binMax );
-
-    void InitQValSpectra ( unsigned int nBins, int binMin, int binMax );
-
-    void GenerateEnergyHistPerStrip ( TChain* chain );
-
-    vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput,
-                                        float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
-                                        string betterFitMode = "chi2 < bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rawIntegral >= bestRawIntegral" );
-
-    template<typename First, typename... Rest> void GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest );
+//     vector<double> AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput,
+//                                         float minBound = 0, float maxBound = 0, int minModEndcaps_ = minModEndcaps, int maxModEndcaps_ = maxModEndcaps,
+//                                         string betterFitMode = "chi2 < bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rawIntegral >= bestRawIntegral" );
 
     void LoadInternalCalib ( string fileName );
 
@@ -305,7 +204,7 @@ public:
 
 extern GoddessCalib* gC;
 
-template<typename T> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, T sector )
+template<typename T> void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, T sector )
 {
     PlotSX3ResStripCalGraph ( chain, varToPlot, sector, 0, conditions );
     PlotSX3ResStripCalGraph ( chain, varToPlot, sector, 1, conditions );
@@ -315,7 +214,7 @@ template<typename T> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChai
     return;
 }
 
-template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
+template<typename First, typename... Rest> void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, string varToPlot, string conditions, First fstSector, Rest... otherSectors )
 {
     if ( std::is_same<decltype ( fstSector ), int>::value  || ( unsigned short ) fstSector < 0 )
     {
@@ -334,7 +233,7 @@ template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResS
     return;
 }
 
-template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, bool isUpstream, First fstSector, Rest... otherSectors )
+template<typename First, typename... Rest> void GoddessCalib::PlotSX3ResStripsCalGraphs ( TChain* chain, bool isUpstream, First fstSector, Rest... otherSectors )
 {
     string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream" ;
     string cond = "si.isBarrel && " + upstreamCond;
@@ -344,7 +243,7 @@ template<typename First, typename... Rest> inline void GoddessCalib::PlotSX3ResS
     return;
 }
 
-template<typename FirstSector, typename... VarArgs> inline void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
+template<typename FirstSector, typename... VarArgs> void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, bool isUpstream_, long int nentries, FirstSector fstSector, VarArgs... sectors )
 {
     vector<int> sectorsList;
 
@@ -414,14 +313,5 @@ template<typename First, typename... Rest> map<string, TH2F*> GoddessCalib::Draw
 // ---------------------------------------- QQQ5 functions ----------------------------------------------- //
 
 float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle );
-
-template<typename First, typename... Rest> void GoddessCalib::GenerateEnergyHistPerStrip ( string treeName, First fileName1, Rest... fileNameRest )
-{
-    gA->InitUserAnalysis ( treeName, fileName1, fileNameRest... );
-
-    TChain* uChain = gA->userChain;
-
-    GenerateEnergyHistPerStrip ( uChain );
-}
 
 #endif

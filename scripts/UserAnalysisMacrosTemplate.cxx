@@ -116,7 +116,15 @@ public:
     GoddessGeomInfos* geomInfoPtr;
     GoddessReacInfos* reacInfoPtr;
 
+    TVector3 qqq5sPos[2][4];
+    TVector3 sX3sPos[2][12];
+
+    TVector3 beamDir;
+
     TVector3 targetLadderDir;
+    TVector3 targetOffset;
+    TVector3 sX3Offset;
+    TVector3 qqq5Offset;
 
     siStruct si;
     gamStruct gam;
@@ -128,22 +136,33 @@ void UserAnalysis::SetSiData ( SiDataBase* siData )
 {
     siDataPtr = siData;
 
+    si.sector = siData->sector;
+    si.strip = siData->StripMaxLayer ( 1, false );
+    si.isUpstream = siData->isUpstream;
+    si.isBarrel = siData->isBarrel;
+    si.ts = siData->TimestampMaxLayer ( 1, false );
+
     si.fEn = siData->ESumLayer ( 1, false );
     si.bEn = siData->ESumLayer ( 1, true );
 
-    si.pos = siData->PosE1();
+    double sectPhi = si.isBarrel ? sX3sPos[si.isUpstream][si.sector].Phi() : qqq5sPos[si.isUpstream][si.sector].Phi();
+    TVector3 localOff = si.isBarrel ? sX3Offset : qqq5Offset;
+
+    localOff.SetPhi ( sectPhi );
+
+    if ( si.isUpstream ) localOff.SetZ ( -localOff.Z() );
+
+    si.pos = siData->PosE1() + localOff - targetOffset;
 
     double effThickness = GetEffectiveThickness ( si.pos.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfoPtr->targetThickness );
 
     double estELoss = ComputeEnergyLoss ( energyLossData.first, energyLossData.second, si.fEn/reacInfoPtr->ejecA, reacInfoPtr->ejecA, 0, effThickness, 0.01, "Interpolation" );
     si.fEn += estELoss;
 
-    si.angle = siData->Angle ( 1, geomInfoPtr->targetOffset.X(), geomInfoPtr->targetOffset.Y(), geomInfoPtr->targetOffset.Z() );
-    si.sector = siData->sector;
-    si.strip = siData->StripMaxLayer ( 1, false );
-    si.isUpstream = siData->isUpstream;
-    si.isBarrel = siData->isBarrel;
-    si.ts = siData->TimestampMaxLayer ( 1, false );
+//     si.angle = siData->Angle ( 1, geomInfoPtr->targetOffset.X(), geomInfoPtr->targetOffset.Y(), geomInfoPtr->targetOffset.Z() );
+
+    si.angle = si.pos.Angle ( beamDir );
+
     si.qval = SiDataBase::QValue ( reacInfoPtr, si.fEn, si.angle*TMath::DegToRad() );
 //     si.qval = siData->QValue ( gA->beamMass, gA->beamEk, gA->targetMass, gA->ejecMass, gA->recoilMass );
     si.ex = reacInfoPtr->qValGsGs - si.qval;
@@ -158,22 +177,33 @@ void UserAnalysis::SetSiData ( SiDataDetailed* siData )
 {
     siDataDPtr = siData;
 
+    si.sector = siData->sector;
+    si.strip = siData->StripMaxLayer ( 1, false );
+    si.isUpstream = siData->isUpstream;
+    si.isBarrel = siData->isBarrel;
+    si.ts = siData->TimestampMaxLayer ( 1, false );
+
     si.fEn = siData->ESumLayer ( 1, false );
     si.bEn = siData->ESumLayer ( 1, true );
 
-    si.pos = siData->PosE1();
+    double sectPhi = si.isBarrel ? sX3sPos[si.isUpstream][si.sector].Phi() : qqq5sPos[si.isUpstream][si.sector].Phi();
+    TVector3 localOff = si.isBarrel ? sX3Offset : qqq5Offset;
+
+    localOff.SetPhi ( sectPhi );
+
+    if ( si.isUpstream ) localOff.SetZ ( -localOff.Z() );
+
+    si.pos = siData->PosE1() + localOff - targetOffset;
 
     double effThickness = GetEffectiveThickness ( si.pos.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfoPtr->targetThickness );
 
     double estELoss = ComputeEnergyLoss ( energyLossData.first, energyLossData.second, si.fEn/reacInfoPtr->ejecA, reacInfoPtr->ejecA, 0, effThickness, 0.01, "Interpolation" );
     si.fEn += estELoss;
 
-    si.angle = siData->Angle ( 1, geomInfoPtr->targetOffset.X(), geomInfoPtr->targetOffset.Y(), geomInfoPtr->targetOffset.Z() );
-    si.sector = siData->sector;
-    si.strip = siData->StripMaxLayer ( 1, false );
-    si.isUpstream = siData->isUpstream;
-    si.isBarrel = siData->isBarrel;
-    si.ts = siData->TimestampMaxLayer ( 1, false );
+//     si.angle = siData->Angle ( 1, geomInfoPtr->targetOffset.X(), geomInfoPtr->targetOffset.Y(), geomInfoPtr->targetOffset.Z() );
+
+    si.angle = si.pos.Angle ( beamDir );
+
     si.qval = SiDataBase::QValue ( reacInfoPtr, si.fEn, si.angle*TMath::DegToRad() );
 //     si.qval = siData->QValue ( gA->beamMass, gA->beamEk, gA->targetMass, gA->ejecMass, gA->recoilMass );
     si.ex = reacInfoPtr->qValGsGs - si.qval;
@@ -922,13 +952,30 @@ void FillUserHists ( long long int maxEvents = 0 )
     analysis->reacInfoPtr = ( GoddessReacInfos* ) reacInfo->Clone();
     analysis->geomInfoPtr = ( GoddessGeomInfos* ) geomInfo->Clone();
 
-    TVector3 beamDir ( 0, 0, 1 );
+    analysis->beamDir = TVector3 ( 0, 0, 1 );
 
     TVector3 targetLadderDir ( 0, 0, 1 );
     targetLadderDir.SetTheta ( geomInfo->targetLadderAngle*TMath::DegToRad() );
     targetLadderDir.SetPhi ( TMath::PiOver2() );
 
     analysis->targetLadderDir = targetLadderDir;
+
+    analysis->targetOffset = TVector3 ( 0, 0, 0 );
+    analysis->sX3Offset = TVector3 ( 0, 0, 0 );
+    analysis->qqq5Offset = TVector3 ( 0, 0, 0 );
+
+    for ( int i = 0; i < 2; i++ )
+    {
+        for ( int j = 0; j < 4; j++ )
+        {
+            analysis->qqq5sPos[i][j] = GetDetPos ( analysis->geomInfoPtr, i, false, j, 1 );
+        }
+
+        for ( int j = 0; j < 12; j++ )
+        {
+            analysis->sX3Offset[i][j] = GetDetPos ( analysis->geomInfoPtr, i, true, j, 1 );
+        }
+    }
 
     std::ifstream mass_input ( pathToGDAQ + "/share/mass_db.dat", std::ios_base::in );
 
@@ -958,7 +1005,7 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     analysis->energyLossData = FillGraphFromFile ( tryFindTable[0] );
 
-    double beamEffThickness = GetEffectiveThickness ( beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
+    double beamEffThickness = GetEffectiveThickness ( analysis->beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
 
     analysis->reacInfoPtr->beamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001,
                                     reacInfo->targetType,  reacInfo->targetDensity, "./", "Interpolation" );

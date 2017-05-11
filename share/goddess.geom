@@ -20,17 +20,17 @@ Endcap Layer Spacing = 3.3
 
 # Offsets are given as (X, Y, Z) with Z the beam direction
 
-# For the SuperX3, the offset is
+# For the SuperX3, the reference offset is for sector D0
 # X: center of detector vs. center of the chamber
 # Y: distance detector to barrel mount outer radius
 # Z: start of active area compared to center of chamber)
 SuperX3 Offset = (0, 4.8, 3.7)
 
-# For the QQQ5, the offset is 
+# For the QQQ5, the reference offset is for sector DA
 # X: tip of the QQQ5 arc circle vs. center of the chamber
 # Y: first strip lower edge to center of the chamber
 # Z: distance detector to barrel mount end )
-QQQ5 Offset = (0, 25.2, -12.7)
+QQQ5 Offset = (0, 25.2, -16.5)
 
 # Offset given compared to the center of the chamber
 Beam Spot Offset = (0, 0, 0)

@@ -260,8 +260,6 @@ int main ( int argc, char **argv )
 {
 //     std::cerr << "Entering main function of GEBMerge.cxx...\n";
 
-    char esc ( 27 );
-
 #ifdef __unix__
     struct sysinfo memInfo;
 #endif
@@ -750,22 +748,6 @@ int main ( int argc, char **argv )
 
     while ( theMergeManager->inData->size() > 0  || theMergeManager->overflowEvent.size() > 0 )
     {
-//         if ( theMergeManager->loopCounter > 16133325 )
-//         {
-//             printProgress = false;
-//             printBytesCount = true;
-//             printDebug = true;
-//         }
-//
-//         if ( theMergeManager->loopCounter > 16133340 )
-//         {
-//             printProgress = true;
-//             printBytesCount = false;
-//             printDebug = false;
-//
-//             theMergeManager->goBackToTop = false;
-//         }
-
         if ( printProgress )
         {
             auto ofInfo = theMergeManager->GetSizeAndBytesCount ( true );
@@ -793,14 +775,6 @@ int main ( int argc, char **argv )
 
             if ( theMergeManager->loopCounter%10000 == 0 || theMergeManager->loopCounter == 1 || alwaysCalcBytesDiff )
             {
-
-
-//             if ( ( float ) theMergeManager->readBytesCount/totBytesCount * 100. > 5.69 )
-//             {
-//                 printDebug = true;
-//                 printProgress = false;
-//             }
-
                 if ( theMergeManager->loopCounter%10000 == 0 || theMergeManager->loopCounter == 1 )
                 {
 #ifdef __unix__
@@ -843,7 +817,7 @@ int main ( int argc, char **argv )
 #ifdef __unix
                     std::cerr << "Memory used (MB): " << physMemUsed/1000000 << " ( " << totalPhysMem/1000000 << " total )\n";
 #else
-                    std::cerr << "Memory used: " << "... memory info is not available for this platform. I could make it but I won't. Go get a real computer.\n";
+                    std::cerr << "Memory used: " << "... memory info is not available for this platform. Go get a real computer.\n";
 #endif
 
                     theMergeManager->goBackToTop = true;
@@ -877,8 +851,6 @@ int main ( int argc, char **argv )
 
 //             std::cerr << "About to clear theMergeManager->Event... Size of theMergeManager->Event is " << theMergeManager->Event.size() << "\n";
         }
-
-//         theMergeManager->Event.clear();
 
         unsigned long long int lstTsBuffered = 0;
 
@@ -1399,46 +1371,6 @@ int main ( int argc, char **argv )
 
             int nEvtToWrite = std::min ( maxEventMapSize/3, bufEvtSize );
 
-//             for ( unsigned int l = 0; l < maxEventMapSize/4; l++ )
-//             {
-//                 auto readItr = theMergeManager->Event.begin();
-//
-//                 for ( unsigned m = 0; m < readItr->second->size(); m++ )
-//                 {
-//                     evCounter++;
-//
-//                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
-//                     int evtLength = readItr->second->at ( m )->gd->length;
-//
-//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GebData ) );
-//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->payload, evtLength );
-//
-//                     unusedEventsCAKeys.push_back ( readItr->second->at ( m )->key );
-//                 }
-//
-//                 theMergeManager->Event.erase ( readItr );
-//             }
-
-//             while(theMergeManager->Event.size() > maxEventMapSize/3)
-//             {
-//                 auto readItr = theMergeManager->Event.begin();
-//
-//                 for ( unsigned m = 0; m < readItr->second->size(); m++ )
-//                 {
-//                     evCounter++;
-//
-//                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
-//                     int evtLength = readItr->second->at ( m )->gd->length;
-//
-//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->gd, sizeof ( GebData ) );
-//                     theMergeManager->outData.write ( ( char* ) readItr->second->at ( m )->payload, evtLength );
-
-//                     unusedEventsCAKeys.push_back ( readItr->second->at ( m )->key );
-//                 }
-//
-//                 theMergeManager->Event.erase ( readItr );
-//             }
-
             while ( nEvtToWrite > 0 )
             {
                 auto readItr = theMergeManager->Event.begin();
@@ -1471,30 +1403,6 @@ int main ( int argc, char **argv )
                 std::cerr << " / Bytes written: " << outData->tellp() << " / Bytes ignored: " << ignoredBytesCount;
                 std::cerr << " (diff = " << ( long long int ) ( theMergeManager->readBytesCount - theMergeManager->GetSizeAndBytesCount ( true ).second  - theMergeManager->GetSizeAndBytesCount ( false ).second - outData->tellp() - ignoredBytesCount ) << ")\n";
             }
-
-//             for ( auto evtItr = theMergeManager->Event.begin(); evtItr != theMergeManager->Event.end(); evtItr++ )
-//             {
-//                 unsigned int itrNum = std::distance ( theMergeManager->Event.begin(), evtItr );
-//
-//                 for ( unsigned m = 0; m < evtItr->second->size(); m++ )
-//                 {
-//                     * ( EventsCA[itrNum+m]->gd ) = * ( evtItr->second->at ( m )->gd );
-//                     memcpy ( EventsCA[itrNum+m]->payload, evtItr->second->at ( m )->payload, evtItr->second->at ( m )->gd->length );
-//
-//                     evtItr->second->at ( m ) = EventsCA[itrNum+m];
-//                 }
-//             }
-//
-//             if ( printDebug ) std::cerr << "Reorganized the buffered events... Will start a new loop...\n";
-
-//             if ( printBytesCount )
-//             {
-//                 std::cerr << "\Reorganization Step Done...";
-//                 std::cerr << "\nBytes read: " << theMergeManager->readBytesCount << " / Buffer byte count: " << theMergeManager->GetSizeAndBytesCount ( true ).second;
-//                 std::cerr << " + " << theMergeManager->GetSizeAndBytesCount ( false ).second;
-//                 std::cerr << " / Bytes written: " << outData->tellp() << " / Bytes ignored: " << ignoredBytesCount;
-//                 std::cerr << " (diff = " << ( long long int ) ( theMergeManager->readBytesCount - theMergeManager->GetSizeAndBytesCount ( true ).second  - theMergeManager->GetSizeAndBytesCount ( false ).second - outData->tellp() - ignoredBytesCount ) << ")\n";
-//             }
         }
 
         else if ( theMergeManager->Event.size() == 0 )

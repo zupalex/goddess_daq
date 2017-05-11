@@ -7,5 +7,6 @@
 
 #pragma link C++ class GoddessCalib+;
 #pragma link C++ class GoddessAnalysis+;
+#pragma link C++ class GoddessGeomUtils+;
 
 #endif
