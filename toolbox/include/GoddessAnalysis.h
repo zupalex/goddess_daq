@@ -14,6 +14,10 @@ public:
     GoddessAnalysis();
     virtual ~GoddessAnalysis();
 
+    double gainAdjusts[500];
+
+    void SetGainAdjust ( string fName );
+
     // ---------------- General useful functions -------------------------- //
 
     static void RegisterClassForROOTSession () {}
@@ -36,6 +40,9 @@ public:
                                  unsigned short sector );
 
     vector<unsigned short> GetStripsListToTreat ( string strips );
+
+    double GetEnergyShiftFromQVal ( double qValShift, double qValRef, double angle );
+    double GetEnergyShiftFromEx ( double exShift, double exRef, double angle );
 
     // ------------------ For the check mapping tool ------------------------ //
 
@@ -371,28 +378,6 @@ TH2F* MakeNewHist ( string name, string title, int nBinsX, double* binsX, unsign
 TH3F* MakeNewHist ( string name, string title, unsigned int nBinsX, int minX, int maxX, unsigned int nBinsY, int minY, int maxY, unsigned int nBinsZ, int minZ, int maxZ, bool addToSpecialList );
 TH3F* MakeNewHist ( string name, string title, int nBinsX, double* binsX, unsigned int nBinsY, int minY, int maxY, unsigned int nBinsZ, int minZ, int maxZ, bool addToSpecialList );
 
-int ToStripID ( bool isUpstream_, bool isBarrel_, bool isFront_, int sector_, int strip_ );
-vector<int> ToStripID ( string sectorStr, bool displayList = false );
-void ToStripID ( vector<int>* dest, string sectorStr );
-
-template<typename... Rest> void ToStripID ( vector<int>* dest, string sectorStr1, Rest... otherSectorStr )
-{
-    dest->clear();
-
-    ToStripID ( dest, sectorStr1 );
-
-    ToStripID ( dest, otherSectorStr... );
-}
-
-template<typename... Rest> vector<int> ToStripID ( string sectorStr1, Rest... otherSectorStr )
-{
-    vector<int> stripIDsList;
-
-    ToStripID<string> ( &stripIDsList, sectorStr1, otherSectorStr... );
-
-    return stripIDsList;
-}
-
 TH1D* DrawGodHist ( TH2F* source, string toDraw, string opt = "" );
 TH2D* DrawGodHist ( TH3F* source, string toDraw, string opt = "" );
 
@@ -400,7 +385,9 @@ TVector3 GetDetPos ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel
 TVector3 GetDetPos ( TChain* c, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose = 0 );
 TVector3 GetDetPos ( TTree* tree, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose = 0 );
 
-vector<double> GetBinsEdges ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector, int depth_, int verbose = 0 );
+TVector3 GetStripPos ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector_, int strip_, int depth_, int verbose = 0 );
+
+vector<double> GetBinsEdges ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose = 0 );
 
 void InsertReacInfo ( TFile* file, GoddessReacInfos* reacInfo_, bool overwriteIfExists = false );
 void InsertGeomInfo ( TFile* file, GoddessGeomInfos* geomInfo_, bool overwriteIfExists = false );

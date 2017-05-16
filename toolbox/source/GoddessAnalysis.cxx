@@ -19,6 +19,8 @@ GoddessAnalysis::GoddessAnalysis()
     userTreeList.clear();
 
     AutoReadAndSetReacParameters();
+
+    SetGainAdjust ( "" );
 }
 
 GoddessAnalysis::GoddessAnalysis ( std::string filename ) : GoddessAnalysis()
@@ -73,6 +75,42 @@ std::vector<unsigned short> GoddessAnalysis::GetStripsListToTreat ( std::string 
     return stripsList;
 }
 
+double GoddessAnalysis::GetEnergyShiftFromQVal ( double qValShift, double qValRef, double angle )
+{
+    TF1* qValEval = new TF1 ( "qValEval",
+                              [&] ( double* x, double* p )
+    {
+        ( void ) p;
+        return SiDataBase::QValue ( reacInfo, x[0], angle );
+    },
+    -20, 20, 0 );
+
+    double qValObs = qValRef*qValShift;
+
+    double enRef = qValEval->GetX ( qValRef );
+    double enObs = qValEval->GetX ( qValObs );
+
+    return enObs/enRef;
+}
+
+double GoddessAnalysis::GetEnergyShiftFromEx ( double exShift, double exRef, double angle )
+{
+    TF1* exEval = new TF1 ( "exEval",
+                            [&] ( double* x, double* p )
+    {
+        ( void ) p;
+        return reacInfo->qValGsGs - SiDataBase::QValue ( reacInfo, x[0], angle );
+    },
+    -20, 20, 0 );
+
+    double exObs = exRef*exShift;
+
+    double enRef = exEval->GetX ( exRef );
+    double enObs = exEval->GetX ( exObs );
+
+    return enObs/enRef;
+}
+
 void GoddessAnalysis::AutoReadAndSetReacParameters()
 {
     GoddessReacInfos* rInfo_ = ( GoddessReacInfos* ) gDirectory->FindObjectAny ( "GoddessReac" );
@@ -125,6 +163,100 @@ void GoddessAnalysis::SetRecoilMass ( float recoilMass_ )
 void GoddessAnalysis::SetTargetMass ( float targetMass_ )
 {
     reacInfo->targetA = targetMass_;
+}
+
+void GoddessAnalysis::SetGainAdjust ( string fName )
+{
+    if ( fName.empty() )
+        for ( int i = 0; i < 500; i++ ) gainAdjusts[i] = 1.0;
+
+    else
+    {
+        std::ifstream input ( fName.c_str() );
+
+        string readLine;
+
+        while ( std::getline ( input, readLine ) )
+        {
+            if ( readLine.empty() ) continue;
+
+            if ( readLine[0] == '#' )
+            {
+                std::istringstream iss;
+                string dummy;
+                string detType, detNum;
+
+                bool isUpstream, isBarrel;
+
+                int sector;
+
+                iss.str ( readLine );
+
+                iss >> dummy >> detType >> detNum;
+
+                if ( detType == "QQQ5" ) isBarrel = false;
+                else if ( detType == "SX3" || detType == "SuperX3" || detType == "BB10" ) isBarrel = true;
+                else
+                {
+                    cerr << "/!\\ Invalid detector type: " << detType << endl;
+                    return;
+                }
+
+                if ( detNum[0] == 'U' ) isUpstream = true;
+                else if ( detNum[0] == 'D' ) isUpstream = false;
+                else
+                {
+                    cerr << "/!\\ Invalid detector identifier: " << detNum << endl;
+                    return;
+                }
+
+                sector = std::stoi ( detNum.substr ( 1 ) );
+
+                bool isFrontside = true;
+
+//                 cout << "Found gain adjusts for detector " << detType << " " << detNum << endl;
+//                 cout << "(isBarrel: " << ( isBarrel ? "true" : "false" ) << " / isUpstream: " << ( isUpstream ? "true" : "false" ) << ")" << endl;
+
+                while ( std::getline ( input, readLine ) )
+                {
+                    if ( readLine.empty() ) continue;
+
+                    if ( readLine.substr ( 0, 5 ) == "-----" ) break;
+                    else if ( readLine == "front" || readLine == "back" )
+                    {
+                        isFrontside = ( readLine == "front" );
+//                         cout << "Retrieving " << ( isFrontside ? "front side" : "back side" ) << " infos...\n";
+                    }
+                    else
+                    {
+                        std::size_t semiColonPos = readLine.find ( ":" );
+                        std::size_t separatorPos = 0;
+
+                        while ( semiColonPos != string::npos )
+                        {
+                            int strip = std::stoi ( readLine.substr ( separatorPos, semiColonPos-separatorPos ) );
+
+                            separatorPos = readLine.find ( "/", semiColonPos );
+
+                            double gain = std::stod ( readLine.substr ( semiColonPos+1, separatorPos-semiColonPos-1 ) );
+
+                            if ( separatorPos != string::npos ) separatorPos++;
+                            semiColonPos = readLine.find ( ":", separatorPos );
+
+                            int globStripID = ToStripID ( isUpstream, isBarrel, isFrontside, sector, strip );
+
+                            gainAdjusts[globStripID] = gain;
+
+//                             cout << "Strip # " << strip << " (global ID: " << globStripID << " ) => Gain = " << gain << endl;
+                        }
+                    }
+                }
+
+//                 cout << "-----------------------------------------------------------\n";
+            }
+            else continue;
+        }
+    }
 }
 
 TH2F* GoddessAnalysis::DrawEnergyVsAngleSX3 ( TChain* chain, int nentries, std::string hname, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, std::string drawOpts,
@@ -1004,186 +1136,6 @@ TH3F* MakeNewHist ( string name, string title, int nBinsX, double* binsX, unsign
     return newHist;
 }
 
-int ToStripID ( bool isUpstream_, bool isBarrel_, bool isFront_, int sector_, int strip_ )
-{
-    // QQQ5 UA: front = [0-31] ; back = [128-131]   --------- QQQ5 DA: front = [240-271] ; back = [368-371]
-    // QQQ5 UB: front = [32-63] ; back = [132-135]  --------- QQQ5 DB: front = [272-303] ; back = [372-375]
-    // QQQ5 UC: front = [64-95] ; back = [136-139]  --------- QQQ5 DC: front = [304-335] ; back = [376-379]
-    // QQQ5 UD: front = [96-127] ; back = [140-143] --------- QQQ5 DD: front = [336-367] ; back = [380-383]
-    // SX3 U0: front = [144-147] ; back = [192-195] --------- SX3 D0: front = [384-387] ; back = [432-435]
-    //...
-
-    int stripID = strip_;
-
-    if ( !isBarrel_ )
-    {
-        if ( isFront_ ) stripID += sector_*32;
-        else stripID += 128+sector_*4;
-    }
-    else
-    {
-        stripID += 144;
-
-        if ( isFront_ ) stripID += sector_*4;
-        else stripID += 48+sector_*4;
-    }
-
-    if ( !isUpstream_ ) stripID += 240;
-
-    return stripID;
-}
-
-vector<int> ToStripID ( string sectorStr, bool displayList )
-{
-    bool isUpstream_ = true;
-    bool isBarrel_ = false;
-    bool isFront_ = true;
-
-    goto tryDecode;
-
-invalidStr:
-
-    std::cerr << "Invalid Sector String entered...\n";
-    std::cerr << "Examples of valid Sector String:\n";
-    std::cerr << "\"QQQ5 U[0-3] front [0-31]\"\n";
-    std::cerr << "\"QQQ5 D[A,C] back [0-2,4]\"\n";
-    std::cerr << "\"SX3 U[0,7-11] front [0-4]\"\n";
-    return {};
-
-tryDecode:
-
-    // --------------------------------------------------------------------- //
-
-    std::size_t foundType = sectorStr.find ( "QQQ5" );
-
-    if ( foundType == string::npos )
-    {
-        foundType = sectorStr.find ( "SX3" );
-        if ( foundType == string::npos ) goto invalidStr;
-
-        isBarrel_ = true;
-    }
-    else if ( sectorStr.find ( "SX3" ) != string::npos ) goto invalidStr;
-
-    // --------------------------------------------------------------------- //
-
-    std::size_t foundSide = sectorStr.find ( "front" );
-
-    if ( foundSide == string::npos )
-    {
-        foundSide = sectorStr.find ( "back" );
-        if ( foundSide == string::npos ) goto invalidStr;
-
-        isFront_ = false;
-    }
-    else if ( sectorStr.find ( "back" ) != string::npos ) goto invalidStr;
-
-    // --------------------------------------------------------------------- //
-
-    std::size_t foundUp = sectorStr.find ( "U" );
-
-    if ( foundUp == string::npos )
-    {
-        foundUp = sectorStr.find ( "D" );
-        if ( foundUp == string::npos ) goto invalidStr;
-
-        isUpstream_ = false;
-    }
-    else if ( sectorStr.find ( "D" ) != string::npos ) goto invalidStr;
-
-    // --------------------------------------------------------------------- //
-
-    vector<int> sectorsList;
-
-    std::size_t openBracket = sectorStr.find_first_of ( "[" );
-    std::size_t closeBracket = sectorStr.find_first_of ( "]", openBracket+1 );
-
-    if ( openBracket > foundSide || ( openBracket == string::npos && closeBracket == string::npos ) )
-    {
-        string sectorNumStr = sectorStr.substr ( foundUp+1, foundSide-foundUp-1 );
-        sectorNumStr = FindAndReplaceInString ( sectorNumStr, " ", "" );
-
-//         cout << "Sectors Number String: " << sectorNumStr << endl;
-
-        if ( sectorNumStr.find_first_not_of ( "0123456789" ) != string::npos ) goto invalidStr;
-
-        sectorsList.push_back ( std::stoi ( sectorNumStr ) );
-    }
-    else if ( ( openBracket != string::npos && closeBracket == string::npos ) || ( openBracket == string::npos && closeBracket != string::npos ) ) goto invalidStr;
-    else if ( openBracket != string::npos )
-    {
-        string sectorNumStr = sectorStr.substr ( openBracket+1, closeBracket-openBracket-1 );
-        sectorNumStr = FindAndReplaceInString ( sectorNumStr, " ", "" );
-
-//         cout << "Sectors Number String: " << sectorNumStr << endl;
-
-        if ( sectorNumStr.find_first_not_of ( "0123456789,-" ) != string::npos ) goto invalidStr;
-
-        sectorsList  = DecodeNumberString ( sectorNumStr );
-    }
-
-    // --------------------------------------------------------------------- //
-
-    vector<int> stripsList;
-
-    openBracket = sectorStr.find_first_of ( "[", foundSide );
-    closeBracket = sectorStr.find_first_of ( "]", openBracket+1 );
-
-    if ( ( openBracket != string::npos && closeBracket == string::npos ) || ( openBracket == string::npos && closeBracket != string::npos ) ) goto invalidStr;
-    else if ( openBracket != string::npos )
-    {
-        string stripNumStr = sectorStr.substr ( openBracket+1, closeBracket-openBracket-1 );
-        stripNumStr = FindAndReplaceInString ( stripNumStr, " ", "" );
-
-//         cout << "Strips Number String: " << stripNumStr << std::endl;
-
-        if ( stripNumStr.find_first_not_of ( "0123456789,-" ) != string::npos ) goto invalidStr;
-
-        stripsList  = DecodeNumberString ( stripNumStr );
-    }
-    else
-    {
-        size_t foundSpace = sectorStr.find_first_of ( " ", foundSide+1 );
-        size_t foundEnd = sectorStr.find_first_of ( " \0", foundSide+1 );
-
-        string stripNumStr = sectorStr.substr ( foundSpace+1, foundEnd-foundSpace-1 );
-        stripNumStr = FindAndReplaceInString ( stripNumStr, " ", "" );
-
-//         cout << "Strips Number String: " << stripNumStr << endl;
-
-        if ( stripNumStr.find_first_not_of ( "0123456789" ) != string::npos ) goto invalidStr;
-
-        stripsList.push_back ( std::stoi ( stripNumStr ) );
-    }
-
-    vector<int> stripIDsList;
-
-    if ( displayList ) cout << sectorStr << " correspond to strips ID:\n";
-
-    for ( unsigned int sectI = 0; sectI < sectorsList.size(); sectI++ )
-    {
-        for ( unsigned int stripI = 0; stripI < stripsList.size(); stripI++ )
-        {
-            int sid = ToStripID ( isUpstream_, isBarrel_, isFront_, sectorsList[sectI], stripsList[stripI] );
-
-            if ( displayList ) cout << " * " << sid << endl;
-
-            stripIDsList.push_back ( sid );
-        }
-    }
-
-    return stripIDsList;
-}
-
-void ToStripID ( vector<int>* dest, string sectorStr )
-{
-    if ( dest->size() == 0 ) dest->clear();
-
-    vector<int> toAdd = ToStripID ( sectorStr );
-
-    dest->insert ( dest->end(), toAdd.begin(), toAdd.end() );
-}
-
 TH1D* DrawGodHist ( TH2F* source, string toDraw, string opt )
 {
     vector<int> stripIDs = ToStripID ( toDraw );
@@ -1442,11 +1394,44 @@ TVector3 GetDetPos ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel
     return detPos;
 }
 
-std::vector<double> GetBinsEdges ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector, int depth_, int verbose )
+TVector3 GetStripPos ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector_, int strip_, int depth_, int verbose )
+{
+    if ( !isBarrel_ )
+    {
+        TVector3 firstStripPos = GetDetPos ( geomInfo, isUpstream_, isBarrel_, sector_, depth_, verbose );
+        double qqq5FstStripWidth = geomInfo->qqq5FirstStripWidth;
+        double qqq5DeltaPitch = geomInfo->qqq5DeltaPitch;
+
+        std::vector<double> qqq5BinsEdges;
+
+        std::list<double> binsEdgesList;
+        binsEdgesList.clear();
+
+        TVector3 lowEdge = firstStripPos;
+        double midDetPhi = lowEdge.Phi();
+
+        TVector3 highEdge = lowEdge;
+
+        for ( int i = 0; i < strip_+1; i++ )
+        {
+            lowEdge = highEdge;
+
+            TVector3 toNextStrip ( 0, qqq5FstStripWidth - ( i-1 ) *qqq5DeltaPitch , 0 );
+            toNextStrip.SetPhi ( midDetPhi );
+
+            highEdge += toNextStrip;
+        }
+
+        return ( lowEdge+highEdge ) *0.5;
+    }
+    else return TVector3 ( 0, 0, 0 );
+}
+
+std::vector<double> GetBinsEdges ( GoddessGeomInfos* geomInfo, bool isUpstream_, bool isBarrel_, int sector_, int depth_, int verbose )
 {
     TVector3 beamDir ( 0, 0, 1 );
 
-    TVector3 firstStripPos = GetDetPos ( geomInfo, isUpstream_, isBarrel_, sector, depth_, verbose );
+    TVector3 firstStripPos = GetDetPos ( geomInfo, isUpstream_, isBarrel_, sector_, depth_, verbose );
     double qqq5FstStripWidth = geomInfo->qqq5FirstStripWidth;
     double qqq5DeltaPitch = geomInfo->qqq5DeltaPitch;
 
@@ -1489,12 +1474,16 @@ std::vector<double> GetBinsEdges ( GoddessGeomInfos* geomInfo, bool isUpstream_,
 
     qqq5BinsEdges.clear();
 
-//     cout << "Filling the final bins edges array of size " << binsEdgesList.size() <<" ...\n";
+    if ( verbose ) cout << "Filling the final bins edges array of size " << binsEdgesList.size() <<" ...\n";
+
+    int counter = 0;
 
     for ( auto listItr = binsEdgesList.begin(); listItr != binsEdgesList.end(); listItr++ )
     {
         qqq5BinsEdges.push_back ( *listItr );
-//         cout << "Bin #" << counter << " : " << qqq5BinsEdges[counter] << endl;
+        if ( verbose ) cout << "Bin #" << counter << " : " << qqq5BinsEdges[counter] << endl;
+
+        counter++;
     }
 
     return qqq5BinsEdges;
@@ -1710,6 +1699,7 @@ void ClearUserHists()
         }
     }
 }
+
 
 
 

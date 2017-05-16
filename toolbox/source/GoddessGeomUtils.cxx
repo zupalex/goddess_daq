@@ -1,4 +1,5 @@
 #include "GoddessGeomUtils.h"
+#include <TIterator.h>
 
 GoddessGeomUtils* gGU = new GoddessGeomUtils();
 
@@ -345,6 +346,8 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal ( void* args )
 
         if ( *eLossMode >= 2 ) energy = correctedEnergy;
         else energy = gAD.initialEnergy;
+
+        energy *= gainAdjusts[gAD.globStripID];
 
         string computeELossStr = ( *eLossMode%2 != 0 ) ? "" : "_no_BeamEnLoss";
         computeELossStr += ( *eLossMode >= 2 ) ? "" : "_no_EjecEnLoss";
@@ -845,6 +848,47 @@ void GoddessGeomUtils::GetQValWithNewGeometry ( string filename, string treeName
     GetQValWithNewGeometry ( filename, treeName, nEntries, qqq5Offs, sx3Offs, targetOffs );
 }
 
+void GoddessGeomUtils::GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries,
+        int minQQQ5OffX, int maxQQQ5OffX, int minQQQ5OffY, int maxQQQ5OffY, int minQQQ5OffZ, int maxQQQ5OffZ, int stepQQQ5,
+        int minSX3OffX, int maxSX3OffX, int minSX3OffY, int maxSX3OffY, int minSX3OffZ, int maxSX3OffZ, int stepSX3,
+        int minTargetOffX, int maxTargetOffX, int minTargetOffY, int maxTargetOffY, int minTargetOffZ, int maxTargetOffZ, int stepTarget )
+{
+    vector<TVector3> sx3Offs, qqq5Offs, targetOffs;
+
+    for ( int iq = minQQQ5OffX; iq <= maxQQQ5OffX; iq+=stepQQQ5 )
+    {
+        for ( int jq = minQQQ5OffY; jq <= maxQQQ5OffY; jq+=stepQQQ5 )
+        {
+            for ( int kq = minQQQ5OffZ; kq <= maxQQQ5OffZ; kq+=stepQQQ5 )
+            {
+                for ( int is = minSX3OffX; is <= maxSX3OffX; is+=stepSX3 )
+                {
+                    for ( int js = minSX3OffY; js <= maxSX3OffY; js+=stepSX3 )
+                    {
+                        for ( int ks = minSX3OffZ; ks <= maxSX3OffZ; ks+=stepSX3 )
+                        {
+                            for ( int it = minTargetOffX; it <= maxTargetOffX; it+=stepTarget )
+                            {
+                                for ( int jt = minTargetOffY; jt <= maxTargetOffY; jt+=stepTarget )
+                                {
+                                    for ( int kt = minTargetOffZ; kt <= maxTargetOffZ; kt+=stepTarget )
+                                    {
+                                        targetOffs.push_back ( TVector3 ( it, jt, kt ) );
+                                        sx3Offs.push_back ( TVector3 ( is, js, ks ) );
+                                        qqq5Offs.push_back ( TVector3 ( iq, jq, kq ) );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    GetQValWithNewGeometry ( filename, treeName, nEntries, qqq5Offs, sx3Offs, targetOffs );
+}
+
 std::pair< double, double > GoddessGeomUtils::FindPeakPos ( TH1* input, int nPeaks, double resolution, double sigma, double threshold )
 {
     TSpectrum* spec = new TSpectrum ( nPeaks, resolution );
@@ -938,6 +982,91 @@ TGraph* GoddessGeomUtils::FindKinematicsLines ( TH2* input, int projWidth )
     }
 
     return gr;
+}
+
+TF1* GoddessGeomUtils::FindBestGeom ( string fName, string detStr )
+{
+    TFile* inFile = new TFile ( fName.c_str(), "read" );
+
+    if ( !inFile->IsOpen() )
+    {
+        cerr << "Failed to open file " << fName << endl;
+        return nullptr;
+    }
+
+    TF1* bestFit = nullptr;
+    double bestIntegral = 0;
+
+    string bestOffName;
+    TH2F* bestHist = nullptr;
+
+    auto lOK = inFile->GetListOfKeys();
+
+    auto itr = lOK->MakeIterator();
+
+    TObject* obj = itr->Next();
+
+    while ( obj != nullptr )
+    {
+        string objName = obj->GetName();
+
+        if ( objName.find ( "Ex_vs_Strips" ) != string::npos )
+        {
+            TH2F* h2 = ( TH2F* ) inFile->Get ( obj->GetName() );
+
+            if ( h2 != nullptr )
+            {
+                TH1D* hEx = DrawGodHist ( h2, detStr );
+
+                TF1* newFit = FitQVal ( hEx, {"[0]: 0", "[1]: [0]+0.3", "[2]: [0]+2.0", "[3]: [0]+2.4"}, 0.01, 0.3, -1, 2.5, false );
+
+                TF1* background = new TF1 ( "background", "[0] + [1]*x", -1, 2.5 );
+
+                background->SetParameters ( newFit->GetParameter ( 0 ), newFit->GetParameter ( 1 ) );
+
+                double newIntegral = newFit->Integral ( -1, 2.5 ) - background->Integral ( -1,.25 );
+
+                if ( bestFit == nullptr ||
+                        ( fabs ( newFit->GetParameter ( 4 ) ) <= fabs ( bestFit->GetParameter ( 4 ) )
+                          && newFit->GetParameter ( 2 ) <= bestFit->GetParameter ( 2 )
+                          && newIntegral >= bestIntegral ) )
+                {
+                    bestFit = newFit;
+
+                    bestIntegral = newIntegral;
+
+                    bestOffName = objName;
+
+                    bestHist = ( TH2F* ) h2->Clone();;
+                }
+            }
+        }
+
+        obj = itr->Next();
+    }
+
+    cout << "Best fit for graph " << bestOffName << endl;
+
+    cout << "Fit Results: \n";
+    for ( unsigned int i = 0; i < 4; i++ )
+    {
+        cout << "Peak #" << std::setw ( 2 ) << std::left << i << " : ";
+
+        cout << bestFit->GetParameter ( 4 ) + ( i > 0 ? bestFit->GetParameter ( 4 + 2*i ) : 0 );
+        cout << " +/- " << bestFit->GetParError ( 4 ) + bestFit->GetParError ( 4 + 2*i ) << " MeV ( Depends from Peak #" << 0 << " : ";
+        cout << " energy difference = " << ( i > 0 ? fabs ( bestFit->GetParameter ( 4 + 2*i ) ) : 0 ) << " +/- " << bestFit->GetParError ( 4 + 2*i );
+        cout << " / Ratio = " << bestFit->GetParameter ( 3 + 2*i ) / bestFit->GetParameter ( 3 ) << " )\n";
+
+    }
+    cout << "Sigma = " << bestFit->GetParameter ( 2 ) << " MeV\n";
+    cout << "Chi2 = " << bestFit->GetChisquare() << "\n";
+
+    DrawGodHist ( bestHist, detStr );
+    bestFit->SetRange ( -1, 2.5 );
+    bestFit->Draw ( "same" );
+    bestFit->SetNpx ( 500 );
+
+    return bestFit;
 }
 
 void GoddessGeomUtils::WriteNewGeomGraphs ( string outFName, string opts )

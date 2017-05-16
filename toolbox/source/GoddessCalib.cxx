@@ -1906,6 +1906,183 @@ float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
     return ratio;
 }
 
+void GoddessCalib::GenerateGainAdjustfile ( string filesname, string treename, long long int nEntries, string outfname, double minAdjust, double maxAdjust, double stepWidth )
+{
+    std::vector<string> rootfiles = DecodeItemsToTreat ( filesname, "system", true, true );
+
+    if ( rootfiles.size() == 0 ) return;
+
+    TFile* firstRootFile = new TFile ( rootfiles[0].c_str(), "read" );
+
+    geomInfo = ( GoddessGeomInfos* ) firstRootFile->FindObjectAny ( "GoddessGeom" );
+    reacInfo = ( GoddessReacInfos* ) firstRootFile->FindObjectAny ( "GoddessReac" );
+
+    if ( geomInfo == nullptr )
+    {
+        cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
+        cerr << "Required information about the geometry are missing...\n";
+        cerr << "Aborting...\n";
+        return;
+    }
+
+    if ( reacInfo == nullptr )
+    {
+        cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
+        cerr << "Required information reaction are missing...\n";
+        cerr << "Aborting...\n";
+        return;
+    }
+
+    firstRootFile->Close();
+
+    TChain* chain = new TChain ( treename.c_str(), treename.c_str() );
+
+    for ( unsigned int i = 0; i < rootfiles.size(); i++ )
+    {
+        chain->Add ( rootfiles[i].c_str() );
+    }
+
+    if ( stoppingPowerTable["ejectile"].empty() )
+    {
+        std::ifstream mass_input ( pathToGDAQ + "/share/mass_db.dat", std::ios_base::in );
+
+        if ( !mass_input.is_open() )
+        {
+            std::cerr << "Failed to open the mass database. Energy loss has not been computed...\n";
+
+            return;
+        }
+
+        string projStr = "";
+
+        GetAtomicFormula ( mass_input, reacInfo->ejecA, reacInfo->ejecZ, projStr );
+
+        char* tryFindStr = new char[512];
+
+        sprintf ( tryFindStr, "*%s*range*_vs_energy*", projStr.c_str() );
+
+        vector<string> tryFindTable = DecodeItemsToTreat ( ( string ) tryFindStr, "system", false );
+
+        if ( tryFindTable.size() != 1 )
+        {
+            std::cerr << "Requested to compute the energy loss but no stopping power table was given and auto search failed...\n";
+            return;
+        }
+
+        stoppingPowerTable["ejectile"] = tryFindTable[0];
+    }
+
+    auto energyLossData = FillGraphFromFile ( stoppingPowerTable["ejectile"] );
+
+    TVector3 targetPos = geomInfo->GetOffset ( "Target Offset" );
+
+    TVector3 beamDir ( 0, 0, 1 );
+
+    auto targetLadderDir = TVector3 ( 0, 0, 1 );
+    targetLadderDir.SetTheta ( geomInfo->targetLadderAngle*TMath::DegToRad() );
+    targetLadderDir.SetPhi ( TMath::PiOver2() );
+
+    double beamEffThickness = GetEffectiveThickness ( beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
+
+    reacInfo->beamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001,
+                       reacInfo->targetType, reacInfo->targetDensity, "./", "Interpolation" );
+
+    cout << "Beam Energy after computing energy loss: " << reacInfo->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
+
+    vector<SiDataBase>* vectSiData = new vector<SiDataBase>;
+
+    chain->SetBranchAddress ( "si", &vectSiData );
+
+    double adjust = minAdjust;
+
+    map<int, TH1F*> hQQQ5[4][32];
+
+    while ( adjust <= maxAdjust )
+    {
+        for ( int sect = 0; sect < 4; sect++ )
+        {
+            for ( int strip = 0; strip < 32; strip++ )
+            {
+                hQQQ5[sect][strip][RoundValue ( adjust*100 )] = new TH1F ( Form ( "hEx_QQQ5_U%d_%d_gain_%d", sect, strip, RoundValue ( adjust*100 ) ),
+                        Form ( "Excitation Energy QQQ5 U%d strip %d gain mod %d %%", sect, strip, RoundValue ( adjust*100 ) ),
+                        800, -20, 20 );
+            }
+        }
+
+        adjust+= stepWidth;
+    }
+
+    if ( nEntries <= 0 ) nEntries = chain->GetEntries();
+
+    for ( long long int ev = 0; ev < nEntries; ev++ )
+    {
+        if ( ev%10000 == 0 )
+        {
+            cout << "Entry " << std::setw ( 15 ) << ev << " / " << nEntries;
+            cout<< " ( " << std::fixed << std::setprecision ( 2 )  << std::setw ( 6 ) << ( ( float ) ev/nEntries ) * 100. << " % )\r" << std::flush;
+        }
+
+        chain->GetEntry ( ev );
+
+        if ( vectSiData->size() > 0 )
+        {
+            for ( unsigned int i = 0; i < vectSiData->size(); i++ )
+            {
+                SiDataBase siData = vectSiData->at ( i );
+
+                double energy = siData.ESumLayer ( 1,false );
+                int sector = siData.sector;
+                int strip = siData.StripMaxLayer ( 1, false );
+
+                if ( siData.isUpstream && !siData.isBarrel && sector >= 0 && sector <= 3 && strip >= 0 && strip <= 31 )
+                {
+                    double effThickness = GetEffectiveThickness ( siData.PosE1().Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
+                    double estELoss = ComputeEnergyLoss ( energyLossData.first, energyLossData.second, energy/reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation" );
+
+                    //             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
+
+                    energy += estELoss;
+
+                    adjust = minAdjust;
+
+                    while ( adjust <= maxAdjust )
+                    {
+                        double qVal = SiDataBase::QValue ( reacInfo, energy*adjust, siData.PosE1().Angle ( beamDir ) );
+
+                        double eX = reacInfo->qValGsGs - qVal;
+
+                        hQQQ5[sector][strip][RoundValue ( adjust*100 )]->Fill ( eX );
+
+                        adjust+= stepWidth;
+                    }
+                }
+            }
+        }
+    }
+
+    TFile* outf = new TFile ( outfname.c_str(), "recreate" );
+
+    outf->cd();
+
+    for ( int sect = 0; sect < 4; sect++ )
+    {
+        for ( int strip = 0; strip < 32; strip++ )
+        {
+            for ( auto itr = hQQQ5[sect][strip].begin(); itr != hQQQ5[sect][strip].end(); itr++ ) itr->second->Write();
+        }
+    }
+
+    outf->mkdir ( "infos" );
+    outf->cd ( "infos" );
+    geomInfo->Write ( "GoddessGeom" );
+    reacInfo->Write ( "GoddessReac" );
+    outf->Close();
+
+    cout << endl;
+
+    return;
+}
+
 TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, bool verbose )
 {
     if ( mean.size() == 0 ) return nullptr;

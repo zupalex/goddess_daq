@@ -189,6 +189,8 @@ public:
 
     vector<float> GetOverlapPoints ( TH2F* input, float xMin, float xMax, double threshold, bool jumpUp = true, bool printDebug = false );
 
+    void GenerateGainAdjustfile ( string filesname, string treename, long long int nEntries, string outfname, double minAdjust, double maxAdjust, double stepWidth );
+
     void WritePosCalHistsToFile ( );
 
     // ---------------------- QQQ5 stuffs -------------------------------- //

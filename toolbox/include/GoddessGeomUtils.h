@@ -61,6 +61,8 @@ public:
     GoddessGeomUtils()
     {
         nGP.Init();
+
+        bestGeom = {TVector3 ( 0, 0, 0 ), TVector3 ( 0, 0, 0 ), TVector3 ( 0, 0, 0 ) };
     }
 
     ~GoddessGeomUtils() {}
@@ -71,6 +73,8 @@ public:
     GeomAdjustData gAD;
 
     SolidVector orrubaStripsPos[2][2][12][32];
+
+    vector<TVector3> bestGeom;
 
     void SetNewGeomMode ( bool geomOR, bool reacOR, bool beamELoss, bool ejecELoss );
     void SetGeomOverride ( bool geomOR );
@@ -107,8 +111,14 @@ public:
 
     void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, string offsetsList );
 
+    void GetQValWithNewGeometry ( string filename, string treeName, long long int nEntries, int minQQQ5OffX, int maxQQQ5OffX, int minQQQ5OffY, int maxQQQ5OffY, int minQQQ5OffZ, int maxQQQ5OffZ, int stepQQQ5,
+                                  int minSX3OffX, int maxSX3OffX, int minSX3OffY, int maxSX3OffY,int minSX3OffZ, int maxSX3OffZ, int stepSX3,
+                                  int minTargetOffX, int maxTargetOffX, int minTargetOffY, int maxTargetOffY,int minTargetOffZ, int maxTargetOffZ, int stepTarget );
+
     std::pair<double, double> FindPeakPos ( TH1* input, int nPeaks, double resolution = 1, double sigma = 2, double threshold = 0.05 );
     TGraph* FindKinematicsLines ( TH2* input, int projWidth = 1 );
+
+    TF1* FindBestGeom ( string fName, string detStr );
 
     ClassDef ( GoddessGeomUtils, 1 )
 };

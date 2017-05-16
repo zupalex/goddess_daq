@@ -2,6 +2,7 @@
 #define __GODDESSTOOLBOX__
 
 #include <iostream>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <streambuf>
@@ -105,9 +106,9 @@ vector<int> DecodeNumberString ( string itemsString, bool verbose = false );
 vector<string> DecodeTags ( string tagsStr );
 
 vector<string> GetDirContent ( string dirName = "./", string mode = "root", string endWith = "",
-                               string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "", bool caseSensitive = true );
+                               string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "", bool caseSensitive = true, bool includePath = false );
 
-std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode = "root", bool caseSensitive = true );
+std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode = "root", bool caseSensitive = true, bool includePath = false );
 
 vector<string> SplitString ( string toSplit, string splitter );
 
@@ -121,6 +122,31 @@ void ReadDetectorID ( std::string DetectorID, bool* isUpstream, unsigned short* 
 string GetDetectorID ( bool isUpstream, bool isBarrel, unsigned int sector );
 
 string GetNameCompliantStr ( int input );
+
+int ToStripID ( bool isUpstream_, bool isBarrel_, bool isFront_, int sector_, int strip_ );
+vector<int> ToStripID ( string sectorStr, bool displayList = false );
+void ToStripID ( vector<int>* dest, string sectorStr );
+
+template<typename... Rest> void ToStripID ( vector<int>* dest, string sectorStr1, Rest... otherSectorStr )
+{
+    dest->clear();
+
+    ToStripID ( dest, sectorStr1 );
+
+    ToStripID ( dest, otherSectorStr... );
+}
+
+template<typename... Rest> vector<int> ToStripID ( string sectorStr1, Rest... otherSectorStr )
+{
+    vector<int> stripIDsList;
+
+    ToStripID<string> ( &stripIDsList, sectorStr1, otherSectorStr... );
+
+    return stripIDsList;
+}
+
+string FromStripID ( int stripID_, bool& isUpstream_, bool& isBarrel_, bool& isFront_, int& sector_, int& strip_ );
+string FromStripID ( int stripID_ );
 
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
