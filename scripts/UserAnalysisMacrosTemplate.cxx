@@ -116,15 +116,13 @@ public:
     GoddessGeomInfos* geomInfoPtr;
     GoddessReacInfos* reacInfoPtr;
 
-    TVector3 qqq5sPos[2][4];
-    TVector3 sX3sPos[2][12];
+    TVector3 qqq5Offsets[2][4];
+    TVector3 sX3Offsets[2][12];
 
     TVector3 beamDir;
 
     TVector3 targetLadderDir;
     TVector3 targetOffset;
-    TVector3 sX3Offset;
-    TVector3 qqq5Offset;
 
     siStruct si;
     gamStruct gam;
@@ -145,12 +143,7 @@ void UserAnalysis::SetSiData ( SiDataBase* siData )
     si.fEn = siData->ESumLayer ( 1, false );
     si.bEn = siData->ESumLayer ( 1, true );
 
-    double sectPhi = si.isBarrel ? sX3sPos[si.isUpstream][si.sector].Phi() : qqq5sPos[si.isUpstream][si.sector].Phi();
-    TVector3 localOff = si.isBarrel ? sX3Offset : qqq5Offset;
-
-    localOff.SetPhi ( sectPhi );
-
-    if ( si.isUpstream ) localOff.SetZ ( -localOff.Z() );
+    TVector3 localOff = si.isBarrel ? sX3Offsets[si.isUpstream][si.sector] : qqq5Offsets[si.isUpstream][si.sector];
 
     si.pos = siData->PosE1() + localOff - targetOffset;
 
@@ -163,9 +156,12 @@ void UserAnalysis::SetSiData ( SiDataBase* siData )
 
     si.angle = si.pos.Angle ( beamDir );
 
-    si.qval = SiDataBase::QValue ( reacInfoPtr, si.fEn, si.angle*TMath::DegToRad() );
+    si.qval = SiDataBase::QValue ( reacInfoPtr, si.fEn, si.angle );
 //     si.qval = siData->QValue ( gA->beamMass, gA->beamEk, gA->targetMass, gA->ejecMass, gA->recoilMass );
     si.ex = reacInfoPtr->qValGsGs - si.qval;
+
+    si.angle *= TMath::RadToDeg();
+
     si.mult = siData->MultLayer ( 1, false );
 
     si.isDigital = OrrubaIsDigital ( siData );
@@ -186,12 +182,7 @@ void UserAnalysis::SetSiData ( SiDataDetailed* siData )
     si.fEn = siData->ESumLayer ( 1, false );
     si.bEn = siData->ESumLayer ( 1, true );
 
-    double sectPhi = si.isBarrel ? sX3sPos[si.isUpstream][si.sector].Phi() : qqq5sPos[si.isUpstream][si.sector].Phi();
-    TVector3 localOff = si.isBarrel ? sX3Offset : qqq5Offset;
-
-    localOff.SetPhi ( sectPhi );
-
-    if ( si.isUpstream ) localOff.SetZ ( -localOff.Z() );
+    TVector3 localOff = si.isBarrel ? sX3Offsets[si.isUpstream][si.sector] : qqq5Offsets[si.isUpstream][si.sector];
 
     si.pos = siData->PosE1() + localOff - targetOffset;
 
@@ -204,8 +195,11 @@ void UserAnalysis::SetSiData ( SiDataDetailed* siData )
 
     si.angle = si.pos.Angle ( beamDir );
 
-    si.qval = SiDataBase::QValue ( reacInfoPtr, si.fEn, si.angle*TMath::DegToRad() );
+    si.qval = SiDataBase::QValue ( reacInfoPtr, si.fEn, si.angle );
 //     si.qval = siData->QValue ( gA->beamMass, gA->beamEk, gA->targetMass, gA->ejecMass, gA->recoilMass );
+
+    si.angle *= TMath::RadToDeg();
+
     si.ex = reacInfoPtr->qValGsGs - si.qval;
     si.mult = siData->MultLayer ( 1, false );
 
@@ -961,19 +955,33 @@ void FillUserHists ( long long int maxEvents = 0 )
     analysis->targetLadderDir = targetLadderDir;
 
     analysis->targetOffset = TVector3 ( 0, 0, 0 );
-    analysis->sX3Offset = TVector3 ( 0, 0, 0 );
-    analysis->qqq5Offset = TVector3 ( 0, 0, 0 );
+    TVector3 sX3Offset = TVector3 ( 0, 0, 0 );
+    TVector3 qqq5Offset = TVector3 ( 0, 0, 0 );
 
     for ( int i = 0; i < 2; i++ )
     {
         for ( int j = 0; j < 4; j++ )
         {
-            analysis->qqq5sPos[i][j] = GetDetPos ( analysis->geomInfoPtr, i, false, j, 1 );
+            TVector3 detPos = GetDetPos ( analysis->geomInfoPtr, i, false, j, 1 );
+
+            double sectPhi = detPos.Phi();
+            analysis->qqq5Offsets[i][j] = qqq5Offset;
+
+            analysis->qqq5Offsets[i][j].SetPhi ( sectPhi );
+
+            if ( i==1 ) analysis->qqq5Offsets[i][j].SetZ ( -analysis->qqq5Offsets[i][j].Z() );
         }
 
         for ( int j = 0; j < 12; j++ )
         {
-            analysis->sX3Offset[i][j] = GetDetPos ( analysis->geomInfoPtr, i, true, j, 1 );
+            TVector3 detPos = GetDetPos ( analysis->geomInfoPtr, i, true, j, 1 );
+
+            double sectPhi = detPos.Phi();
+            analysis->sX3Offsets[i][j] = sX3Offset;
+
+            analysis->sX3Offsets[i][j].SetPhi ( sectPhi );
+
+            if ( i==1 ) analysis->sX3Offsets[i][j].SetZ ( -analysis->sX3Offsets[i][j].Z() );
         }
     }
 

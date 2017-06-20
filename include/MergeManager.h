@@ -16,7 +16,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <iostream>
-#include <map>
 
 #include <signal.h>
 #include <time.h>
@@ -24,6 +23,8 @@
 #include <zlib.h>
 
 #include "GTMerge.h"
+
+#define payloadMaxSize 50000
 
 using std::string;
 
@@ -50,15 +51,28 @@ public:
     EVENT();
     ~EVENT();
 
+    EVENT CopyContent ( const EVENT toCopy )
+    {
+        key = toCopy.key;
+
+        gd->length = toCopy.gd->length;
+        gd->timestamp = toCopy.gd->timestamp;
+        gd->type = toCopy.gd->type;
+
+        memcpy ( payload, toCopy.payload, gd->length );
+
+        return *this;
+    }
+
     GebData* gd;
     char* payload;
     int key;
 };
 
-// In GetASeed.c
-int GetASeed ( unsigned int *seed );
-
 void CheckNoArgs ( int required, int actual, string str );
+
+bool CompareTimestamps ( EVENT* ev1, EVENT* ev2 );
+// bool CompareTimestamps ( int ev1, int ev2 );
 
 // In GEBMerge.cxx
 EVENT* GTGetDiskEv ( InDataInfo* inFile, EVENT* bufEVENT, bool printInfo );
@@ -82,7 +96,7 @@ public:
     static MergeManager* sinstance();
 
     unsigned long long int loopCounter;
-    
+
     unsigned long long int readBytesCount;
 
     bool goBackToTop;
@@ -96,6 +110,8 @@ public:
 
     std::vector<InDataInfo*>* inData;
     std::ofstream outData;
+
+    std::vector<int> pendingFiles;
 
     void RemoveFromInputList ( string input );
 

@@ -13,6 +13,16 @@ void CheckNoArgs ( int required, int actual, string str )
     }
 }
 
+bool CompareTimestamps ( EVENT* ev1, EVENT* ev2 )
+{
+    return ev1->gd->timestamp < ev2->gd->timestamp;
+}
+
+// bool CompareTimestamps ( int ev1, int ev2 )
+// {
+//     return ev1->gd->timestamp < ev2.gd->timestamp;
+// }
+
 // --------------------- InDataInfo ---------------------- //
 
 InDataInfo::InDataInfo ( std::ifstream* istream_ )
@@ -25,7 +35,7 @@ InDataInfo::InDataInfo ( std::ifstream* istream_ )
 EVENT::EVENT()
 {
     gd = new GebData;
-    payload = new char[50000];
+    payload = new char[payloadMaxSize];
     key = -1;
 }
 
@@ -72,7 +82,14 @@ void MergeManager::RemoveFromInputList ( string input )
         {
             ( *itr )->istream->close();
 
-            inData->erase ( itr );
+            int fid = ( int ) std::distance ( inData->begin(), itr );
+
+            if ( std::find ( pendingFiles.begin(), pendingFiles.end(), fid ) == pendingFiles.end() ) pendingFiles.push_back ( fid );
+
+//             cerr << "\n\nReached the end of file #" << pendingFiles.at ( pendingFiles.size()-1 ) << "...\n\n";
+//             goBackToTop = false;
+
+//             inData->erase ( itr );
 
             return;
         }
@@ -113,4 +130,3 @@ std::pair< unsigned int, unsigned long long int > MergeManager::GetSizeAndBytesC
 
     return std::make_pair ( ofEvSize, bufferBytesCount );
 }
-

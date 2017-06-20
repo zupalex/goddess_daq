@@ -13,7 +13,7 @@ GoddessCalib::GoddessCalib() : GoddessAnalysis()
 
     InitGUI();
 
-//     controlFrame->GetL
+    //     controlFrame->GetL
 
     currDetType = "";
     currRefEn1 = 0.0;
@@ -56,9 +56,9 @@ void GoddessCalib::StartSX3EnCalib ( string detectorType, double refEnergy1 )
     gStyle->SetLineWidth ( 2 );
     gStyle->SetLineColor ( 2 );
 
-//     gStyle->SetMarkerColor ( 4 );
-//     gStyle->SetMarkerSize ( 2 );
-//     gStyle->SetMarkerStyle ( 3 );
+    //     gStyle->SetMarkerColor ( 4 );
+    //     gStyle->SetMarkerSize ( 2 );
+    //     gStyle->SetMarkerStyle ( 3 );
 
     TGNumberEntryField* alphaEnIF = ( TGNumberEntryField* ) FindWindowByName ( "alphaEn1IF" );
 
@@ -69,7 +69,7 @@ string GoddessCalib::GetAutoOutFileName ( string baseName )
 {
     string currPath = ( string ) gSystem->pwd();
 
-//     string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
+    //     string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
 
     string rootFileName = baseName;
 
@@ -96,7 +96,7 @@ string GoddessCalib::GetAutoOutFileName ( string baseName )
         {
             for ( int i = 0; i < lOK->GetSize(); i++ )
             {
-//                 cout << lOK->At ( i )->GetName() << endl;
+                //                 cout << lOK->At ( i )->GetName() << endl;
 
                 TTree* testTree = ( TTree* ) lOK->At ( i );
 
@@ -277,11 +277,11 @@ void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsign
 
         double slope = ( y2 - y1 ) / ( x2 - x1 );
 
-//         cout << "Found a line in the list at position #" << i << endl;
-//         cout << "X1 : " << x1 << "   /   Y1 : " << y1 << endl;
-//         cout << "X2 : " << x2 << "   /   Y2 ; " << y2 << endl;
-//
-//         cout << "Slope = " << slope << endl;
+        //         cout << "Found a line in the list at position #" << i << endl;
+        //         cout << "X1 : " << x1 << "   /   Y1 : " << y1 << endl;
+        //         cout << "X2 : " << x2 << "   /   Y2 ; " << y2 << endl;
+        //
+        //         cout << "Slope = " << slope << endl;
 
         if ( slope < 0 ) negLine = line;
         else
@@ -500,7 +500,7 @@ void GoddessCalib::WriteResCalResults ( string fileName, string mode )
 
     string year = timeAndDate.substr ( charPos, spacePos - charPos );
 
-//     string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + "_at_" + timeOfDay + ".root";
+    //     string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + "_at_" + timeOfDay + ".root";
     string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + ".root";
 
     TFile* grFile = new TFile ( graphFileName.c_str(), "update" );
@@ -516,7 +516,7 @@ void GoddessCalib::WriteResCalResults ( string fileName, string mode )
             grFile->Delete ( toDelete.c_str() );
         }
 
-        if ( !isnan ( itr->second->GetXaxis()->GetXmin() ) && !isnan ( itr->second->GetXaxis()->GetXmax() ) )
+        if ( !std::isnan ( itr->second->GetXaxis()->GetXmin() ) && !std::isnan ( itr->second->GetXaxis()->GetXmax() ) )
         {
             if ( itr->first.find ( "_jump_at_" ) != string::npos )
             {
@@ -584,7 +584,7 @@ bool GoddessCalib::UpdateParamsInConf ( string configFile, string detType, bool 
 
             readLine >> dummy >> detID;
 
-//             int posInFile = readFile.tellg();
+            //             int posInFile = readFile.tellg();
 
             cout << "Found a " << detType << " entry: " << detID << endl;
 
@@ -750,7 +750,7 @@ bool GoddessCalib::UpdateParamsInConf ( string configFile, string detType, bool 
 
 TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TChain* chain, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
 {
-//     cout<<"button pushed"<<endl;
+    //     cout<<"button pushed"<<endl;
 
     std::size_t upStreamCondPos = conditions.find ( "si.isUpstream" );
 
@@ -1005,7 +1005,7 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool 
         ReadConfigCalPars ( configFileName );
     }
 
-//     string qqq5Ids[4] = {"A", "B", "C", "D"};
+    //     string qqq5Ids[4] = {"A", "B", "C", "D"};
 
     for ( int i = 0; i < nentries; i++ )
     {
@@ -1194,8 +1194,8 @@ int GoddessCalib::GetPosCalEnBinMax ( TH2F* input, double threshold )
 
     binMax = proj->GetMaximumBin();
 
-//     cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
-//     cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
+    //     cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
+    //     cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
 
     return binMax;
 }
@@ -1322,7 +1322,7 @@ TF1* GoddessCalib::FitEdges ( TH2F* input, int projCenterBin, int projWidth, boo
 
         projX->Fit ( fitfunc, "QRMN" );
 
-//         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+        //         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
         float edge = fitfunc->GetX ( 0.7 * fitfunc->GetParameter ( 0 ),
                                      ( fitRight ? fitfunc->GetParameter ( 1 ) : fitfunc->GetParameter ( 1 ) - 5*fitfunc->GetParameter ( 2 ) ),
                                      ( fitRight ? fitfunc->GetParameter ( 1 ) + 5*fitfunc->GetParameter ( 2 ) : fitfunc->GetParameter ( 1 ) ) );
@@ -1559,7 +1559,7 @@ std::tuple<TGraph*,vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition
         }
     }
 
-    if ( isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin() ) && isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax() ) ) return std::make_tuple<TGraph*,vector<vector<float>>> ( nullptr, {} );
+    if ( std::isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin() ) && std::isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax() ) ) return std::make_tuple<TGraph*,vector<vector<float>>> ( nullptr, {} );
 
     return std::make_tuple ( enShiftVsPosGraphs[graphName], overlapCoords );
 }
@@ -1789,7 +1789,7 @@ void GoddessCalib::LoadInternalCalib ( string fileName )
         readLine.str ( dump );
         readLine >> stripNbr >> coeff;
 
-//         cout << "Read: " << stripNbr << "    " << coeff << "\n";
+        //         cout << "Read: " << stripNbr << "    " << coeff << "\n";
 
         if ( stripNbr >= 0 && stripNbr <= 31 ) newCoeffs[stripNbr] = coeff;
         else
@@ -1845,7 +1845,7 @@ float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
 
         iss >> angle >> crossSection;
 
-//         cout << angle << "    /    " << crossSection << "\n";
+        //         cout << angle << "    /    " << crossSection << "\n";
 
         if ( buffMap != nullptr ) ( *buffMap ) [angle] = crossSection;
     }
@@ -1872,8 +1872,8 @@ float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
         counter++;
     }
 
-//     gsGraph->Draw ( "AP" );
-//     fstExGraph->Draw ( "same" );
+    //     gsGraph->Draw ( "AP" );
+    //     fstExGraph->Draw ( "same" );
 
     auto gsMinIndexItr = gsMap.upper_bound ( minAngle );
     gsMinIndexItr--;
@@ -2083,47 +2083,69 @@ void GoddessCalib::GenerateGainAdjustfile ( string filesname, string treename, l
     return;
 }
 
-TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, bool verbose )
+TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, string mode, bool verbose )
 {
     if ( mean.size() == 0 ) return nullptr;
+
+    TH1* hist_cpy = ( TH1* ) hist->Clone();
 
     string funcFormula = "[0] + [1] * x + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [2],2 ) )";
 
     vector<float> meansF;
     float minMean, maxMean;
 
+    vector<pair<float,float>> boundsF;
+
     int* dependantFrom = new int[mean.size()];
 
     if ( mean.size() > 0 )
     {
         dependantFrom[0] = -1;
-        meansF.push_back ( std::stof ( mean[0].substr ( 5 ) ) );
+        meansF.push_back ( stof ( mean[0].substr ( 5 ) ) );
 
         minMean = meansF[0];
         maxMean = meansF[0];
 
-        for ( unsigned int i = 1; i < mean.size(); i++ )
+        for ( unsigned int i = 0; i < mean.size(); i++ )
         {
-            string newMeanStr = mean[i].substr ( 5 );
+            string newMeanStr = mean[i].substr ( mean[i].find_first_of ( ":" ) +1 );
+
+            size_t minBoundPos = newMeanStr.find ( "(min=" );
+
+            if ( minBoundPos != string::npos )
+            {
+                size_t boundSepPos = newMeanStr.find_first_of ( ";", minBoundPos );
+                size_t maxBoundPos = newMeanStr.find ( "max=" );
+
+                float minb = stof ( newMeanStr.substr ( minBoundPos+5, boundSepPos-minBoundPos-5 ) );
+                float maxb = stof ( newMeanStr.substr ( maxBoundPos+4, newMeanStr.find_last_of ( ")" ) - maxBoundPos - 4 ) );
+
+                boundsF.push_back ( make_pair ( minb, maxb ) );
+
+                newMeanStr = newMeanStr.substr ( 0, minBoundPos );
+            }
+            else boundsF.push_back ( make_pair ( -1,-1 ) );
+
+            if ( i == 0 ) continue;
 
             bool isDependant = false;
             dependantFrom[i] = -1;
 
-            std::size_t oBracketPos = newMeanStr.find_first_of ( "[" );
+            size_t oBracketPos = newMeanStr.find_first_of ( "[" );
 
             if ( oBracketPos != string::npos )
             {
                 isDependant = true;
 
-                std::size_t cBracketPos = newMeanStr.find_first_of ( "]" );
+                size_t cBracketPos = newMeanStr.find_first_of ( "]" );
 
                 if ( cBracketPos == string::npos || cBracketPos < oBracketPos ) return nullptr;
 
-                dependantFrom[i] = std::stoi ( newMeanStr.substr ( oBracketPos+1, cBracketPos - oBracketPos - 1 ) );
+                dependantFrom[i] = stoi ( newMeanStr.substr ( oBracketPos+1, cBracketPos - oBracketPos - 1 ) );
 
-                meansF.push_back ( std::stof ( newMeanStr.substr ( cBracketPos+1 ) ) );
+                meansF.push_back ( stof ( newMeanStr.substr ( cBracketPos+1 ) ) );
             }
-            else meansF.push_back ( std::stoi ( newMeanStr ) );
+            else meansF.push_back ( stoi ( newMeanStr ) );
 
             float newMean = dependantFrom[i] == -1 ? meansF[i] : meansF[dependantFrom[i]] + meansF[i];
 
@@ -2131,19 +2153,42 @@ TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max,
             else if ( newMean > maxMean ) maxMean = newMean;
 
             if ( dependantFrom[i] == -1 ) funcFormula += ( string ) Form ( " + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [2],2 ) )", 5 + ( i-1 ) * 2, 6 + ( i-1 ) * 2 );
-            else funcFormula += ( string ) Form ( " + [%d] * TMath::Exp ( -pow ( x - ([%d]+[%d]),2 ) / pow ( 2 * [2],2 ) )", 5 + ( i-1 ) * 2, 4 + dependantFrom[i] * 2, 6 + ( i-1 ) * 2 );
+            else funcFormula += ( string ) Form ( " + [%d]*[%d] * TMath::Exp ( -pow ( x - ([%d]+[%d]),2 ) / pow ( 2 * [2],2 ) )",
+                                                      3 + dependantFrom[i] * 2, 5 + ( i-1 ) * 2, 4 + dependantFrom[i] * 2, 6 + ( i-1 ) * 2 );
         }
     }
     else return nullptr;
 
+    auto lambdaFitFunc = [=] ( double* x, double* par ) -> double
+    {
+        double res = 0;
+
+        if ( mode == "linear" ) res += par[0] + par[1]*x[0];
+
+        int parnum = 3;
+
+        for ( unsigned int i = 0; i < meansF.size(); i++ )
+        {
+            if ( dependantFrom[i] == -1 ) res += par[parnum] * TMath::Exp ( -pow ( x[0] - par[parnum+1],2 ) / pow ( 2 * par[2],2 ) );
+            else res += par[dependantFrom[i]*2+3]*par[parnum] * TMath::Exp ( -pow ( x[0] - ( par[dependantFrom[i]*2+4]+par[parnum+1] ),2 ) / pow ( 2 * par[2],2 ) );
+
+            parnum += 2;
+        }
+
+        return res;
+    };
+
+    int npars = 3 + 2*meansF.size();
+
     if ( verbose )
     {
-        cout << "Final Fit Formula:\n";
+        cout << "Final Fit Formula (" << npars << " parameters):\n";
         cout << funcFormula << endl;
         cout << "***********************************************************************\n";
     }
 
-    TF1* fitFunc = new TF1 ( "fitFunc", funcFormula.c_str(), -20, 20 );
+//     TF1* fitFunc = new TF1 ( "fitFunc", funcFormula.c_str(), -20, 20 );
+    TF1* fitFunc = new TF1 ( "fitFunc", lambdaFitFunc, -20, 20, npars );
 
     float fitMin, fitMax;
 
@@ -2155,11 +2200,27 @@ TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max,
     if ( maxBound == 0 ) fitMax = maxMean + fwhm_mean*3;
     else fitMax = maxBound;
 
-    fitFunc->SetParameter ( 2, fwhm_mean );
-    fitFunc->SetParLimits ( 2, fwhm_min, fwhm_max );
-
     fitFunc->SetParameter ( 0, 1 );
     fitFunc->SetParameter ( 1, 0.1 );
+
+    fitFunc->SetParameter ( 2 , fwhm_mean );
+    fitFunc->SetParLimits ( 2 , fwhm_min, fwhm_max );
+
+    if ( mode == "TSpectrum" )
+    {
+        if ( verbose ) cout << "Fitting with background evaluated using TSpectrum..." << endl;
+
+        fitFunc->FixParameter ( 0, 0 );
+        fitFunc->FixParameter ( 1, 0 );
+
+        hist_cpy->GetXaxis()->SetRangeUser ( minBound-1, maxBound+1 );
+
+        TSpectrum* spec = new TSpectrum();
+
+        auto hBack = spec->Background ( hist_cpy, 50 );
+
+        hist_cpy->Add ( hBack, -1 );
+    }
 
     for ( unsigned int i = 0; i < mean.size(); i++ )
     {
@@ -2168,23 +2229,38 @@ TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max,
         fitFunc->SetParameter ( parNum, 10 );
         fitFunc->SetParameter ( parNum+1, meansF[i] );
 
-        fitFunc->SetParLimits ( parNum, 0, 1e6 );
-        if ( verbose ) cout << "Setting limits for parameter #" << parNum+1 << endl;
-        if ( dependantFrom[i] == -1 )
-        {
-            fitFunc->SetParLimits ( parNum+1, meansF[i]-0.4, meansF[i]+0.4 );
+        if ( dependantFrom[i] == -1 ) fitFunc->SetParLimits ( parNum, 1, 1e6 );
+        else fitFunc->SetParLimits ( parNum, 0.1, 100 );
 
-            if ( verbose ) cout << "Min Bound = " << meansF[i]-0.4 << " / Max Bound = " << meansF[i]+0.4 << endl;
+        if ( verbose ) cout << "Setting limits for parameter #" << parNum+1 << endl;
+        if ( boundsF[i].first == -1 || boundsF[i].second == -1 )
+        {
+            if ( dependantFrom[i] == -1 )
+            {
+                fitFunc->SetParLimits ( parNum+1, meansF[i]-0.5, meansF[i]+0.5 );
+
+                if ( verbose ) cout << "Min Bound = " << meansF[i]-0.5 << " / Max Bound = " << meansF[i]+0.5 << endl;
+            }
+            else
+            {
+                fitFunc->SetParLimits ( parNum+1, meansF[i] - 0.1, meansF[i] + 0.1 );
+
+                if ( verbose ) cout << "Min Bound = " << meansF[i]-0.1 << " / Max Bound = " << meansF[i]+0.1 << endl;
+            }
         }
         else
         {
-            fitFunc->SetParLimits ( parNum+1, meansF[i] - 0.1, meansF[i] + 0.1 );
+            if ( boundsF[i].first == boundsF[i].second )
+            {
+                fitFunc->FixParameter ( parNum+1, boundsF[i].first );
+            }
+            else fitFunc->SetParLimits ( parNum+1, boundsF[i].first, boundsF[i].second );
 
-            if ( verbose ) cout << "Min Bound = " << meansF[i]-0.1 << " / Max Bound = " << meansF[i]+0.1 << endl;
+            if ( verbose ) cout << "Min Bound = " << boundsF[i].first << " / Max Bound = " << boundsF[i].second << endl;
         }
     }
 
-    hist->Fit ( fitFunc, "Q", "", fitMin, fitMax );
+    hist_cpy->Fit ( fitFunc, "Q", "", fitMin, fitMax );
 
     if ( minBound == 0 || maxBound == 0 )
     {
@@ -2200,7 +2276,7 @@ TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max,
         fitMin = minBound == 0 ? ( minMean - 3 * fitFunc->GetParameter ( 2 ) ) : minBound;
         fitMax = maxBound == 0 ? ( maxMean + 10 * fitFunc->GetParameter ( 2 ) ) : maxBound;
 
-        hist->Fit ( fitFunc, "Q", "", fitMin, fitMax );
+        hist_cpy->Fit ( fitFunc, "Q", "", fitMin, fitMax );
     }
 
     if ( verbose )
@@ -2215,7 +2291,7 @@ TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max,
                 cout << fitFunc->GetParameter ( 4 + dependantFrom[i]*i ) + fitFunc->GetParameter ( 4 + 2*i );
                 cout << " +/- " << fitFunc->GetParError ( 4 + dependantFrom[i]*i ) + fitFunc->GetParError ( 4 + 2*i ) << " MeV ( Depends from Peak #" << dependantFrom[i] << " : ";
                 cout << " energy difference = " << fabs ( fitFunc->GetParameter ( 4 + 2*i ) ) << " +/- " << fitFunc->GetParError ( 4 + 2*i );
-                cout << " / Ratio = " << fitFunc->GetParameter ( 3 + 2*i ) / fitFunc->GetParameter ( 3 + dependantFrom[i]*i ) << " )\n";
+                cout << " / Ratio = " << fitFunc->GetParameter ( 3 + 2*i ) << " )\n";
             }
         }
         cout << "Sigma = " << fitFunc->GetParameter ( 2 ) << " MeV\n";
@@ -2296,8 +2372,8 @@ TF1* FitQValGS ( TH1* hist, vector<float> mean, float fwhm, float peakRatio, flo
     {
         cout << "Fit Results for the G.S. and 1st Exited State: \n";
         cout << std::setw ( 16 ) << std::left << "G.S. @ " << fitFunc->GetParameter ( 5 ) << " MeV\n";
-//         cout << std::setw ( 16 ) << std::left << "1st Ex. State @ " << fitFunc->GetParameter ( 7 ) << " MeV\n";
-//         cout << "Energy Difference = " << fabs ( fitFunc->GetParameter ( 7 ) - fitFunc->GetParameter ( 5 ) ) << " MeV\n";
+        //         cout << std::setw ( 16 ) << std::left << "1st Ex. State @ " << fitFunc->GetParameter ( 7 ) << " MeV\n";
+        //         cout << "Energy Difference = " << fabs ( fitFunc->GetParameter ( 7 ) - fitFunc->GetParameter ( 5 ) ) << " MeV\n";
         cout << "Sigma = " << fitFunc->GetParameter ( 3 ) << " MeV\n";
         cout << "Peak Ratio = " << fitFunc->GetParameter ( 2 ) << " MeV\n";
     }
@@ -2536,28 +2612,6 @@ void GoddessCalib::PosCalibHelp()
 }
 
 ClassImp ( GoddessCalib )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

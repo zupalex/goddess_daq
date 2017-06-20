@@ -22,7 +22,7 @@ extern vector<std::map<int, TH1F*>> hQVal_QQQ5UC;
 extern vector<std::map<int, TH1F*>> hQVal_QQQ5UD;
 
 TF1* FitQValGS ( TH1* hist, vector<float> mean, float fwhm, float peakRatio, float minBound = 0, float maxBound = 0, bool verbose = false );
-TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, bool verbose );
+TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, string mode = "TSpectrum", bool verbose = false );
 
 extern map<string, string> stoppingPowerTable;
 

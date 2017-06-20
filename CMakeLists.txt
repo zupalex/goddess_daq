@@ -26,7 +26,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -O3")
 
 #Add custom modules to module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")

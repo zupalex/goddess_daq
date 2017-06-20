@@ -910,7 +910,7 @@ std::pair< double, double > GoddessGeomUtils::FindPeakPos ( TH1* input, int nPea
 
         vector<string> means = {Form ( "[0]: %f", peaksX[i] ), "[1]: [0]-0.1"};
 
-        TF1* fitFunc = FitQVal ( input, means, 0.01, 0.3, peaksX[i] - 0.6, peaksX[i] + 0.6, true );
+        TF1* fitFunc = FitQVal ( input, means, 0.01, 0.3, peaksX[i] - 0.6, peaksX[i] + 0.6, "TSpectrum", true );
 
         double ampDiff = fabs ( fitFunc->GetParameter ( 3 ) - input->GetBinContent ( floor ( fitFunc->GetParameter ( 4 ) /input->GetXaxis()->GetBinWidth ( 1 ) ) +1 ) );
         ampDiff += fabs ( fitFunc->GetParameter ( 5 ) - input->GetBinContent ( floor ( ( fitFunc->GetParameter ( 4 ) +fitFunc->GetParameter ( 6 ) ) /input->GetXaxis()->GetBinWidth ( 1 ) ) +1 ) );
@@ -940,7 +940,7 @@ std::pair< double, double > GoddessGeomUtils::FindPeakPos ( TH1* input, int nPea
         }
     }
 
-    FitQVal ( input, {Form ( "[0]: %f", peaksX[bestPeak] ), "[1]: [0]-0.1"}, 0.01, 0.3, peaksX[bestPeak] - 0.6, peaksX[bestPeak] + 0.6, false );
+    FitQVal ( input, {Form ( "[0]: %f", peaksX[bestPeak] ), "[1]: [0]-0.1"}, 0.01, 0.3, peaksX[bestPeak] - 0.6, peaksX[bestPeak] + 0.6, "linear", false );
 
     return std::make_pair ( peaksX[bestPeak], peaksY[bestPeak] );
 }
@@ -1000,11 +1000,22 @@ TF1* GoddessGeomUtils::FindBestGeom ( string fName, string detStr )
     string bestOffName;
     TH2F* bestHist = nullptr;
 
+    double bestChi2 = -1;
+
     auto lOK = inFile->GetListOfKeys();
 
     auto itr = lOK->MakeIterator();
 
     TObject* obj = itr->Next();
+
+    bool failedOnce = false;
+
+    vector<int> xOffs, yOffs, zOffs;
+    vector<double> sigmas, integrals, chi2s;
+
+    TCanvas* bestFitCan = new TCanvas ( "Best_Fit", "Best Fit" );
+
+FindBestFitLoop:
 
     while ( obj != nullptr )
     {
@@ -1014,36 +1025,231 @@ TF1* GoddessGeomUtils::FindBestGeom ( string fName, string detStr )
         {
             TH2F* h2 = ( TH2F* ) inFile->Get ( obj->GetName() );
 
+            size_t targOffPos = objName.find ( "target_off_" );
+
+            if ( targOffPos == string::npos ) continue;
+
+            size_t xOffPos = objName.find_first_of ( "0123456789", targOffPos );
+            size_t offSepPos = objName.find_first_of ( "_", xOffPos );
+
+            int offMod;
+
+            offMod = ( objName[xOffPos-1] == 'm' ) ? -1 : 1;
+
+            xOffs.push_back ( offMod * stof ( objName.substr ( xOffPos, offSepPos-xOffPos ) ) );
+
+            size_t yOffPos = objName.find_first_of ( "0123456789", offSepPos );
+            offSepPos = objName.find_first_of ( "_", yOffPos );
+
+            offMod = ( objName[yOffPos-1] == 'm' ) ? -1 : 1;
+
+            yOffs.push_back ( offMod * stof ( objName.substr ( yOffPos, offSepPos-xOffPos ) ) );
+
+            size_t zOffPos = objName.find_first_of ( "0123456789", offSepPos );
+            offSepPos = objName.find_first_of ( "_", zOffPos );
+
+            offMod = ( objName[zOffPos-1] == 'm' ) ? -1 : 1;
+
+            zOffs.push_back ( offMod * stof ( objName.substr ( zOffPos, offSepPos-xOffPos ) ) );
+
             if ( h2 != nullptr )
             {
                 TH1D* hEx = DrawGodHist ( h2, detStr );
 
-                TF1* newFit = FitQVal ( hEx, {"[0]: 0", "[1]: [0]+0.3", "[2]: [0]+2.0", "[3]: [0]+2.4"}, 0.01, 0.3, -1, 2.5, false );
+                TF1* newFit = FitQVal ( hEx,
+                {"[0]: 0 (min=-0.02;max=0.02)", "[1]: [0]+0.288 (min=0.288;max=0.288)", "[2]: [0]+2.035 (min=2.023;max=2.047)", "[3]: [0]+2.406 (min=2.400; max=2.418)"},
+                0.02, 0.5, -1, 3, "TSpectrum", false );
 
-                TF1* background = new TF1 ( "background", "[0] + [1]*x", -1, 2.5 );
+                double newIntegral = newFit->Integral ( -1, 2.5 );
 
-                background->SetParameters ( newFit->GetParameter ( 0 ), newFit->GetParameter ( 1 ) );
+                integrals.push_back ( newIntegral );
+                sigmas.push_back ( newFit->GetParameter ( 2 ) );
+                chi2s.push_back ( newFit->GetChisquare() );
 
-                double newIntegral = newFit->Integral ( -1, 2.5 ) - background->Integral ( -1,.25 );
-
-                if ( bestFit == nullptr ||
-                        ( fabs ( newFit->GetParameter ( 4 ) ) <= fabs ( bestFit->GetParameter ( 4 ) )
-                          && newFit->GetParameter ( 2 ) <= bestFit->GetParameter ( 2 )
-                          && newIntegral >= bestIntegral ) )
+                if ( ( bestFit == nullptr &&
+                        ( fabs ( newFit->GetParameter ( 4 ) ) <= 0.05 /*&& fabs ( newFit->GetParameter ( 6 ) - 0.288 ) <=0.02
+                          && fabs ( newFit->GetParameter ( 8 ) - 2.035 ) <=0.02 && fabs ( newFit->GetParameter ( 10 ) - 2.406 ) <=0.02*/ ) )
+                        || ( bestFit != nullptr
+                             /*&& fabs ( bestChi2-newFit->GetChisquare() ) / bestChi2 <= 0.5*/
+                             && fabs ( newFit->GetParameter ( 4 ) ) <= fabs ( bestFit->GetParameter ( 4 ) )
+                             && fabs ( newFit->GetParameter ( 6 ) - 0.288 ) <= fabs ( bestFit->GetParameter ( 6 ) - 0.288 )
+                             && fabs ( newFit->GetParameter ( 8 ) - 2.035 ) <= fabs ( bestFit->GetParameter ( 8 ) - 2.035 )
+                             && fabs ( newFit->GetParameter ( 10 ) - 2.406 ) <= fabs ( bestFit->GetParameter ( 10 ) - 2.406 )
+                             && newFit->GetParameter ( 2 ) <= bestFit->GetParameter ( 2 )
+                             /*&& newFit->GetParameter ( 5 ) / newFit->GetParameter ( 3 ) > 1 && newFit->GetParameter ( 5 ) / newFit->GetParameter ( 3 ) < 5
+                             /*&& newIntegral >= bestIntegral*/ ) )
                 {
+                    if ( bestChi2 < 0 ) bestChi2 = newFit->GetChisquare();
+                    else if ( newFit->GetChisquare() < bestChi2 ) bestChi2 = newFit->GetChisquare();
+
                     bestFit = newFit;
 
                     bestIntegral = newIntegral;
 
                     bestOffName = objName;
 
-                    bestHist = ( TH2F* ) h2->Clone();;
+                    bestHist = ( TH2F* ) h2->Clone();
                 }
             }
         }
 
         obj = itr->Next();
     }
+
+    TH2F* h_x_y_chi2 = new TH2F ( "h_x_y_chi2", "Chi2 for (x,y) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_x_z_chi2 = new TH2F ( "h_x_z_chi2", "Chi2 for (x,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_y_z_chi2 = new TH2F ( "h_y_z_chi2", "Chi2 for (y,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_x_y_sigma = new TH2F ( "h_x_y_sigma", "Sigma for (x,y) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_x_z_sigma = new TH2F ( "h_x_z_sigma", "Sigma for (x,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_y_z_sigma = new TH2F ( "h_y_z_sigma", "Sigma for (y,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_x_y_integral = new TH2F ( "h_x_y_integral", "Integral for (x,y) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_x_z_integral = new TH2F ( "h_x_z_integral", "Integral for (x,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_y_z_integral = new TH2F ( "h_y_z_integral", "Integral for (y,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+
+    TH2F* h_x_y_tot = new TH2F ( "h_x_y_tot", "Global Factor for (x,y) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_x_z_tot = new TH2F ( "h_x_z_tot", "Global Factor for (x,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+    TH2F* h_y_z_tot = new TH2F ( "h_y_z_tot", "Global Factor for (y,z) sets", 11, -1100, 1100, 11, -1100, 1100 );
+
+    for ( unsigned int i = 0; i < xOffs.size(); i++ )
+    {
+        h_x_y_chi2->Fill ( xOffs[i], yOffs[i], chi2s[i] );
+        h_x_z_chi2->Fill ( xOffs[i], zOffs[i], chi2s[i] );
+        h_y_z_chi2->Fill ( yOffs[i], zOffs[i], chi2s[i] );
+
+        double rev_sigma = sigmas[i]/0.07;
+        if ( rev_sigma < 1 ) rev_sigma = 1/rev_sigma;
+
+        h_x_y_sigma->Fill ( xOffs[i], yOffs[i], rev_sigma );
+        h_x_z_sigma->Fill ( xOffs[i], zOffs[i], rev_sigma );
+        h_y_z_sigma->Fill ( yOffs[i], zOffs[i], rev_sigma );
+
+        h_x_y_integral->Fill ( xOffs[i], yOffs[i], integrals[i] );
+        h_x_z_integral->Fill ( xOffs[i], zOffs[i], integrals[i] );
+        h_y_z_integral->Fill ( yOffs[i], zOffs[i], integrals[i] );
+    }
+
+    double normFactorChi2 = h_x_y_chi2->GetMinimum();
+    double normFactorSigma = h_x_y_sigma->GetMinimum();
+    double normFactorIntegral = h_x_y_integral->GetMaximum();
+
+    for ( int i = 1; i <= h_x_y_chi2->GetNbinsX(); i++ )
+    {
+        for ( int j = 1; j <= h_x_y_chi2->GetNbinsY(); j++ )
+        {
+            double xVal = h_x_y_chi2->GetXaxis()->GetBinCenter ( i );
+            double yVal = h_x_y_chi2->GetYaxis()->GetBinCenter ( j );
+
+            double binContent = h_x_y_chi2->GetBinContent ( i,j ) / normFactorChi2;
+            binContent += h_x_y_sigma->GetBinContent ( i,j ) / normFactorSigma;
+            binContent += normFactorIntegral / h_x_y_integral->GetBinContent ( i,j );
+
+            h_x_y_tot->Fill ( xVal, yVal, binContent );
+        }
+    }
+
+    normFactorChi2 = h_x_z_chi2->GetMinimum();
+    normFactorSigma = h_x_z_sigma->GetMinimum();
+    normFactorIntegral = h_x_z_integral->GetMaximum();
+
+    for ( int i = 1; i <= h_x_z_chi2->GetNbinsX(); i++ )
+    {
+        for ( int j = 1; j <= h_x_z_chi2->GetNbinsY(); j++ )
+        {
+            double xVal = h_x_z_chi2->GetXaxis()->GetBinCenter ( i );
+            double yVal = h_x_z_chi2->GetYaxis()->GetBinCenter ( j );
+
+            double binContent = h_x_z_chi2->GetBinContent ( i,j ) / normFactorChi2;
+            binContent += h_x_z_sigma->GetBinContent ( i,j ) / normFactorSigma;
+            binContent += normFactorIntegral / h_x_z_integral->GetBinContent ( i,j );
+
+            h_x_z_tot->Fill ( xVal, yVal, binContent );
+        }
+    }
+
+    normFactorChi2 = h_y_z_chi2->GetMinimum();
+    normFactorSigma = h_y_z_sigma->GetMinimum();
+    normFactorIntegral = h_y_z_integral->GetMaximum();
+
+    for ( int i = 1; i <= h_y_z_chi2->GetNbinsX(); i++ )
+    {
+        for ( int j = 1; j <= h_y_z_chi2->GetNbinsY(); j++ )
+        {
+            double xVal = h_y_z_chi2->GetXaxis()->GetBinCenter ( i );
+            double yVal = h_y_z_chi2->GetYaxis()->GetBinCenter ( j );
+
+            double binContent = h_y_z_chi2->GetBinContent ( i,j ) / normFactorChi2;
+            binContent += h_y_z_sigma->GetBinContent ( i,j ) / normFactorSigma;
+            binContent += normFactorIntegral / h_y_z_integral->GetBinContent ( i,j );
+
+            h_y_z_tot->Fill ( xVal, yVal, binContent );
+        }
+    }
+
+    TCanvas* fitResCan = new TCanvas ( "Fit_Results", "Fit Results" );
+
+    fitResCan->Divide ( 3,4 );
+
+    fitResCan->cd ( 1 );
+    h_x_y_chi2->Draw ( "colz" );
+    h_x_y_chi2->SetStats ( kFALSE );
+
+    fitResCan->cd ( 2 );
+    h_x_z_chi2->Draw ( "colz" );
+    h_x_z_chi2->SetStats ( kFALSE );
+
+    fitResCan->cd ( 3 );
+    h_y_z_chi2->Draw ( "colz" );
+    h_y_z_chi2->SetStats ( kFALSE );
+
+    fitResCan->cd ( 4 );
+    h_x_y_sigma->Draw ( "colz" );
+    h_x_y_sigma->SetStats ( kFALSE );
+
+    fitResCan->cd ( 5 );
+    h_x_z_sigma->Draw ( "colz" );
+    h_x_z_sigma->SetStats ( kFALSE );
+
+    fitResCan->cd ( 6 );
+    h_y_z_sigma->Draw ( "colz" );
+    h_y_z_sigma->SetStats ( kFALSE );
+
+    fitResCan->cd ( 7 );
+    h_x_y_integral->Draw ( "colz" );
+    h_x_y_integral->SetStats ( kFALSE );
+
+    fitResCan->cd ( 8 );
+    h_x_z_integral->Draw ( "colz" );
+    h_x_z_integral->SetStats ( kFALSE );
+
+    fitResCan->cd ( 9 );
+    h_y_z_integral->Draw ( "colz" );
+    h_y_z_integral->SetStats ( kFALSE );
+
+    fitResCan->cd ( 10 );
+    h_x_y_tot->Draw ( "colz" );
+    h_x_y_tot->SetStats ( kFALSE );
+
+    fitResCan->cd ( 11 );
+    h_x_z_tot->Draw ( "colz" );
+    h_x_z_tot->SetStats ( kFALSE );
+
+    fitResCan->cd ( 12 );
+    h_y_z_tot->Draw ( "colz" );
+    h_y_z_tot->SetStats ( kFALSE );
+
+    if ( bestFit == nullptr )
+    {
+        cerr << "Failed to determine a proper fit..." <<endl;
+        return nullptr;
+    }
+
+    if ( !failedOnce && fabs ( bestChi2-bestFit->GetChisquare() ) /bestChi2 <= 0.5 )
+    {
+        failedOnce = true;
+        goto FindBestFitLoop;
+    }
+
+    bestFitCan->cd();
 
     cout << "Best fit for graph " << bestOffName << endl;
 
@@ -1053,16 +1259,27 @@ TF1* GoddessGeomUtils::FindBestGeom ( string fName, string detStr )
         cout << "Peak #" << std::setw ( 2 ) << std::left << i << " : ";
 
         cout << bestFit->GetParameter ( 4 ) + ( i > 0 ? bestFit->GetParameter ( 4 + 2*i ) : 0 );
-        cout << " +/- " << bestFit->GetParError ( 4 ) + bestFit->GetParError ( 4 + 2*i ) << " MeV ( Depends from Peak #" << 0 << " : ";
-        cout << " energy difference = " << ( i > 0 ? fabs ( bestFit->GetParameter ( 4 + 2*i ) ) : 0 ) << " +/- " << bestFit->GetParError ( 4 + 2*i );
-        cout << " / Ratio = " << bestFit->GetParameter ( 3 + 2*i ) / bestFit->GetParameter ( 3 ) << " )\n";
+        cout << " +/- " << bestFit->GetParError ( 4 ) + bestFit->GetParError ( 4 + 2*i ) << " MeV";
+        if ( i > 0 )
+        {
+            cout << " ( Energy difference = " << fabs ( bestFit->GetParameter ( 4 + 2*i ) ) << " +/- " << bestFit->GetParError ( 4 + 2*i );
+            cout << " / Ratio = " << bestFit->GetParameter ( 3 + 2*i ) << " )";
+        }
+
+        cout << endl;
 
     }
     cout << "Sigma = " << bestFit->GetParameter ( 2 ) << " MeV\n";
     cout << "Chi2 = " << bestFit->GetChisquare() << "\n";
 
-    DrawGodHist ( bestHist, detStr );
-    bestFit->SetRange ( -1, 2.5 );
+    auto besth = DrawGodHist ( bestHist, detStr );
+    besth->GetXaxis()->SetRangeUser ( -2, 4 );
+    TSpectrum* spec = new TSpectrum();
+    auto backh = spec->Background ( besth,50 );
+    besth->Add ( backh, -1 );
+    besth->Draw();
+
+    bestFit->SetRange ( -1, 3 );
     bestFit->Draw ( "same" );
     bestFit->SetNpx ( 500 );
 

@@ -571,7 +571,7 @@ void GoddessAnalysis::AddFileToTreat ( TFile* inFile, std::string treeName )
 
 void GoddessAnalysis::AddFileToTreat ( std::string inFile, std::string treeName )
 {
-    std::vector<std::string> listOfFiles = DecodeItemsToTreat ( inFile, "system" );
+    std::vector<std::string> listOfFiles = DecodeItemsToTreat ( inFile, "system", true, true );
 
     for ( unsigned int i = 0; i < listOfFiles.size(); i++ )
     {
@@ -1009,7 +1009,7 @@ TH2F* DrawCombinedKinematics ( string qqq5List, string sX3List )
     return combinedHist;
 }
 
-TGraph* SuperimposeCalculatedKinematics ( string input )
+TGraph* SuperimposeCalculatedKinematics ( string input, string xStr, string yStr )
 {
     std::ifstream indata ( input.c_str() );
 
@@ -1043,11 +1043,36 @@ TGraph* SuperimposeCalculatedKinematics ( string input )
         }
         else
         {
-            float labAngle, labEnergy;
+            float ejecLabAngle, ejecLabEnergy, ejecCMAngle, recoilLabAngle, recoilLabEnergy;
 
-            iss >> labAngle >> labEnergy;
+            iss >> ejecLabAngle >> ejecLabEnergy >> ejecCMAngle >> recoilLabAngle >> recoilLabEnergy;
 
-            dataPoints.push_back ( std::make_pair ( labAngle, labEnergy ) );
+            float* xData;
+            float* yData;
+
+            if ( xStr == "Ejectile Lab Angle" ) xData = &ejecLabAngle;
+            else if ( xStr == "Ejectile Lab Energy" ) xData = &ejecLabEnergy;
+            else if ( xStr == "C.M. Angle" ) xData = &ejecCMAngle;
+            else if ( xStr == "Recoil Lab Angle" ) xData = &recoilLabAngle;
+            else if ( xStr == "Recoild Lab Energy" ) xData = &recoilLabEnergy;
+            else
+            {
+                cerr << "Invalid input for the x axis..." << endl;
+                return nullptr;
+            }
+
+            if ( yStr == "Ejectile Lab Angle" ) yData = &ejecLabAngle;
+            else if ( yStr == "Ejectile Lab Energy" ) yData = &ejecLabEnergy;
+            else if ( yStr == "C.M. Angle" ) yData = &ejecCMAngle;
+            else if ( yStr == "Recoil Lab Angle" ) yData = &recoilLabAngle;
+            else if ( yStr == "Recoild Lab Energy" ) yData = &recoilLabEnergy;
+            else
+            {
+                cerr << "Invalid input for the y axis..." << endl;
+                return nullptr;
+            }
+
+            dataPoints.push_back ( std::make_pair ( *xData, *yData ) );
         }
     }
 

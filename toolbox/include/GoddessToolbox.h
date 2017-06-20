@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <queue>
 #include <random>
 #include <type_traits>
 #include <cxxabi.h>
@@ -35,14 +36,7 @@
 #include "TMath.h"
 #include "TKey.h"
 
-using std::map;
-using std::string;
-using std::vector;
-using std::cout;
-using std::cerr;
-using std::clog;
-using std::endl;
-using std::size_t;
+using namespace std;
 
 const char esc ( 27 );
 
@@ -67,7 +61,7 @@ int GetCurrentSecond ( bool doPrint = false );
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
 
-inline std::function<bool ( char,char ) > ignoreCharCasePred ( bool caseSensitive )
+inline function<bool ( char,char ) > ignoreCharCasePred ( bool caseSensitive )
 {
     return [caseSensitive] ( char a, char b ) -> bool
     {
@@ -78,20 +72,20 @@ inline std::function<bool ( char,char ) > ignoreCharCasePred ( bool caseSensitiv
 
 template<typename T> struct has_operator_equal
 {
-    template<typename U> static auto test ( U* ) -> decltype ( std::declval<U>() == std::declval<U>() );
-    template<typename> static auto test ( ... ) -> std::false_type;
+    template<typename U> static auto test ( U* ) -> decltype ( declval<U>() == declval<U>() );
+    template<typename> static auto test ( ... ) -> false_type;
 
-    static typename std::is_same<bool, decltype ( test<T> ( nullptr ) ) >::type type;
-    static const bool value = std::is_same<bool, decltype ( test<T> ( nullptr ) ) >::value;
+    static typename is_same<bool, decltype ( test<T> ( nullptr ) ) >::type type;
+    static const bool value = is_same<bool, decltype ( test<T> ( nullptr ) ) >::value;
 };
 
 template<typename T> struct has_redirect_output
 {
-    template<typename U> static auto test ( U* ) -> decltype ( cout << std::declval<U>() );
-    template<typename> static auto test ( ... ) -> std::false_type;
+    template<typename U> static auto test ( U* ) -> decltype ( cout << declval<U>() );
+    template<typename> static auto test ( ... ) -> false_type;
 
-    static typename std::is_same<decltype ( cout << "whatever" ), decltype ( test<T> ( nullptr ) ) >::type type;
-    static const bool value = ( std::is_same<decltype ( cout << "whatever" ), decltype ( test<T> ( nullptr ) ) >::value );
+    static typename is_same<decltype ( cout << "whatever" ), decltype ( test<T> ( nullptr ) ) >::type type;
+    static const bool value = ( is_same<decltype ( cout << "whatever" ), decltype ( test<T> ( nullptr ) ) >::value );
 };
 
 //_______________________________________________________________________________________________________________________________________________//
@@ -108,7 +102,7 @@ vector<string> DecodeTags ( string tagsStr );
 vector<string> GetDirContent ( string dirName = "./", string mode = "root", string endWith = "",
                                string mustHaveAll = "", string cantHaveAny = "", string mustHaveOneOf = "", string startWith = "", bool caseSensitive = true, bool includePath = false );
 
-std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mode = "root", bool caseSensitive = true, bool includePath = false );
+vector<string> DecodeItemsToTreat ( string itemsString, string mode = "root", bool caseSensitive = true, bool includePath = false );
 
 vector<string> SplitString ( string toSplit, string splitter );
 
@@ -117,7 +111,7 @@ vector<string> SplitString ( string toSplit, string splitter );
 //_______________________________________________________________________________________________________________________________________________//
 
 
-void ReadDetectorID ( std::string DetectorID, bool* isUpstream, unsigned short* numsector, bool* isBarrel, int* layernum, bool* side, bool* isSX3 );
+void ReadDetectorID ( string DetectorID, bool* isUpstream, unsigned short* numsector, bool* isBarrel, int* layernum, bool* side, bool* isSX3 );
 
 string GetDetectorID ( bool isUpstream, bool isBarrel, unsigned int sector );
 
@@ -157,14 +151,14 @@ void ListHistograms ( string match = "", unsigned int limit = 0, unsigned int st
 
 //_______________________________________________________________________________________________________________________________________________//
 
-template<std::false_type& fType1, typename rType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
+template<false_type& fType1, typename rType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
 {
     cout << "No valid Keys to redirect to the standard output...\n";
 }
 
 //_______________________________________________________________________________________________________________________________________________//
 
-template<std::true_type& tType1, std::false_type& fType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
+template<true_type& tType1, false_type& fType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
 {
     auto itr = map_.begin();
 
@@ -180,7 +174,7 @@ template<std::true_type& tType1, std::false_type& fType2, typename KeyType, type
 
 //_______________________________________________________________________________________________________________________________________________//
 
-template<std::true_type& tType1, std::true_type& tType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
+template<true_type& tType1, true_type& tType2, typename KeyType, typename ValType> void PrintMapKeysAndValues ( map<KeyType, ValType> map_ )
 {
     auto itr = map_.begin();
 
@@ -207,7 +201,7 @@ inline string FindAndReplaceInString ( string input, string toReplace, string su
 {
     int repSize = toReplace.length();
 
-    std::size_t foundPos = input.find ( toReplace.c_str() );
+    size_t foundPos = input.find ( toReplace.c_str() );
 
     unsigned int counter = 0;
     unsigned int replaced = 0;
@@ -272,9 +266,9 @@ template<typename T1, typename T2> void AddLinkMapEntries ( map<string, T1*>* li
 
 template<typename T1, typename T2, typename... Rest> void AddLinkMapEntries ( map<string, T1>* linkMap_, string varsStr, T2& var1, Rest&... varRest )
 {
-    std::size_t fstMemPosStart = varsStr.find_first_not_of ( " " );
+    size_t fstMemPosStart = varsStr.find_first_not_of ( " " );
 
-    std::size_t fstMemPosEnd = varsStr.find_first_of ( " ", fstMemPosStart );
+    size_t fstMemPosEnd = varsStr.find_first_of ( " ", fstMemPosStart );
 
     string var1Str = varsStr.substr ( fstMemPosStart, fstMemPosEnd - fstMemPosStart );
 
@@ -308,7 +302,7 @@ template<typename T> string SubstituteStrInFormula ( string formula, map<string,
     {
         string toSubstitute = itr->first;
 
-        std::size_t  subPos = modFormula.find ( toSubstitute.c_str() );
+        size_t  subPos = modFormula.find ( toSubstitute.c_str() );
 
         while ( subPos != string::npos )
         {
@@ -333,7 +327,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
 {
     toEval = ReplaceSpecialVariables ( toEval );
 
-    std::size_t invalidCharacter = toEval.find_first_not_of ( " +-*/0123456789." );
+    size_t invalidCharacter = toEval.find_first_not_of ( " +-*/0123456789." );
 
     if ( invalidCharacter != string::npos )
     {
@@ -342,19 +336,19 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         return ( ( T ) 0 );
     }
 
-    map<std::size_t, char> operators;
+    map<size_t, char> operators;
     operators.clear();
 
-    map<std::size_t, T> members;
+    map<size_t, T> members;
     members.clear();
 
-    std::size_t newMemberStartPos;
+    size_t newMemberStartPos;
 
     newMemberStartPos = toEval.find_first_of ( "0123456789" );
 
-    std::size_t newOperatorPos = toEval.find_first_of ( "+-*/" );
+    size_t newOperatorPos = toEval.find_first_of ( "+-*/" );
 
-    if ( newOperatorPos == string::npos && toEval.find_first_of ( "0123456789" ) != string::npos ) return ( ( T ) std::stod ( toEval ) );
+    if ( newOperatorPos == string::npos && toEval.find_first_of ( "0123456789" ) != string::npos ) return ( ( T ) stod ( toEval ) );
 
     while ( newOperatorPos != string::npos )
     {
@@ -376,7 +370,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
     {
         if ( opItr != operators.end() )
         {
-            members[newMemberStartPos] = ( T ) std::stod ( toEval.substr ( newMemberStartPos, opItr->first - newMemberStartPos ) );
+            members[newMemberStartPos] = ( T ) stod ( toEval.substr ( newMemberStartPos, opItr->first - newMemberStartPos ) );
 
             newMemberStartPos = toEval.find_first_of ( "0123456789", opItr->first );
 
@@ -384,7 +378,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         }
         else
         {
-            members[newMemberStartPos] = ( T ) std::stod ( toEval.substr ( newMemberStartPos ) );
+            members[newMemberStartPos] = ( T ) stod ( toEval.substr ( newMemberStartPos ) );
             break;
         }
 
@@ -435,7 +429,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
             auto prevItr = opItr;
             prevItr--;
 
-            std::size_t foundDigit = toEval.find_first_of ( "0123456789", prevItr->first );
+            size_t foundDigit = toEval.find_first_of ( "0123456789", prevItr->first );
 
             if ( foundDigit > opItr->first )
             {
@@ -548,7 +542,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         double val1 = memItr->second;
 
 //         cout << "Current operation to process is: " << val1 << opItr->second << val2 << "\n";
-//         int opNumber = ( int ) std::distance ( operators.begin(), opItr );
+//         int opNumber = ( int ) distance ( operators.begin(), opItr );
 //         cout << "Operator number: " << opNumber << " @ pos " << opItr->first << "\n";
 
         if ( opItr->second == '*' ) subRes = val1 * val2;
@@ -585,7 +579,7 @@ template<typename T> T EvalComplexString ( string toEval, T* result = nullptr )
     string toEvalCp = toEval;
     string newEvalStr;
 
-    std::size_t openBracketPos, closeBracketPos;
+    size_t openBracketPos, closeBracketPos;
 
     openBracketPos = toEvalCp.find_last_of ( "(" );
     closeBracketPos = toEvalCp.find_first_of ( ")", openBracketPos );
@@ -594,7 +588,7 @@ template<typename T> T EvalComplexString ( string toEval, T* result = nullptr )
     {
         bool doAbs = false;
 
-        std::size_t absPos = toEval.find ( "abs" );
+        size_t absPos = toEval.find ( "abs" );
 
         while ( absPos != string::npos )
         {
@@ -652,7 +646,7 @@ template<typename T1, typename T2> T2 EvalString ( string toEval, map<string, T1
 
     if ( linkMap_ != nullptr ) toEvalSub = SubstituteStrInFormula<T1> ( toEval, *linkMap_ );
 
-    std::size_t foundBracket = toEvalSub.find_last_of ( "(" );
+    size_t foundBracket = toEvalSub.find_last_of ( "(" );
 
     if ( foundBracket != string::npos ) return EvalComplexString<T2> ( toEvalSub, result );
     else return EvalSimpleString<T2> ( toEvalSub, result );
@@ -669,7 +663,7 @@ inline double EvalString ( string toEval, map<string, double*>* linkMap_ = nullp
 
 template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, T*>* linkMap_ = nullptr )
 {
-    std::size_t lessThanPos, moreThanPos, equalPos;
+    size_t lessThanPos, moreThanPos, equalPos;
 
     string compStrSub = compStr;
 
@@ -677,7 +671,7 @@ template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, 
 
 //     cout << "Comparison string after substitution: " << compStrSub << "\n";
 
-    std::size_t opPos = compStrSub.find_first_of ( "<>=" );
+    size_t opPos = compStrSub.find_first_of ( "<>=" );
 
     if ( opPos == string::npos )
     {
@@ -728,10 +722,10 @@ template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, 
 
 template<typename T> bool ComplexFormulaComparator ( string compStr, map<string, T*>* linkMap_ = nullptr )
 {
-    map<std::size_t, char> andOrSigns;
-    map<std::size_t, bool> members;
+    map<size_t, char> andOrSigns;
+    map<size_t, bool> members;
 
-    std::size_t newAndOrSign, newMember;
+    size_t newAndOrSign, newMember;
 
     newAndOrSign = compStr.find_first_of ( "|&" );
     newMember = compStr.find_first_not_of ( " |&" );
@@ -825,7 +819,7 @@ template<typename T> bool StringFormulaComparator ( string compStr, map<string, 
     string toEvalCp = compStr;
     string newEvalStr;
 
-    std::size_t openBracketPos, closeBracketPos;
+    size_t openBracketPos, closeBracketPos;
 
     openBracketPos = toEvalCp.find_last_of ( "(" );
     closeBracketPos = toEvalCp.find_first_of ( ")", openBracketPos );
@@ -871,11 +865,11 @@ inline bool StringFormulaComparator ( string compStr )
 
 //_______________________________________________________________________________________________________________________________________________//
 
-std::function<bool ( double,double ) > CheckValProxFunc ( double compVal );
+function<bool ( double,double ) > CheckValProxFunc ( double compVal );
 
 int RoundValue ( double val );
 
-std::pair<vector<double>, vector<double>> FillGraphFromFile ( string input );
+pair<vector<double>, vector<double>> FillGraphFromFile ( string input );
 
 double EvalGraph ( vector<double> x_, vector<double> y_, double toEval );
 double IntegrateGraph ( vector<double> x_, vector<double> y_, double xMin_, double xMax_, double dx_ );
@@ -889,12 +883,12 @@ double TryGetRemainingEnergy ( string mass_db, int mass, int charge, double star
 
 //_______________________________________________________________________________________________________________________________________________//
 
-int InitReadMassesForKinematic ( std::ifstream& mass_db );
+int InitReadMassesForKinematic ( ifstream& mass_db );
 
 void GetRelevantInfoPositions ( string* readWord, short& posMassExcess, short& posBindingEnergy, short& posBetaDecay, short& posAMU, short& posElement );
 
-void GetAtomicFormula ( std::ifstream& mass_db, int mass, int charge, string& toReconstruct );
-void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, int& charge, float& atomicMass );
+void GetAtomicFormula ( ifstream& mass_db, int mass, int charge, string& toReconstruct );
+void DecodeAtomicFormula ( ifstream& mass_db, string toDecode, int& mass, int& charge, float& atomicMass );
 
 bool CharIsDigit ( char toCheck );
 
@@ -905,28 +899,28 @@ template<typename T> bool IsSameValue ( T a_, T b_ )
 
 template<typename T1, typename T2> bool IsSameValue ( T1 a_, T2 b_ )
 {
-    if ( !std::is_same<T1, T2 >::value ) return false;
+    if ( !is_same<T1, T2 >::value ) return false;
     else return IsSameValue<T1> ( a_, b_ );
 }
 
 template<typename T2> inline int CheckForMatch ( string* readWord, short posElement, short massCheck, T2 chargeCheck )
 {
-//     std::cout << "Performing the CheckForMatch function with: " << posMassExcess << " / " << posBindingEnergy << " / " << posBetaDecay << " / " << posAMU;
-//     std::cout << " / " << posElement << " / " << massCheck << " / " << chargeCheck << " / " << memberID << " / "<< "\n";
+//     cout << "Performing the CheckForMatch function with: " << posMassExcess << " / " << posBindingEnergy << " / " << posBetaDecay << " / " << posAMU;
+//     cout << " / " << posElement << " / " << massCheck << " / " << chargeCheck << " / " << memberID << " / "<< "\n";
 
     int charge = -1;
 
     int foundMatch = -1;
 
-    if ( std::stoi ( readWord[posElement-1] ) == massCheck )
+    if ( stoi ( readWord[posElement-1] ) == massCheck )
     {
-        if ( std::is_same<int, decltype ( chargeCheck ) >::value )
+        if ( is_same<int, decltype ( chargeCheck ) >::value )
         {
-            if ( IsSameValue ( std::stoi ( readWord[posElement-2] ), chargeCheck ) ) foundMatch = 1;
+            if ( IsSameValue ( stoi ( readWord[posElement-2] ), chargeCheck ) ) foundMatch = 1;
         }
-        else if ( std::is_same<string, decltype ( chargeCheck ) >::value )
+        else if ( is_same<string, decltype ( chargeCheck ) >::value )
         {
-//             std::cout << "Searching Element by Atomic Symbol " << chargeCheck << " ...\n";
+//             cout << "Searching Element by Atomic Symbol " << chargeCheck << " ...\n";
 
             if ( IsSameValue ( readWord[posElement], chargeCheck ) )
             {
@@ -937,11 +931,11 @@ template<typename T2> inline int CheckForMatch ( string* readWord, short posElem
 
     if ( foundMatch >= 0 )
     {
-//         std::cout << "Found a matching pattern: " << foundMatch << " ...\n";
+//         cout << "Found a matching pattern: " << foundMatch << " ...\n";
 
-        charge = std::stoi ( readWord[posElement-2] );
+        charge = stoi ( readWord[posElement-2] );
 
-//         std::cout << "Decoded charge: " << charge << " ...\n";
+//         cout << "Decoded charge: " << charge << " ...\n";
     }
 
     return charge;
