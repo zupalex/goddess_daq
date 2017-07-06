@@ -78,7 +78,7 @@ std::vector<unsigned short> GoddessAnalysis::GetStripsListToTreat ( std::string 
 double GoddessAnalysis::GetEnergyShiftFromQVal ( double qValShift, double qValRef, double angle )
 {
     TF1* qValEval = new TF1 ( "qValEval",
-                              [&] ( double* x, double* p )
+                              [&] ( double* x, double* p ) -> Double_t
     {
         ( void ) p;
         return SiDataBase::QValue ( reacInfo, x[0], angle );
@@ -96,7 +96,7 @@ double GoddessAnalysis::GetEnergyShiftFromQVal ( double qValShift, double qValRe
 double GoddessAnalysis::GetEnergyShiftFromEx ( double exShift, double exRef, double angle )
 {
     TF1* exEval = new TF1 ( "exEval",
-                            [&] ( double* x, double* p )
+                            [&] ( double* x, double* p ) -> Double_t
     {
         ( void ) p;
         return reacInfo->qValGsGs - SiDataBase::QValue ( reacInfo, x[0], angle );
