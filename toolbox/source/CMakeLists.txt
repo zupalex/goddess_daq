@@ -11,7 +11,6 @@ root_generate_dictionary(GoddessAnalysisDictionnary GoddessAnalysis.h GoddessCal
 if (${ROOT_VERSION} VERSION_GREATER "6.0")
 	#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GoddessCalibDictionnary_rdict.pcm  DESTINATION ${CMAKE_INSTALL_PREFIX})
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GoddessAnalysisDictionnary_rdict.pcm  DESTINATION ${CMAKE_INSTALL_PREFIX})
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GoddessLuaDictionnary_rdict.pcm  DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 set (GODDESSANALYSIS_SOURCES GoddessAnalysis.cxx GoddessCalib.cxx GoddessCalibGUI.cxx GoddessGeomUtils.cxx GoddessAnalysisDictionnary.cxx)
