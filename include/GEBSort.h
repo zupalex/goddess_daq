@@ -135,6 +135,7 @@ public:
     short noCalib;
     bool noMapping;
     bool noHists;
+    bool noDoppler;
     unsigned short ignoreThresholds;
     unsigned short siDetailLvl;
 

@@ -104,6 +104,7 @@ int main ( int argc, char** argv )
     pars->siDetailLvl = 1;
     pars->noMapping = false;
     pars->noHists = false;
+    pars->noDoppler = false;
     pars->userFilter = "";
     pars->triggerMode = "default";
     pars->InputSrc = NOTDEF;
@@ -349,6 +350,12 @@ int main ( int argc, char** argv )
                 j++;
                 printf ( "No pre-made histograms will be generated and written to the file\n" );
                 pars->noHists = true;
+            }
+            else if ( ( p = strstr ( argv[j], "-nodoppler" ) ) != NULL )
+            {
+                j++;
+                printf ( "Doppler correction won't be performed\n" );
+                pars->noDoppler = true;
             }
             else if ( ( p = strstr ( argv[j], "-userfilter" ) ) != NULL )
             {

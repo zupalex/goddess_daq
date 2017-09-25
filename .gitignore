@@ -7,6 +7,7 @@
 build/
 exec/
 doc/
+user/lua_scripts/
 
 #ignore non relevant files
 *.kdev4
@@ -15,6 +16,7 @@ OpenScriptsMacro.sh
 *.so
 *.pcm
 .kdev4/
+*.kate-swp
 
 #Ignore the specific user scripts
 */UserAnalysisMacros.cxx

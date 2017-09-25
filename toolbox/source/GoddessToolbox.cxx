@@ -1,5 +1,7 @@
 #include "GoddessToolbox.h"
 
+string pathToGDAQ;
+
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
@@ -254,9 +256,9 @@ std::vector<int> DecodeNumberString ( std::string itemsString, bool verbose )
 
         if ( foundComa != std::string::npos || foundDash != std::string::npos )
         {
-//             std::cout << "itemsString was " << itemsString;
+            //             std::cout << "itemsString was " << itemsString;
             itemsString.replace ( 0, sub2.length() > 0 ? foundDash+1 : foundComa+1, "" );
-//             std::cout << " ... is now " << itemsString << "\n";
+            //             std::cout << " ... is now " << itemsString << "\n";
         }
         else
         {
@@ -317,7 +319,7 @@ vector< string > GetDirContent ( string dirName, string mode, string endWith, st
     {
         mustTagsOrdered = true;
 
-//         cout << "Requested to find tags in order...\n";
+        //         cout << "Requested to find tags in order...\n";
 
         mode = FindAndReplaceInString ( mode, "\\ordered", "" );
     }
@@ -423,7 +425,7 @@ vector< string > GetDirContent ( string dirName, string mode, string endWith, st
 
                 if ( entryClassName == "TKey" ) entryClassName = gDirectory->GetKey ( entName.c_str() )->GetClassName();
 
-//                 cout << "Encounter object of type " << entryClassName << endl;
+                //                 cout << "Encounter object of type " << entryClassName << endl;
 
                 skipEntry = std::find ( acceptedClasses.begin(), acceptedClasses.end(), entryClassName ) == acceptedClasses.end();
             }
@@ -872,7 +874,7 @@ tryDecode:
         string sectorNumStr = sectorStr.substr ( foundUp+1, foundSide-foundUp-1 );
         sectorNumStr = FindAndReplaceInString ( sectorNumStr, " ", "" );
 
-//         cout << "Sectors Number String: " << sectorNumStr << endl;
+        //         cout << "Sectors Number String: " << sectorNumStr << endl;
 
         if ( sectorNumStr.find_first_not_of ( "0123456789" ) != string::npos ) goto invalidStr;
 
@@ -884,7 +886,7 @@ tryDecode:
         string sectorNumStr = sectorStr.substr ( openBracket+1, closeBracket-openBracket-1 );
         sectorNumStr = FindAndReplaceInString ( sectorNumStr, " ", "" );
 
-//         cout << "Sectors Number String: " << sectorNumStr << endl;
+        //         cout << "Sectors Number String: " << sectorNumStr << endl;
 
         if ( sectorNumStr.find_first_not_of ( "0123456789,-" ) != string::npos ) goto invalidStr;
 
@@ -904,7 +906,7 @@ tryDecode:
         string stripNumStr = sectorStr.substr ( openBracket+1, closeBracket-openBracket-1 );
         stripNumStr = FindAndReplaceInString ( stripNumStr, " ", "" );
 
-//         cout << "Strips Number String: " << stripNumStr << std::endl;
+        //         cout << "Strips Number String: " << stripNumStr << std::endl;
 
         if ( stripNumStr.find_first_not_of ( "0123456789,-" ) != string::npos ) goto invalidStr;
 
@@ -918,7 +920,7 @@ tryDecode:
         string stripNumStr = sectorStr.substr ( foundSpace+1, foundEnd-foundSpace-1 );
         stripNumStr = FindAndReplaceInString ( stripNumStr, " ", "" );
 
-//         cout << "Strips Number String: " << stripNumStr << endl;
+        //         cout << "Strips Number String: " << stripNumStr << endl;
 
         if ( stripNumStr.find_first_not_of ( "0123456789" ) != string::npos ) goto invalidStr;
 
@@ -1211,7 +1213,7 @@ double TryGetRemainingEnergy ( string mass_db, int mass, int charge, double star
 
         double eLoss = ComputeEnergyLoss ( beamTable.first, beamTable.second, startingEnergy/mass, mass, 0, thickness_, dx_, mode );
 
-//         std::cout << "Computed energy loss using table " << tryFindTable[0] << " : " << eLoss << " MeV" << std::endl;
+        //         std::cout << "Computed energy loss using table " << tryFindTable[0] << " : " << eLoss << " MeV" << std::endl;
 
         remainingEnergy -= eLoss;
     }
@@ -1276,6 +1278,51 @@ UserPrompt:
     return;
 }
 
+void WriteHistograms ( string outfile, string match, bool caseSensitive )
+{
+    std::vector<string> matchingHists;
+    matchingHists.clear();
+
+    if ( match.empty() ) match = "*";
+
+    matchingHists = DecodeItemsToTreat ( match, "root \\ordered TH1F TH2F TH1D TH2D", caseSensitive );
+
+    cout << matchingHists.size() << " matching histograms...\n\n";
+
+    if ( matchingHists.size() > 0 )
+    {
+        string histsDir = gDirectory->GetPath();
+
+        TFile* f = new TFile ( outfile.c_str(), "recreate" );
+
+        for ( unsigned int i = 0; i < matchingHists.size(); i++ )
+        {
+            cout << "Written " << i << " / " << matchingHists.size() << " histograms...\r" << flush;
+            gDirectory->cd ( histsDir.c_str() );
+            auto obj = gDirectory->Get ( matchingHists[i].c_str() );
+	    
+	    f->cd();
+
+            if ( obj != nullptr )
+            {
+                if ( ( ( string ) obj->ClassName() ).find ( "TH2" ) != string::npos )
+                {
+                    ( ( TH2F* ) obj )->Write();
+                }
+                else if ( ( ( string ) obj->ClassName() ).find ( "TH1" ) != string::npos )
+                {
+                    ( ( TH1F* ) obj )->Write();
+                }
+            }
+        }
+        cout << endl;
+
+        f->Close();
+    }
+
+    return;
+}
+
 //____________________________________________________________________________________________//
 //____________________________________________________________________________________________//
 
@@ -1319,7 +1366,7 @@ void GetRelevantInfoPositions ( string* readWord, short& posMassExcess, short& p
 
     if ( !checkNumConversion.fail() ) // Our element is a number and not a string!
     {
-//         std::cout << Form ( "Did not fail to parse Word#%d as a float ** ", posElement );
+        //         std::cout << Form ( "Did not fail to parse Word#%d as a float ** ", posElement );
         posMassExcess++;
         posElement++;
     }
@@ -1330,7 +1377,7 @@ void GetRelevantInfoPositions ( string* readWord, short& posMassExcess, short& p
 
     if ( checkNumConversion.fail() ) // Our Mass Excess number is not a number!
     {
-//         std::cout << Form ( "Failed to parse Word#%d as an float ** ", posMassExcess );
+        //         std::cout << Form ( "Failed to parse Word#%d as an float ** ", posMassExcess );
         posMassExcess++;
     }
 
@@ -1401,15 +1448,15 @@ void GetAtomicFormula ( std::ifstream& mass_db, int mass, int charge, string& to
 
             string readWord[17];
 
-//         std::cout << "Read Line:\n";
+            //         std::cout << "Read Line:\n";
 
             for ( int i = 0; i < 17; i++ )
             {
                 readMassDB >> readWord[i];
-//             std::cout << readWord[i] << "  ";
+                //             std::cout << readWord[i] << "  ";
             }
 
-//         std::cout << "\n";
+            //         std::cout << "\n";
 
             GetRelevantInfoPositions ( readWord, posMassExcess, posBindingEnergy, posBetaDecay, posAMU, posElement );
 
@@ -1488,13 +1535,13 @@ void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, i
 
         for ( unsigned short i = 0; i < massDigits.size(); i++ )
         {
-//         std::cout << "Retreived mass digit: " << massDigits[i] << "\n";
+            //         std::cout << "Retreived mass digit: " << massDigits[i] << "\n";
             mass += massDigits[i] * pow ( 10, massDigits.size() - 1 - i );
         }
     }
 
-//     std::cout << "Retreiving the charge of element: " << element << " ...\n";
-//     std::cout << "Decoded Mass: " << mass << "\n";
+    //     std::cout << "Retreiving the charge of element: " << element << " ...\n";
+    //     std::cout << "Decoded Mass: " << mass << "\n";
 
     std::stringstream readMassDB;
     string readLine;
@@ -1515,15 +1562,15 @@ void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, i
 
         string readWord[17];
 
-//         std::cout << "Read Line:\n";
+        //         std::cout << "Read Line:\n";
 
         for ( int i = 0; i < 17; i++ )
         {
             readMassDB >> readWord[i];
-//             std::cout << readWord[i] << "  ";
+            //             std::cout << readWord[i] << "  ";
         }
 
-//         std::cout << "\n";
+        //         std::cout << "\n";
 
         posMassExcess = 5;
         posBindingEnergy = -1;
@@ -1549,13 +1596,13 @@ void DecodeAtomicFormula ( std::ifstream& mass_db, string toDecode, int& mass, i
 
     string atomicMassStr = mainAMStr + secondaryAMStr;
 
-//     std::size_t fstSpacePos = readLine.find_first_of ( " ", posAMU );;
-//     std::size_t amEndPos = readLine.find_first_of ( " \n", fstSpacePos+1 );
-//     atomicMassStr = readLine.substr ( posAMU, amEndPos-posAMU );
-//
-//     atomicMassStr = FindAndReplaceInString ( atomicMassStr, " ", "" );
+    //     std::size_t fstSpacePos = readLine.find_first_of ( " ", posAMU );;
+    //     std::size_t amEndPos = readLine.find_first_of ( " \n", fstSpacePos+1 );
+    //     atomicMassStr = readLine.substr ( posAMU, amEndPos-posAMU );
+    //
+    //     atomicMassStr = FindAndReplaceInString ( atomicMassStr, " ", "" );
 
-//     std::cout << "Atomic Mass String: " << atomicMassStr << std::endl;
+    //     std::cout << "Atomic Mass String: " << atomicMassStr << std::endl;
 
     atomicMass = std::stof ( atomicMassStr );
     atomicMass *= 1e-6;
@@ -1606,4 +1653,696 @@ int GetASeed ( unsigned int *seed )
     /* printf("GetASeed:: %i\n", *seed); */
 
     return 0;
+}
+
+//_______________________________________________________________________________________________________________________________________________//
+//_____________________________________________________BINARY FILES UTILITIES____________________________________________________________________//
+//_______________________________________________________________________________________________________________________________________________//
+
+ifstream binaryFileToRead;
+string currentBinaryFileName;
+std::pair<BinDecHeadStruct*, char*>* gebWord = 0;
+char* binPayload;
+
+unsigned long long int BytesCounter ( string fName )
+{
+    ifstream binFile ( fName.c_str(), std::ios::in | std::ios::binary );
+
+    unsigned long long int nBytes = 0;
+
+    if ( !binFile.is_open() ) return nBytes;
+
+    binFile.seekg ( 0, binFile.end );
+
+    nBytes = binFile.tellg();
+
+    binFile.close();
+
+    return nBytes;
+}
+
+bool OpenBinaryFile ( string fname )
+{
+    cout << "Opening file " << fname << "\n";
+
+    if ( binaryFileToRead.is_open() )
+    {
+        binaryFileToRead.close();
+    }
+
+    binaryFileToRead.open ( fname.c_str(), std::ios::in | std::ios::binary );
+    currentBinaryFileName = fname;
+
+    if ( !binaryFileToRead.is_open() )
+    {
+        cerr << "Failed to open file: " << fname << "\n";
+
+        return false;
+    }
+
+    return true;
+}
+
+char* ReadBinData ( int size )
+{
+    char* binRead = new char[size];
+    binaryFileToRead.read ( binRead, size );
+
+    return binRead;
+}
+
+void InvertEndianness ( char** word, int sizeofword )
+{
+    unsigned long long int* tempData = ( unsigned long long int* ) ( *word );
+    unsigned long long int* finalData = new unsigned long long int();
+    *finalData = *tempData;
+
+//         cout << "Byte swapping...\n";
+
+    int nbytes = sizeofword;
+    *finalData = 0;
+
+    for ( int i = 0; i < nbytes; i++ )
+    {
+        long long unsigned int mask = 0;
+        for ( int j = i*8; j < i*8+8; j++ ) mask += ( long long unsigned int ) pow ( 2, j );
+
+        if ( i < nbytes/2 ) *finalData += ( * ( tempData ) & mask ) << ( 8* ( nbytes-i*2-1 ) );
+        else  *finalData += ( * ( tempData ) & mask ) >> ( 8*abs ( nbytes-i*2-1 ) );
+    }
+
+//         cout << "Byte swapping done...\n";
+
+    *word = ( char* ) finalData;
+}
+
+char* GetAWord ( ifstream& inFile, int nBytesToRead, bool invertWords )
+{
+    if ( binPayload == NULL )
+    {
+        binPayload = new char[50000];
+        //         cout << "Allocated space for the payload...\n";
+    }
+
+    string dummy;
+
+    inFile.read ( binPayload, nBytesToRead );
+
+    unsigned int* relevantData = ( unsigned int* ) binPayload;
+
+    if ( invertWords )
+    {
+//         cout << "Byte swapping...\n";
+
+        unsigned int j = 0;
+        while ( j < gebWord->first->length/sizeof ( unsigned int ) )
+        {
+            /* before 4 3 2 1 */
+            /*        | | | | */
+            /* after  1 2 3 4 */
+
+            int t1 = ( * ( relevantData + j ) & 0x000000ff ) << 24;
+            int t2 = ( * ( relevantData + j ) & 0x0000ff00 ) << 8;
+            int t3 = ( * ( relevantData + j ) & 0x00ff0000 ) >> 8;
+            int t4 = ( * ( relevantData + j ) & 0xff000000 ) >> 24;
+            * ( relevantData + j ) = t1 + t2 + t3 + t4;
+
+            j++;
+        }
+
+//         cout << "Byte swapping done...\n";
+    }
+
+    return  binPayload;
+}
+
+char* GetAWord ( ifstream& inFile, string binType, bool invertWords )
+{
+    if ( binType == "GEB" && gebWord == NULL )
+    {
+        //         cout << "First readout... Creating objects...\n";
+        gebWord = new std::pair<BinDecHeadStruct*, char*>;
+        gebWord->first = new BinDecHeadStruct;
+        gebWord->second = new char[50000];
+        binPayload = gebWord->second;
+    }
+
+    int nBytesToRead;
+
+    if ( binType == "GEB" )
+    {
+        //         cout << "Reding header...\n";
+
+        inFile.read ( ( char* ) gebWord->first, sizeof ( BinDecHeadStruct ) );
+
+        //         cout << "Reading payload...\n";
+
+        nBytesToRead = gebWord->first->length;
+    }
+    else
+    {
+        nBytesToRead = 8194*4;
+    }
+
+    return GetAWord ( inFile, nBytesToRead, invertWords );
+}
+
+char* GetAWord ( string binType, bool invertWords )
+{
+    return  GetAWord ( binaryFileToRead, binType, invertWords );
+}
+
+char* GetAWord ( string binType, unsigned long long int eventNbr, bool invertWords )
+{
+    if ( !binaryFileToRead.is_open() )
+    {
+        cerr << "No binary file loaded...\n";
+
+        return nullptr;
+    }
+
+    binaryFileToRead.seekg ( 0 );
+
+    if ( eventNbr > 0 )
+    {
+        for ( unsigned long long int i = 0; i < eventNbr; i++ )
+        {
+            GetAWord ( binType, false );
+        }
+    }
+
+    return GetAWord ( binType, invertWords );
+}
+
+char* GetAWord ( string fname, string binType, unsigned long long int eventNbr, bool invertWords )
+{
+    OpenBinaryFile ( fname );
+
+    return GetAWord ( binType, eventNbr, invertWords );
+}
+
+void ReadGEBHeader( )
+{
+    if ( gebWord == NULL ) return;
+
+    cout << "---- Reading GEB Header ----\n";
+    cout << "* type : " << gebWord->first->type << "\n";
+    cout << "* length : " << gebWord->first->length << "\n";
+    cout << "* timestamp : " << gebWord->first->timestamp << "\n";
+}
+
+bool GEBBinaryEvFilter ( std::pair<BinDecHeadStruct*, char*>* readWord_ )
+{
+    //     cout << "Entering event filter...\n";
+
+    int type = readWord_->first->type;
+    int length = readWord_->first->length;
+    unsigned long long int timestamp = readWord_->first->timestamp;
+    char* data = gebWord->second;
+
+    //     if ( type == 19 ) return true;
+    //     else return false;
+
+    return true;
+}
+
+void DecodeGEBBinary ( string fname, unsigned long int nevents, unsigned long int fstevent, bool invertWords, bool quietMode, string outRootName, string mapFileName )
+{
+    unsigned int chMap[2410];
+    fill ( chMap, chMap+2410, -1 );
+
+    unsigned int chType[2410];
+    fill ( chType, chType+2410, -1 );
+
+    ifstream mapping ( mapFileName.c_str() );
+
+    if ( !mapping.is_open() )
+    {
+        cerr << "Failed to open the map file!...\n";
+
+        return;
+    }
+
+    string dummy;
+    unsigned int readID, readCh, readChType;
+
+    while ( !mapping.eof() )
+    {
+        if ( readID < 2410 )
+        {
+            mapping >> readID >> readChType >> readCh >> dummy;
+            chMap[readID] = readCh;
+            chType[readID] = readChType;
+        }
+        else
+        {
+            cerr << "Unrecognized ID!...\n";
+
+            return;
+        }
+    }
+
+    cout << "Byte swapping is " << ( invertWords ? "ON" : "OFF" ) << "...\n";
+
+    unsigned long int i = 0;
+    unsigned long int counter = 0;
+
+    binaryFileToRead.open ( fname.c_str(), std::ios::in | std::ios::binary );
+
+    binaryFileToRead.seekg ( 0, binaryFileToRead.end );
+
+    unsigned long long int binSize = binaryFileToRead.tellg();
+    unsigned long long int bytesRead = 0;
+
+    binaryFileToRead.seekg ( 0, binaryFileToRead.beg );
+
+    int type, channel;
+    unsigned long int value;
+    unsigned long long int timestamp;
+
+    //     TTree* outRoot = 0;
+    //     TFile* outRootFile = 0;
+
+    //     if ( !outRootName.empty() )
+    //     {
+    //         outRoot = MakeRootTree ( &type, &channel, &value, &timestamp );
+    //         outRootFile = new TFile ( outRootName.c_str(), "recreate" );
+    //     }
+
+    while ( counter < nevents && !binaryFileToRead.eof() )
+    {
+        if ( !binaryFileToRead.is_open() )
+        {
+            cerr << "Failed to open binary file!...\n";
+
+            return;
+        }
+
+        //         if ( ( i ) %10000 == 0 )
+        //         {
+        //             cout << ( i < fstevent ? "Skipping phase...\n" : "\n" );
+        //             cout << "Read " << bytesRead << " bytes out of " << binSize << " (" << ( float ) bytesRead/binSize * 100. << "%)\n";
+        //             cout << "Read " << i-fstevent << " events" << esc << "[1A" << "\r" << flush;
+        //         }
+
+        GetAWord ( "GEB", invertWords );
+
+        bytesRead += sizeof ( BinDecHeadStruct );
+        bytesRead += gebWord->first->length;
+
+        // 	cout << "Read " << bytesRead << " bytes...\n";
+
+        type = gebWord->first->type;
+        timestamp = gebWord->first->timestamp;
+
+        // 	cout << "Type is " << type << " / timestamp is " << timestamp << "\n";
+
+        if ( i >= fstevent )
+        {
+            int boardID, channelNumber;
+            unsigned long int preRise, postRise1, postRise2;
+
+            boardID = ReadPayload<int> ( 0, 4, 15, 0, false );
+            channelNumber = ReadPayload<int> ( 0, 0, 3, 0, false );
+
+            postRise1 = ReadPayload<unsigned long int> ( 7, 24, 31, 0, false );
+            postRise2 = ReadPayload<unsigned long int> ( 8, 0, 15, 8, false );
+            preRise = ReadPayload<unsigned long int> ( 7, 0, 23, 0, false );
+
+            // 	    cout << "Done reading the payload...\n";
+
+            int channelID = boardID * 10 + channelNumber;
+
+            // 	    cout << "Channel ID is " << channelID << "\n";
+
+            channel = ( type != 19 ? chMap[channelID] : 0 );
+
+            // 	    cout << "Reconstructed channel: " << channel << "\n";
+
+            value = ( postRise1 +  postRise2 - preRise ) / 10;
+
+            bool validEvent = GEBBinaryEvFilter ( gebWord );
+
+            //             cout << "Exiting event filter...\n";
+
+            if ( validEvent )
+            {
+                //                 if ( outRoot != NULL )
+                //                 {
+                //                     if ( counter%10000 == 0 ) cout << "Treated " << counter << " events out of " << nevents << " ( " << ( float ) counter/nevents * 100. << " % )\r" << flush;
+                //
+                //                     outRoot->Fill();
+                //                 }
+
+                //                 if ( !quietMode && type == 14 && chType[channelID] >= 3 )
+                if ( !quietMode )
+                {
+                    cout << endl;
+                    cout << "\n-------- Event number " << i << " --------" << endl;
+
+                    ReadGEBHeader();
+
+                    if ( type == 19 )
+                    {
+
+                    }
+
+                    else if ( type == 16 )
+                    {
+                        cout << std::left << std::setw ( 17 ) << "* channel ID : " << channelID << "" << endl;
+                        cout << std::left << std::setw ( 17 ) << "* channel : " << channel << "" << endl;
+                        cout << std::left << std::setw ( 17 ) << "* value : " << value << "" << endl;
+                        cout << "==> Dumping the raw words:" << endl;
+
+                        for ( int ww = 0; ww < 16; ww++ )
+                        {
+                            unsigned int res = ReadPayload<unsigned int> ( ww, 0, 31, 0, false );
+
+                            cout << "   - Word " << ww << ": " << res <<endl;
+                        }
+                    }
+
+                    else if ( type == 14 )
+                    {
+                        cout << std::left << std::setw ( 17 ) << "* channel ID : " << channelID << "" << endl;
+                        cout << std::left << std::setw ( 17 ) << "* channel Type : " << chType[channelID] << "" << endl;
+                        cout << std::left << std::setw ( 17 ) << "* channel : " << chMap[channelID] << "" << endl;
+                        cout << std::left << std::setw ( 17 ) << "* value : " << value << "" << endl;
+
+                        cout << "==> Dumping the raw words:" << endl;
+
+                        for ( int ww = 0; ww < 16; ww++ )
+                        {
+                            unsigned int res = ReadPayload<unsigned int> ( ww, 0, 31, 0, false );
+
+                            cout << "   - Word " << ww << ": " << res <<endl;
+                        }
+                    }
+                }
+
+                counter++;
+            }
+        }
+
+        i++;
+    }
+
+    cout << "\n\n\n";
+
+    //     if ( outRootFile != NULL && outRootFile->IsOpen() )
+    //     {
+    //         outRootFile->cd();
+    //
+    //         outRoot->Write();
+    //
+    //         outRootFile->Close();
+    //     }
+
+    binaryFileToRead.close();
+    binaryFileToRead.clear();
+
+    return;
+}
+
+TGraph* GetGEBWaveForm()
+{
+    int np = ReadPayload<int> ( 0, 16, 26, 0, false );
+
+    TGraph* wave = new TGraph ( ( np-13 ) *2 );
+
+    int p = 0;
+
+    for ( int i = 13; i < np; i++ )
+    {
+        unsigned int amp = ReadPayload<unsigned int> ( i, 0, 13, 0, false );
+        wave->SetPoint ( p, p, amp );
+        p++;
+
+        amp = ReadPayload<unsigned int> ( i, 16, 29, 0, false );
+        wave->SetPoint ( p, p, amp );
+        p++;
+    }
+
+    wave->Draw ( "ACP" );
+
+    return wave;
+}
+
+// void InitializePlotGEBWaveForm ( string fname, string binType, bool invertWords )
+// {
+//     GetAWord ( fname, binType, 0, invertWords );
+// }
+
+// TH2F* PlotGEBWaveForm ( std::function<bool() > channelFilterFn, long long int reqN, long long int maxEv, bool invertWords )
+// {
+//     TH2F* res = new TH2F ( "Wave_Form", "Wave Form", 1024, 0, 1024, 9000, 0, 18000 );
+//
+//     int matching = 0;
+//     int processed = 0;
+//
+//     while ( matching < reqN && processed != maxEv && !binaryFileToRead.eof() )
+//     {
+//         if ( processed%100 == 0 ) cout << "Processed " << processed << " event ( found " << matching << " matching)\r" << flush;
+//
+//         if ( channelFilterFn() )
+//         {
+//             int np = ReadPayload<int> ( 0, 16, 26, 0, false );
+//
+//             int sample = 0;
+//
+//             for ( int i = 13; i < np; i++ )
+//             {
+//                 unsigned int amp = ReadPayload<unsigned int> ( i, 0, 13, 0, false );
+//                 res->Fill ( sample, amp );
+//                 sample++;
+//
+//                 amp = ReadPayload<unsigned int> ( i, 16, 29, 0, false );
+//                 res->Fill ( sample, amp );
+//                 sample++;
+//             }
+//
+//             matching++;
+//         }
+//
+//         processed++;
+//
+//         GetAWord ( "GEB", invertWords );
+//     }
+//
+//     cout << endl;
+//     cout << "Done processing " << processed << " event ( found " << matching << " matching)\r" << endl;
+//
+//     res->Draw ( "colz" );
+//
+//     return res;
+// }
+
+// TH2F* PlotGEBWaveForm ( string channelFilterFn, long long int reqN, long long int maxEv, bool invertWords, bool init )
+// {
+//     LoadLuaFile ( channelFilterFn );
+//
+//     if ( lua_type ( lua, -1 ) != LUA_TFUNCTION || lua_gettop ( lua ) < 2 )
+//     {
+//         cerr << "lua file provided has an invalid format!" << endl;
+//         return nullptr;
+//     }
+//
+//     vector<string> binFiles;
+//
+//     if ( lua_type ( lua, -2 ) == LUA_TTABLE )
+//     {
+//         lua_pushnil ( lua );
+//
+//         while ( lua_next ( lua, -3 ) != 0 )
+//         {
+//             if ( lua_type ( lua, -1 ) != LUA_TSTRING )
+//             {
+//                 cerr << "Invalid return for the first element of the lua script" << endl;
+//                 return nullptr;
+//             }
+//
+//             cout << "Adding file to treat: " << lua_tostring ( lua, -1 ) << endl;
+//             binFiles.push_back ( lua_tostring ( lua, -1 ) );
+//
+//             lua_pop ( lua, 1 );
+//         }
+//     }
+//
+//     cout << "stack size: " << lua_gettop ( lua ) << endl;
+//
+//     TH2F* res = new TH2F ( "Wave_Form", "Wave Form", 1024, 0, 1024, 9000, 0, 18000 );
+//
+//     int matching = 0;
+//     int processed = 0;
+//
+//     int fnum = 0;
+//
+//     if ( init ) InitializePlotGEBWaveForm ( binFiles[fnum], "GEB", true );
+//     else
+//     {
+//         for ( unsigned int i = 0; i < binFiles.size(); i++ )
+//         {
+//             if ( currentBinaryFileName == binFiles[i] ) break;
+//
+//             fnum++;
+//         }
+//
+//         GetAWord ( "GEB", invertWords );
+//     }
+//
+//     while ( matching < reqN && processed != maxEv && !binaryFileToRead.eof() && fnum < binFiles.size() )
+//     {
+//         if ( processed%100 == 0 ) cout << "Processed " << processed << " event ( found " << matching << " matching)\r" << flush;
+//
+//         lua_pushvalue ( lua, -1 );
+//
+//         lua_call ( lua, 0, 1 );
+//         bool passedFilter = lua_toboolean ( lua, -1 );
+//         lua_pop ( lua, 1 );
+//
+//         if ( passedFilter )
+//         {
+//             int np = ReadPayload<int> ( 0, 16, 26, 0, false );
+//
+//             int sample = 0;
+//
+//             for ( int i = 13; i < np; i++ )
+//             {
+//                 unsigned int amp = ReadPayload<unsigned int> ( i, 0, 13, 0, false );
+//                 res->Fill ( sample, amp );
+//                 sample++;
+//
+//                 amp = ReadPayload<unsigned int> ( i, 16, 29, 0, false );
+//                 res->Fill ( sample, amp );
+//                 sample++;
+//             }
+//
+//             matching++;
+//         }
+//
+//         processed++;
+//
+//         GetAWord ( "GEB", invertWords );
+//
+//         if ( binaryFileToRead.eof() && fnum < binFiles.size()-1 )
+//         {
+//             fnum++;
+//             InitializePlotGEBWaveForm ( binFiles[fnum], "GEB", true );
+//         }
+//     }
+//
+//     cout << endl;
+//     cout << "Done processing " << processed << " event ( found " << matching << " matching)\r" << endl;
+//
+//     res->Draw ( "colz" );
+//
+//     lua_settop ( lua, 0 );
+//
+//     return res;
+// }
+
+int compDiffCounter = 0;
+
+ifstream binCompFile1;
+ifstream binCompFile2;
+
+void CompareGEBBinaries ( bool strictComp, bool invertWords )
+{
+    std::pair<BinDecHeadStruct*, char*>* readFile1a = 0;
+    std::pair<BinDecHeadStruct*, char*>* readFile1b = 0;
+    std::pair<BinDecHeadStruct*, char*>* readFile2a = 0;
+    std::pair<BinDecHeadStruct*, char*>* readFile2b = 0;
+
+    if ( !binCompFile1.is_open() || !binCompFile2.is_open() )
+    {
+        return;
+    }
+
+    if ( readFile1a == NULL )
+    {
+        readFile1a = new std::pair<BinDecHeadStruct*, char*>;
+        readFile1a->first = new BinDecHeadStruct;
+        readFile1a->second = new char[50000];
+
+        readFile1b = new std::pair<BinDecHeadStruct*, char*>;
+        readFile1b->first = new BinDecHeadStruct;
+        readFile1b->second = new char[50000];
+
+        readFile2a = new std::pair<BinDecHeadStruct*, char*>;
+        readFile2a->first = new BinDecHeadStruct;
+        readFile2a->second = new char[50000];
+
+        readFile2b = new std::pair<BinDecHeadStruct*, char*>;
+        readFile2b->first = new BinDecHeadStruct;
+        readFile2b->second = new char[50000];
+    }
+
+    while ( !binCompFile1.eof() && !binCompFile2.eof() )
+    {
+        GetAWord ( binCompFile1, invertWords );
+        *readFile1a = *gebWord;
+
+        GetAWord ( binCompFile2, invertWords );
+        *readFile2a = *gebWord;
+
+        if ( readFile1a->first->type != readFile2a->first->type || readFile1a->first->length != readFile2a->first->length || readFile1a->first->timestamp != readFile2a->first->timestamp )
+        {
+            if ( strictComp )
+            {
+                cout << "Difference found in the headers at word #" << compDiffCounter << "\n";
+                cout << "Types are=> File 1: " << readFile1a->first->type << " / File 2: " << readFile2a->first->type << "\n";
+                cout << "Lengths are=> File 1: " << readFile1a->first->length << " / File 2: " << readFile2a->first->length << "\n";
+                cout << "Timestamps are=> File 1: " << readFile1a->first->timestamp << " / File 2: " << readFile2a->first->timestamp << "\n";
+
+                compDiffCounter++;
+
+                return;
+            }
+            else
+            {
+                GetAWord ( binCompFile1, invertWords );
+                *readFile1b = *gebWord;
+
+                GetAWord ( binCompFile2, invertWords );
+                *readFile2b = *gebWord;
+
+                if ( readFile1a->first->type != readFile2b->first->type || readFile1a->first->length != readFile2b->first->length || readFile1a->first->timestamp != readFile2b->first->timestamp ||
+                        readFile1b->first->type != readFile2a->first->type || readFile1b->first->length != readFile2a->first->length || readFile1b->first->timestamp != readFile2a->first->timestamp )
+                {
+                    cout << "Difference found in the headers at word #" << compDiffCounter << "\n";
+                    cout << "Types are=> File 1: " << readFile1a->first->type << " / File 2: " << readFile2a->first->type << "\n";
+                    cout << "Lengths are=> File 1: " << readFile1a->first->length << " / File 2: " << readFile2a->first->length << "\n";
+                    cout << "Timestamps are=> File 1: " << readFile1a->first->timestamp << " / File 2: " << readFile2a->first->timestamp << "\n";
+
+                    compDiffCounter++;
+
+                    if ( readFile1b->first->type != readFile2b->first->type || readFile1b->first->length != readFile2b->first->length || readFile1b->first->timestamp != readFile2b->first->timestamp )
+                    {
+                        cout << "Difference found in the headers at word #" << compDiffCounter << "\n";
+                        cout << "Types are=> File 1: " << readFile1b->first->type << " / File 2: " << readFile2b->first->type << "\n";
+                        cout << "Lengths are=> File 1: " << readFile1b->first->length << " / File 2: " << readFile2b->first->length << "\n";
+                        cout << "Timestamps are=> File 1: " << readFile1b->first->timestamp << " / File 2: " << readFile2b->first->timestamp << "\n";
+
+                        compDiffCounter++;
+                    }
+
+                    return;
+                }
+            }
+        }
+
+        compDiffCounter++;
+    }
+}
+
+void CompareGEBBinaries ( string fName1, string fName2, bool strictComp, bool invertWords )
+{
+    compDiffCounter = 0;
+
+    binCompFile1.open ( fName1.c_str(), std::ios::in | std::ios::binary );
+    binCompFile2.open ( fName2.c_str(), std::ios::in | std::ios::binary );
+
+    CompareGEBBinaries ( strictComp, invertWords );
+
+    return;
 }

@@ -43,6 +43,8 @@ ReturnError()
     echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> nohists will prevent histograms to be generated"
     echo "______________________________________________________________________________________________________________________________________________________________"
+    echo "-> nodoppler will ignore the Doppler correction"
+    echo "______________________________________________________________________________________________________________________________________________________________"
     echo "-> userfilter[=folder_name] will apply the UserEventFilter to generate the root file."
     echo "                            if [=folder_name] is specified, a \"cleaned\" merged file will be generated in the specified folder"
     echo "______________________________________________________________________________________________________________________________________________________________"
@@ -62,6 +64,7 @@ OUTPUTSUFIX=""
 NOCALIBFLAG=""
 NOMAPPINGFLAG=""
 NOHISTSFLAG=""
+NODOPPLERFLAG=""
 IGNORETHRFLAG=""
 SIDETLVLFLAG=""
 
@@ -149,7 +152,12 @@ COUNTER=$(($COUNTER + 1))
 
 	NOHISTSFLAG="-nohists"
 	echo "no pre-made histograms will be written to the file..."
+	
+    elif [ "$arg" = "nodoppler" ]; then
 
+	NODOPPLERFLAG="-nodoppler"
+	echo "Doppler correction won't be performed..."
+	
     elif [ "$arg" != "${arg##nevents=}" ]; then
 
 	NEVENTS="${arg##nevents=}"
@@ -192,8 +200,8 @@ COUNTER=$(($COUNTER + 1))
 	
     elif [ "$arg" != "${arg##trigmode=}" ]; then
     
-	TRIGMODEARG="-triggermode ${arg##suffix=}"
-	echo "The TRIGGER MODE used is ${arg##suffix=}"
+	TRIGMODEARG="-triggermode ${arg##trigmode=}"
+	echo "The TRIGGER MODE used is ${arg##trigmode=}"
 	
     elif [ "$arg" != "${arg##userfilter=}" ]; then
 
@@ -248,7 +256,7 @@ do
     fi
     
     time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
-    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $TRIGMODEARG\
+    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $NODOPPLERFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $TRIGMODEARG\
     -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     
     echo "GEBSort DONE at `date`"

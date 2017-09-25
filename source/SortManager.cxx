@@ -1041,7 +1041,8 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     // Calculate the beta of the beam from its energy, charge, mass and the target properties. Requires a corresponding energy loss lookup table
 
-    if ( gConfig->reacInfos["Beam Mass"] > 0 && gConfig->reacInfos["Beam Charge"] > 0 && gConfig->reacInfos["Beam Energy"] > 0 && gConfig->reacInfos["Target Thickness"] > 0 )
+    if(execParams->noDoppler) execParams->beta = 0;
+    else if ( gConfig->reacInfos["Beam Mass"] > 0 && gConfig->reacInfos["Beam Charge"] > 0 && gConfig->reacInfos["Beam Energy"] > 0 && gConfig->reacInfos["Target Thickness"] > 0 )
     {
         string targetStr_;
         if ( gConfig->reacInfos.find ( "TargetType" ) != gConfig->reacInfos.end() ) targetStr_ = gConfig->reacInfos["Target Type"];
@@ -1317,7 +1318,7 @@ int SortManager::GEBacq ( char* ChatFileName )
         st = GEBGetEv ( );
 
 //         std::cerr << "------- Exiting GEBGetEv -------\n";
-//         for ( int i = 0; i < gebEvt->ptgd.size(); i++ )
+//         for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
 //         {
 //             std::cerr << "---> type: " << gebEvt->ptgd[i]->type << "\n";
 //             std::cerr << "---> length: " << gebEvt->ptgd[i]->length << "\n";

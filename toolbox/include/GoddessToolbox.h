@@ -2,6 +2,7 @@
 #define __GODDESSTOOLBOX__
 
 #include <iostream>
+#include <stdlib.h>
 #include <cstdio>
 #include <fstream>
 #include <sstream>
@@ -21,6 +22,7 @@
 #include <chrono>
 #include <ctime>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <stdio.h>
 #include <math.h>
@@ -35,10 +37,20 @@
 #include "TSystem.h"
 #include "TMath.h"
 #include "TKey.h"
+#include "TTree.h"
+#include "TGraphErrors.h"
+#include "TH2F.h"
+#include "TH1F.h"
+#include "TF1.h"
+#include "TFile.h"
+#include "TCutG.h"
+#include "TDirectory.h"
 
 using namespace std;
 
 const char esc ( 27 );
+
+extern string pathToGDAQ;
 
 //_______________________________________________________________________________________________________________________________________________//
 //_______________________________________________________________________________________________________________________________________________//
@@ -148,6 +160,7 @@ string FromStripID ( int stripID_ );
 
 
 void ListHistograms ( string match = "", unsigned int limit = 0, unsigned int startAt = 0, bool caseSensitive = true );
+void WriteHistograms ( string outfile, string match = "*", bool caseSensitive = true );
 
 //_______________________________________________________________________________________________________________________________________________//
 
@@ -357,11 +370,11 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         newOperatorPos = toEval.find_first_of ( "+-*/", newOperatorPos+1 );
     }
 
-//     cout << "found the following operators:\n";
-//     for ( auto itr = operators.begin(); itr != operators.end(); itr++ )
-//     {
-//         cout << itr->second << " (@ pos " << itr->first << " )\n";
-//     }
+    //     cout << "found the following operators:\n";
+    //     for ( auto itr = operators.begin(); itr != operators.end(); itr++ )
+    //     {
+    //         cout << itr->second << " (@ pos " << itr->first << " )\n";
+    //     }
 
     auto opItr = operators.begin();
 
@@ -386,11 +399,11 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
     }
 
 
-//     cout << "the number members are:\n";
-//     for ( auto itr = members.begin(); itr != members.end(); itr++ )
-//     {
-//         cout << itr->second << " (@ pos " << itr->first << " )\n";
-//     }
+    //     cout << "the number members are:\n";
+    //     for ( auto itr = members.begin(); itr != members.end(); itr++ )
+    //     {
+    //         cout << itr->second << " (@ pos " << itr->first << " )\n";
+    //     }
 
     // Checking if the first character of the string is an operator
 
@@ -433,7 +446,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
 
             if ( foundDigit > opItr->first )
             {
-//                 cout << "2 successive signs without digits detected: " << prevItr->first << " and " << opItr->first << "\n";
+                //                 cout << "2 successive signs without digits detected: " << prevItr->first << " and " << opItr->first << "\n";
 
                 if ( opItr->second == '+' )
                 {
@@ -460,16 +473,16 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         opItr++;
     }
 
-//     memItr = members.begin();
-//     opItr = operators.begin();
-//     cout << "New formula after removing double signs: ";
-//     while ( memItr != members.end() )
-//     {
-//         cout << "(" << memItr->second << ")" << ( opItr != operators.end() ? opItr->second : ' ' );
-//         memItr++;
-//         opItr++;
-//     }
-//     cout << "\n";
+    //     memItr = members.begin();
+    //     opItr = operators.begin();
+    //     cout << "New formula after removing double signs: ";
+    //     while ( memItr != members.end() )
+    //     {
+    //         cout << "(" << memItr->second << ")" << ( opItr != operators.end() ? opItr->second : ' ' );
+    //         memItr++;
+    //         opItr++;
+    //     }
+    //     cout << "\n";
 
     // Transforming the "-" operators to "+ (-1) * value"
 
@@ -490,16 +503,16 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         }
     }
 
-//     memItr = members.begin();
-//     opItr = operators.begin();
-//     cout << "New formula after converting the minus signs: ";
-//     while ( memItr != members.end() )
-//     {
-//         cout << "(" << memItr->second << ")" << ( opItr != operators.end() ? opItr->second : ' ' );
-//         memItr++;
-//         opItr++;
-//     }
-//     cout << "\n";
+    //     memItr = members.begin();
+    //     opItr = operators.begin();
+    //     cout << "New formula after converting the minus signs: ";
+    //     while ( memItr != members.end() )
+    //     {
+    //         cout << "(" << memItr->second << ")" << ( opItr != operators.end() ? opItr->second : ' ' );
+    //         memItr++;
+    //         opItr++;
+    //     }
+    //     cout << "\n";
 
     if ( members.size() != operators.size() +1 )
     {
@@ -513,18 +526,18 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         opItr = operators.begin();
         memItr = members.begin();
 
-//         cout << "Looking for a * or / operator...\n";
+        //         cout << "Looking for a * or / operator...\n";
 
         while ( opItr != operators.end() )
         {
             if ( opItr->second == '*' )
             {
-//                 cout << "Found * @ pos " << opItr->first << " ...\n";
+                //                 cout << "Found * @ pos " << opItr->first << " ...\n";
                 break;
             }
             else if ( opItr->second == '/' )
             {
-//                 cout << "Found / @ pos " << opItr->first << " ...\n";
+                //                 cout << "Found / @ pos " << opItr->first << " ...\n";
                 break;
             }
 
@@ -541,9 +554,9 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
         memItr--;
         double val1 = memItr->second;
 
-//         cout << "Current operation to process is: " << val1 << opItr->second << val2 << "\n";
-//         int opNumber = ( int ) distance ( operators.begin(), opItr );
-//         cout << "Operator number: " << opNumber << " @ pos " << opItr->first << "\n";
+        //         cout << "Current operation to process is: " << val1 << opItr->second << val2 << "\n";
+        //         int opNumber = ( int ) distance ( operators.begin(), opItr );
+        //         cout << "Operator number: " << opNumber << " @ pos " << opItr->first << "\n";
 
         if ( opItr->second == '*' ) subRes = val1 * val2;
         else if ( opItr->second == '/' ) subRes = val1 / val2;
@@ -555,7 +568,7 @@ template<typename T> T EvalSimpleString ( string toEval, T* result = nullptr )
             return ( ( T ) 0 );
         }
 
-//         cout << "Result of the operation is: " << subRes << "\n";
+        //         cout << "Result of the operation is: " << subRes << "\n";
 
         memItr->second = subRes;
 
@@ -669,7 +682,7 @@ template<typename T> bool SimpleFormulaComparator ( string compStr, map<string, 
 
     if ( linkMap_ != nullptr ) compStrSub = SubstituteStrInFormula ( compStr, *linkMap_ );
 
-//     cout << "Comparison string after substitution: " << compStrSub << "\n";
+    //     cout << "Comparison string after substitution: " << compStrSub << "\n";
 
     size_t opPos = compStrSub.find_first_of ( "<>=" );
 
@@ -758,19 +771,19 @@ template<typename T> bool ComplexFormulaComparator ( string compStr, map<string,
     auto compItr = andOrSigns.begin();
     auto memItr = members.begin();
 
-//     cout << "The different comparator signs are:\n";
-//     while ( compItr != andOrSigns.end() )
-//     {
-//         cout << compItr->second << " @ pos " << compItr->first << "\n";
-//         compItr++;
-//     }
-//
-//     cout << "The different members of the formula are:\n";
-//     while ( memItr != members.end() )
-//     {
-//         cout << memItr->second << " @ pos " << memItr->first << "\n";
-//         memItr++;
-//     }
+    //     cout << "The different comparator signs are:\n";
+    //     while ( compItr != andOrSigns.end() )
+    //     {
+    //         cout << compItr->second << " @ pos " << compItr->first << "\n";
+    //         compItr++;
+    //     }
+    //
+    //     cout << "The different members of the formula are:\n";
+    //     while ( memItr != members.end() )
+    //     {
+    //         cout << memItr->second << " @ pos " << memItr->first << "\n";
+    //         memItr++;
+    //     }
 
     while ( andOrSigns.size() > 0 )
     {
@@ -905,8 +918,8 @@ template<typename T1, typename T2> bool IsSameValue ( T1 a_, T2 b_ )
 
 template<typename T2> inline int CheckForMatch ( string* readWord, short posElement, short massCheck, T2 chargeCheck )
 {
-//     cout << "Performing the CheckForMatch function with: " << posMassExcess << " / " << posBindingEnergy << " / " << posBetaDecay << " / " << posAMU;
-//     cout << " / " << posElement << " / " << massCheck << " / " << chargeCheck << " / " << memberID << " / "<< "\n";
+    //     cout << "Performing the CheckForMatch function with: " << posMassExcess << " / " << posBindingEnergy << " / " << posBetaDecay << " / " << posAMU;
+    //     cout << " / " << posElement << " / " << massCheck << " / " << chargeCheck << " / " << memberID << " / "<< "\n";
 
     int charge = -1;
 
@@ -920,7 +933,7 @@ template<typename T2> inline int CheckForMatch ( string* readWord, short posElem
         }
         else if ( is_same<string, decltype ( chargeCheck ) >::value )
         {
-//             cout << "Searching Element by Atomic Symbol " << chargeCheck << " ...\n";
+            //             cout << "Searching Element by Atomic Symbol " << chargeCheck << " ...\n";
 
             if ( IsSameValue ( readWord[posElement], chargeCheck ) )
             {
@@ -931,11 +944,11 @@ template<typename T2> inline int CheckForMatch ( string* readWord, short posElem
 
     if ( foundMatch >= 0 )
     {
-//         cout << "Found a matching pattern: " << foundMatch << " ...\n";
+        //         cout << "Found a matching pattern: " << foundMatch << " ...\n";
 
         charge = stoi ( readWord[posElement-2] );
 
-//         cout << "Decoded charge: " << charge << " ...\n";
+        //         cout << "Decoded charge: " << charge << " ...\n";
     }
 
     return charge;
@@ -951,6 +964,160 @@ float findPolarFromCartesian ( float xx, float yy, float zz, float* rr );
 //_________________________________________RANDOM INITIALIZER UTILITIES_______________________________________________________//
 
 int GetASeed ( unsigned int *seed );
+
+//_________________________________________BINARY FILES UTILITIES_______________________________________________________//
+
+struct BinDecHeadStruct
+{
+    int type;
+    int length;
+    unsigned long long timestamp;
+};
+
+extern ifstream binaryFileToRead;
+extern string currentBinaryFileName;
+extern std::pair<BinDecHeadStruct*, char*>* gebWord;
+extern char* binPayload;
+
+unsigned long long int BytesCounter ( string fName );
+
+bool OpenBinaryFile ( string fname );
+
+char* GetAWord ( ifstream& inFile, int nBytesToRead, bool invertWords = false );
+
+char* GetAWord ( ifstream& inFile, string binType = "GEB", bool invertWords = false );
+
+char* GetAWord ( string binType, bool invertWords = false );
+
+char* GetAWord ( string binType, unsigned long long int eventNbr, bool invertWords = false );
+
+char* GetAWord ( string fname, string binType = "GEB", unsigned long long int eventNbr = 0, bool invertWords = false );
+
+void ReadGEBHeader();
+
+template<typename T = unsigned int> T ReadPayload ( int wordNum, unsigned short firstBit, unsigned short lastBit, int bitShift, bool doPrint )
+{
+    //   cout << "Reading payload for word #" << wordNum << " ( first byte = " << firstByte << " / last byte = " << lastByte << " )\n";
+
+    if ( binPayload == NULL ) return 0;
+
+    T* buf = ( T* ) ( binPayload + wordNum * sizeof ( T ) ); // binPayload is a char* so the incrementation of the pointer is by sizeof(char) which is 1...
+
+    long long int bitmask = 0;
+
+    for ( unsigned short i = 0; i <= lastBit-firstBit; i++ )
+    {
+        bitmask += pow ( 2, i );
+    }
+
+    T res;
+
+    if ( bitShift >= 0 )
+    {
+        res = ( ( ( *buf >> firstBit ) & bitmask ) << bitShift );
+    }
+    else
+    {
+        res = ( ( ( *buf >> firstBit ) & bitmask ) >> bitShift );
+    }
+
+    if ( doPrint )
+    {
+        cout << "Word #" << wordNum << ": " << res << "\n";
+    }
+
+    return res;
+}
+
+char* ReadBinData ( int size );
+
+void InvertEndianness ( char** word, int sizeofword );
+
+template<typename T = unsigned int> T DecodeBinData ( char* data, unsigned short firstBit, unsigned short lastBit, int bitShift, bool doPrint = false )
+{
+    unsigned long long int* buffer = new unsigned long long int;
+
+    if ( is_same<T,char>::value )
+    {
+        *buffer = static_cast<int> ( *data );
+    }
+    else
+    {
+        buffer = ( unsigned long long int* ) data;
+    }
+
+    long long unsigned int bitmask = ( unsigned long long int ) pow ( 2, (lastBit-firstBit+1) ) - 1;
+
+    if ( bitShift >= 0 )
+    {
+        *buffer = ( ( ( *buffer >> firstBit ) & bitmask ) << bitShift );
+    }
+    else
+    {
+        *buffer = ( ( ( *buffer >> firstBit ) & bitmask ) >> bitShift );
+    }
+
+    T* res = ( T* ) buffer;
+
+    if ( doPrint )
+    {
+        cout << "Data: " << data << endl;
+        cout << "Raw cast: " << * ( ( T* ) data ) << endl;
+        cout << "Extracted: " << *res << "\n";
+    }
+
+    return *res;
+}
+
+template<typename T = unsigned int> T ReadBinData ( int nSkipBytes, unsigned short firstBit, unsigned short lastBit, int bitShift, bool invertWords, bool doPrint = false )
+{
+    long long unsigned int currPos = binaryFileToRead.tellg();
+    binaryFileToRead.seekg ( currPos+ nSkipBytes );
+
+    char* read = ReadBinData ( sizeof ( T ) );
+
+    if ( invertWords ) InvertEndianness ( &read, sizeof ( T ) );
+
+    return DecodeBinData<T> ( read, firstBit, lastBit, bitShift, doPrint );
+}
+
+bool GEBBinaryEvFilter ( std::pair<BinDecHeadStruct*, char*>* readWord_ );
+
+// TTree* MakeRootTree ( int* type_, int* channel_, unsigned long int* value_, unsigned long long int* timestamp_ )
+// {
+//     TTree* newTree = new TTree ( "unpacked", "Unpacked Tree" );
+//
+//     newTree->Branch ( "type", type_ );
+//     newTree->Branch ( "channel", channel_ );
+//     newTree->Branch ( "value", value_ );
+//     newTree->Branch ( "timestamp", timestamp_ );
+//
+//     return newTree;
+// }
+
+void DecodeGEBBinary ( string fname, unsigned long int nevents, unsigned long int fstevent = 0, bool invertWords = true, bool quietMode = false, string outRootName = "",
+                       string mapFileName = "/mnt/hgfs/Dropbox/ORNL/goddess_daq/goddess_daq/share/map.dat" );
+
+// TGraph* GetGEBWaveForm();
+
+// void InitializePlotGEBWaveForm ( string fname, string binType = "GEB", bool invertWords = true );
+
+// TH2F* PlotGEBWaveForm ( std::function<bool() > channelFilterFn = []()
+// {
+//     return true;
+// }, long long int reqN = 1, long long int maxEv = -1, bool invertWords = true );
+// 
+// TH2F* PlotGEBWaveForm ( string channelFilterFn, long long int reqN = 1, long long int maxEv = -1, bool invertWords = true, bool init = true );
+
+extern int compDiffCounter;
+
+extern ifstream binCompFile1;
+extern ifstream binCompFile2;
+
+void CompareGEBBinaries ( bool strictComp = false, bool invertWords = true );
+
+
+void CompareGEBBinaries ( string fName1, string fName2, bool strictComp = false, bool invertWords = true );
 
 #endif
 

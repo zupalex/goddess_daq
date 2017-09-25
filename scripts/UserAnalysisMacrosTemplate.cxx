@@ -1002,16 +1002,27 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     sprintf ( tryFindStr, "%s_in_%s_%dmg_cm3*range*_vs_energy*", projStr.c_str(), reacInfo->targetType.c_str(), ( int ) reacInfo->targetDensity );
 
+    string tryPath = "";
     vector<string> tryFindTable = DecodeItemsToTreat ( ( string ) tryFindStr, "system", false );
 
     if ( tryFindTable.size() != 1 )
     {
-        std::cerr << "Requested to compute the energy loss for " << projStr << " but no stopping power table was given or auto search failed...\n";
-        std::cerr << "Auto search: " << tryFindStr << std::endl;
-        return;
+        std::cout << "Requested to compute the energy loss for " << projStr << " but no stopping power table was given or auto search failed...\n";
+        std::cout << "Auto search: " << tryFindStr << std::endl;
+
+        std::cout << "Location of the stopping power table? ";
+        std::cin >> tryPath;
+
+        tryFindTable = DecodeItemsToTreat ( tryPath + ( string ) tryFindStr, "system", false );
+
+        if ( tryFindTable.size() != 1 )
+        {
+            std::cerr << "Unable to find requested stopping power table..." << endl;
+            return;
+        }
     }
 
-    analysis->energyLossData = FillGraphFromFile ( tryFindTable[0] );
+    analysis->energyLossData = FillGraphFromFile ( tryPath + tryFindTable[0] );
 
     double beamEffThickness = GetEffectiveThickness ( analysis->beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
 

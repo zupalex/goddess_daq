@@ -1,7 +1,5 @@
 #include "GoddessAnalysis.h"
 
-string pathToGDAQ;
-
 GoddessAnalysis* gA;
 unsigned int ghistcount = 0;
 

@@ -31,6 +31,8 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -O3")
 #Add custom modules to module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
+set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}")
+
 include(${CMAKE_MODULE_PATH}/ExportDYLD.cmake)
 
 CheckForExportDYLD()
@@ -48,8 +50,6 @@ link_directories(${ROOT_LIBRARY_DIR})
 #Find the zlib fro compression
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
-
-add_definitions(-DLINUX -D_FILE_OFFSET_BITS=64)
 
 add_subdirectory(hribf)
 

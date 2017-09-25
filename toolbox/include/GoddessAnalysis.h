@@ -394,12 +394,6 @@ void InsertGeomInfo ( TFile* file, GoddessGeomInfos* geomInfo_, bool overwriteIf
 void InsertReacInfo ( string files, GoddessReacInfos* reacInfo_, bool overwriteIfExists = false );
 void InsertGeomInfo ( string files, GoddessGeomInfos* geomInfo_, bool overwriteIfExists = false );
 
-extern string pathToGDAQ;
-
-void WriteUserHists ( string outName );
-void UpdateUserHists ( string outName );
-void ClearUserHists();
-
 #endif
 
 
