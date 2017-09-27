@@ -570,12 +570,12 @@ int SortManager::GEBGetEv ( )
                 gebEvt->ptinp.push_back ( buffData[coincCounter] );
 
                 startFilling = true;
+
+                coincCounter++;
             }
 
             overflowGEBEv->ptgd.clear();
             overflowGEBEv->ptinp.clear();
-
-            coincCounter++;
         }
 
         inData.read ( ( char* ) buffHeader[coincCounter], sizeof ( GebData ) );
@@ -1041,7 +1041,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     // Calculate the beta of the beam from its energy, charge, mass and the target properties. Requires a corresponding energy loss lookup table
 
-    if(execParams->noDoppler) execParams->beta = 0;
+    if ( execParams->noDoppler ) execParams->beta = 0;
     else if ( gConfig->reacInfos["Beam Mass"] > 0 && gConfig->reacInfos["Beam Charge"] > 0 && gConfig->reacInfos["Beam Energy"] > 0 && gConfig->reacInfos["Target Thickness"] > 0 )
     {
         string targetStr_;
@@ -1625,6 +1625,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     std::cerr << "GEBSort done treating " << execParams->CurEvNo << " events...\n";
     std::cerr << userFlagedEvtCounter << " events fulfilled the user filter(s)...\n";
+    std::cerr << nbadTS << " events had a bad timestamp :(\n";
 
     /*-----------------------*/
     /* we are done sorting!! */

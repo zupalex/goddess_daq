@@ -1888,15 +1888,16 @@ void DecodeGEBBinary ( string fname, unsigned long int nevents, unsigned long in
 
     while ( !mapping.eof() )
     {
+	mapping >> readID >> readChType >> readCh >> dummy;
+	
         if ( readID < 2410 )
         {
-            mapping >> readID >> readChType >> readCh >> dummy;
             chMap[readID] = readCh;
             chType[readID] = readChType;
         }
         else
         {
-            cerr << "Unrecognized ID!...\n";
+            cerr << "Unrecognized ID " << readID << " !...\n";
 
             return;
         }

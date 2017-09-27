@@ -551,12 +551,12 @@ int main ( int argc, char **argv )
 //                 nFileEntries.push_back ( 0 );
 //     }
 
-    auto pq_comparator = [&] ( EVENT* ev1, EVENT* ev2 )
+    auto gebev_comparator = [] ( EVENT* ev1, EVENT* ev2 )
     {
         return ev1->gd->timestamp < ev2->gd->timestamp;
     };
 
-    priority_queue<EVENT*, std::vector<EVENT*>, decltype ( pq_comparator ) > eventQueue {pq_comparator};
+    list<EVENT*> eventQueue;
 
     int maxBigBuffSize = 10*maxEventListSize* ( sizeof ( GebData ) +payloadMaxSize );
 
@@ -605,11 +605,13 @@ int main ( int argc, char **argv )
                     if ( GTGetDiskEv ( inData->at ( fid ), entriesList.back(), false ) != nullptr )
                     {
                         entriesList.back()->key = fid;
-                        eventQueue.push ( entriesList.back() );
+                        eventQueue.push_back ( entriesList.back() );
                     }
                     else entriesList.erase ( entriesList.end()-1 );
                 }
             }
+
+            eventQueue.sort ( gebev_comparator );
 
             listInitialized = true;
 
@@ -737,24 +739,32 @@ int main ( int argc, char **argv )
 //                 else masterItr++;
 //             }
 
-        for ( unsigned int i = 0; i < maxEventListSize; i++ )
+        int coincCounter = 0;
+	int curr_fid = -1;
+
+        while ( coincCounter < maxEventListSize)
         {
             if ( eventQueue.empty() ) break;
 
             evCounter++;
+	    coincCounter++;
 
-            EVENT* readEv = eventQueue.top();
+            EVENT* readEv = eventQueue.front();
 
             int evtLength = readEv->gd->length;
             int fid = readEv->key;
+	    
+	    if(curr_fid >= 0 && fid != curr_fid) break;
 
             theMergeManager->outData.write ( ( char* ) readEv->gd, sizeof ( GebData ) );
             theMergeManager->outData.write ( ( char* ) readEv->payload, evtLength );
 
-            eventQueue.pop();
+            eventQueue.pop_front();
 
-            if ( GTGetDiskEv ( inData->at ( fid ), readEv, false ) != nullptr ) eventQueue.push ( readEv );
+            if ( GTGetDiskEv ( inData->at ( fid ), readEv, false ) != nullptr ) eventQueue.push_back ( readEv );
         }
+        
+        eventQueue.sort(gebev_comparator);
 
         //         cerr << "End of loop #" << theMergeManager->loopCounter << endl;
 
