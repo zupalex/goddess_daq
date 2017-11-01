@@ -217,6 +217,22 @@ extern unsigned int ghistcount;
 extern std::map<string, std::pair<TObject*, vector<GamData*>>> histsMap;
 extern vector<string> specialHists;
 
+struct AnalysisParams
+{
+    TVector3 targetOffset;
+    TVector3 qqq5sOffset;
+    TVector3 sx3sOffset;
+
+    AnalysisParams()
+    {
+        targetOffset = TVector3 ( 0, 0, 0 );
+        qqq5sOffset = TVector3 ( 0, 0, 0 );
+        sx3sOffset = TVector3 ( 0, 0, 0 );
+    }
+};
+
+extern AnalysisParams godAnaParams;
+
 inline void LoadTrees()
 {
     cout << "To initialize the chain of runs, type:\n   LoadTrees( (string) treeName, (string) fileName1, (string) fileName2, (string) ... )\n\n";

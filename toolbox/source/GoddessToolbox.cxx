@@ -311,18 +311,7 @@ std::vector<std::string> DecodeTags ( std::string tagsStr )
 
 vector< string > GetDirContent ( string dirName, string mode, string endWith, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith, bool caseSensitive, bool includePath )
 {
-    std::vector<std::string> fileList, mustAllTags, cantTags, mustOneOfTags;
-
-    bool mustTagsOrdered = false;
-
-    if ( mode.find ( "\\ordered" ) != string::npos )
-    {
-        mustTagsOrdered = true;
-
-        //         cout << "Requested to find tags in order...\n";
-
-        mode = FindAndReplaceInString ( mode, "\\ordered", "" );
-    }
+    std::vector<std::string> fileList, mustAllTags, cantTags, mustOneOfTags, endWithVec;
 
     if ( !mustHaveAll.empty() )
     {
@@ -337,6 +326,13 @@ vector< string > GetDirContent ( string dirName, string mode, string endWith, st
     if ( !mustHaveOneOf.empty() )
     {
         mustOneOfTags = DecodeTags ( mustHaveOneOf );
+
+        if ( mustOneOfTags.back() == "\\shouldfinishwith" )
+        {
+            mustOneOfTags.erase ( mustOneOfTags.end()-1 );
+
+            for ( unsigned int i = 0; i < mustOneOfTags.size(); i++ ) endWithVec.push_back ( mustOneOfTags[i] );
+        }
     }
 
     if ( startWith == "*" ) startWith.clear();
@@ -443,9 +439,31 @@ vector< string > GetDirContent ( string dirName, string mode, string endWith, st
 
         if ( entName.empty() ) continue;
 
+        bool endOK = false;
+
+        if ( endWithVec.size() > 0 )
+        {
+//             cout << "endWithVec not empty, using it instead of standard endWith..." << endl;
+            for ( unsigned int i = 0; i < endWithVec.size(); i++ )
+            {
+                if ( std::search ( entName.begin(), entName.end(), endWithVec[i].begin(), endWithVec[i].end(), ignoreCharCasePred ( caseSensitive ) ) == entName.end() - endWithVec[i].length() )
+                {
+                    endOK = true;
+                    break;
+                }
+            }
+        }
+        else if ( endWith.empty()
+                  || endWith.length() == 1 && endWith[0] == entName[entName.length()-1]
+                  || ( !endWith.empty() && std::search ( entName.begin(), entName.end(), endWith.begin(), endWith.end(), ignoreCharCasePred ( caseSensitive ) ) == entName.end() - endWith.length() ) )
+        {
+//             cout << "Found matching end" << endl;
+            endOK = true;
+        }
+
         if ( startWith.empty() || ( !startWith.empty() && std::search ( entName.begin(), entName.end(), startWith.begin(), startWith.end(), ignoreCharCasePred ( caseSensitive ) ) == entName.begin() ) )
         {
-            if ( endWith.empty() || ( !endWith.empty() && std::search ( entName.begin(), entName.end(), endWith.begin(), endWith.end(), ignoreCharCasePred ( caseSensitive ) ) == entName.end() - endWith.length() ) )
+            if ( endOK )
             {
                 bool mustAllFlag = true, cantFlag = false, mustOneOfFlag = ( mustOneOfTags.size() > 0 ? false : true );
 
@@ -455,9 +473,7 @@ vector< string > GetDirContent ( string dirName, string mode, string endWith, st
 
                     for ( unsigned int i = 0; i < mustAllTags.size(); i++ )
                     {
-                        string::iterator startSearch = entName.begin();
-
-                        if ( mustTagsOrdered ) startSearch = prevTagPos;
+                        string::iterator startSearch = prevTagPos;
 
                         string::iterator currTagPos = std::search ( startSearch, entName.end(), mustAllTags[i].begin(), mustAllTags[i].end(), ignoreCharCasePred ( caseSensitive ) );
 
@@ -529,11 +545,15 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
 
     if ( special == std::string::npos )
     {
-        files = GetDirContent ( path, mode, "", itemsString, "", "", "", caseSensitive, includePath );
+        files = GetDirContent ( path, mode, itemsString, itemsString, "", "", itemsString, caseSensitive, includePath );
     }
     else
     {
-        if ( startPos == 0 ) fStartWith = itemsString.substr ( 0, special );
+        if ( startPos == 0 )
+        {
+            fStartWith = itemsString.substr ( 0, special );
+//             cout << "Should start with: " << fStartWith << endl;
+        }
 
         if ( special < startPos )
         {
@@ -553,8 +573,17 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
 
             //             std::cout << "separator: " << itemsString[special] << " @ " << special << "\n";
 
-            special = itemsString.find_first_of ( "*[]", startPos );
+            special = itemsString.find_first_of ( "*[]", special+1 );
+
+            while ( special < startPos )
+            {
+                sChars.push_back ( std::make_tuple ( special, itemsString[special], special ) );
+                special = itemsString.find_first_of ( "*[]", special+1 );
+            }
         }
+
+        vector<string> leftOver;
+        leftOver.clear();
 
         for ( unsigned int i = 0; i < sChars.size(); i++ )
         {
@@ -565,7 +594,7 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
                 fMustHaveAll += itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) );
                 fMustHaveAll += " ";
 
-                //                 std::cout << "new must all tag: " << itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) ) << "\n";
+//                 std::cout << "new must all tag: " << itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) ) << "\n";
             }
 
             else if ( std::get<1> ( sChars[i] ) == '[' )
@@ -583,16 +612,65 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
                     std::vector<int> filesNbr = DecodeNumberString ( toDecode, false );
 
                     std::string baseStr = itemsString.substr ( std::get<2> ( sChars[i] ), std::get<0> ( sChars[i] ) - std::get<2> ( sChars[i] ) );
+                    std::string suffixStr = "";
+
+                    i++;
+
+                    bool isEnd = false;
+
+                    if ( i == sChars.size()-1 )
+                    {
+                        if ( std::get<0> ( sChars[i] ) +1 != itemsString.length() ) suffixStr = itemsString.substr ( std::get<0> ( sChars[i] ) +1 );
+                        isEnd = true;
+                    }
+                    else if ( std::get<1> ( sChars[i+1] ) == '*' && std::get<0> ( sChars[i+1] ) != std::get<0> ( sChars[i] ) +1 )
+                    {
+                        suffixStr = itemsString.substr ( std::get<2> ( sChars[i+1] ), std::get<0> ( sChars[i+1] ) - std::get<2> ( sChars[i+1] ) );
+                        i++;
+                    }
+                    else if ( std::get<1> ( sChars[i+1] ) == '[' )
+                    {
+                        vector<string> newLeftOvers;
+                        newLeftOvers.clear();
+
+                        for ( unsigned int j = 0; j < filesNbr.size(); j++ )
+                        {
+                            if ( leftOver.size() > 0 )
+                            {
+                                for ( unsigned int k = 0; k < leftOver.size(); k++ ) newLeftOvers.push_back ( leftOver[k] + ( string ) Form ( "%s%d", baseStr.c_str(), filesNbr[j] ) );
+                            }
+                            else newLeftOvers.push_back ( Form ( "%s%d", baseStr.c_str(), filesNbr[j] ) );
+                        }
+
+                        leftOver = newLeftOvers;
+
+                        continue;
+                    }
 
                     for ( unsigned int j = 0; j < filesNbr.size(); j++ )
                     {
-                        fMustHaveOneOf += Form ( "%s%d", baseStr.c_str(), filesNbr[j] );
-                        fMustHaveOneOf += " ";
+                        if ( leftOver.size() > 0 )
+                        {
+                            for ( unsigned int k = 0; k < leftOver.size(); k++ )
+                            {
+                                fMustHaveOneOf += leftOver[k] + Form ( "%s%d%s", baseStr.c_str(), filesNbr[j], suffixStr.c_str() );
+                                fMustHaveOneOf += " ";
 
-                        //                         std::cout << "new must one of tag: " << Form ( "%s%d", baseStr.c_str(), filesNbr[j] ) << "\n";
+//                                 std::cout << "new must one of tag: " << leftOver[k] + Form ( "%s%d%s", baseStr.c_str(), filesNbr[j], suffixStr.c_str() ) << "\n";
+                            }
+                        }
+                        else
+                        {
+                            fMustHaveOneOf += Form ( "%s%d%s", baseStr.c_str(), filesNbr[j], suffixStr.c_str() );
+                            fMustHaveOneOf += " ";
+
+//                             std::cout << "new must one of tag: " << Form ( "%s%d%s", baseStr.c_str(), filesNbr[j], suffixStr.c_str() ) << "\n";
+                        }
                     }
 
-                    i++;
+                    if ( isEnd ) fMustHaveOneOf += "\\shouldfinishwith";
+
+                    leftOver.clear();
                 }
             }
 
@@ -609,6 +687,8 @@ std::vector<std::string> DecodeItemsToTreat ( std::string itemsString, string mo
             fNameParts.push_back ( itemsString.substr ( startPos, itemsString.length() ) );
 
             fEndWith += itemsString.substr ( startPos, itemsString.length() );
+
+//             cout << "Should end with: " << fEndWith << endl;
         }
 
         files = GetDirContent ( path, mode, fEndWith, fMustHaveAll, "", fMustHaveOneOf, fStartWith, caseSensitive, includePath );
@@ -1228,7 +1308,7 @@ void ListHistograms ( string match, unsigned int limit, unsigned int startAt, bo
 
     if ( match.empty() ) match = "*";
 
-    matchingHists = DecodeItemsToTreat ( match, "root \\ordered TH1F TH2F TH1D TH2D", caseSensitive );
+    matchingHists = DecodeItemsToTreat ( match, "root TH1F TH2F TH1D TH2D", caseSensitive );
 
     if ( limit == 0 ) limit = 20;
 
@@ -1285,7 +1365,7 @@ void WriteHistograms ( string outfile, string match, bool caseSensitive )
 
     if ( match.empty() ) match = "*";
 
-    matchingHists = DecodeItemsToTreat ( match, "root \\ordered TH1F TH2F TH1D TH2D", caseSensitive );
+    matchingHists = DecodeItemsToTreat ( match, "root TH1F TH2F TH1D TH2D", caseSensitive );
 
     cout << matchingHists.size() << " matching histograms...\n\n";
 
@@ -1300,8 +1380,8 @@ void WriteHistograms ( string outfile, string match, bool caseSensitive )
             cout << "Written " << i << " / " << matchingHists.size() << " histograms...\r" << flush;
             gDirectory->cd ( histsDir.c_str() );
             auto obj = gDirectory->Get ( matchingHists[i].c_str() );
-	    
-	    f->cd();
+
+            f->cd();
 
             if ( obj != nullptr )
             {
@@ -1888,8 +1968,8 @@ void DecodeGEBBinary ( string fname, unsigned long int nevents, unsigned long in
 
     while ( !mapping.eof() )
     {
-	mapping >> readID >> readChType >> readCh >> dummy;
-	
+        mapping >> readID >> readChType >> readCh >> dummy;
+
         if ( readID < 2410 )
         {
             chMap[readID] = readCh;
