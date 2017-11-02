@@ -12,6 +12,8 @@ using std::string;
 //******************************************************************************************//
 //******************************************************************************************//
 
+AnalysisParams godAnaParams = AnalysisParams();
+
 // ----------------------- A few functions to make life easier ----------------------------- //
 
 bool OrrubaIsDigital ( SiDataBase* siData_ )
@@ -421,6 +423,7 @@ void InitGsVsExHists ( unsigned int nBinsX, int minX, int maxX, unsigned int nBi
     MakeNewHist ( "GsBGOVetoVsEx_tot", "Gamma Energy BGO Veto vs. Excitation Energy tot", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
     MakeNewHist ( "GsBGOVetoVsEx_SX3U_tot", "Gamma Energy BGO Veto vs. Excitation Energy SX3s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
     MakeNewHist ( "GsBGOVetoVsEx_QQQ5U_tot", "Gamma Energy BGO Veto vs. Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
+    MakeNewHist ( "GsBGOVetoVsEx_QQQ5U_goodstrips", "Gamma Energy vs. Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX, nBinsY, minY, maxY, true );
 
     for ( int i = 0; i < 12; i++ )
     {
@@ -465,6 +468,7 @@ bool FillGsVsExHist ( UserAnalysis* analysis_, bool vetoBGO )
     if ( analysis_->si.isUpstream ) histsBaseName += "U";
     else histsBaseName += "D";
     TH2F* gsVsExU = ( TH2F* ) histsMap[ ( string ) ( histsBaseName + "_tot" )].first;
+    TH2F* gsVsExGoodStrips = ( TH2F* ) histsMap[ ( string ) ( histsBaseName + "_goodstrips" )].first;
 
     string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), analysis_->si.sector );
     TH2F* gsVsExSector = ( TH2F* ) histsMap[histsSectorName].first;
@@ -483,6 +487,17 @@ bool FillGsVsExHist ( UserAnalysis* analysis_, bool vetoBGO )
         {
             gsVsExtot->Fill ( analysis_->si.ex, analysis_->gam.gsEn );
             AddToHistState ( gsVsExtot, analysis_->gamDataPtr );
+        }
+
+        if ( vetoBGO && !analysis_->si.isBarrel && analysis_->si.isUpstream &&
+//                 ( ( analysis_->si.strip >= 0 && analysis_->si.strip <= 43 ) || ( analysis_->si.strip >= 65 && analysis_->si.strip <= 78 ) || ( analysis_->si.strip >= 114 && analysis_->si.strip <= 128 ) ) &&
+//                 ( ( analysis_->si.sector == 0 && analysis_->si.strip >= 0 && analysis_->si.strip <= 31 ) || ( analysis_->si.sector == 1 && analysis_->si.strip >= 0 && analysis_->si.strip <= 16 ) ) &&
+//                 ( analysis_->si.sector == 2 && analysis_->si.strip >= 0 && analysis_->si.strip <= 16 ) &&
+                ( analysis_->si.sector == 3 && analysis_->si.strip >= 15 && analysis_->si.strip <= 31 ) &&
+                !CheckHistState ( gsVsExGoodStrips, analysis_->gamDataPtr ) )
+        {
+            gsVsExGoodStrips->Fill ( analysis_->si.ex, analysis_->gam.gsEn );
+            AddToHistState ( gsVsExGoodStrips, analysis_->gamDataPtr );
         }
 
 //         int globStripID = ToStripID ( analysis_->si.isUpstream, analysis_->si.isBarrel, true, analysis_->si.sector, analysis_->si.strip );
@@ -954,9 +969,13 @@ void FillUserHists ( long long int maxEvents = 0 )
 
     analysis->targetLadderDir = targetLadderDir;
 
-    analysis->targetOffset = TVector3 ( 0, 0, 0 );
-    TVector3 sX3Offset = TVector3 ( 0, 0, 0 );
-    TVector3 qqq5Offset = TVector3 ( 0, 0, 0 );
+    analysis->targetOffset = godAnaParams.targetOffset;
+    TVector3 sX3Offset = godAnaParams.sx3sOffset;
+    TVector3 qqq5Offset = godAnaParams.qqq5sOffset;
+
+//     analysis->targetOffset = TVector3 ( 0, 0, 0 );
+//     TVector3 sX3Offset = TVector3 ( 0, 0, 0 );
+//     TVector3 qqq5Offset = TVector3 ( 0, 0, 0 );
 
     for ( int i = 0; i < 2; i++ )
     {
@@ -1062,6 +1081,8 @@ void FillUserHists ( long long int maxEvents = 0 )
         for ( unsigned int i = 0; i < vectSiSize; i++ )
         {
             SiDataBase siData = ( vectSiData != nullptr ) ? vectSiData->at ( i ) : vectSiDataD->at ( i );
+
+            if ( siData.PosE1().Mag() == 0 ) continue;
 
             analysis->SetSiData ( &siData );
 
