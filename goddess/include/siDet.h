@@ -5,8 +5,8 @@
 
 ///A class to handle basic silicon detectors.
 /**
- * \author Karl Smith
- * \date July 2015
+ * created by Karl Smith July 2015
+ * updated by Alex Lepailleur June 2016
  */
 class siDet : public Detector
 {

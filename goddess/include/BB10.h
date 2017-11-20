@@ -7,8 +7,8 @@
 ///Class designed to compute hit information on a Micron BB10 detector.
 /**The BB10 is a single sided strip, rectangular, detector. It has eight strips.
  *
- * \author Karl Smith
- * \date July 2015
+ * created by Karl Smith July 2015
+ * updated by Alex Lepailleur June 2016
  */
 
 class BB10 : public orrubaDet
@@ -46,8 +46,10 @@ public:
     ///Clear the stored values in this detector.
     void Clear();
 
+    ///Active width of the detector. Used in geometry reconstruction.
     double activeWidth;
 
+    ///Returns the position of the center of a front side strip
     TVector3 GetPStripCenterPos ( int strip )
     {
         return pStripCenterPos[strip];
@@ -84,29 +86,50 @@ public:
     ///Return the number of fired contacts above threhsold for the specified type.
     virtual int GetContactMult ( bool contactType, bool calibrated );
 
+    ///Returns the sum of the energies gathered on the front (back if nType is true) side.
     virtual float GetEnSum ( bool nType = false, bool calibrated = true );
 
+    ///Assign the proper strip number (and calibrate in energy)
     virtual void SortAndCalibrate ( bool doCalibrate = true );
 
     ///Return the computed event position.
     TVector3 GetEventPosition ( bool calibrated = true );
 
+    ///Set the geometry parameters for the detector
     virtual void SetGeomParams ( map<string, double> geomInfos_ );
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr );
 
+    ///If the energy is dependent of the position of interaction in the detector, this function assign an Energy vs. Position correction graph
+    /// \note used only for SX3s or other position sensitive detectors
     virtual void SetEnShiftVsPosGraph ( std::string graphFileName );
 
+    ///The list of front side strips which fired
     std::vector<int> stripsP;
+
+    ///The list of raw energies gathered on the front side
     std::vector<float> enRawP;
+
+    ///The list of calibrated energies gathered on the front side
     std::vector<float> enCalP;
+
+    ///The list of timestamps associated to each hits
     std::vector<long long unsigned int> timeP;
 
+    ///Returns the vector containing the data corresponding to the requested "info"
     virtual std::vector<float> GetHitsInfo ( std::string info, std::vector<float>* dest = nullptr );
+
+    ///Returns the vector containing the data corresponding to the requested "info"
     virtual std::vector<int> GetHitsInfo ( std::string info, std::vector<int>* dest = nullptr );
+
+    ///Returns the vector containing the data corresponding to the requested "info"
     virtual std::vector<long long unsigned int> GetHitsInfo ( std::string info, std::vector<long long unsigned int>* dest = nullptr );
+
+    ///Set the values of the parameters using the hit with the highest energy
     virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true );
+
+    ///Returns the multiplicity of the event
     virtual int GetMultiplicity ( bool nType = false, bool calibrated = true );
 
     /// \cond This is just for ROOT and doesn't need to be documented

@@ -10,8 +10,8 @@
  * sensitive via a restive strip with contacts on each side of the strip. The
  * detector has an active area of 40.3 x 75.0 mm&sup2;.
  *
- * \author Karl Smith
- * \date July 2015
+ * created by Karl Smith July 2015
+ * updated by Alex Lepailleur June 2016
  */
 class superX3 : public orrubaDet
 {

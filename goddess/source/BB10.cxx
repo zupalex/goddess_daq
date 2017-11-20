@@ -60,9 +60,9 @@ void BB10::SetGeomParams ( map< string, double > geomInfos_ )
  * was a p type contact we check if another p contact in the same strip has been set
  * and if so we make a call to compute the position the event occurred in the strip.
  *
- * \param[in] contact The number of the contact which was updated.
- *  \param[in] rawValue The raw contact value in channels.
- * \param[in] nType Whether the contact was n Type.
+ * \param contact The number of the contact which was updated.
+ *  \param rawValue The raw contact value in channels.
+ * \param nType Whether the contact was n Type.
  */
 void BB10::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr )
 {
