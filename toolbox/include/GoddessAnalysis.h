@@ -3,6 +3,7 @@
 
 #include "goddess_analysis_macros.h"
 
+///Class providing useful function to process sorted data
 class GoddessAnalysis : public TObject, public TQObject
 {
 private:

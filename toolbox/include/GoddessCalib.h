@@ -29,6 +29,7 @@ extern map<string, string> stoppingPowerTable;
 extern map<string, std::pair<float, float>> configCalPars;
 void ReadConfigCalPars ( string configFileName );
 
+///Class providing tools to calibrate GODDESS detectors
 class GoddessCalib : public GoddessAnalysis
 {
 private:
