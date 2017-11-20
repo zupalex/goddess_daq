@@ -21,4 +21,6 @@ Once the compilation is done, you should add the following lines in your .rootlo
 }
 ```
 
-Simply replace <path/to/goddess_daq> to the actual path to the cloned repository.
+Simply replace <path/to/goddess_daq> to the actual path to the cloned repository.  
+**Be careful to replace only the part enclosed in <> (including the < and > sign) and keep the rest as is.  
+Escaping the quotes in the second line is mandatory**
