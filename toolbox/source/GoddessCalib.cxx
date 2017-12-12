@@ -7,20 +7,21 @@ map<string, string> stoppingPowerTable;
 
 map<string, std::pair<float, float>> configCalPars;
 
-GoddessCalib::GoddessCalib() : GoddessAnalysis()
+GoddessCalib::GoddessCalib()
+		: GoddessAnalysis()
 {
-    calChain = nullptr;
+	calChain = nullptr;
 
-    InitGUI();
+	InitGUI();
 
-    //     controlFrame->GetL
+	//     controlFrame->GetL
 
-    currDetType = "";
-    currRefEn1 = 0.0;
+	currDetType = "";
+	currRefEn1 = 0.0;
 
-    SetReacParameters();
+	SetReacParameters();
 
-    cout << "You can use the newly create \"gC\" object to access the GoddessCalib class functions\n";
+	cout << "You can use the newly create \"gC\" object to access the GoddessCalib class functions\n";
 }
 
 GoddessCalib::~GoddessCalib()
@@ -30,2355 +31,2368 @@ GoddessCalib::~GoddessCalib()
 
 void GoddessCalib::DeleteSInstance()
 {
-    delete s_instance;
-    s_instance = nullptr;
+	delete s_instance;
+	s_instance = nullptr;
 }
 
 GoddessCalib* GoddessCalib::StartCalib()
 {
-    if ( s_instance == NULL )
-        s_instance = new GoddessCalib();
+	if (s_instance == NULL) s_instance = new GoddessCalib();
 
-    gC = s_instance;
+	gC = s_instance;
 
-    return s_instance;
+	return s_instance;
 }
 
-void GoddessCalib::StartSX3EnCalib ( string detectorType, double refEnergy1 )
+void GoddessCalib::StartSX3EnCalib(string detectorType, double refEnergy1)
 {
-    if ( s_instance == NULL ) return;
+	if (s_instance == NULL) return;
 
-    s_instance->currDetType = detectorType;
-    s_instance->currRefEn1 = refEnergy1;
+	s_instance->currDetType = detectorType;
+	s_instance->currRefEn1 = refEnergy1;
 
-    if ( gPad == NULL || gPad->GetCanvas() == NULL ) new TBrowser();
+	if ( gPad == NULL || gPad->GetCanvas() == NULL) new TBrowser();
 
-    gStyle->SetLineWidth ( 2 );
-    gStyle->SetLineColor ( 2 );
+	gStyle->SetLineWidth(2);
+	gStyle->SetLineColor(2);
 
-    //     gStyle->SetMarkerColor ( 4 );
-    //     gStyle->SetMarkerSize ( 2 );
-    //     gStyle->SetMarkerStyle ( 3 );
+	//     gStyle->SetMarkerColor ( 4 );
+	//     gStyle->SetMarkerSize ( 2 );
+	//     gStyle->SetMarkerStyle ( 3 );
 
-    TGNumberEntryField* alphaEnIF = ( TGNumberEntryField* ) FindWindowByName ( "alphaEn1IF" );
+	TGNumberEntryField* alphaEnIF = (TGNumberEntryField*) FindWindowByName("alphaEn1IF");
 
-    alphaEnIF->SetText ( Form ( "%.3f", refEnergy1 ) );
+	alphaEnIF->SetText(Form("%.3f", refEnergy1));
 }
 
-string GoddessCalib::GetAutoOutFileName ( string baseName )
+string GoddessCalib::GetAutoOutFileName(string baseName)
 {
-    string currPath = ( string ) gSystem->pwd();
+	string currPath = (string) gSystem->pwd();
 
-    //     string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
+	//     string rootFileName = currPath + "/Resistive_Strips_EnCal_Graphs_";
 
-    string rootFileName = baseName;
+	string rootFileName = baseName;
 
-    if ( calChain != nullptr )
-    {
-        if ( calChain->GetNtrees() == 1 )
-        {
-            string treeFName = calChain->GetFile()->GetName();
+	if (calChain != nullptr)
+	{
+		if (calChain->GetNtrees() == 1)
+		{
+			string treeFName = calChain->GetFile()->GetName();
 
-            std::size_t begRunName = treeFName.find ( "run" );
-            std::size_t endRunName = treeFName.find ( "_", begRunName );
+			std::size_t begRunName = treeFName.find("run");
+			std::size_t endRunName = treeFName.find("_", begRunName);
 
-            if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName-begRunName ) + ".root";
-            else rootFileName += "_" + treeFName;
-        }
-        else if ( calChain->GetNtrees() >= 2 ) rootFileName += "_chain.root";
-    }
+			if (begRunName != string::npos && endRunName != string::npos) rootFileName += "_" + treeFName.substr(begRunName, endRunName - begRunName) + ".root";
+			else rootFileName += "_" + treeFName;
+		}
+		else if (calChain->GetNtrees() >= 2) rootFileName += "_chain.root";
+	}
 
-    else
-    {
-        auto lOK = gDirectory->GetListOfKeys();
+	else
+	{
+		auto lOK = gDirectory->GetListOfKeys();
 
-        if ( lOK != nullptr && lOK->GetSize() > 0 )
-        {
-            for ( int i = 0; i < lOK->GetSize(); i++ )
-            {
-                //                 cout << lOK->At ( i )->GetName() << endl;
+		if (lOK != nullptr && lOK->GetSize() > 0)
+		{
+			for (int i = 0; i < lOK->GetSize(); i++)
+			{
+				//                 cout << lOK->At ( i )->GetName() << endl;
 
-                TTree* testTree = ( TTree* ) lOK->At ( i );
+				TTree* testTree = (TTree*) lOK->At(i);
 
-                if ( testTree != nullptr )
-                {
-                    string treeFName = gDirectory->GetName();
+				if (testTree != nullptr)
+				{
+					string treeFName = gDirectory->GetName();
 
-                    std::size_t begRunName = treeFName.find ( "run" );
-                    std::size_t endRunName = treeFName.find ( "_", begRunName );
+					std::size_t begRunName = treeFName.find("run");
+					std::size_t endRunName = treeFName.find("_", begRunName);
 
-                    if ( begRunName != string::npos && endRunName != string::npos ) rootFileName += "_" + treeFName.substr ( begRunName, endRunName-begRunName ) + ".root";
-                    else rootFileName += "_" + treeFName;
+					if (begRunName != string::npos && endRunName != string::npos) rootFileName += "_" + treeFName.substr(begRunName, endRunName - begRunName) + ".root";
+					else rootFileName += "_" + treeFName;
 
-                    break;
-                }
-            }
-        }
-    }
+					break;
+				}
+			}
+		}
+	}
 
-    outFileName = rootFileName;
+	outFileName = rootFileName;
 
-    return rootFileName;
+	return rootFileName;
 }
 
-void GoddessCalib::AddFileToChain ( string fileName )
+void GoddessCalib::AddFileToChain(string fileName)
 {
-    if ( calChain == nullptr ) calChain = new TChain ( calTreeName.c_str(), calTreeName.c_str() );
+	if (calChain == nullptr) calChain = new TChain(calTreeName.c_str(), calTreeName.c_str());
 
-    calChain->Add ( fileName.c_str() );
+	calChain->Add(fileName.c_str());
 
-    return;
+	return;
 }
 
 void GoddessCalib::ResetChain()
 {
-    calChain = nullptr;
+	calChain = nullptr;
 
-    return;
+	return;
 }
 
-void ReadConfigCalPars ( string configFileName )
+void ReadConfigCalPars(string configFileName)
 {
-    std::ifstream config;
-    config.open ( configFileName.c_str(), std::ios::in );
+	std::ifstream config;
+	config.open(configFileName.c_str(), std::ios::in);
 
-    if ( !config.is_open() )
-    {
-        cerr << "Failed to open file: " << configFileName << " ...\n";
-        return;
-    }
+	if (!config.is_open())
+	{
+		cerr << "Failed to open file: " << configFileName << " ...\n";
+		return;
+	}
 
-    string readLine, dummy, detType, detID, lineID, stripType;
-    int stripNbr;
-    float offset, slope;
-    float leftEdge, rightEdge;
-    std::istringstream iss;
+	string readLine, dummy, detType, detID, lineID, stripType;
+	int stripNbr;
+	float offset, slope;
+	float leftEdge, rightEdge;
+	std::istringstream iss;
 
-    while ( std::getline ( config, readLine ) )
-    {
-        if ( readLine.empty() || readLine == "\n" ) continue;
+	while (std::getline(config, readLine))
+	{
+		if (readLine.empty() || readLine == "\n") continue;
 
-        iss.clear();
-        iss.str ( readLine );
+		iss.clear();
+		iss.str(readLine);
 
-        if ( readLine.find ( "QQQ5" ) != string::npos || readLine.find ( "superX3" ) != string::npos )
-        {
-            iss >> detType >> dummy >> detID;
+		if (readLine.find("QQQ5") != string::npos || readLine.find("superX3") != string::npos)
+		{
+			iss >> detType >> dummy >> detID;
 
-            detID = detID.substr ( 0, detID.find ( "-" ) );
+			detID = detID.substr(0, detID.find("-"));
 
-            if ( detType == "superX3" ) detType = "SuperX3";
-        }
-        else
-        {
-            iss >> lineID;
+			if (detType == "superX3") detType = "SuperX3";
+		}
+		else
+		{
+			iss >> lineID;
 
-            if ( lineID == "enCal" )
-            {
-                iss >> stripType >> stripNbr;
+			if (lineID == "enCal")
+			{
+				iss >> stripType >> stripNbr;
 
-                if ( detType == "QQQ5" )
-                {
-                    if ( stripType == "p" ) stripType = "front";
-                    else stripType = "back";
-                }
-                else if ( detType == "SuperX3" )
-                {
-                    if ( stripType == "resStrip" ) stripType = "front";
-                    else if ( stripType == "n" ) stripType = "back";
-                    else
-                    {
-                        if ( stripNbr == 0 || stripNbr == 2 || stripNbr == 5 || stripNbr == 7 ) stripType = "near";
-                        else stripType = "far";
+				if (detType == "QQQ5")
+				{
+					if (stripType == "p") stripType = "front";
+					else stripType = "back";
+				}
+				else if (detType == "SuperX3")
+				{
+					if (stripType == "resStrip") stripType = "front";
+					else if (stripType == "n") stripType = "back";
+					else
+					{
+						if (stripNbr == 0 || stripNbr == 2 || stripNbr == 5 || stripNbr == 7) stripType = "near";
+						else stripType = "far";
 
-                        stripNbr /= 2;
-                    }
-                }
+						stripNbr /= 2;
+					}
+				}
 
-                iss >> offset >> slope;
+				iss >> offset >> slope;
 
-                string detKey = detType + " " + detID + " " + stripType + " " + Form ( "%d", stripNbr );
+				string detKey = detType + " " + detID + " " + stripType + " " + Form("%d", stripNbr);
 
-                configCalPars[detKey] = std::make_pair ( offset, slope );
-            }
+				configCalPars[detKey] = std::make_pair(offset, slope);
+			}
 
-            else if ( lineID == "posCal" )
-            {
-                iss >> stripType >> stripNbr >> leftEdge >> rightEdge;
+			else if (lineID == "posCal")
+			{
+				iss >> stripType >> stripNbr >> leftEdge >> rightEdge;
 
-                string detKey = detType + " " + detID + " position " + Form ( "%d", stripNbr );
+				string detKey = detType + " " + detID + " position " + Form("%d", stripNbr);
 
-                configCalPars[detKey] = std::make_pair ( leftEdge, rightEdge );
-            }
-        }
-    }
+				configCalPars[detKey] = std::make_pair(leftEdge, rightEdge);
+			}
+		}
+	}
 
-    return;
+	return;
 }
 
-void GoddessCalib::InitializeCalMapKey ( string mapKey, unsigned short strip )
+void GoddessCalib::InitializeCalMapKey(string mapKey, unsigned short strip)
 {
-    auto itr = resStripsCalMap.find ( mapKey );
+	auto itr = resStripsCalMap.find(mapKey);
 
-    if ( itr == resStripsCalMap.end() )
-    {
-        cout << "No entry found for " << mapKey << " strip #" << strip << " in current session's map. Initializing it with -100" << endl;
+	if (itr == resStripsCalMap.end())
+	{
+		cout << "No entry found for " << mapKey << " strip #" << strip << " in current session's map. Initializing it with -100" << endl;
 
-        for ( int i = 0; i < 6; i++ )
-        {
-            resStripsCalMap[mapKey][strip].push_back ( -100 );
-        }
-    }
-    else
-    {
-        auto itrStr = resStripsCalMap[mapKey].find ( strip );
+		for (int i = 0; i < 6; i++)
+		{
+			resStripsCalMap[mapKey][strip].push_back(-100);
+		}
+	}
+	else
+	{
+		auto itrStr = resStripsCalMap[mapKey].find(strip);
 
-        if ( itrStr == resStripsCalMap[mapKey].end() )
-        {
-            cout << "No entry found for " << mapKey << " strip #" << strip << ". Initializing it with -100" << endl;
+		if (itrStr == resStripsCalMap[mapKey].end())
+		{
+			cout << "No entry found for " << mapKey << " strip #" << strip << ". Initializing it with -100" << endl;
 
-            for ( int i = 0; i < 6; i++ )
-            {
-                resStripsCalMap[mapKey][strip].push_back ( -100 );
-            }
-        }
-    }
+			for (int i = 0; i < 6; i++)
+			{
+				resStripsCalMap[mapKey][strip].push_back(-100);
+			}
+		}
+	}
 }
 
-void GoddessCalib::GetCornersCoordinates ( TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, string detectorType, double refEnergy1 )
+void GoddessCalib::GetCornersCoordinates(TCanvas* can, string calMapKey, unsigned short strip, double refEnergy1)
 {
-    string calMapKey = detectorType;
-    calMapKey += isUpstream ? " U" : " D";
-    calMapKey += std::to_string ( sector );
+	TList* list = can->GetListOfPrimitives();
 
-    TList* list = can->GetListOfPrimitives();
+	int listSize = list->GetSize();
 
-    int listSize = list->GetSize();
+	TLine* negLine = 0;
+	TLine* topLine = 0;
+	TLine* botLine = 0;
 
-    TLine* negLine = 0;
-    TLine* topLine = 0;
-    TLine* botLine = 0;
+	double tempSlope = 0;
+	TLine* tempLine = 0;
 
-    double tempSlope = 0;
-    TLine* tempLine = 0;
+	for (int i = 0; i < listSize; i++)
+	{
+		TObject* child = list->At(i);
 
-    for ( int i = 0; i < listSize; i++ )
-    {
-        TObject* child = list->At ( i );
+		TLine* line = dynamic_cast<TLine*>(child);
 
-        TLine* line = dynamic_cast<TLine*> ( child );
+		if (line == nullptr) continue;
 
-        if ( line == nullptr ) continue;
+		double x1 = line->GetX1();
+		double y1 = line->GetY1();
+		double x2 = line->GetX2();
+		double y2 = line->GetY2();
 
-        double x1 = line->GetX1();
-        double y1 = line->GetY1();
-        double x2 = line->GetX2();
-        double y2 = line->GetY2();
+		double slope = (y2 - y1) / (x2 - x1);
 
-        double slope = ( y2 - y1 ) / ( x2 - x1 );
+		//         cout << "Found a line in the list at position #" << i << endl;
+		//         cout << "X1 : " << x1 << "   /   Y1 : " << y1 << endl;
+		//         cout << "X2 : " << x2 << "   /   Y2 ; " << y2 << endl;
+		//
+		//         cout << "Slope = " << slope << endl;
 
-        //         cout << "Found a line in the list at position #" << i << endl;
-        //         cout << "X1 : " << x1 << "   /   Y1 : " << y1 << endl;
-        //         cout << "X2 : " << x2 << "   /   Y2 ; " << y2 << endl;
-        //
-        //         cout << "Slope = " << slope << endl;
+		if (slope < 0) negLine = line;
+		else
+		{
+			if (tempLine == nullptr)
+			{
+				tempSlope = slope;
+				tempLine = line;
+			}
+			else
+			{
+				if (slope > tempSlope)
+				{
+					topLine = line;
+					botLine = tempLine;
+				}
+				else
+				{
+					botLine = line;
+					topLine = tempLine;
+				}
+			}
+		}
+	}
 
-        if ( slope < 0 ) negLine = line;
-        else
-        {
-            if ( tempLine == nullptr )
-            {
-                tempSlope = slope;
-                tempLine = line;
-            }
-            else
-            {
-                if ( slope > tempSlope )
-                {
-                    topLine = line;
-                    botLine = tempLine;
-                }
-                else
-                {
-                    botLine = line;
-                    topLine = tempLine;
-                }
-            }
-        }
-    }
+	// ---------------- Let's find the inteserction between top and bottom ---------------- //
 
-    // ---------------- Let's find the inteserction between top and bottom ---------------- //
+	double slopeTop = -100, slopeBot = -10, slopeNeg = -10;
+	double offTop = -100, offBot = -100, offNeg = -100;
 
-    double slopeTop = -100, slopeBot = -10, slopeNeg = -10;
-    double offTop = -100, offBot = -100, offNeg = -100;
+	if (topLine != nullptr)
+	{
+		slopeTop = (topLine->GetY2() - topLine->GetY1()) / (topLine->GetX2() - topLine->GetX1());
+		offTop = (topLine->GetX1() * topLine->GetY2() - topLine->GetX2() * topLine->GetY1()) / (topLine->GetX1() - topLine->GetX2());
+	}
 
-    if ( topLine != nullptr )
-    {
-        slopeTop = ( topLine->GetY2() - topLine->GetY1() ) / ( topLine->GetX2() - topLine->GetX1() );
-        offTop = ( topLine->GetX1() * topLine->GetY2() - topLine->GetX2() * topLine->GetY1() ) / ( topLine->GetX1() - topLine->GetX2() );
-    }
+	if (botLine != nullptr)
+	{
+		slopeBot = (botLine->GetY2() - botLine->GetY1()) / (botLine->GetX2() - botLine->GetX1());
+		offBot = (botLine->GetX1() * botLine->GetY2() - botLine->GetX2() * botLine->GetY1()) / (botLine->GetX1() - botLine->GetX2());
+	}
 
-    if ( botLine != nullptr )
-    {
-        slopeBot = ( botLine->GetY2() - botLine->GetY1() ) / ( botLine->GetX2() - botLine->GetX1() );
-        offBot = ( botLine->GetX1() * botLine->GetY2() - botLine->GetX2() * botLine->GetY1() ) / ( botLine->GetX1() - botLine->GetX2() );
-    }
+	if (negLine != nullptr)
+	{
+		slopeNeg = (negLine->GetY2() - negLine->GetY1()) / (negLine->GetX2() - negLine->GetX1());
+		offNeg = (negLine->GetX1() * negLine->GetY2() - negLine->GetX2() * negLine->GetY1()) / (negLine->GetX1() - negLine->GetX2());
+	}
 
-    if ( negLine != nullptr )
-    {
-        slopeNeg = ( negLine->GetY2() - negLine->GetY1() ) / ( negLine->GetX2() - negLine->GetX1() );
-        offNeg = ( negLine->GetX1() * negLine->GetY2() - negLine->GetX2() * negLine->GetY1() ) / ( negLine->GetX1() - negLine->GetX2() );
-    }
+	double xIntersect = -100, yIntersect = -100;
 
-    double xIntersect = -100, yIntersect = -100;
+	if (topLine != nullptr && botLine != nullptr)
+	{
+		xIntersect = (offTop - offBot) / (slopeBot - slopeTop);
+		yIntersect = slopeTop * xIntersect + offTop;
+	}
 
-    if ( topLine != nullptr && botLine != nullptr )
-    {
-        xIntersect = ( offTop - offBot ) / ( slopeBot - slopeTop );
-        yIntersect = slopeTop * xIntersect + offTop;
-    }
+	double nearCorrFactor = -100;
+	double energyCalCoeff = -100;
 
-    double nearCorrFactor = -100;
-    double energyCalCoeff = -100;
+	if (negLine != nullptr) nearCorrFactor = -slopeNeg;
 
-    if ( negLine != nullptr ) nearCorrFactor = -slopeNeg;
+	InitializeCalMapKey(calMapKey, strip);
 
-    InitializeCalMapKey ( calMapKey, strip );
+	vector<double>* calRes = &resStripsCalMap[calMapKey][strip];
 
-    vector<double>* calRes = &resStripsCalMap[calMapKey][strip];
+	xIntersect = (xIntersect == -100 ? calRes->at(0) : xIntersect);
+	yIntersect = (yIntersect == -100 ? calRes->at(1) : yIntersect);
+	nearCorrFactor = (nearCorrFactor == -100 ? calRes->at(2) : nearCorrFactor);
 
-    xIntersect = ( xIntersect == -100 ? calRes->at ( 0 ) : xIntersect );
-    yIntersect = ( yIntersect == -100 ? calRes->at ( 1 ) : yIntersect );
-    nearCorrFactor = ( nearCorrFactor == -100 ? calRes->at ( 2 ) : nearCorrFactor );
+	calRes->at(0) = xIntersect;
+	calRes->at(1) = yIntersect;
+	calRes->at(2) = nearCorrFactor;
 
-    calRes->at ( 0 ) = xIntersect;
-    calRes->at ( 1 ) = yIntersect;
-    calRes->at ( 2 ) = nearCorrFactor;
+	if (negLine != nullptr && calRes->at(0) != -100 && calRes->at(1) != -100 && calRes->at(2) != -100)
+	{
+		energyCalCoeff = refEnergy1 / (negLine->GetX1() * calRes->at(2) - calRes->at(0) + negLine->GetY1() - calRes->at(1));
+	}
 
-    if ( negLine != nullptr && calRes->at ( 0 ) != -100 && calRes->at ( 1 ) != -100 && calRes->at ( 2 ) != -100 )
-    {
-        energyCalCoeff = refEnergy1 / ( negLine->GetX1() * calRes->at ( 2 ) - calRes->at ( 0 ) + negLine->GetY1() - calRes->at ( 1 ) );
-    }
+	energyCalCoeff = (energyCalCoeff == -100 ? calRes->at(3) : energyCalCoeff);
 
-    energyCalCoeff = ( energyCalCoeff == -100 ? calRes->at ( 3 ) : energyCalCoeff );
+	cout << "Intersection between top and bottom at ( " << xIntersect << " ; " << yIntersect << " )" << endl;
+	cout << "Correction factor for the near strip = " << nearCorrFactor << endl;
+	cout << "Slope for energy calibration = " << energyCalCoeff << endl;
 
-    cout << "Intersection between top and bottom at ( " << xIntersect << " ; " << yIntersect << " )" << endl;
-    cout << "Correction factor for the near strip = " << nearCorrFactor << endl;
-    cout << "Slope for energy calibration = " << energyCalCoeff << endl;
+	calRes->at(3) = energyCalCoeff;
 
-    calRes->at ( 3 ) = energyCalCoeff;
-
-    return;
+	return;
 }
 
-bool GoddessCalib::DumpFileToResCalMap ( string fileName )
+void GoddessCalib::GetCornersCoordinates(TCanvas* can, bool isUpstream, unsigned short sector, unsigned short strip, string detectorType, double refEnergy1)
 {
-    std::ifstream readFile ( fileName.c_str() );
+	string calMapKey = detectorType;
+	calMapKey += isUpstream ? " U" : " D";
+	calMapKey += std::to_string(sector);
 
-    if ( !readFile.is_open() )
-    {
-        cerr << "Failed to open file " << fileName << " for previous calibration reading" << endl;
-        return false;
-    }
-
-    string dump;
-
-    string lineID, detID, stripID, dummy;
-
-    cout << "Reading " << fileName << "..." << endl;
-
-    while ( std::getline ( readFile, dump ) )
-    {
-        if ( dump.empty() ) continue;
-
-        std::istringstream readLine;
-        readLine.str ( dump );
-
-        readLine >> lineID;
-
-        if ( lineID == "SuperX3" )
-        {
-            readLine >> detID;
-
-            detID = lineID + " " + detID;
-
-            int posInFile = readFile.tellg();
-
-            cout << "Found " << detID << " at position " << posInFile << " in input file..." << endl;
-
-            std::getline ( readFile, dump );
-
-            readLine.clear();
-            readLine.str ( dump );
-
-            readLine >> lineID;
-        }
-
-
-        auto itr = resStripsCalMap.find ( detID );
-
-        if ( lineID == "Res." )
-        {
-            readLine >> dummy >> stripID;
-
-            unsigned short stripNbr = std::stoul ( stripID.substr ( 1 ) );
-
-            double xinter, yinter, slope_gm, slope_encal, pos_left_edge, pos_right_edge;
-
-            readLine >> xinter >> yinter >> slope_gm >> slope_encal >> pos_left_edge >> pos_right_edge;
-
-            InitializeCalMapKey ( detID, stripNbr );
-
-            cout << "Read the following values for strip #" << stripNbr << ": " << xinter << " / " <<  yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge << " / " << pos_right_edge << endl;
-
-            vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
-
-            if ( readCal->at ( 0 ) == -100 ) readCal->at ( 0 ) = xinter == -100 ? readCal->at ( 0 ) : xinter;
-            if ( readCal->at ( 1 ) == -100 ) readCal->at ( 1 ) = yinter == -100 ? readCal->at ( 1 ) : yinter;
-            if ( readCal->at ( 2 ) == -100 ) readCal->at ( 2 ) = slope_gm == -100 ? readCal->at ( 2 ) : slope_gm;
-            if ( readCal->at ( 3 ) == -100 ) readCal->at ( 3 ) = slope_encal == -100 ? readCal->at ( 3 ) : slope_encal;
-            if ( readCal->at ( 4 ) == -100 ) readCal->at ( 4 ) = pos_left_edge == -100 ? readCal->at ( 4 ) : pos_left_edge;
-            if ( readCal->at ( 5 ) == -100 ) readCal->at ( 5 ) = pos_right_edge == -100 ? readCal->at ( 5 ) : pos_right_edge;
-
-            cout << "New values: " << readCal->at ( 0 ) << " / " <<  readCal->at ( 1 ) << " / " << readCal->at ( 2 ) << " / " << readCal->at ( 3 ) << " / " << readCal->at ( 4 ) << " / " << readCal->at ( 5 ) << endl;
-        }
-    }
-
-    return true;
+	return GetCornersCoordinates(can, calMapKey, strip, refEnergy1);
 }
 
-void GoddessCalib::WriteResCalResults ( string fileName, string mode )
+bool GoddessCalib::DumpFileToResCalMap(string fileName)
 {
-    if ( mode == "update" )
-    {
-        if ( DumpFileToResCalMap ( fileName.c_str() ) ) remove ( fileName.c_str() );
-    }
+	std::ifstream readFile(fileName.c_str());
 
-    std::ofstream outStream ( fileName.c_str() );
+	if (!readFile.is_open())
+	{
+		cerr << "Failed to open file " << fileName << " for previous calibration reading" << endl;
+		return false;
+	}
 
-    outStream << "Columns are: \"Strip #\"     \"Offset X\"     \"Offset Y\"     \"Slope (gain match)\"    \"Slope (energy calibration)\"     \"Left Edge Relative Pos.\"     \"Right edge Relative Pos.\"\n";
+	string dump;
 
-    for ( auto itr = resStripsCalMap.begin(); itr != resStripsCalMap.end(); itr++ )
-    {
-        outStream << "\n" << itr->first << "\n";
+	string lineID, detID, stripID, dummy;
 
-        for ( auto stripItr = itr->second.begin(); stripItr != itr->second.end(); stripItr++ )
-        {
-            outStream << "Res. Strip #" << stripItr->first << "   " << stripItr->second[0] << "   " << stripItr->second[1] << "   " << stripItr->second[2] << "   " << stripItr->second[3];
-            outStream << "   " << stripItr->second[4] << "   " << stripItr->second[5] << "\n";
-        }
-    }
+	cout << "Reading " << fileName << "..." << endl;
 
-    auto time_now = std::chrono::system_clock::now();
+	while (std::getline(readFile, dump))
+	{
+		if (dump.empty()) continue;
 
-    auto ctime_now = std::chrono::system_clock::to_time_t ( time_now );
+		std::istringstream readLine;
+		readLine.str(dump);
 
-    string timeAndDate = std::ctime ( &ctime_now );
+		readLine >> lineID;
 
-    std::size_t spacePos, charPos;
+		if (lineID == "SuperX3")
+		{
+			readLine >> detID;
 
-    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v" );
+			detID = lineID + " " + detID;
 
-    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
-    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+			int posInFile = readFile.tellg();
 
-    string month = timeAndDate.substr ( charPos, spacePos - charPos );
+			cout << "Found " << detID << " at position " << posInFile << " in input file..." << endl;
 
-    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
-    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+			std::getline(readFile, dump);
 
-    string dayNum = timeAndDate.substr ( charPos, spacePos - charPos );
+			readLine.clear();
+			readLine.str(dump);
 
-    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
-    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+			readLine >> lineID;
+		}
 
-    string timeOfDay = timeAndDate.substr ( charPos, spacePos - charPos );
-    timeOfDay = FindAndReplaceInString ( timeOfDay, ":", "_" );
+		auto itr = resStripsCalMap.find(detID);
 
-    charPos = timeAndDate.find_first_not_of ( " \b\n\r\t\v", spacePos );
-    spacePos = timeAndDate.find_first_of ( " \b\n\r\t\v", charPos );
+		if (lineID == "Res.")
+		{
+			readLine >> dummy >> stripID;
 
-    string year = timeAndDate.substr ( charPos, spacePos - charPos );
+			unsigned short stripNbr = std::stoul(stripID.substr(1));
 
-    //     string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + "_at_" + timeOfDay + ".root";
-    string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + ".root";
+			double xinter, yinter, slope_gm, slope_encal, pos_left_edge, pos_right_edge;
 
-    TFile* grFile = new TFile ( graphFileName.c_str(), "update" );
+			readLine >> xinter >> yinter >> slope_gm >> slope_encal >> pos_left_edge >> pos_right_edge;
 
-    for ( auto itr = enShiftVsPosGraphs.begin(); itr != enShiftVsPosGraphs.end(); itr++ )
-    {
-        grFile->cd();
+			InitializeCalMapKey(detID, stripNbr);
 
-        if ( grFile->FindObjectAny ( itr->first.c_str() ) != nullptr )
-        {
-            string toDelete = itr->first + ";*";
+			cout << "Read the following values for strip #" << stripNbr << ": " << xinter << " / " << yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge
+					<< " / " << pos_right_edge << endl;
 
-            grFile->Delete ( toDelete.c_str() );
-        }
+			vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
 
-        if ( !std::isnan ( itr->second->GetXaxis()->GetXmin() ) && !std::isnan ( itr->second->GetXaxis()->GetXmax() ) )
-        {
-            if ( itr->first.find ( "_jump_at_" ) != string::npos )
-            {
-                if ( grFile->FindObjectAny ( "jumps" ) == nullptr ) grFile->mkdir ( "jumps" );
+			if (readCal->at(0) == -100) readCal->at(0) = xinter == -100 ? readCal->at(0) : xinter;
+			if (readCal->at(1) == -100) readCal->at(1) = yinter == -100 ? readCal->at(1) : yinter;
+			if (readCal->at(2) == -100) readCal->at(2) = slope_gm == -100 ? readCal->at(2) : slope_gm;
+			if (readCal->at(3) == -100) readCal->at(3) = slope_encal == -100 ? readCal->at(3) : slope_encal;
+			if (readCal->at(4) == -100) readCal->at(4) = pos_left_edge == -100 ? readCal->at(4) : pos_left_edge;
+			if (readCal->at(5) == -100) readCal->at(5) = pos_right_edge == -100 ? readCal->at(5) : pos_right_edge;
 
-                grFile->cd ( "/jumps" );
-            }
+			cout << "New values: " << readCal->at(0) << " / " << readCal->at(1) << " / " << readCal->at(2) << " / " << readCal->at(3) << " / " << readCal->at(4) << " / "
+					<< readCal->at(5) << endl;
+		}
+	}
 
-            itr->second->Write();
-        }
-    }
-
-    grFile->Close();
-
-    return;
+	return true;
 }
 
-bool GoddessCalib::UpdateParamsInConf ( string configFile, string detType, bool invertContactMidDet, string mode )
+void GoddessCalib::WriteResCalResults(string fileName, string mode)
 {
-    std::ifstream readFile ( configFile.c_str() );
+	if (mode == "update")
+	{
+		if (DumpFileToResCalMap(fileName.c_str())) remove(fileName.c_str());
+	}
 
-    if ( !readFile.is_open() )
-    {
-        cerr << "Failed to open input file " << configFile << endl;
-        return false;
-    }
+	std::ofstream outStream(fileName.c_str());
+	outStream
+			<< "Columns are: \"Strip #\"     \"Offset X\"     \"Offset Y\"     \"Slope (gain match)\"    \"Slope (energy calibration)\"     \"Left Edge Relative Pos.\"     \"Right edge Relative Pos.\"\n";
 
-    string path = configFile.substr ( 0, configFile.find_last_of ( "/" ) );
+	for (auto itr = resStripsCalMap.begin(); itr != resStripsCalMap.end(); itr++)
+	{
+		outStream << "\n" << itr->first << "\n";
 
-    int foundExt = configFile.find ( "." );
+		for (auto stripItr = itr->second.begin(); stripItr != itr->second.end(); stripItr++)
+		{
+			outStream << "Res. Strip #" << stripItr->first << "   " << stripItr->second[0] << "   " << stripItr->second[1] << "   " << stripItr->second[2] << "   "
+					<< stripItr->second[3];
+			outStream << "   " << stripItr->second[4] << "   " << stripItr->second[5] << "\n";
+		}
+	}
 
-    string newName = configFile;
-    newName.insert ( foundExt, "_new" );
+	auto time_now = std::chrono::system_clock::now();
 
-    std::ofstream outStream ( newName.c_str() );
+	auto ctime_now = std::chrono::system_clock::to_time_t(time_now);
 
-    if ( !outStream.is_open() )
-    {
-        cerr << "Failed to open output file " << configFile << endl;
-        return false;
-    }
+	string timeAndDate = std::ctime(&ctime_now);
 
-    string dump;
+	std::size_t spacePos, charPos;
 
-    string lineID, detID, stripID, dummy;
+	spacePos = timeAndDate.find_first_of(" \b\n\r\t\v");
 
-    cout << "Reading " << configFile << "..." << endl;
+	charPos = timeAndDate.find_first_not_of(" \b\n\r\t\v", spacePos);
+	spacePos = timeAndDate.find_first_of(" \b\n\r\t\v", charPos);
 
-    while ( std::getline ( readFile, dump ) )
-    {
-        std::istringstream readLine;
-        readLine.str ( dump );
+	string month = timeAndDate.substr(charPos, spacePos - charPos);
 
-        readLine >> lineID;
+	charPos = timeAndDate.find_first_not_of(" \b\n\r\t\v", spacePos);
+	spacePos = timeAndDate.find_first_of(" \b\n\r\t\v", charPos);
 
-        if ( lineID != detType )
-        {
-            outStream << dump << "\n";
-            continue;
-        }
+	string dayNum = timeAndDate.substr(charPos, spacePos - charPos);
 
-        else
-        {
-            outStream << dump << "\n";
+	charPos = timeAndDate.find_first_not_of(" \b\n\r\t\v", spacePos);
+	spacePos = timeAndDate.find_first_of(" \b\n\r\t\v", charPos);
 
-            readLine >> dummy >> detID;
+	string timeOfDay = timeAndDate.substr(charPos, spacePos - charPos);
+	timeOfDay = FindAndReplaceInString(timeOfDay, ":", "_");
 
-            //             int posInFile = readFile.tellg();
+	charPos = timeAndDate.find_first_not_of(" \b\n\r\t\v", spacePos);
+	spacePos = timeAndDate.find_first_of(" \b\n\r\t\v", charPos);
 
-            cout << "Found a " << detType << " entry: " << detID << endl;
+	string year = timeAndDate.substr(charPos, spacePos - charPos);
 
-            std::getline ( readFile, dump );
-            outStream << dump << "\n";
+	//     string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + "_at_" + timeOfDay + ".root";
+	string graphFileName = "EnShift_vs_Pos_" + dayNum + "_" + month + "_" + year + ".root";
 
-            if ( detType == "superX3" || detType == "QQQ5" )
-            {
-                std::getline ( readFile, dump );
-                outStream << dump << "\n";
-            }
+	TFile* grFile = new TFile(graphFileName.c_str(), "update");
 
-            if ( detType == "superX3" )
-            {
-                string detKey = "SuperX3 " + detID.substr ( 0,detID.find ( "-" ) );
+	for (auto itr = enShiftVsPosGraphs.begin(); itr != enShiftVsPosGraphs.end(); itr++)
+	{
+		grFile->cd();
 
-                if ( resStripsCalMap.find ( detKey ) != resStripsCalMap.end() )
-                {
-                    for ( int i =0; i < 4; i++ )
-                    {
-                        if ( resStripsCalMap[detKey].find ( i ) != resStripsCalMap[detKey].end() )
-                        {
-                            cout << "Replacing the parameters for strip #" << i << " with the new values..." << endl;
+		if (grFile->FindObjectAny(itr->first.c_str()) != nullptr)
+		{
+			string toDelete = itr->first + ";*";
 
-                            float offNear, offFar, slopeNear, slopeFar, offEnCal, slopeEnCal, pos_left_edge, pos_right_edge;
+			grFile->Delete(toDelete.c_str());
+		}
 
-                            std::getline ( readFile, dump );
-                            readLine.clear();
-                            readLine.str ( dump );
+		if (!std::isnan(itr->second->GetXaxis()->GetXmin()) && !std::isnan(itr->second->GetXaxis()->GetXmax()))
+		{
+			if (itr->first.find("_jump_at_") != string::npos)
+			{
+				if (grFile->FindObjectAny("jumps") == nullptr) grFile->mkdir("jumps");
 
-                            if ( i < 2 || !invertContactMidDet )
-                            {
-                                readLine >> dummy >> dummy>> dummy >> offNear >> slopeNear;
+				grFile->cd("/jumps");
+			}
 
-                                offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
-                                slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
+			itr->second->Write();
+		}
+	}
 
-                                std::getline ( readFile, dump );
-                                readLine.clear();
-                                readLine.str ( dump );
+	grFile->Close();
 
-                                readLine >> dummy >> dummy>> dummy >> offFar >> slopeFar;
-
-                                offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
-
-                                outStream << "enCal p " << i*2 << " " << offNear << " " << slopeNear << "\n";
-                                outStream << "enCal p " << i*2 + 1 << " " << offFar << " " << slopeFar << "\n";
-                            }
-                            else
-                            {
-                                readLine >> dummy >> dummy>> dummy >> offFar >> slopeFar;
-
-                                offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
-
-                                std::getline ( readFile, dump );
-                                readLine.clear();
-                                readLine.str ( dump );
-
-                                readLine >> dummy >> dummy>> dummy >> offNear >> slopeNear;
-
-                                offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
-                                slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
-
-                                outStream << "enCal p " << i*2 << " " << offFar << " " << slopeFar << "\n";
-                                outStream << "enCal p " << i*2 + 1 << " " << offNear << " " << slopeNear << "\n";
-                            }
-
-                            std::getline ( readFile, dump );
-                            readLine.clear();
-                            readLine.str ( dump );
-
-                            readLine >> dummy >> dummy>> dummy >> offEnCal >> slopeEnCal;
-
-                            slopeEnCal = resStripsCalMap[detKey][i][3] != -100 ? resStripsCalMap[detKey][i][3] : slopeEnCal;
-
-                            outStream << "enCal resStrip " << i << " " << offEnCal << " " << slopeEnCal << "\n";
-
-                            std::getline ( readFile, dump );
-                            readLine.clear();
-                            readLine.str ( dump );
-
-                            readLine >> dummy >> dummy>> dummy >> pos_left_edge >> pos_right_edge;
-
-                            pos_left_edge = resStripsCalMap[detKey][i][4] != -100 ? resStripsCalMap[detKey][i][4] : pos_left_edge;
-                            pos_right_edge = resStripsCalMap[detKey][i][5] != -100 ? resStripsCalMap[detKey][i][5] : pos_right_edge;
-
-                            outStream << "posCal resStrip " << i << " " << pos_left_edge << " " << pos_right_edge << "\n";
-                        }
-                        else
-                        {
-                            for ( int j =0; j < 4; j++ )
-                            {
-                                std::getline ( readFile, dump );
-                                outStream << dump << "\n";
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    for ( int i = 0; i < 16; i++ )
-                    {
-                        std::getline ( readFile, dump );
-                        outStream << dump << "\n";
-                    }
-                }
-
-
-                for ( int i = 0; i < 4; i++ )
-                {
-                    std::getline ( readFile, dump );
-                    outStream << dump << "\n";
-                }
-            }
-            else if ( detType == "QQQ5" )
-            {
-                string detKey = "QQQ5 " + detID.substr ( 0,detID.find ( "-" ) );
-
-                if ( endcapsStripsCalMap.find ( detKey ) != endcapsStripsCalMap.end() )
-                {
-                    for ( int i = 0; i < 32; i++ )
-                    {
-                        float offset, slope;
-
-                        std::getline ( readFile, dump );
-                        readLine.clear();
-                        readLine.str ( dump );
-
-                        readLine >> dummy >> dummy>> dummy >> offset >> slope;
-
-                        outStream << "enCal p " << i << " " << offset << " " << slope * ( endcapsStripsCalMap[detKey][i]/100. ) << "\n";
-                    }
-                }
-                else
-                {
-                    for ( int i = 0; i < 16; i++ )
-                    {
-                        std::getline ( readFile, dump );
-                        outStream << dump << "\n";
-                    }
-                }
-
-                for ( int i = 0; i < 4; i++ )
-                {
-                    std::getline ( readFile, dump );
-                    outStream << dump << "\n";
-                }
-            }
-        }
-    }
-
-    readFile.close();
-    outStream.close();
-
-    if ( mode == "overwrite" )
-    {
-        remove ( configFile.c_str() );
-        rename ( newName.c_str(), configFile.c_str() );
-    }
-
-    return true;
+	return;
 }
 
-TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TChain* chain, string varToPlot, unsigned short sector, unsigned short strip, string conditions )
+bool GoddessCalib::UpdateParamsInConf(string configFile, string detType, bool invertContactMidDet, string mode)
 {
-    //     cout<<"button pushed"<<endl;
+	std::ifstream readFile(configFile.c_str());
 
-    std::size_t upStreamCondPos = conditions.find ( "si.isUpstream" );
+	if (!readFile.is_open())
+	{
+		cerr << "Failed to open input file " << configFile << endl;
+		return false;
+	}
 
-    string upStreamCond = "U";
+	string path = configFile.substr(0, configFile.find_last_of("/"));
 
-    if ( upStreamCondPos == string::npos )
-    {
-        cerr << "isUpstream condition missing..." << endl;
-        return 0;
-    }
+	int foundExt = configFile.find(".");
 
-    if ( conditions[upStreamCondPos-1] == '!' ) upStreamCond = "D";
+	string newName = configFile;
+	newName.insert(foundExt, "_new");
 
-    cout << "Plotting sector #" << sector << " strip #" << strip << "..." << endl;
+	std::ofstream outStream(newName.c_str());
 
-    chain->Draw ( Form ( "%s", varToPlot.c_str() ), Form ( "%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip ), "colz" );
+	if (!outStream.is_open())
+	{
+		cerr << "Failed to open output file " << configFile << endl;
+		return false;
+	}
 
-    int binnum;
-    int starthere;
-    int endhere;
+	string dump;
 
-    if ( sector < 6 && sector != 0 )
-    {
-        binnum = 2000;
-        starthere = 0;
-        endhere = 150000;
-    }
-    if ( sector > 6 || sector == 0 )
-    {
-        binnum = 400;
-        starthere = 0;
-        endhere = 2000;
-    }
+	string lineID, detID, stripID, dummy;
 
-    TH2F* TH2Fplot = new TH2F ( "SX3EnCal","SX3 Energy Calibrations", binnum, starthere, endhere, binnum, starthere, endhere );
-    //TH2Fplot = ( TH2F* ) gPad->GetPrimitive ( "Graph" );
+	cout << "Reading " << configFile << "..." << endl;
 
-    if ( TH2Fplot == nullptr ) return 0;
+	while (std::getline(readFile, dump))
+	{
+		std::istringstream readLine;
+		readLine.str(dump);
 
-    string gName = Form ( "sector%s%d_strip%d", upStreamCond.c_str(), sector, strip );
+		readLine >> lineID;
 
-    TH2Fplot->SetName ( gName.c_str() );
-    TH2Fplot->SetTitle ( gName.c_str() );
+		if (lineID != detType)
+		{
+			outStream << dump << "\n";
+			continue;
+		}
 
-    TFile* f = new TFile ( outFileName.c_str(), "update" );
+		else
+		{
+			outStream << dump << "\n";
 
-    if ( f->FindKey ( gName.c_str() ) != nullptr || f->FindObject ( gName.c_str() ) != nullptr )
-    {
-        string objToDelete = gName + ";*";
-        f->Delete ( objToDelete.c_str() );
-    }
+			readLine >> dummy >> detID;
 
-    f->cd();
+			//             int posInFile = readFile.tellg();
 
-    TH2Fplot->Write();
+			cout << "Found a " << detType << " entry: " << detID << endl;
 
-    f->Close();
+			std::getline(readFile, dump);
+			outStream << dump << "\n";
 
-    resStripsEnCalGraphsMap[Form ( "sector %s%d strip %d", upStreamCond.c_str(), sector, strip )] = TH2Fplot;
+			if (detType == "superX3" || detType == "QQQ5")
+			{
+				std::getline(readFile, dump);
+				outStream << dump << "\n";
+			}
 
-    return TH2Fplot;
+			if (detType == "superX3")
+			{
+				string detKey = "SuperX3 " + detID.substr(0, detID.find("-"));
+
+				if (resStripsCalMap.find(detKey) != resStripsCalMap.end())
+				{
+					for (int i = 0; i < 4; i++)
+					{
+						if (resStripsCalMap[detKey].find(i) != resStripsCalMap[detKey].end())
+						{
+							cout << "Replacing the parameters for strip #" << i << " with the new values..." << endl;
+
+							float offNear, offFar, slopeNear, slopeFar, offEnCal, slopeEnCal, pos_left_edge, pos_right_edge;
+
+							std::getline(readFile, dump);
+							readLine.clear();
+							readLine.str(dump);
+
+							if (i < 2 || !invertContactMidDet)
+							{
+								readLine >> dummy >> dummy >> dummy >> offNear >> slopeNear;
+
+								offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
+								slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
+
+								std::getline(readFile, dump);
+								readLine.clear();
+								readLine.str(dump);
+
+								readLine >> dummy >> dummy >> dummy >> offFar >> slopeFar;
+
+								offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
+
+								outStream << "enCal p " << i * 2 << " " << offNear << " " << slopeNear << "\n";
+								outStream << "enCal p " << i * 2 + 1 << " " << offFar << " " << slopeFar << "\n";
+							}
+							else
+							{
+								readLine >> dummy >> dummy >> dummy >> offFar >> slopeFar;
+
+								offFar = resStripsCalMap[detKey][i][1] != -100 ? resStripsCalMap[detKey][i][1] : offFar;
+
+								std::getline(readFile, dump);
+								readLine.clear();
+								readLine.str(dump);
+
+								readLine >> dummy >> dummy >> dummy >> offNear >> slopeNear;
+
+								offNear = resStripsCalMap[detKey][i][0] != -100 ? resStripsCalMap[detKey][i][0] : offNear;
+								slopeNear = resStripsCalMap[detKey][i][2] != -100 ? resStripsCalMap[detKey][i][2] : slopeNear;
+
+								outStream << "enCal p " << i * 2 << " " << offFar << " " << slopeFar << "\n";
+								outStream << "enCal p " << i * 2 + 1 << " " << offNear << " " << slopeNear << "\n";
+							}
+
+							std::getline(readFile, dump);
+							readLine.clear();
+							readLine.str(dump);
+
+							readLine >> dummy >> dummy >> dummy >> offEnCal >> slopeEnCal;
+
+							slopeEnCal = resStripsCalMap[detKey][i][3] != -100 ? resStripsCalMap[detKey][i][3] : slopeEnCal;
+
+							outStream << "enCal resStrip " << i << " " << offEnCal << " " << slopeEnCal << "\n";
+
+							std::getline(readFile, dump);
+							readLine.clear();
+							readLine.str(dump);
+
+							readLine >> dummy >> dummy >> dummy >> pos_left_edge >> pos_right_edge;
+
+							pos_left_edge = resStripsCalMap[detKey][i][4] != -100 ? resStripsCalMap[detKey][i][4] : pos_left_edge;
+							pos_right_edge = resStripsCalMap[detKey][i][5] != -100 ? resStripsCalMap[detKey][i][5] : pos_right_edge;
+
+							outStream << "posCal resStrip " << i << " " << pos_left_edge << " " << pos_right_edge << "\n";
+						}
+						else
+						{
+							for (int j = 0; j < 4; j++)
+							{
+								std::getline(readFile, dump);
+								outStream << dump << "\n";
+							}
+						}
+					}
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						std::getline(readFile, dump);
+						outStream << dump << "\n";
+					}
+				}
+
+				for (int i = 0; i < 4; i++)
+				{
+					std::getline(readFile, dump);
+					outStream << dump << "\n";
+				}
+			}
+			else if (detType == "QQQ5")
+			{
+				string detKey = "QQQ5 " + detID.substr(0, detID.find("-"));
+
+				if (endcapsStripsCalMap.find(detKey) != endcapsStripsCalMap.end())
+				{
+					for (int i = 0; i < 32; i++)
+					{
+						float offset, slope;
+
+						std::getline(readFile, dump);
+						readLine.clear();
+						readLine.str(dump);
+
+						readLine >> dummy >> dummy >> dummy >> offset >> slope;
+
+						outStream << "enCal p " << i << " " << offset << " " << slope * (endcapsStripsCalMap[detKey][i] / 100.) << "\n";
+					}
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						std::getline(readFile, dump);
+						outStream << dump << "\n";
+					}
+				}
+
+				for (int i = 0; i < 4; i++)
+				{
+					std::getline(readFile, dump);
+					outStream << dump << "\n";
+				}
+			}
+		}
+	}
+
+	readFile.close();
+	outStream.close();
+
+	if (mode == "overwrite")
+	{
+		remove(configFile.c_str());
+		rename(newName.c_str(), configFile.c_str());
+	}
+
+	return true;
 }
 
-void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree ( TChain* chain, long int nentries, bool isUpstream_, vector< int > sectorsList )
+TH2F* GoddessCalib::PlotSX3ResStripCalGraph(TChain* chain, string varToPlot, unsigned short sector, unsigned short strip, string conditions)
 {
-    cout << sectorsList.size() << " sectors will be treated..." << endl;
+	//     cout<<"button pushed"<<endl;
 
-    int sizeOfSectors = sectorsList.size();
+	std::size_t upStreamCondPos = conditions.find("si.isUpstream");
 
-    //     int numberOfGraphs = sizeOfSectors*4;
+	string upStreamCond = "U";
 
-    for ( int i =0; i < sizeOfSectors; i++ )
-    {
-        for ( int j =0; j < 4; j++ )
-        {
-            string grID = Form ( "sector%s%d_strip%d", isUpstream_ ? "U" : "D", sectorsList[i], j );
+	if (upStreamCondPos == string::npos)
+	{
+		cerr << "isUpstream condition missing..." << endl;
+		return 0;
+	}
 
-            cout << "Creating graph " << grID << endl;
+	if (conditions[upStreamCondPos - 1] == '!') upStreamCond = "D";
 
-            int binnum;
-            int starthere;
-            int endhere;
+	cout << "Plotting sector #" << sector << " strip #" << strip << "..." << endl;
 
-            if ( sectorsList[i] <= 6 && sectorsList[i] != 0 )
-            {
-                binnum = 2000;
-                starthere = 0;
-                endhere = 150000;
-            }
-            else if ( sectorsList[i] > 6 || sectorsList[i] == 0 )
-            {
-                binnum = 400;
-                starthere = 0;
-                endhere = 2000;
-            }
+	chain->Draw(Form("%s", varToPlot.c_str()), Form("%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip), "colz");
 
-            TH2F* TH2Fplot = new TH2F ( "SX3EnCal","SX3 Energy Calibrations", binnum, starthere, endhere, binnum, starthere, endhere );
+	int binnum;
+	int starthere;
+	int endhere;
 
-            TH2Fplot->SetName ( grID.c_str() );
-            TH2Fplot->SetTitle ( grID.c_str() );
+	if (sector < 6 && sector != 0)
+	{
+		binnum = 2000;
+		starthere = 0;
+		endhere = 150000;
+	}
+	if (sector > 6 || sector == 0)
+	{
+		binnum = 400;
+		starthere = 0;
+		endhere = 2000;
+	}
 
-            resStripsEnCalGraphsMap[Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorsList[i], j )] = TH2Fplot;
+	TH2F* TH2Fplot = new TH2F("SX3EnCal", "SX3 Energy Calibrations", binnum, starthere, endhere, binnum, starthere, endhere);
+	//TH2Fplot = ( TH2F* ) gPad->GetPrimitive ( "Graph" );
 
-            //             cout << "Stored graph in the TH2F map..." << endl;
-        }
-    }
+	if (TH2Fplot == nullptr) return 0;
 
-    if ( nentries == 0 || nentries > chain->GetEntries() ) nentries = chain->GetEntries();
+	string gName = Form("sector%s%d_strip%d", upStreamCond.c_str(), sector, strip);
 
-    cout << nentries << " entries will be treated" <<endl;
+	TH2Fplot->SetName(gName.c_str());
+	TH2Fplot->SetTitle(gName.c_str());
 
-    vector<SiDataDetailed>* siInfo = new vector<SiDataDetailed>();
-    siInfo->clear();
+	TFile* f = new TFile(outFileName.c_str(), "update");
 
-    cout << "Preparing the readout of the tree..." << endl;
+	if (f->FindKey(gName.c_str()) != nullptr || f->FindObject(gName.c_str()) != nullptr)
+	{
+		string objToDelete = gName + ";*";
+		f->Delete(objToDelete.c_str());
+	}
 
-    chain->SetBranchAddress ( "si", &siInfo );
+	f->cd();
 
-    //     cout << "Linked the \"si\" branch to a SiDataDetailed object..." << endl;
+	TH2Fplot->Write();
 
-    for ( int i = 0; i < nentries; i++ )
-    {
-        chain->GetEntry ( i );
+	f->Close();
 
-        if ( i%10000 == 0 )
-        {
-            cout << "Treated " << std::setw ( 9 ) << i << " / " << nentries;
-            std::cout << " entries ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 5 ) << ( float ) i/nentries * 100. << "% )\r" << std::flush;
-        }
+	resStripsEnCalGraphsMap[Form("sector %s%d strip %d", upStreamCond.c_str(), sector, strip)] = TH2Fplot;
 
-        if ( siInfo->size() == 0 ) continue;
-
-        for ( unsigned short j = 0; j < siInfo->size(); j++ )
-        {
-            int sectorNbr = -1;
-
-            for ( int k = 0; k < sizeOfSectors; k++ )
-            {
-                if ( siInfo->at ( j ).sector == sectorsList[k] )
-                {
-                    sectorNbr = siInfo->at ( j ).sector;
-                    break;
-                }
-            }
-
-            if ( sectorNbr == -1 ) continue;
-
-            if ( siInfo->at ( j ).isBarrel && siInfo->at ( j ).isUpstream == isUpstream_ && siInfo->at ( j ).E1.en.p.size() > 0 )
-            {
-                for ( unsigned short st = 0; st < siInfo->at ( j ).E1.en.p.size(); st++ )
-                {
-                    string grID = Form ( "sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorNbr, siInfo->at ( j ).E1.strip.p[st] );
-
-                    TH2F* gr = resStripsEnCalGraphsMap[grID];
-
-                    gStyle->SetPalette ( kRainBow );
-
-                    gr->Fill ( siInfo->at ( j ).E1.en.p[st] , siInfo->at ( j ).E1.en.n[st] ) ;
-                }
-            }
-        }
-    }
-
-    cout << endl;
-
-    TFile* f = new TFile ( outFileName.c_str(), "update" );
-
-    f->cd();
-
-    for ( auto itr = resStripsEnCalGraphsMap.begin(); itr != resStripsEnCalGraphsMap.end(); itr++ )
-    {
-        TH2F* gr = itr->second;
-
-        if ( f->FindKey ( gr->GetName() ) != NULL || f->FindObject ( gr->GetName() ) != NULL )
-        {
-            string objToDelete = gr->GetName();
-            objToDelete += ";*";
-            f->Delete ( objToDelete.c_str() );
-        }
-
-        cout << "Writing " << gr->GetName() << " to file..." << endl;
-
-        gr->Write();
-    }
-
-    f->Close();
-
-    return;
+	return TH2Fplot;
 }
 
-TGraph* GoddessCalib::DrawPosCalGraph ( TChain* chain, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_ )
+void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree(TChain* chain, long int nentries, bool isUpstream_, vector<int> sectorsList)
 {
-    TGraph* newGraph = new TGraph();
+	cout << sectorsList.size() << " sectors will be treated..." << endl;
 
-    DrawPosCal ( chain, isUpstream_, sector_,strip_, nentries, newGraph );
+	int sizeOfSectors = sectorsList.size();
 
-    newGraph->Draw ( "AP" );
+	//     int numberOfGraphs = sizeOfSectors*4;
 
-    return newGraph;
+	for (int i = 0; i < sizeOfSectors; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			string grID = Form("sector%s%d_strip%d", isUpstream_ ? "U" : "D", sectorsList[i], j);
+
+			cout << "Creating graph " << grID << endl;
+
+			int binnum;
+			int starthere;
+			int endhere;
+
+			if (sectorsList[i] <= 6 && sectorsList[i] != 0)
+			{
+				binnum = 2000;
+				starthere = 0;
+				endhere = 150000;
+			}
+			else if (sectorsList[i] > 6 || sectorsList[i] == 0)
+			{
+				binnum = 400;
+				starthere = 0;
+				endhere = 2000;
+			}
+
+			TH2F* TH2Fplot = new TH2F("SX3EnCal", "SX3 Energy Calibrations", binnum, starthere, endhere, binnum, starthere, endhere);
+
+			TH2Fplot->SetName(grID.c_str());
+			TH2Fplot->SetTitle(grID.c_str());
+
+			resStripsEnCalGraphsMap[Form("sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorsList[i], j)] = TH2Fplot;
+
+			//             cout << "Stored graph in the TH2F map..." << endl;
+		}
+	}
+
+	if (nentries == 0 || nentries > chain->GetEntries()) nentries = chain->GetEntries();
+
+	cout << nentries << " entries will be treated" << endl;
+
+	vector<SiDataDetailed>* siInfo = new vector<SiDataDetailed>();
+	siInfo->clear();
+
+	cout << "Preparing the readout of the tree..." << endl;
+
+	chain->SetBranchAddress("si", &siInfo);
+
+	//     cout << "Linked the \"si\" branch to a SiDataDetailed object..." << endl;
+
+	for (int i = 0; i < nentries; i++)
+	{
+		chain->GetEntry(i);
+
+		if (i % 10000 == 0)
+		{
+			cout << "Treated " << std::setw(9) << i << " / " << nentries;
+			std::cout << " entries ( " << std::fixed << std::setprecision(1) << std::setw(5) << (float) i / nentries * 100. << "% )\r" << std::flush;
+		}
+
+		if (siInfo->size() == 0) continue;
+
+		for (unsigned short j = 0; j < siInfo->size(); j++)
+		{
+			int sectorNbr = -1;
+
+			for (int k = 0; k < sizeOfSectors; k++)
+			{
+				if (siInfo->at(j).sector == sectorsList[k])
+				{
+					sectorNbr = siInfo->at(j).sector;
+					break;
+				}
+			}
+
+			if (sectorNbr == -1) continue;
+
+			if (siInfo->at(j).isBarrel && siInfo->at(j).isUpstream == isUpstream_ && siInfo->at(j).E1.en.p.size() > 0)
+			{
+				for (unsigned short st = 0; st < siInfo->at(j).E1.en.p.size(); st++)
+				{
+					string grID = Form("sector %s%d strip %d", isUpstream_ ? "U" : "D", sectorNbr, siInfo->at(j).E1.strip.p[st]);
+
+					TH2F* gr = resStripsEnCalGraphsMap[grID];
+
+					gStyle->SetPalette(kRainBow);
+
+					gr->Fill(siInfo->at(j).E1.en.p[st], siInfo->at(j).E1.en.n[st]);
+				}
+			}
+		}
+	}
+
+	cout << endl;
+
+	TFile* f = new TFile(outFileName.c_str(), "update");
+
+	f->cd();
+
+	for (auto itr = resStripsEnCalGraphsMap.begin(); itr != resStripsEnCalGraphsMap.end(); itr++)
+	{
+		TH2F* gr = itr->second;
+
+		if (f->FindKey(gr->GetName()) != NULL || f->FindObject(gr->GetName()) != NULL)
+		{
+			string objToDelete = gr->GetName();
+			objToDelete += ";*";
+			f->Delete(objToDelete.c_str());
+		}
+
+		cout << "Writing " << gr->GetName() << " to file..." << endl;
+
+		gr->Write();
+	}
+
+	f->Close();
+
+	return;
 }
 
-TH2F* GoddessCalib::DrawPosCalHist ( TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
-                                     string drawOpts, unsigned short sector_, unsigned short strip_ )
+TGraph* GoddessCalib::DrawPosCalGraph(TChain* chain, bool isUpstream_, int nentries, unsigned short sector_, unsigned short strip_)
 {
-    string hname = Form ( "hPosCal_sector%s%d_strip%d", isUpstream_ ? "U" : "D", sector_, strip_ );
+	TGraph* newGraph = new TGraph();
 
-    string isUpstreamID = isUpstream_ ? "U" : "D";
-    string hKey = Form ( "%s%d_%d", isUpstreamID.c_str(), sector_, strip_ );
-    resStripsPosCalGraphsMap[hKey.c_str()] = new TH2F ( hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY );
+	DrawPosCal(chain, isUpstream_, sector_, strip_, nentries, newGraph);
 
-    DrawPosCal ( chain, isUpstream_, sector_,strip_, nentries, resStripsPosCalGraphsMap[hKey.c_str()] );
+	newGraph->Draw("AP");
 
-    resStripsPosCalGraphsMap[hKey.c_str()]->Draw ( drawOpts.c_str() );
-
-    return resStripsPosCalGraphsMap[hKey.c_str()];
+	return newGraph;
 }
 
-std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
-        int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName )
+TH2F* GoddessCalib::DrawPosCalHist(TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
+		unsigned short sector_, unsigned short strip_)
 {
-    return DrawPosCalHistBatch ( chain, isUpstream_, nentries,nbinsX,binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_, configFileName );
+	string hname = Form("hPosCal_sector%s%d_strip%d", isUpstream_ ? "U" : "D", sector_, strip_);
+
+	string isUpstreamID = isUpstream_ ? "U" : "D";
+	string hKey = Form("%s%d_%d", isUpstreamID.c_str(), sector_, strip_);
+	resStripsPosCalGraphsMap[hKey.c_str()] = new TH2F(hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY);
+
+	DrawPosCal(chain, isUpstream_, sector_, strip_, nentries, resStripsPosCalGraphsMap[hKey.c_str()]);
+
+	resStripsPosCalGraphsMap[hKey.c_str()]->Draw(drawOpts.c_str());
+
+	return resStripsPosCalGraphsMap[hKey.c_str()];
 }
 
-std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch ( TChain* chain, bool isUpstream_, int nentries,
-        int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY, float binMaxY, string drawOpts, vector< int > sectorsList, string configFileName )
+std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
+		string drawOpts, unsigned short sector_, string configFileName)
 {
-    drawOpts = ""; // to avoid useless warning about that variable not being used for the moment...
-
-    string isUpstreamID = isUpstream_ ? "U" : "D";
-
-    for ( unsigned short i = 0; i < sectorsList.size(); i++ )
-    {
-        for ( int j = 0; j < 4; j++ )
-        {
-            string hname = Form ( "%s%d_%d", isUpstreamID.c_str(), sectorsList[i], j );
-
-            cout << "Initializing graph for sector " << isUpstreamID << sectorsList[i] << " strip " << j << " and storing it in the map at key \"" << hname << "\"" << endl;
-
-            resStripsPosCalGraphsMap[hname.c_str()] = new TH2F ( hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY );
-        }
-    }
-
-    vector<SiDataDetailed>* siDataVect = new vector<SiDataDetailed>();
-    siDataVect->clear();
-
-    chain->SetBranchAddress ( "si", &siDataVect );
-
-    if ( nentries > chain->GetEntries() || nentries == 0 ) nentries = chain->GetEntries();
-
-    if ( !configFileName.empty() )
-    {
-        ReadConfigCalPars ( configFileName );
-    }
-
-    //     string qqq5Ids[4] = {"A", "B", "C", "D"};
-
-    for ( int i = 0; i < nentries; i++ )
-    {
-        chain->GetEntry ( i );
-
-        if ( i%10000 == 0 )
-        {
-            cout << "Treated " << std::setw ( 9 ) << i << " / " << nentries;
-            cout << " entries ( " << std::fixed << std::setprecision ( 1 ) << std::setw ( 5 ) << ( float ) i/nentries * 100. << " % )\r" << std::flush;
-        }
-
-        if ( siDataVect->size() == 0 ) continue;
-
-        for ( unsigned short j = 0; j < siDataVect->size(); j++ )
-        {
-            SiDataDetailed siData = siDataVect->at ( j );
-
-            if ( siData.isBarrel && siData.isUpstream == isUpstream_ && siData.E1.en.p.size() > 0 && siData.E1.en.n.size() > 0 )
-            {
-                int sect = -1;
-
-                for ( unsigned short sec = 0; sec < sectorsList.size(); sec++ )
-                {
-                    if ( siData.sector == sectorsList[sec] )
-                    {
-                        sect = siData.sector;
-                        break;
-                    }
-                }
-
-                if ( sect == -1 ) continue;
-
-                if ( configFileName.empty() )
-                {
-                    for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
-                    {
-                        TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k] )];
-                        hh->Fill ( ( siData.E1.en.p[k] - siData.E1.en.n[k] ) / ( siData.E1.en.p[k] + siData.E1.en.n[k] ), ( siData.E1.en.p[k] + siData.E1.en.n[k] ) );
-                    }
-                }
-                else
-                {
-                    string detID = siData.isUpstream ? "U" : "D";
-
-                    string detKey = Form ( "SuperX3 %s%d", detID.c_str(), siData.sector );
-
-                    for ( unsigned short k = 0; k < siData.E1.en.p.size(); k++ )
-                    {
-                        int strip = siData.E1.strip.p[k];
-
-                        float offNear, slopeNear, offFar, slopeFar, enCalPar;
-
-                        string calParKey = detKey + " front " + Form ( "%d", strip );
-
-                        enCalPar = configCalPars[calParKey].second;
-
-                        calParKey = detKey + " near " + Form ( "%d", strip );
-
-                        offNear = configCalPars[calParKey].first;
-                        slopeNear = configCalPars[calParKey].second;
-
-                        calParKey = detKey + " far " + Form ( "%d", strip );
-
-                        offFar = configCalPars[calParKey].first;
-                        slopeFar = configCalPars[calParKey].second;
-
-                        float nearCalEn = siData.E1.en.p[k] * slopeNear - offNear ;
-                        float farCalEn = siData.E1.en.n[k] * slopeFar - offFar;
-
-                        float totCalEn = ( nearCalEn + farCalEn ) * enCalPar;
-
-                        TH2F* hh = resStripsPosCalGraphsMap[Form ( "%s%d_%d", isUpstreamID.c_str(), sect, strip )];
-                        hh->Fill ( ( nearCalEn - farCalEn ) / ( nearCalEn + farCalEn ), totCalEn );
-                    }
-                }
-            }
-        }
-    }
-
-    cout << endl;
-
-    WritePosCalHistsToFile ( );
-
-    return resStripsPosCalGraphsMap;
+	return DrawPosCalHistBatch(chain, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_, configFileName);
 }
 
-void GoddessCalib::DrawSX3EnCalGraph ( bool isUpstream, short unsigned int sector, short unsigned int strip )
+std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool isUpstream_, int nentries, int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY,
+		float binMaxY, string drawOpts, vector<int> sectorsList, string configFileName)
 {
-    string isUpstreamID = isUpstream ? "U" : "D";
-    string hKey = Form ( "sector %s%d strip %d", isUpstreamID.c_str(), sector, strip );
+	drawOpts = ""; // to avoid useless warning about that variable not being used for the moment...
 
-    auto itr = resStripsEnCalGraphsMap.find ( hKey );
+	string isUpstreamID = isUpstream_ ? "U" : "D";
 
-    if ( itr != resStripsEnCalGraphsMap.end() )
-    {
-        itr->second->Draw ( "AP" );
-    }
-    else
-        cerr << "This graph has not been generated yet!" << endl;
+	for (unsigned short i = 0; i < sectorsList.size(); i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			string hname = Form("%s%d_%d", isUpstreamID.c_str(), sectorsList[i], j);
+
+			cout << "Initializing graph for sector " << isUpstreamID << sectorsList[i] << " strip " << j << " and storing it in the map at key \"" << hname << "\"" << endl;
+
+			resStripsPosCalGraphsMap[hname.c_str()] = new TH2F(hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY);
+		}
+	}
+
+	vector<SiDataDetailed>* siDataVect = new vector<SiDataDetailed>();
+	siDataVect->clear();
+
+	chain->SetBranchAddress("si", &siDataVect);
+
+	if (nentries > chain->GetEntries() || nentries == 0) nentries = chain->GetEntries();
+
+	if (!configFileName.empty())
+	{
+		ReadConfigCalPars(configFileName);
+	}
+
+	//     string qqq5Ids[4] = {"A", "B", "C", "D"};
+
+	for (int i = 0; i < nentries; i++)
+	{
+		chain->GetEntry(i);
+
+		if (i % 10000 == 0)
+		{
+			cout << "Treated " << std::setw(9) << i << " / " << nentries;
+			cout << " entries ( " << std::fixed << std::setprecision(1) << std::setw(5) << (float) i / nentries * 100. << " % )\r" << std::flush;
+		}
+
+		if (siDataVect->size() == 0) continue;
+
+		for (unsigned short j = 0; j < siDataVect->size(); j++)
+		{
+			SiDataDetailed siData = siDataVect->at(j);
+
+			if (siData.isBarrel && siData.isUpstream == isUpstream_ && siData.E1.en.p.size() > 0 && siData.E1.en.n.size() > 0)
+			{
+				int sect = -1;
+
+				for (unsigned short sec = 0; sec < sectorsList.size(); sec++)
+				{
+					if (siData.sector == sectorsList[sec])
+					{
+						sect = siData.sector;
+						break;
+					}
+				}
+
+				if (sect == -1) continue;
+
+				if (configFileName.empty())
+				{
+					for (unsigned short k = 0; k < siData.E1.en.p.size(); k++)
+					{
+						TH2F* hh = resStripsPosCalGraphsMap[Form("%s%d_%d", isUpstreamID.c_str(), sect, siData.E1.strip.p[k])];
+						hh->Fill((siData.E1.en.p[k] - siData.E1.en.n[k]) / (siData.E1.en.p[k] + siData.E1.en.n[k]), (siData.E1.en.p[k] + siData.E1.en.n[k]));
+					}
+				}
+				else
+				{
+					string detID = siData.isUpstream ? "U" : "D";
+
+					string detKey = Form("SuperX3 %s%d", detID.c_str(), siData.sector);
+
+					for (unsigned short k = 0; k < siData.E1.en.p.size(); k++)
+					{
+						int strip = siData.E1.strip.p[k];
+
+						float offNear, slopeNear, offFar, slopeFar, enCalPar;
+
+						string calParKey = detKey + " front " + Form("%d", strip);
+
+						enCalPar = configCalPars[calParKey].second;
+
+						calParKey = detKey + " near " + Form("%d", strip);
+
+						offNear = configCalPars[calParKey].first;
+						slopeNear = configCalPars[calParKey].second;
+
+						calParKey = detKey + " far " + Form("%d", strip);
+
+						offFar = configCalPars[calParKey].first;
+						slopeFar = configCalPars[calParKey].second;
+
+						float nearCalEn = siData.E1.en.p[k] * slopeNear - offNear;
+						float farCalEn = siData.E1.en.n[k] * slopeFar - offFar;
+
+						float totCalEn = (nearCalEn + farCalEn) * enCalPar;
+
+						TH2F* hh = resStripsPosCalGraphsMap[Form("%s%d_%d", isUpstreamID.c_str(), sect, strip)];
+						hh->Fill((nearCalEn - farCalEn) / (nearCalEn + farCalEn), totCalEn);
+					}
+				}
+			}
+		}
+	}
+
+	cout << endl;
+
+	WritePosCalHistsToFile();
+
+	return resStripsPosCalGraphsMap;
 }
 
-void GoddessCalib::DrawSX3PosCalHist ( bool isUpstream, short unsigned int sector, short unsigned int strip, string drawOpts )
+void GoddessCalib::DrawSX3EnCalGraph(bool isUpstream, short unsigned int sector, short unsigned int strip)
 {
-    string isUpstreamID = isUpstream ? "U" : "D";
-    string hKey = Form ( "%s%d_%d", isUpstreamID.c_str(), sector, strip );
+	string isUpstreamID = isUpstream ? "U" : "D";
+	string hKey = Form("sector %s%d strip %d", isUpstreamID.c_str(), sector, strip);
 
-    auto itr = resStripsPosCalGraphsMap.find ( hKey );
+	auto itr = resStripsEnCalGraphsMap.find(hKey);
 
-    if ( itr != resStripsPosCalGraphsMap.end() )
-    {
-        itr->second->Draw ( drawOpts.c_str() );
-    }
-    else
-        cerr << "This graph has not been generated yet!" << endl;
+	if (itr != resStripsEnCalGraphsMap.end())
+	{
+		itr->second->Draw("AP");
+	}
+	else cerr << "This graph has not been generated yet!" << endl;
 }
 
-void GoddessCalib::WritePosCalHistsToFile ( )
+void GoddessCalib::DrawSX3PosCalHist(bool isUpstream, short unsigned int sector, short unsigned int strip, string drawOpts)
 {
-    TFile* f = new TFile ( outFileName.c_str(), "update" );
+	string isUpstreamID = isUpstream ? "U" : "D";
+	string hKey = Form("%s%d_%d", isUpstreamID.c_str(), sector, strip);
 
-    for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
-    {
-        if ( f->FindKey ( itr->second->GetName() ) != nullptr || f->FindObject ( itr->second->GetName() ) != nullptr )
-        {
-            string objToDelete = itr->second->GetName();
-            objToDelete += ";*";
-            f->Delete ( objToDelete.c_str() );
-        }
+	auto itr = resStripsPosCalGraphsMap.find(hKey);
 
-        f->cd();
-
-        itr->second->Write();
-    }
-
-    f->Close();
-
-    return;
+	if (itr != resStripsPosCalGraphsMap.end())
+	{
+		itr->second->Draw(drawOpts.c_str());
+	}
+	else cerr << "This graph has not been generated yet!" << endl;
 }
 
-TH2F* GoddessCalib::GetSX3EnCalGraph ( bool isUpstream, short unsigned int sector, short unsigned int strip )
+void GoddessCalib::WritePosCalHistsToFile()
 {
-    string isUpstreamID = isUpstream ? "U" : "D";
-    string hKey = Form ( "sector %s%d strip %d", isUpstreamID.c_str(), sector, strip );
+	TFile* f = new TFile(outFileName.c_str(), "update");
 
-    auto itr = resStripsEnCalGraphsMap.find ( hKey );
+	for (auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++)
+	{
+		if (f->FindKey(itr->second->GetName()) != nullptr || f->FindObject(itr->second->GetName()) != nullptr)
+		{
+			string objToDelete = itr->second->GetName();
+			objToDelete += ";*";
+			f->Delete(objToDelete.c_str());
+		}
 
-    if ( itr != resStripsEnCalGraphsMap.end() )
-    {
-        return itr->second;
-    }
-    else
-    {
-        cerr << "This graph has not been generated yet!" << endl;
-        return 0;
-    }
+		f->cd();
+
+		itr->second->Write();
+	}
+
+	f->Close();
+
+	return;
 }
 
-TH2F* GoddessCalib::GetSX3PosCalHist ( bool isUpstream, short unsigned int sector, short unsigned int strip )
+TH2F* GoddessCalib::GetSX3EnCalGraph(bool isUpstream, short unsigned int sector, short unsigned int strip)
 {
-    string isUpstreamID = isUpstream ? "U" : "D";
-    string hKey = Form ( "%s%d_%d", isUpstreamID.c_str(), sector, strip );
+	string isUpstreamID = isUpstream ? "U" : "D";
+	string hKey = Form("sector %s%d strip %d", isUpstreamID.c_str(), sector, strip);
 
-    auto itr = resStripsPosCalGraphsMap.find ( hKey );
+	auto itr = resStripsEnCalGraphsMap.find(hKey);
 
-    if ( itr != resStripsPosCalGraphsMap.end() )
-    {
-        return itr->second;
-    }
-    else
-    {
-        cerr << "This graph has not been generated yet!" << endl;
-        return 0;
-    }
+	if (itr != resStripsEnCalGraphsMap.end())
+	{
+		return itr->second;
+	}
+	else
+	{
+		cerr << "This graph has not been generated yet!" << endl;
+		return 0;
+	}
 }
 
-int GoddessCalib::GetPosCalEnBinMax ( TH2F* input, double threshold )
+TH2F* GoddessCalib::GetSX3PosCalHist(bool isUpstream, short unsigned int sector, short unsigned int strip)
 {
-    int fstBin = input->GetXaxis()->GetFirst();
-    int lstBin = input->GetXaxis()->GetLast();
+	string isUpstreamID = isUpstream ? "U" : "D";
+	string hKey = Form("%s%d_%d", isUpstreamID.c_str(), sector, strip);
 
-    int binMax = 0;
+	auto itr = resStripsPosCalGraphsMap.find(hKey);
 
-    TH1D* proj = input->ProjectionY ( ( ( string ) "projY_" + input->GetName() ).c_str(), fstBin, lstBin );
-
-    proj->GetXaxis()->SetRangeUser ( threshold, proj->GetBinCenter ( proj->GetXaxis()->GetLast() ) );
-
-    binMax = proj->GetMaximumBin();
-
-    //     cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
-    //     cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
-
-    return binMax;
+	if (itr != resStripsPosCalGraphsMap.end())
+	{
+		return itr->second;
+	}
+	else
+	{
+		cerr << "This graph has not been generated yet!" << endl;
+		return 0;
+	}
 }
 
-TH1D* GoddessCalib::GetPosCalProjX ( TH2F* input, int projCenter, int projWidth )
+int GoddessCalib::GetPosCalEnBinMax(TH2F* input, double threshold)
 {
-    string projName = Form ( "projX_%s_%0.3f_%0.3f", input->GetName(), input->GetYaxis()->GetBinCenter ( projCenter - projWidth/2. ), input->GetYaxis()->GetBinCenter ( projCenter + projWidth/2. ) );
-    string projTitle = Form ( "projX %s [%0.3f to %0.3f]", input->GetName(), input->GetYaxis()->GetBinCenter ( projCenter - projWidth/2. ), input->GetYaxis()->GetBinCenter ( projCenter + projWidth/2. ) );
+	int fstBin = input->GetXaxis()->GetFirst();
+	int lstBin = input->GetXaxis()->GetLast();
 
-    TH1D* proj = input->ProjectionX ( projName.c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
-    proj->SetTitle ( projTitle.c_str() );
+	int binMax = 0;
 
-    return proj;
+	TH1D* proj = input->ProjectionY(((string) "projY_" + input->GetName()).c_str(), fstBin, lstBin);
+
+	proj->GetXaxis()->SetRangeUser(threshold, proj->GetBinCenter(proj->GetXaxis()->GetLast()));
+
+	binMax = proj->GetMaximumBin();
+
+	//     cout << "Found the max at " << proj->GetXaxis()->GetBinCenter ( binMax );
+	//     cout << " (Range: " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetFirst()) << " - " << proj->GetXaxis()->GetBinCenter (proj->GetXaxis()->GetLast()) << ")\n";
+
+	return binMax;
 }
 
-TH1D* GoddessCalib::GetPosCalProjY ( TH2F* input, int projCenter, int projWidth )
+TH1D* GoddessCalib::GetPosCalProjX(TH2F* input, int projCenter, int projWidth)
 {
-    string projName = Form ( "projY_%s_%0.3f_%0.3f", input->GetName(), input->GetXaxis()->GetBinCenter ( projCenter - projWidth/2 ), input->GetXaxis()->GetBinCenter ( projCenter + projWidth/2 ) );
-    string projTitle = Form ( "projY %s [%0.3f to %0.3f]", input->GetName(), input->GetXaxis()->GetBinCenter ( projCenter - projWidth/2 ), input->GetXaxis()->GetBinCenter ( projCenter + projWidth/2 ) );
+	string projName = Form("projX_%s_%0.3f_%0.3f", input->GetName(), input->GetYaxis()->GetBinCenter(projCenter - projWidth / 2.),
+			input->GetYaxis()->GetBinCenter(projCenter + projWidth / 2.));
+	string projTitle = Form("projX %s [%0.3f to %0.3f]", input->GetName(), input->GetYaxis()->GetBinCenter(projCenter - projWidth / 2.),
+			input->GetYaxis()->GetBinCenter(projCenter + projWidth / 2.));
 
-    TH1D* proj = input->ProjectionY ( projName.c_str(), projCenter - projWidth/2, projCenter + projWidth/2 );
-    proj->SetTitle ( projTitle.c_str() );
+	TH1D* proj = input->ProjectionX(projName.c_str(), projCenter - projWidth / 2, projCenter + projWidth / 2);
+	proj->SetTitle(projTitle.c_str());
 
-    return proj;
+	return proj;
 }
 
-
-Double_t flatTopGaussLeft ( Double_t *x, Double_t *par )
+TH1D* GoddessCalib::GetPosCalProjY(TH2F* input, int projCenter, int projWidth)
 {
-    if ( x[0] > par[1] )
-    {
-        return par[3] * ( x[0] - par[1] ) + par[0];
-    }
-    else
-    {
-        return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
-    }
+	string projName = Form("projY_%s_%0.3f_%0.3f", input->GetName(), input->GetXaxis()->GetBinCenter(projCenter - projWidth / 2),
+			input->GetXaxis()->GetBinCenter(projCenter + projWidth / 2));
+	string projTitle = Form("projY %s [%0.3f to %0.3f]", input->GetName(), input->GetXaxis()->GetBinCenter(projCenter - projWidth / 2),
+			input->GetXaxis()->GetBinCenter(projCenter + projWidth / 2));
+
+	TH1D* proj = input->ProjectionY(projName.c_str(), projCenter - projWidth / 2, projCenter + projWidth / 2);
+	proj->SetTitle(projTitle.c_str());
+
+	return proj;
 }
 
-Double_t flatTopGaussRight ( Double_t *x, Double_t *par )
+Double_t flatTopGaussLeft(Double_t *x, Double_t *par)
 {
-    if ( x[0] < par[1] )
-    {
-        return par[3] * ( x[0] - par[1] ) + par[0];
-    }
-    else
-    {
-        return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
-    }
+	if (x[0] > par[1])
+	{
+		return par[3] * (x[0] - par[1]) + par[0];
+	}
+	else
+	{
+		return par[0] * TMath::Exp(-pow(x[0] - par[1], 2) / pow(2 * par[2], 2));
+	}
 }
 
-Double_t flatTopGauss ( Double_t *x, Double_t *par )
+Double_t flatTopGaussRight(Double_t *x, Double_t *par)
 {
-    if ( x[0] < par[1] )
-    {
-        return par[0] * TMath::Exp ( -pow ( x[0] - par[1],2 ) / pow ( 2 * par[2],2 ) );
-    }
-    else if ( x[0] > par[4] )
-    {
-        return par[3] * TMath::Exp ( -pow ( x[0] - par[4],2 ) / pow ( 2 * par[2],2 ) );
-    }
-    else
-    {
-        return ( par[3] - par[0] ) / ( par[4] - par[1] ) * ( x[0] - par[1] ) + ( par[0] );
-    }
+	if (x[0] < par[1])
+	{
+		return par[3] * (x[0] - par[1]) + par[0];
+	}
+	else
+	{
+		return par[0] * TMath::Exp(-pow(x[0] - par[1], 2) / pow(2 * par[2], 2));
+	}
 }
 
-TF1* GoddessCalib::FitEdges ( TH2F* input, int projCenterBin, int projWidth, bool fitRight, bool getParams, bool quietMode )
+Double_t flatTopGauss(Double_t *x, Double_t *par)
 {
-    TH1D* projX = GetPosCalProjX ( input, projCenterBin, projWidth );
-    projX->GetXaxis()->SetRange ( projX->GetXaxis()->GetFirst() +1, projX->GetXaxis()->GetLast()-1 );
-
-    int binMaxX = projX->GetMaximumBin();
-
-    double maxContent = projX->GetBinContent ( binMaxX );
-
-    int startBin = fitRight ? ( projX->GetXaxis()->GetLast() - 1 ) : ( projX->GetXaxis()->GetFirst() + 1 );
-    double startBinContent = maxContent;
-
-    int binShoulder = -1;
-
-    int windowWidth = projX->GetNbinsX() / 20;
-
-    int localMaxBin = fitRight ? ( projX->GetXaxis()->GetLast() - 1 ) : ( projX->GetXaxis()->GetFirst() + 1 );
-    double localMaxContent = projX->GetBinContent ( localMaxBin );
-
-    while ( fitRight ? ( startBin > projX->GetXaxis()->GetFirst() + 1 ) : ( startBin < projX->GetXaxis()->GetLast() - 1 ) )
-    {
-        double prevBinContent = startBinContent;
-
-        int nextBin = fitRight ? ( startBin - 1 ) : ( startBin + 1 );
-        double nextBinContent = projX->GetBinContent ( nextBin );
-
-        if ( nextBinContent > localMaxContent )
-        {
-            localMaxBin = nextBin;
-            localMaxContent = nextBinContent;
-        }
-
-        if ( binShoulder != -1 && ( nextBinContent-prevBinContent ) /prevBinContent <= 0.1 ) break;
-
-        if ( prevBinContent > maxContent/6. && ( nextBinContent-prevBinContent ) /prevBinContent > 0.1 )
-        {
-            binShoulder = nextBin;
-        }
-
-        if ( fitRight ) startBin--;
-        else startBin++;
-
-        startBinContent = projX->GetBinContent ( startBin );
-    }
-
-    if ( !quietMode ) cout << "Found the " << ( fitRight ? "right" : "left" ) << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter ( binShoulder ) << ")" << endl;
-
-    TF1 *fitfunc = new TF1 ( Form ( "myfit_left_%s",input->GetName() ), ( fitRight ? flatTopGaussRight : flatTopGaussLeft ), projX->GetBinCenter ( binShoulder - 2*windowWidth ), projX->GetBinCenter ( binShoulder + windowWidth ), 4 );
-
-    if ( binShoulder != -1 )
-    {
-        fitfunc->SetParameter ( 0, projX->GetBinContent ( binShoulder ) );
-        fitfunc->SetParameter ( 1, projX->GetBinCenter ( binShoulder ) );
-        fitfunc->SetParameter ( 2, 2*projX->GetBinWidth ( binShoulder ) );
-
-        fitfunc->SetParameter ( 3, 0 );
-
-        projX->Fit ( fitfunc, "QRMN" );
-
-        //         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
-        float edge = fitfunc->GetX ( 0.7 * fitfunc->GetParameter ( 0 ),
-                                     ( fitRight ? fitfunc->GetParameter ( 1 ) : fitfunc->GetParameter ( 1 ) - 5*fitfunc->GetParameter ( 2 ) ),
-                                     ( fitRight ? fitfunc->GetParameter ( 1 ) + 5*fitfunc->GetParameter ( 2 ) : fitfunc->GetParameter ( 1 ) ) );
-
-        if ( !quietMode ) cout << "Found the " << ( fitRight ? "right" : "left" ) << " strip edge at " << edge << endl;
-
-        string hname = input->GetName();
-        string calMapKey = "SuperX3 " + hname.substr ( 0, hname.find ( "_" ) );
-
-        int stripNbr = std::stoi ( hname.substr ( hname.find ( "_" ) + 1 ) );
-
-        if ( getParams )
-        {
-            InitializeCalMapKey ( calMapKey, stripNbr );
-
-            if ( fitRight ) resStripsCalMap[calMapKey][stripNbr][5] = edge;
-            else resStripsCalMap[calMapKey][stripNbr][4] = edge;
-        }
-    }
-    return fitfunc;
+	if (x[0] < par[1])
+	{
+		return par[0] * TMath::Exp(-pow(x[0] - par[1], 2) / pow(2 * par[2], 2));
+	}
+	else if (x[0] > par[4])
+	{
+		return par[3] * TMath::Exp(-pow(x[0] - par[4], 2) / pow(2 * par[2], 2));
+	}
+	else
+	{
+		return (par[3] - par[0]) / (par[4] - par[1]) * (x[0] - par[1]) + (par[0]);
+	}
 }
 
-vector< float > GoddessCalib::GetOverlapPoints ( TH2F* input, float xMin, float xMax, double threshold, bool jumpUp, bool printDebug )
+TF1* GoddessCalib::FitEdges(TH2F* input, int projCenterBin, int projWidth, bool fitRight, bool getParams, bool quietMode)
 {
-    int xMinBin = input->GetXaxis()->FindBin ( xMin );
-    int xMaxBin = input->GetXaxis()->FindBin ( xMax );
+	TH1D* projX = GetPosCalProjX(input, projCenterBin, projWidth);
+	projX->GetXaxis()->SetRange(projX->GetXaxis()->GetFirst() + 1, projX->GetXaxis()->GetLast() - 1);
 
-    int projWidthX = xMaxBin - xMinBin;
+	int binMaxX = projX->GetMaximumBin();
 
-    int projBinX = xMinBin + projWidthX/2;
+	double maxContent = projX->GetBinContent(binMaxX);
 
-    TH1D* projY = GetPosCalProjY ( input, projBinX, projWidthX );
+	int startBin = fitRight ? (projX->GetXaxis()->GetLast() - 1) : (projX->GetXaxis()->GetFirst() + 1);
+	double startBinContent = maxContent;
 
-    double lastBinCenter = projY->GetBinCenter ( projY->GetXaxis()->GetLast() );
+	int binShoulder = -1;
 
-    projY->GetXaxis()->SetRangeUser ( threshold, lastBinCenter );
+	int windowWidth = projX->GetNbinsX() / 20;
 
-    if ( printDebug )
-    {
-        TCanvas* c1 = new TCanvas();
-        c1->cd();
-        TH1D* h1 = ( TH1D* ) projY->Clone();
-        h1->Draw();
-    }
+	int localMaxBin = fitRight ? (projX->GetXaxis()->GetLast() - 1) : (projX->GetXaxis()->GetFirst() + 1);
+	double localMaxContent = projX->GetBinContent(localMaxBin);
 
-    float binCenterMax1 = projY->GetBinCenter ( projY->GetMaximumBin() );
+	while (fitRight ? (startBin > projX->GetXaxis()->GetFirst() + 1) : (startBin < projX->GetXaxis()->GetLast() - 1))
+	{
+		double prevBinContent = startBinContent;
 
-    if ( printDebug ) cout << "Found first maximum at " << binCenterMax1 << "...\n";
+		int nextBin = fitRight ? (startBin - 1) : (startBin + 1);
+		double nextBinContent = projX->GetBinContent(nextBin);
 
-    TF1* simpleGauss = new TF1 ( "simpleGauss", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) )", threshold, lastBinCenter );
+		if (nextBinContent > localMaxContent)
+		{
+			localMaxBin = nextBin;
+			localMaxContent = nextBinContent;
+		}
 
-    simpleGauss->SetParameters ( 10, binCenterMax1, 0.2 );
+		if (binShoulder != -1 && (nextBinContent - prevBinContent) / prevBinContent <= 0.1) break;
 
-    projY->Fit ( simpleGauss, "QRMN", "", binCenterMax1 - 0.5, binCenterMax1 + 0.5 );
+		if (prevBinContent > maxContent / 6. && (nextBinContent - prevBinContent) / prevBinContent > 0.1)
+		{
+			binShoulder = nextBin;
+		}
 
-    float projYSigma = TMath::Abs ( simpleGauss->GetParameter ( 2 ) );
+		if (fitRight) startBin--;
+		else startBin++;
 
-    if ( printDebug )
-    {
-        cout << "Result of the fasty fit:\n";
-        cout << "Amplitude: " << simpleGauss->GetParameter ( 0 ) << endl;
-        cout << "Mean: " << simpleGauss->GetParameter ( 1 ) << endl;
-        cout << "Sigma: " << simpleGauss->GetParameter ( 2 ) << endl;
-    }
+		startBinContent = projX->GetBinContent(startBin);
+	}
 
-    projY->GetXaxis()->SetRangeUser ( threshold, binCenterMax1 - 5*projYSigma );
+	if (!quietMode) cout << "Found the " << (fitRight ? "right" : "left") << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter(binShoulder) << ")" << endl;
 
-    if ( printDebug )
-    {
-        TCanvas* c2 = new TCanvas();
-        c2->cd();
-        TH1D* h2 = ( TH1D* ) projY->Clone();
-        h2->Draw();
-    }
+	TF1 *fitfunc = new TF1(Form("myfit_left_%s", input->GetName()), (fitRight ? flatTopGaussRight : flatTopGaussLeft), projX->GetBinCenter(binShoulder - 2 * windowWidth),
+			projX->GetBinCenter(binShoulder + windowWidth), 4);
 
-    float binCenterMaxLow = projY->GetBinCenter ( projY->GetMaximumBin() );
-    float binContentMaxLow = projY->GetBinContent ( projY->GetMaximumBin() );
+	if (binShoulder != -1)
+	{
+		fitfunc->SetParameter(0, projX->GetBinContent(binShoulder));
+		fitfunc->SetParameter(1, projX->GetBinCenter(binShoulder));
+		fitfunc->SetParameter(2, 2 * projX->GetBinWidth(binShoulder));
 
-    if ( printDebug ) cout << "Found temporary max on the left of the first max at " << binCenterMaxLow << " ( content = " << binContentMaxLow << " )\n";
+		fitfunc->SetParameter(3, 0);
 
-    projY->GetXaxis()->SetRangeUser ( binCenterMax1 + 5*projYSigma, lastBinCenter );
+		projX->Fit(fitfunc, "QRMN");
 
-    if ( printDebug )
-    {
-        TCanvas* c3 = new TCanvas();
-        c3->cd();
-        TH1D* h3 = ( TH1D* ) projY->Clone();
-        h3->Draw();
-    }
+		//         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+		float edge = fitfunc->GetX(0.7 * fitfunc->GetParameter(0), (fitRight ? fitfunc->GetParameter(1) : fitfunc->GetParameter(1) - 5 * fitfunc->GetParameter(2)),
+				(fitRight ? fitfunc->GetParameter(1) + 5 * fitfunc->GetParameter(2) : fitfunc->GetParameter(1)));
 
-    float binCenterMaxHigh = projY->GetBinCenter ( projY->GetMaximumBin() );
-    float binContentMaxHigh = projY->GetBinContent ( projY->GetMaximumBin() );
+		if (!quietMode) cout << "Found the " << (fitRight ? "right" : "left") << " strip edge at " << edge << endl;
 
-    if ( printDebug ) cout << "Found temporary max on the right of the first max at " << binCenterMaxHigh << " ( content = " << binContentMaxHigh << " )\n";
+		string hname = input->GetName();
+		string calMapKey = "SuperX3 " + hname.substr(0, hname.find("_"));
 
-    float binCenterMax2 = binCenterMaxLow;
+		int stripNbr = std::stoi(hname.substr(hname.find("_") + 1));
 
-    if ( binContentMaxHigh > binContentMaxLow ) binCenterMax2 = binCenterMaxHigh;
+		if (getParams)
+		{
+			InitializeCalMapKey(calMapKey, stripNbr);
 
-    float xleft, xright, yleft, yright; // left and right are referring to the edge detection and not the actual position in the plot
-
-    if ( jumpUp )
-    {
-        yleft = std::max ( binCenterMax1, binCenterMax2 );
-        yright = std::min ( binCenterMax1, binCenterMax2 );
-    }
-    else
-    {
-        yleft = std::min ( binCenterMax1, binCenterMax2 );
-        yright = std::max ( binCenterMax1, binCenterMax2 );
-    }
-
-    if ( printDebug ) cout << "Detected a jump from " << yright << " to " << yleft << " ...\n";
-
-    int projWidthY = 6*projYSigma / input->GetYaxis()->GetBinWidth ( 0 );
-
-    TF1* lfit = FitEdges ( input, input->GetYaxis()->FindBin ( yleft ), projWidthY, false, false, true );
-
-    if ( printDebug )
-    {
-        TCanvas* c4 = new TCanvas();
-        c4->cd();
-        TH1D* h4 = ( TH1D* ) GetPosCalProjX ( input, input->GetYaxis()->FindBin ( yleft ), projWidthY )->Clone();
-        h4->Draw();
-        lfit->Draw ( "same" );
-    }
-
-    TF1* rfit = FitEdges ( input, input->GetYaxis()->FindBin ( yright ), projWidthY, true, false, true );
-
-    if ( printDebug )
-    {
-        TCanvas* c5 = new TCanvas();
-        c5->cd();
-        TH1D* h5 = ( TH1D* ) GetPosCalProjX ( input, input->GetYaxis()->FindBin ( yright ), projWidthY )->Clone();
-        h5->Draw();
-        rfit->Draw ( "same" );
-    }
-
-    xleft = lfit->GetParameter ( 1 ) - 4*TMath::Abs ( lfit->GetParameter ( 2 ) );
-    xright = rfit->GetParameter ( 1 ) + 4*TMath::Abs ( rfit->GetParameter ( 2 ) );
-
-    if ( printDebug ) cout << "The jumping points are ( " << xright << " , " << yright << " ) and ( " << xleft << " , " << yleft << " )\n";
-
-    float eNear1, eFar1, eNear2, eFar2;
-
-    // Now we recover the Energy near and Energy Far corresponding to these 2 points to get the equation of the line separating the 2 regimes
-    // REMINDER:
-    // x = (Enear - Efar) / ( Enear + Efar) -------------- y = Enear + Efar
-    // so
-    // ===? (xy + y) / 2 = Enear
-    // ===> -(xy - y) / 2 = Efar
-
-    eNear1 = ( xleft * yleft + yleft ) / 2.;
-    eFar1 = - ( xleft * yleft - yleft ) / 2.;
-
-    eNear2 = ( xright * yright + yright ) / 2.;
-    eFar2 = - ( xright * yright - yright ) / 2.;
-
-    float eNearMin = std::min ( eNear1, eNear2 );
-    float eNearMax = std::max ( eNear1, eNear2 );
-
-    return {xright, yright, xleft, yleft, eNearMin, ( eNearMin == eNear1 ? eFar1 : eFar2 ), eNearMax, ( eNearMax == eNear1 ? eFar1 : eFar2 ) };
+			if (fitRight) resStripsCalMap[calMapKey][stripNbr][5] = edge;
+			else resStripsCalMap[calMapKey][stripNbr][4] = edge;
+		}
+	}
+	return fitfunc;
 }
 
-std::tuple<TGraph*,vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition ( TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos )
+vector<float> GoddessCalib::GetOverlapPoints(TH2F* input, float xMin, float xMax, double threshold, bool jumpUp, bool printDebug)
 {
-    if ( input->GetEntries() == 0 ) return std::make_tuple<TGraph*,vector<vector<float>>> ( nullptr, {} );
+	int xMinBin = input->GetXaxis()->FindBin(xMin);
+	int xMaxBin = input->GetXaxis()->FindBin(xMax);
 
-    string graphName = "SuperX3_" + ( string ) input->GetName();
+	int projWidthX = xMaxBin - xMinBin;
 
-    float lastBinCenter = input->GetYaxis()->GetBinCenter ( input->GetYaxis()->GetLast() );
+	int projBinX = xMinBin + projWidthX / 2;
 
-    enShiftVsPosGraphs[graphName] = new TGraph ( nPoints );
-    enShiftVsPosGraphs[graphName]->SetName ( graphName.c_str() );
-    enShiftVsPosGraphs[graphName]->SetTitle ( Form ( "Energy Shift vs. Position for %s", graphName.c_str() ) );
+	TH1D* projY = GetPosCalProjY(input, projBinX, projWidthX);
 
-    float projWidth = ( endPoint-startPoint ) / nPoints;
+	double lastBinCenter = projY->GetBinCenter(projY->GetXaxis()->GetLast());
 
-    TH1D* projY = 0;
+	projY->GetXaxis()->SetRangeUser(threshold, lastBinCenter);
 
-    float recenter = ( startPoint + endPoint ) / 2.;
-    float normalize = endPoint - startPoint;
+	if (printDebug)
+	{
+		TCanvas* c1 = new TCanvas();
+		c1->cd();
+		TH1D* h1 = (TH1D*) projY->Clone();
+		h1->Draw();
+	}
 
-    vector<vector<float>> overlapCoords;
-    overlapCoords.clear();
+	float binCenterMax1 = projY->GetBinCenter(projY->GetMaximumBin());
 
-    vector<float> tempOC;
-    tempOC.clear();
+	if (printDebug) cout << "Found first maximum at " << binCenterMax1 << "...\n";
 
-    for ( int i = 0; i < nPoints; i++ )
-    {
-        int projBin = input->GetXaxis()->FindBin ( startPoint + projWidth * ( i + 1/2. ) );
+	TF1* simpleGauss = new TF1("simpleGauss", "[0] * TMath::Exp ( -pow ( x - [1],2 ) / pow ( 2 * [2],2 ) )", threshold, lastBinCenter);
 
-        projY = GetPosCalProjY ( input, projBin, projWidth );
+	simpleGauss->SetParameters(10, binCenterMax1, 0.2);
 
-        projY->GetXaxis()->SetRangeUser ( threshold, lastBinCenter );
+	projY->Fit(simpleGauss, "QRMN", "", binCenterMax1 - 0.5, binCenterMax1 + 0.5);
 
-        int binMax = projY->GetMaximumBin();
+	float projYSigma = TMath::Abs(simpleGauss->GetParameter(2));
 
-        float relPos = startPoint + projWidth * ( i + 1/2. );
+	if (printDebug)
+	{
+		cout << "Result of the fasty fit:\n";
+		cout << "Amplitude: " << simpleGauss->GetParameter(0) << endl;
+		cout << "Mean: " << simpleGauss->GetParameter(1) << endl;
+		cout << "Sigma: " << simpleGauss->GetParameter(2) << endl;
+	}
 
-        float shiftCoeff = peakPos / projY->GetBinCenter ( binMax );
+	projY->GetXaxis()->SetRangeUser(threshold, binCenterMax1 - 5 * projYSigma);
 
-        enShiftVsPosGraphs[graphName]->SetPoint ( i, ( relPos-recenter ) / normalize, shiftCoeff );
+	if (printDebug)
+	{
+		TCanvas* c2 = new TCanvas();
+		c2->cd();
+		TH1D* h2 = (TH1D*) projY->Clone();
+		h2->Draw();
+	}
 
-        if ( i > 0 )
-        {
-            double prevX, prevY;
+	float binCenterMaxLow = projY->GetBinCenter(projY->GetMaximumBin());
+	float binContentMaxLow = projY->GetBinContent(projY->GetMaximumBin());
 
-            enShiftVsPosGraphs[graphName]->GetPoint ( i-1, prevX, prevY );
+	if (printDebug) cout << "Found temporary max on the left of the first max at " << binCenterMaxLow << " ( content = " << binContentMaxLow << " )\n";
 
-            if ( shiftCoeff - prevY >= 0.1 ) tempOC = GetOverlapPoints ( input, relPos - 0.2, relPos + 0.2, threshold, false );
-            else if ( shiftCoeff - prevY <= -0.1 ) tempOC = GetOverlapPoints ( input, relPos - 0.2, relPos + 0.2, threshold, true );
+	projY->GetXaxis()->SetRangeUser(binCenterMax1 + 5 * projYSigma, lastBinCenter);
 
-            if ( tempOC.size() > 0 )
-            {
-                tempOC.push_back ( ( tempOC[0]-recenter ) / normalize );
-                tempOC.push_back ( ( tempOC[2]-recenter ) / normalize );
+	if (printDebug)
+	{
+		TCanvas* c3 = new TCanvas();
+		c3->cd();
+		TH1D* h3 = (TH1D*) projY->Clone();
+		h3->Draw();
+	}
 
-                string overlapGrName = graphName + ( string ) Form ( "_jump_at_%0.3f", tempOC[8] + 0.001 );
+	float binCenterMaxHigh = projY->GetBinCenter(projY->GetMaximumBin());
+	float binContentMaxHigh = projY->GetBinContent(projY->GetMaximumBin());
 
-                enShiftVsPosGraphs[overlapGrName] = new TGraph ( 2 );
+	if (printDebug) cout << "Found temporary max on the right of the first max at " << binCenterMaxHigh << " ( content = " << binContentMaxHigh << " )\n";
 
-                enShiftVsPosGraphs[overlapGrName]->SetPoint ( 0, tempOC[4], tempOC[5] );
-                enShiftVsPosGraphs[overlapGrName]->SetPoint ( 1, tempOC[6], tempOC[7] );
+	float binCenterMax2 = binCenterMaxLow;
 
-                enShiftVsPosGraphs[overlapGrName]->SetName ( overlapGrName.c_str() );
-                enShiftVsPosGraphs[overlapGrName]->SetTitle ( Form ( "Regime switch equation for %s", graphName.c_str() ) );
+	if (binContentMaxHigh > binContentMaxLow) binCenterMax2 = binCenterMaxHigh;
 
-                overlapCoords.push_back ( tempOC );
+	float xleft, xright, yleft, yright; // left and right are referring to the edge detection and not the actual position in the plot
 
-                tempOC.clear();
-            }
-        }
-    }
+	if (jumpUp)
+	{
+		yleft = std::max(binCenterMax1, binCenterMax2);
+		yright = std::min(binCenterMax1, binCenterMax2);
+	}
+	else
+	{
+		yleft = std::min(binCenterMax1, binCenterMax2);
+		yright = std::max(binCenterMax1, binCenterMax2);
+	}
 
-    if ( std::isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin() ) && std::isnan ( enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax() ) ) return std::make_tuple<TGraph*,vector<vector<float>>> ( nullptr, {} );
+	if (printDebug) cout << "Detected a jump from " << yright << " to " << yleft << " ...\n";
 
-    return std::make_tuple ( enShiftVsPosGraphs[graphName], overlapCoords );
+	int projWidthY = 6 * projYSigma / input->GetYaxis()->GetBinWidth(0);
+
+	TF1* lfit = FitEdges(input, input->GetYaxis()->FindBin(yleft), projWidthY, false, false, true);
+
+	if (printDebug)
+	{
+		TCanvas* c4 = new TCanvas();
+		c4->cd();
+		TH1D* h4 = (TH1D*) GetPosCalProjX(input, input->GetYaxis()->FindBin(yleft), projWidthY)->Clone();
+		h4->Draw();
+		lfit->Draw("same");
+	}
+
+	TF1* rfit = FitEdges(input, input->GetYaxis()->FindBin(yright), projWidthY, true, false, true);
+
+	if (printDebug)
+	{
+		TCanvas* c5 = new TCanvas();
+		c5->cd();
+		TH1D* h5 = (TH1D*) GetPosCalProjX(input, input->GetYaxis()->FindBin(yright), projWidthY)->Clone();
+		h5->Draw();
+		rfit->Draw("same");
+	}
+
+	xleft = lfit->GetParameter(1) - 4 * TMath::Abs(lfit->GetParameter(2));
+	xright = rfit->GetParameter(1) + 4 * TMath::Abs(rfit->GetParameter(2));
+
+	if (printDebug) cout << "The jumping points are ( " << xright << " , " << yright << " ) and ( " << xleft << " , " << yleft << " )\n";
+
+	float eNear1, eFar1, eNear2, eFar2;
+
+	// Now we recover the Energy near and Energy Far corresponding to these 2 points to get the equation of the line separating the 2 regimes
+	// REMINDER:
+	// x = (Enear - Efar) / ( Enear + Efar) -------------- y = Enear + Efar
+	// so
+	// ===? (xy + y) / 2 = Enear
+	// ===> -(xy - y) / 2 = Efar
+
+	eNear1 = (xleft * yleft + yleft) / 2.;
+	eFar1 = -(xleft * yleft - yleft) / 2.;
+
+	eNear2 = (xright * yright + yright) / 2.;
+	eFar2 = -(xright * yright - yright) / 2.;
+
+	float eNearMin = std::min(eNear1, eNear2);
+	float eNearMax = std::max(eNear1, eNear2);
+
+	return
+	{	xright, yright, xleft, yleft, eNearMin, ( eNearMin == eNear1 ? eFar1 : eFar2 ), eNearMax, ( eNearMax == eNear1 ? eFar1 : eFar2 )};
 }
 
-void GoddessCalib::GetStripsEdges ( TH2F* input, int projCenterBin, int projWidth, double peakPos, double threshold, int shiftGrNPoints, bool drawResults )
+std::tuple<TGraph*, vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition(TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos)
 {
-    string hname = input->GetName();
+	if (input->GetEntries() == 0) return std::make_tuple<TGraph*, vector<vector<float>>>(nullptr,
+		{ });
 
-    cout << "Retreiving the edges of sector " << hname.substr ( 0, hname.find ( "_" ) ) << " strip #" << hname.substr ( hname.find ( "_" ) +1 ) << " ..." << endl;
+	string graphName = "SuperX3_" + (string) input->GetName();
 
-    TF1* lfit = FitEdges ( input, projCenterBin, projWidth, false );
-    TF1* rfit = FitEdges ( input, projCenterBin, projWidth, true );
+	float lastBinCenter = input->GetYaxis()->GetBinCenter(input->GetYaxis()->GetLast());
 
-    float leftEdge = lfit->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( lfit->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
-    float rightEdge = rfit->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( rfit->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
+	enShiftVsPosGraphs[graphName] = new TGraph(nPoints);
+	enShiftVsPosGraphs[graphName]->SetName(graphName.c_str());
+	enShiftVsPosGraphs[graphName]->SetTitle(Form("Energy Shift vs. Position for %s", graphName.c_str()));
 
-    std::tuple<TGraph*, vector<vector<float>>> eShiftVsPosRes = GetEnergyShiftVsPosition ( input, shiftGrNPoints, leftEdge, rightEdge, threshold, peakPos );
+	float projWidth = (endPoint - startPoint) / nPoints;
 
-    TGraph* enShiftGraph = std::get<0> ( eShiftVsPosRes );
-    vector<vector<float>> overlapCoords = std::get<1> ( eShiftVsPosRes );
+	TH1D* projY = 0;
 
-    if ( drawResults )
-    {
-        TCanvas* newCanvas = new TCanvas ( Form ( "c_%s", hname.c_str() ) );
+	float recenter = (startPoint + endPoint) / 2.;
+	float normalize = endPoint - startPoint;
 
-        newCanvas->Divide ( 3, 1 );
+	vector<vector<float>> overlapCoords;
+	overlapCoords.clear();
 
-        newCanvas->GetPad ( 1 )->cd();
+	vector<float> tempOC;
+	tempOC.clear();
 
-        input->Draw ( "colz" );
+	for (int i = 0; i < nPoints; i++)
+	{
+		int projBin = input->GetXaxis()->FindBin(startPoint + projWidth * (i + 1 / 2.));
 
-        newCanvas->GetPad ( 2 )->cd();
+		projY = GetPosCalProjY(input, projBin, projWidth);
 
-        GetPosCalProjX ( input, projCenterBin, projWidth )->Draw();
-        lfit->Draw ( "same" );
-        rfit->Draw ( "same" );
+		projY->GetXaxis()->SetRangeUser(threshold, lastBinCenter);
 
-        if ( enShiftGraph != nullptr )
-        {
-            enShiftGraph->SetMarkerSize ( 2 );
-            enShiftGraph->SetMarkerColor ( 4 );
-            enShiftGraph->SetMarkerStyle ( 5 );
+		int binMax = projY->GetMaximumBin();
 
-            if ( overlapCoords.size() > 0 )
-            {
-                for ( unsigned int i = 0; i < overlapCoords.size(); i++ )
-                {
-                    newCanvas->GetPad ( 1 )->cd();
+		float relPos = startPoint + projWidth * (i + 1 / 2.);
 
-                    TMarker* m1 = new TMarker();
-                    m1->SetMarkerStyle ( 3 );
-                    m1->SetMarkerSize ( 2 );
-                    m1->SetMarkerColor ( 2 );
+		float shiftCoeff = peakPos / projY->GetBinCenter(binMax);
 
-                    m1->SetX ( overlapCoords[i][0] );
-                    m1->SetY ( overlapCoords[i][1] );
+		enShiftVsPosGraphs[graphName]->SetPoint(i, (relPos - recenter) / normalize, shiftCoeff);
 
-                    m1->Draw();
+		if (i > 0)
+		{
+			double prevX, prevY;
 
-                    TMarker* m2 = new TMarker();
-                    m2->SetMarkerStyle ( 3 );
-                    m2->SetMarkerSize ( 2 );
-                    m2->SetMarkerColor ( 2 );
+			enShiftVsPosGraphs[graphName]->GetPoint(i - 1, prevX, prevY);
 
-                    m2->SetX ( overlapCoords[i][2] );
-                    m2->SetY ( overlapCoords[i][3] );
+			if (shiftCoeff - prevY >= 0.1) tempOC = GetOverlapPoints(input, relPos - 0.2, relPos + 0.2, threshold, false);
+			else if (shiftCoeff - prevY <= -0.1) tempOC = GetOverlapPoints(input, relPos - 0.2, relPos + 0.2, threshold, true);
 
-                    m2->Draw();
+			if (tempOC.size() > 0)
+			{
+				tempOC.push_back((tempOC[0] - recenter) / normalize);
+				tempOC.push_back((tempOC[2] - recenter) / normalize);
 
-                    cout << "*** Searching for points between " << std::min ( overlapCoords[i][8], overlapCoords[i][9] ) << " and " << std::max ( overlapCoords[i][8], overlapCoords[i][9] ) << " ***\n";
+				string overlapGrName = graphName + (string) Form("_jump_at_%0.3f", tempOC[8] + 0.001);
 
-                    int realPointNum = 0;
+				enShiftVsPosGraphs[overlapGrName] = new TGraph(2);
 
-                    for ( int j = 0; j < enShiftGraph->GetN(); j++ )
-                    {
-                        double pos, en;
+				enShiftVsPosGraphs[overlapGrName]->SetPoint(0, tempOC[4], tempOC[5]);
+				enShiftVsPosGraphs[overlapGrName]->SetPoint(1, tempOC[6], tempOC[7]);
 
-                        enShiftGraph->GetPoint ( j, pos, en );
+				enShiftVsPosGraphs[overlapGrName]->SetName(overlapGrName.c_str());
+				enShiftVsPosGraphs[overlapGrName]->SetTitle(Form("Regime switch equation for %s", graphName.c_str()));
 
-                        if ( pos >= std::min ( overlapCoords[i][8], overlapCoords[i][9] ) && pos <= std::max ( overlapCoords[i][8], overlapCoords[i][9] ) )
-                        {
-                            cout << "Removing point #" << realPointNum << " with coordinates ( " << pos << " , " << en << " )\n";
+				overlapCoords.push_back(tempOC);
 
-                            enShiftGraph->RemovePoint ( j );
+				tempOC.clear();
+			}
+		}
+	}
 
-                            j--;
-                        }
+	if (std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin()) && std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax())) return std::make_tuple<TGraph*,
+			vector<vector<float>>>(nullptr,
+		{ });
 
-                        realPointNum++;
-                    }
-
-                    cout << "**************************\n";
-                }
-            }
-
-            newCanvas->GetPad ( 3 )->cd();
-
-            enShiftGraph->Draw ( "ALP" );
-        }
-    }
-
-    return;
+	return std::make_tuple(enShiftVsPosGraphs[graphName], overlapCoords);
 }
 
-void GoddessCalib::GetStripsEdges ( int projCenterBin, int projWidth, double peakPos, double threshold, int shiftGrNPoints, bool drawResults )
+void GoddessCalib::GetStripsEdges(TH2F* input, int projCenterBin, int projWidth, double peakPos, double threshold, int shiftGrNPoints, bool drawResults)
 {
-    for ( auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++ )
-    {
-        GetStripsEdges ( itr->second, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults );
-    }
+	string hname = input->GetName();
 
-    return;
+	cout << "Retreiving the edges of sector " << hname.substr(0, hname.find("_")) << " strip #" << hname.substr(hname.find("_") + 1) << " ..." << endl;
+
+	TF1* lfit = FitEdges(input, projCenterBin, projWidth, false);
+	TF1* rfit = FitEdges(input, projCenterBin, projWidth, true);
+
+	float leftEdge = lfit->GetParameter(1) - TMath::Sqrt(-2 * pow(lfit->GetParameter(2), 2) * TMath::Log(0.7));
+	float rightEdge = rfit->GetParameter(1) - TMath::Sqrt(-2 * pow(rfit->GetParameter(2), 2) * TMath::Log(0.7));
+
+	std::tuple<TGraph*, vector<vector<float>>> eShiftVsPosRes = GetEnergyShiftVsPosition(input, shiftGrNPoints, leftEdge, rightEdge, threshold, peakPos);
+
+	TGraph* enShiftGraph = std::get<0>(eShiftVsPosRes);
+	vector<vector<float>> overlapCoords = std::get<1>(eShiftVsPosRes);
+
+	if (drawResults)
+	{
+		TCanvas* newCanvas = new TCanvas(Form("c_%s", hname.c_str()));
+
+		newCanvas->Divide(3, 1);
+
+		newCanvas->GetPad(1)->cd();
+
+		input->Draw("colz");
+
+		newCanvas->GetPad(2)->cd();
+
+		GetPosCalProjX(input, projCenterBin, projWidth)->Draw();
+		lfit->Draw("same");
+		rfit->Draw("same");
+
+		if (enShiftGraph != nullptr)
+		{
+			enShiftGraph->SetMarkerSize(2);
+			enShiftGraph->SetMarkerColor(4);
+			enShiftGraph->SetMarkerStyle(5);
+
+			if (overlapCoords.size() > 0)
+			{
+				for (unsigned int i = 0; i < overlapCoords.size(); i++)
+				{
+					newCanvas->GetPad(1)->cd();
+
+					TMarker* m1 = new TMarker();
+					m1->SetMarkerStyle(3);
+					m1->SetMarkerSize(2);
+					m1->SetMarkerColor(2);
+
+					m1->SetX(overlapCoords[i][0]);
+					m1->SetY(overlapCoords[i][1]);
+
+					m1->Draw();
+
+					TMarker* m2 = new TMarker();
+					m2->SetMarkerStyle(3);
+					m2->SetMarkerSize(2);
+					m2->SetMarkerColor(2);
+
+					m2->SetX(overlapCoords[i][2]);
+					m2->SetY(overlapCoords[i][3]);
+
+					m2->Draw();
+
+					cout << "*** Searching for points between " << std::min(overlapCoords[i][8], overlapCoords[i][9]) << " and " << std::max(overlapCoords[i][8], overlapCoords[i][9])
+							<< " ***\n";
+
+					int realPointNum = 0;
+
+					for (int j = 0; j < enShiftGraph->GetN(); j++)
+					{
+						double pos, en;
+
+						enShiftGraph->GetPoint(j, pos, en);
+
+						if (pos >= std::min(overlapCoords[i][8], overlapCoords[i][9]) && pos <= std::max(overlapCoords[i][8], overlapCoords[i][9]))
+						{
+							cout << "Removing point #" << realPointNum << " with coordinates ( " << pos << " , " << en << " )\n";
+
+							enShiftGraph->RemovePoint(j);
+
+							j--;
+						}
+
+						realPointNum++;
+					}
+
+					cout << "**************************\n";
+				}
+			}
+
+			newCanvas->GetPad(3)->cd();
+
+			enShiftGraph->Draw("ALP");
+		}
+	}
+
+	return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, int shiftGrNPoints, bool drawResults )
+void GoddessCalib::GetStripsEdges(int projCenterBin, int projWidth, double peakPos, double threshold, int shiftGrNPoints, bool drawResults)
 {
-    vector<int> sectors = DecodeNumberString ( sectorsList );
+	for (auto itr = resStripsPosCalGraphsMap.begin(); itr != resStripsPosCalGraphsMap.end(); itr++)
+	{
+		GetStripsEdges(itr->second, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
+	}
 
-    auto lOK = input->GetListOfKeys();
-
-    for ( int i = 0; i < lOK->GetSize(); i++ )
-    {
-        TH2F* hist = dynamic_cast<TH2F*> ( input->Get ( lOK->At ( i )->GetName() ) );
-
-        if ( hist != nullptr )
-        {
-            string hname = hist->GetName();
-
-            if ( ! ( hname[0] == 'U' || hname[0] == 'D' ) && ! ( hname.find ( "_" ) == 2 || hname.find ( "_" ) == 3 ) ) continue;
-
-            unsigned int sect = std::stoi ( hname.substr ( 1, hname.find_first_of ( "_" ) - 1 ) );
-
-            if ( std::find ( sectors.begin(), sectors.end(), sect ) == sectors.end() ) continue;
-
-            double binWidth = hist->GetYaxis()->GetBinWidth ( 0 );
-
-            int projWidth = ( projWinMax-projWinMin ) / binWidth;
-
-            int projCenterBin = hist->GetYaxis()->FindBin ( projWinMin + ( projWinMax-projWinMin ) /2. );
-
-            GetStripsEdges ( hist, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults );
-        }
-    }
-
-    return;
+	return;
 }
 
-void GoddessCalib::GetStripsEdges ( TFile* input, string sectorsList, int projWidth, double threshold, double peakPos, int shiftGrNPoints, bool drawResults )
+void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, int shiftGrNPoints, bool drawResults)
 {
-    vector<int> sectors = DecodeNumberString ( sectorsList );
+	vector<int> sectors = DecodeNumberString(sectorsList);
 
-    auto lOK = input->GetListOfKeys();
+	auto lOK = input->GetListOfKeys();
 
-    for ( int i = 0; i < lOK->GetSize(); i++ )
-    {
-        TH2F* hist = dynamic_cast<TH2F*> ( input->Get ( lOK->At ( i )->GetName() ) );
+	for (int i = 0; i < lOK->GetSize(); i++)
+	{
+		TH2F* hist = dynamic_cast<TH2F*>(input->Get(lOK->At(i)->GetName()));
 
-        if ( hist != nullptr )
-        {
-            string hname = hist->GetName();
+		if (hist != nullptr)
+		{
+			string hname = hist->GetName();
 
-            if ( ! ( hname[0] == 'U' || hname[0] == 'D' ) && ! ( hname.find ( "_" ) == 2 || hname.find ( "_" ) == 3 ) ) continue;
+			if (!(hname[0] == 'U' || hname[0] == 'D') && !(hname.find("_") == 2 || hname.find("_") == 3)) continue;
 
-            unsigned int sect = std::stoi ( hname.substr ( 1, hname.find_first_of ( "_" ) - 1 ) );
+			unsigned int sect = std::stoi(hname.substr(1, hname.find_first_of("_") - 1));
 
-            if ( std::find ( sectors.begin(), sectors.end(), sect ) == sectors.end() ) continue;
+			if (std::find(sectors.begin(), sectors.end(), sect) == sectors.end()) continue;
 
-            int binMaxY = GetPosCalEnBinMax ( hist, threshold );
+			double binWidth = hist->GetYaxis()->GetBinWidth(0);
 
-            GetStripsEdges ( hist, binMaxY, projWidth, peakPos, threshold, shiftGrNPoints, drawResults );
-        }
-    }
+			int projWidth = (projWinMax - projWinMin) / binWidth;
 
-    return;
+			int projCenterBin = hist->GetYaxis()->FindBin(projWinMin + (projWinMax - projWinMin) / 2.);
+
+			GetStripsEdges(hist, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
+		}
+	}
+
+	return;
+}
+
+void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, int projWidth, double threshold, double peakPos, int shiftGrNPoints, bool drawResults)
+{
+	vector<int> sectors = DecodeNumberString(sectorsList);
+
+	auto lOK = input->GetListOfKeys();
+
+	for (int i = 0; i < lOK->GetSize(); i++)
+	{
+		TH2F* hist = dynamic_cast<TH2F*>(input->Get(lOK->At(i)->GetName()));
+
+		if (hist != nullptr)
+		{
+			string hname = hist->GetName();
+
+			if (!(hname[0] == 'U' || hname[0] == 'D') && !(hname.find("_") == 2 || hname.find("_") == 3)) continue;
+
+			unsigned int sect = std::stoi(hname.substr(1, hname.find_first_of("_") - 1));
+
+			if (std::find(sectors.begin(), sectors.end(), sect) == sectors.end()) continue;
+
+			int binMaxY = GetPosCalEnBinMax(hist, threshold);
+
+			GetStripsEdges(hist, binMaxY, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
+		}
+	}
+
+	return;
 }
 
 // --------------------------------------------- QQQ5 functions ---------------------------------- //
 
-void GoddessCalib::LoadInternalCalib ( string fileName )
+void GoddessCalib::LoadInternalCalib(string fileName)
 {
-    std::ifstream input ( fileName.c_str(), std::ios_base::in );
+	std::ifstream input(fileName.c_str(), std::ios_base::in);
 
-    if ( !input.is_open() )
-    {
-        cerr << "Unable to open file: " << fileName << "\n";
+	if (!input.is_open())
+	{
+		cerr << "Unable to open file: " << fileName << "\n";
 
-        return;
-    }
+		return;
+	}
 
-    string dump;
+	string dump;
 
-    string readWord1, sectorID, readWord2, readWord3;
+	string readWord1, sectorID, readWord2, readWord3;
 
-    std::istringstream readLine;
+	std::istringstream readLine;
 
-    std::getline ( input, dump );
+	std::getline(input, dump);
 
-    readLine.str ( dump );
+	readLine.str(dump);
 
-    readLine >> readWord1 >> sectorID >> readWord2 >> readWord3;
+	readLine >> readWord1 >> sectorID >> readWord2 >> readWord3;
 
-    if ( readWord1 != "QQQ5" || readWord2 != "Internal" || readWord3 != "Calib" )
-    {
-        cerr << "File used as an input doesn't have the proper format (check out the template)...\n";
+	if (readWord1 != "QQQ5" || readWord2 != "Internal" || readWord3 != "Calib")
+	{
+		cerr << "File used as an input doesn't have the proper format (check out the template)...\n";
 
-        return;
-    }
+		return;
+	}
 
-    string mapID = "QQQ5 " + sectorID;
+	string mapID = "QQQ5 " + sectorID;
 
-    vector<double> newCoeffs;
+	vector<double> newCoeffs;
 
-    for ( int i = 0; i < 32; i++ )
-    {
-        newCoeffs.push_back ( 100 );
-    }
+	for (int i = 0; i < 32; i++)
+	{
+		newCoeffs.push_back(100);
+	}
 
-    while ( std::getline ( input, dump ) )
-    {
-        if ( dump.empty() || dump.find_first_of ( "0123456789" ) == string::npos ) continue;
+	while (std::getline(input, dump))
+	{
+		if (dump.empty() || dump.find_first_of("0123456789") == string::npos) continue;
 
-        double coeff;
-        int stripNbr;
+		double coeff;
+		int stripNbr;
 
-        readLine.clear();
+		readLine.clear();
 
-        readLine.str ( dump );
-        readLine >> stripNbr >> coeff;
+		readLine.str(dump);
+		readLine >> stripNbr >> coeff;
 
-        //         cout << "Read: " << stripNbr << "    " << coeff << "\n";
+		//         cout << "Read: " << stripNbr << "    " << coeff << "\n";
 
-        if ( stripNbr >= 0 && stripNbr <= 31 ) newCoeffs[stripNbr] = coeff;
-        else
-        {
-            cerr << "Warning: strip number " << stripNbr << " doesn't exists!\n";
-        }
-    }
+		if (stripNbr >= 0 && stripNbr <= 31) newCoeffs[stripNbr] = coeff;
+		else
+		{
+			cerr << "Warning: strip number " << stripNbr << " doesn't exists!\n";
+		}
+	}
 
-    endcapsStripsCalMap[mapID] = newCoeffs;
+	endcapsStripsCalMap[mapID] = newCoeffs;
 
-    return;
+	return;
 }
 
-float GetRatioGSvsFirstEx ( string inputName, float minAngle, float maxAngle )
+float GetRatioGSvsFirstEx(string inputName, float minAngle, float maxAngle)
 {
-    std::ifstream input;
-    input.open ( inputName.c_str(), std::ios::in );
+	std::ifstream input;
+	input.open(inputName.c_str(), std::ios::in);
 
-    if ( !input.is_open() )
-    {
-        cerr << "Failed to open file: " << inputName << " ...\n";
-        return 0.0;
-    }
+	if (!input.is_open())
+	{
+		cerr << "Failed to open file: " << inputName << " ...\n";
+		return 0.0;
+	}
 
-    map<float, double> gsMap, firstExMap;
-    map<float, double>* buffMap = 0;
+	map<float, double> gsMap, firstExMap;
+	map<float, double>* buffMap = 0;
 
-    string readLine;
-    std::istringstream iss;
+	string readLine;
+	std::istringstream iss;
 
-    float angle;
-    double crossSection;
+	float angle;
+	double crossSection;
 
-    while ( std::getline ( input, readLine ) )
-    {
-        if ( readLine.empty() ) continue;
+	while (std::getline(input, readLine))
+	{
+		if (readLine.empty()) continue;
 
-        if ( readLine.find ( "Ground State" ) != string::npos )
-        {
-            buffMap = &gsMap;
-            continue;
-        }
-        else if ( readLine.find ( "First Excited State" ) != string::npos )
-        {
-            buffMap = &firstExMap;
-            continue;
-        }
+		if (readLine.find("Ground State") != string::npos)
+		{
+			buffMap = &gsMap;
+			continue;
+		}
+		else if (readLine.find("First Excited State") != string::npos)
+		{
+			buffMap = &firstExMap;
+			continue;
+		}
 
-        if ( readLine.find_first_of ( "0123456789" ) == string::npos ) continue;
+		if (readLine.find_first_of("0123456789") == string::npos) continue;
 
-        iss.clear();
-        iss.str ( readLine );
+		iss.clear();
+		iss.str(readLine);
 
-        iss >> angle >> crossSection;
+		iss >> angle >> crossSection;
 
-        //         cout << angle << "    /    " << crossSection << "\n";
+		//         cout << angle << "    /    " << crossSection << "\n";
 
-        if ( buffMap != nullptr ) ( *buffMap ) [angle] = crossSection;
-    }
+		if (buffMap != nullptr) (*buffMap)[angle] = crossSection;
+	}
 
-    TGraph* gsGraph = new TGraph ( gsMap.size() );
+	TGraph* gsGraph = new TGraph(gsMap.size());
 
-    int counter = 0;
+	int counter = 0;
 
-    for ( auto itr = gsMap.begin(); itr != gsMap.end(); itr++ )
-    {
-        gsGraph->SetPoint ( counter, itr->first, itr->second );
+	for (auto itr = gsMap.begin(); itr != gsMap.end(); itr++)
+	{
+		gsGraph->SetPoint(counter, itr->first, itr->second);
 
-        counter++;
-    }
+		counter++;
+	}
 
-    TGraph* fstExGraph = new TGraph ( firstExMap.size() );
+	TGraph* fstExGraph = new TGraph(firstExMap.size());
 
-    counter = 0;
+	counter = 0;
 
-    for ( auto itr = firstExMap.begin(); itr != firstExMap.end(); itr++ )
-    {
-        fstExGraph->SetPoint ( counter, itr->first, itr->second );
+	for (auto itr = firstExMap.begin(); itr != firstExMap.end(); itr++)
+	{
+		fstExGraph->SetPoint(counter, itr->first, itr->second);
 
-        counter++;
-    }
+		counter++;
+	}
 
-    //     gsGraph->Draw ( "AP" );
-    //     fstExGraph->Draw ( "same" );
+	//     gsGraph->Draw ( "AP" );
+	//     fstExGraph->Draw ( "same" );
 
-    auto gsMinIndexItr = gsMap.upper_bound ( minAngle );
-    gsMinIndexItr--;
+	auto gsMinIndexItr = gsMap.upper_bound(minAngle);
+	gsMinIndexItr--;
 
-    auto gsMaxIndexItr = gsMap.upper_bound ( maxAngle );
-    gsMaxIndexItr--;
+	auto gsMaxIndexItr = gsMap.upper_bound(maxAngle);
+	gsMaxIndexItr--;
 
-    int gsMinIndex = std::distance ( gsMap.begin(), gsMinIndexItr );
-    int gsMaxIndex = std::distance ( gsMap.begin(), gsMaxIndexItr );
+	int gsMinIndex = std::distance(gsMap.begin(), gsMinIndexItr);
+	int gsMaxIndex = std::distance(gsMap.begin(), gsMaxIndexItr);
 
-    cout << "Integrating the Ground State TGraph between index " << gsMinIndex << " ( " << gsMinIndexItr->first << " ) and " << gsMaxIndex << " ( " << gsMaxIndexItr->first << " ) ...\n";
+	cout << "Integrating the Ground State TGraph between index " << gsMinIndex << " ( " << gsMinIndexItr->first << " ) and " << gsMaxIndex << " ( " << gsMaxIndexItr->first
+			<< " ) ...\n";
 
-    double gsIntegral = gsGraph->Integral ( gsMinIndex, gsMaxIndex );
+	double gsIntegral = gsGraph->Integral(gsMinIndex, gsMaxIndex);
 
-    auto fstExMinIndexItr = firstExMap.upper_bound ( minAngle );
-    fstExMinIndexItr--;
+	auto fstExMinIndexItr = firstExMap.upper_bound(minAngle);
+	fstExMinIndexItr--;
 
-    auto fstExMaxIndexItr = firstExMap.upper_bound ( maxAngle );
-    fstExMaxIndexItr--;
+	auto fstExMaxIndexItr = firstExMap.upper_bound(maxAngle);
+	fstExMaxIndexItr--;
 
-    int fstExMinIndex = std::distance ( firstExMap.begin(), fstExMinIndexItr );
-    int fstExMaxIndex = std::distance ( firstExMap.begin(), fstExMaxIndexItr );
+	int fstExMinIndex = std::distance(firstExMap.begin(), fstExMinIndexItr);
+	int fstExMaxIndex = std::distance(firstExMap.begin(), fstExMaxIndexItr);
 
-    cout << "Integrating the First Excited State TGraph between index " << fstExMinIndex << " ( " << fstExMinIndexItr->first << " ) and " << fstExMaxIndex << " ( " << fstExMaxIndexItr->first << " ) ...\n";
+	cout << "Integrating the First Excited State TGraph between index " << fstExMinIndex << " ( " << fstExMinIndexItr->first << " ) and " << fstExMaxIndex << " ( "
+			<< fstExMaxIndexItr->first << " ) ...\n";
 
-    double fstExIntegral = fstExGraph->Integral ( fstExMinIndex, fstExMaxIndex );
+	double fstExIntegral = fstExGraph->Integral(fstExMinIndex, fstExMaxIndex);
 
-    double ratio = fstExIntegral/gsIntegral;
+	double ratio = fstExIntegral / gsIntegral;
 
-    return ratio;
+	return ratio;
 }
 
-void GoddessCalib::GenerateGainAdjustfile ( string filesname, string treename, long long int nEntries, string outfname, double minAdjust, double maxAdjust, double stepWidth )
+void GoddessCalib::GenerateGainAdjustfile(string filesname, string treename, long long int nEntries, string outfname, double minAdjust, double maxAdjust, double stepWidth)
 {
-    std::vector<string> rootfiles = DecodeItemsToTreat ( filesname, "system", true, true );
+	std::vector<string> rootfiles = DecodeItemsToTreat(filesname, "system", true, true);
 
-    if ( rootfiles.size() == 0 ) return;
+	if (rootfiles.size() == 0) return;
 
-    TFile* firstRootFile = new TFile ( rootfiles[0].c_str(), "read" );
+	TFile* firstRootFile = new TFile(rootfiles[0].c_str(), "read");
 
-    geomInfo = ( GoddessGeomInfos* ) firstRootFile->FindObjectAny ( "GoddessGeom" );
-    reacInfo = ( GoddessReacInfos* ) firstRootFile->FindObjectAny ( "GoddessReac" );
+	geomInfo = (GoddessGeomInfos*) firstRootFile->FindObjectAny("GoddessGeom");
+	reacInfo = (GoddessReacInfos*) firstRootFile->FindObjectAny("GoddessReac");
 
-    if ( geomInfo == nullptr )
-    {
-        cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
-        cerr << "Required information about the geometry are missing...\n";
-        cerr << "Aborting...\n";
-        return;
-    }
+	if (geomInfo == nullptr)
+	{
+		cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
+		cerr << "Required information about the geometry are missing...\n";
+		cerr << "Aborting...\n";
+		return;
+	}
 
-    if ( reacInfo == nullptr )
-    {
-        cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
-        cerr << "Required information reaction are missing...\n";
-        cerr << "Aborting...\n";
-        return;
-    }
+	if (reacInfo == nullptr)
+	{
+		cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
+		cerr << "Required information reaction are missing...\n";
+		cerr << "Aborting...\n";
+		return;
+	}
 
-    firstRootFile->Close();
+	firstRootFile->Close();
 
-    TChain* chain = new TChain ( treename.c_str(), treename.c_str() );
+	TChain* chain = new TChain(treename.c_str(), treename.c_str());
 
-    for ( unsigned int i = 0; i < rootfiles.size(); i++ )
-    {
-        chain->Add ( rootfiles[i].c_str() );
-    }
+	for (unsigned int i = 0; i < rootfiles.size(); i++)
+	{
+		chain->Add(rootfiles[i].c_str());
+	}
 
-    if ( stoppingPowerTable["ejectile"].empty() )
-    {
-        std::ifstream mass_input ( pathToGDAQ + "/share/mass_db.dat", std::ios_base::in );
+	if (stoppingPowerTable["ejectile"].empty())
+	{
+		std::ifstream mass_input(pathToGDAQ + "/share/mass_db.dat", std::ios_base::in);
 
-        if ( !mass_input.is_open() )
-        {
-            std::cerr << "Failed to open the mass database. Energy loss has not been computed...\n";
+		if (!mass_input.is_open())
+		{
+			std::cerr << "Failed to open the mass database. Energy loss has not been computed...\n";
 
-            return;
-        }
+			return;
+		}
 
-        string projStr = "";
+		string projStr = "";
 
-        GetAtomicFormula ( mass_input, reacInfo->ejecA, reacInfo->ejecZ, projStr );
+		GetAtomicFormula(mass_input, reacInfo->ejecA, reacInfo->ejecZ, projStr);
 
-        char* tryFindStr = new char[512];
+		char* tryFindStr = new char[512];
 
-        sprintf ( tryFindStr, "*%s*range*_vs_energy*", projStr.c_str() );
+		sprintf(tryFindStr, "*%s*range*_vs_energy*", projStr.c_str());
 
-        vector<string> tryFindTable = DecodeItemsToTreat ( ( string ) tryFindStr, "system", false );
+		vector<string> tryFindTable = DecodeItemsToTreat((string) tryFindStr, "system", false);
 
-        if ( tryFindTable.size() != 1 )
-        {
-            std::cerr << "Requested to compute the energy loss but no stopping power table was given and auto search failed...\n";
-            return;
-        }
+		if (tryFindTable.size() != 1)
+		{
+			std::cerr << "Requested to compute the energy loss but no stopping power table was given and auto search failed...\n";
+			return;
+		}
 
-        stoppingPowerTable["ejectile"] = tryFindTable[0];
-    }
+		stoppingPowerTable["ejectile"] = tryFindTable[0];
+	}
 
-    auto energyLossData = FillGraphFromFile ( stoppingPowerTable["ejectile"] );
+	auto energyLossData = FillGraphFromFile(stoppingPowerTable["ejectile"]);
 
-    TVector3 targetPos = geomInfo->GetOffset ( "Target Offset" );
+	TVector3 targetPos = geomInfo->GetOffset("Target Offset");
 
-    TVector3 beamDir ( 0, 0, 1 );
+	TVector3 beamDir(0, 0, 1);
 
-    auto targetLadderDir = TVector3 ( 0, 0, 1 );
-    targetLadderDir.SetTheta ( geomInfo->targetLadderAngle*TMath::DegToRad() );
-    targetLadderDir.SetPhi ( TMath::PiOver2() );
+	auto targetLadderDir = TVector3(0, 0, 1);
+	targetLadderDir.SetTheta(geomInfo->targetLadderAngle * TMath::DegToRad());
+	targetLadderDir.SetPhi(TMath::PiOver2());
 
-    double beamEffThickness = GetEffectiveThickness ( beamDir.Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
+	double beamEffThickness = GetEffectiveThickness(beamDir.Angle(targetLadderDir) - TMath::PiOver2(), reacInfo->targetThickness);
 
-    reacInfo->beamEk = TryGetRemainingEnergy ( pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001,
-                       reacInfo->targetType, reacInfo->targetDensity, "./", "Interpolation" );
+	reacInfo->beamEk = TryGetRemainingEnergy(pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001, reacInfo->targetType,
+			reacInfo->targetDensity, "./", "Interpolation");
 
-    cout << "Beam Energy after computing energy loss: " << reacInfo->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
+	cout << "Beam Energy after computing energy loss: " << reacInfo->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
 
-    vector<SiDataBase>* vectSiData = new vector<SiDataBase>;
+	vector<SiDataBase>* vectSiData = new vector<SiDataBase>;
 
-    chain->SetBranchAddress ( "si", &vectSiData );
+	chain->SetBranchAddress("si", &vectSiData);
 
-    double adjust = minAdjust;
+	double adjust = minAdjust;
 
-    map<int, TH1F*> hQQQ5[4][32];
+	map<int, TH1F*> hQQQ5[4][32];
 
-    while ( adjust <= maxAdjust )
-    {
-        for ( int sect = 0; sect < 4; sect++ )
-        {
-            for ( int strip = 0; strip < 32; strip++ )
-            {
-                hQQQ5[sect][strip][RoundValue ( adjust*100 )] = new TH1F ( Form ( "hEx_QQQ5_U%d_%d_gain_%d", sect, strip, RoundValue ( adjust*100 ) ),
-                        Form ( "Excitation Energy QQQ5 U%d strip %d gain mod %d %%", sect, strip, RoundValue ( adjust*100 ) ),
-                        800, -20, 20 );
-            }
-        }
+	while (adjust <= maxAdjust)
+	{
+		for (int sect = 0; sect < 4; sect++)
+		{
+			for (int strip = 0; strip < 32; strip++)
+			{
+				hQQQ5[sect][strip][RoundValue(adjust * 100)] = new TH1F(Form("hEx_QQQ5_U%d_%d_gain_%d", sect, strip, RoundValue(adjust * 100)),
+						Form("Excitation Energy QQQ5 U%d strip %d gain mod %d %%", sect, strip, RoundValue(adjust * 100)), 800, -20, 20);
+			}
+		}
 
-        adjust+= stepWidth;
-    }
+		adjust += stepWidth;
+	}
 
-    if ( nEntries <= 0 ) nEntries = chain->GetEntries();
+	if (nEntries <= 0) nEntries = chain->GetEntries();
 
-    for ( long long int ev = 0; ev < nEntries; ev++ )
-    {
-        if ( ev%10000 == 0 )
-        {
-            cout << "Entry " << std::setw ( 15 ) << ev << " / " << nEntries;
-            cout<< " ( " << std::fixed << std::setprecision ( 2 )  << std::setw ( 6 ) << ( ( float ) ev/nEntries ) * 100. << " % )\r" << std::flush;
-        }
+	for (long long int ev = 0; ev < nEntries; ev++)
+	{
+		if (ev % 10000 == 0)
+		{
+			cout << "Entry " << std::setw(15) << ev << " / " << nEntries;
+			cout << " ( " << std::fixed << std::setprecision(2) << std::setw(6) << ((float) ev / nEntries) * 100. << " % )\r" << std::flush;
+		}
 
-        chain->GetEntry ( ev );
+		chain->GetEntry(ev);
 
-        if ( vectSiData->size() > 0 )
-        {
-            for ( unsigned int i = 0; i < vectSiData->size(); i++ )
-            {
-                SiDataBase siData = vectSiData->at ( i );
+		if (vectSiData->size() > 0)
+		{
+			for (unsigned int i = 0; i < vectSiData->size(); i++)
+			{
+				SiDataBase siData = vectSiData->at(i);
 
-                double energy = siData.ESumLayer ( 1,false );
-                int sector = siData.sector;
-                int strip = siData.StripMaxLayer ( 1, false );
+				double energy = siData.ESumLayer(1, false);
+				int sector = siData.sector;
+				int strip = siData.StripMaxLayer(1, false);
 
-                if ( siData.isUpstream && !siData.isBarrel && sector >= 0 && sector <= 3 && strip >= 0 && strip <= 31 )
-                {
-                    double effThickness = GetEffectiveThickness ( siData.PosE1().Angle ( targetLadderDir ) - TMath::PiOver2(), reacInfo->targetThickness );
-                    double estELoss = ComputeEnergyLoss ( energyLossData.first, energyLossData.second, energy/reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation" );
+				if (siData.isUpstream && !siData.isBarrel && sector >= 0 && sector <= 3 && strip >= 0 && strip <= 31)
+				{
+					double effThickness = GetEffectiveThickness(siData.PosE1().Angle(targetLadderDir) - TMath::PiOver2(), reacInfo->targetThickness);
+					double estELoss = ComputeEnergyLoss(energyLossData.first, energyLossData.second, energy / reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation");
 
-                    //             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
+					//             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
 
-                    energy += estELoss;
+					energy += estELoss;
 
-                    adjust = minAdjust;
+					adjust = minAdjust;
 
-                    while ( adjust <= maxAdjust )
-                    {
-                        double qVal = SiDataBase::QValue ( reacInfo, energy*adjust, siData.PosE1().Angle ( beamDir ) );
+					while (adjust <= maxAdjust)
+					{
+						double qVal = SiDataBase::QValue(reacInfo, energy * adjust, siData.PosE1().Angle(beamDir));
 
-                        double eX = reacInfo->qValGsGs - qVal;
+						double eX = reacInfo->qValGsGs - qVal;
 
-                        hQQQ5[sector][strip][RoundValue ( adjust*100 )]->Fill ( eX );
+						hQQQ5[sector][strip][RoundValue(adjust * 100)]->Fill(eX);
 
-                        adjust+= stepWidth;
-                    }
-                }
-            }
-        }
-    }
+						adjust += stepWidth;
+					}
+				}
+			}
+		}
+	}
 
-    TFile* outf = new TFile ( outfname.c_str(), "recreate" );
+	TFile* outf = new TFile(outfname.c_str(), "recreate");
 
-    outf->cd();
+	outf->cd();
 
-    for ( int sect = 0; sect < 4; sect++ )
-    {
-        for ( int strip = 0; strip < 32; strip++ )
-        {
-            for ( auto itr = hQQQ5[sect][strip].begin(); itr != hQQQ5[sect][strip].end(); itr++ ) itr->second->Write();
-        }
-    }
+	for (int sect = 0; sect < 4; sect++)
+	{
+		for (int strip = 0; strip < 32; strip++)
+		{
+			for (auto itr = hQQQ5[sect][strip].begin(); itr != hQQQ5[sect][strip].end(); itr++)
+				itr->second->Write();
+		}
+	}
 
-    outf->mkdir ( "infos" );
-    outf->cd ( "infos" );
-    geomInfo->Write ( "GoddessGeom" );
-    reacInfo->Write ( "GoddessReac" );
-    outf->Close();
+	outf->mkdir("infos");
+	outf->cd("infos");
+	geomInfo->Write("GoddessGeom");
+	reacInfo->Write("GoddessReac");
+	outf->Close();
 
-    cout << endl;
+	cout << endl;
 
-    return;
+	return;
 }
 
-TF1* FitQVal ( TH1* hist, vector< string > mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, string mode, bool verbose )
+TF1* FitQVal(TH1* hist, vector<string> mean, float fwhm_min, float fwhm_max, float minBound, float maxBound, string mode, bool verbose)
 {
-    if ( mean.size() == 0 ) return nullptr;
+	if (mean.size() == 0) return nullptr;
 
-    TH1* hist_cpy = ( TH1* ) hist->Clone();
+	TH1* hist_cpy = (TH1*) hist->Clone();
 
-    string funcFormula = "[0] + [1] * x + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [2],2 ) )";
+	string funcFormula = "[0] + [1] * x + [3] * TMath::Exp ( -pow ( x - [4],2 ) / pow ( 2 * [2],2 ) )";
 
-    vector<float> meansF;
-    float minMean, maxMean;
+	vector<float> meansF;
+	float minMean, maxMean;
 
-    vector<pair<float,float>> boundsF;
+	vector<pair<float, float>> boundsF;
 
-    int* dependantFrom = new int[mean.size()];
+	int* dependantFrom = new int[mean.size()];
 
-    if ( mean.size() > 0 )
-    {
-        dependantFrom[0] = -1;
-        meansF.push_back ( stof ( mean[0].substr ( 5 ) ) );
+	if (mean.size() > 0)
+	{
+		dependantFrom[0] = -1;
+		meansF.push_back(stof(mean[0].substr(5)));
 
-        minMean = meansF[0];
-        maxMean = meansF[0];
+		minMean = meansF[0];
+		maxMean = meansF[0];
 
-        for ( unsigned int i = 0; i < mean.size(); i++ )
-        {
-            string newMeanStr = mean[i].substr ( mean[i].find_first_of ( ":" ) +1 );
+		for (unsigned int i = 0; i < mean.size(); i++)
+		{
+			string newMeanStr = mean[i].substr(mean[i].find_first_of(":") + 1);
 
-            size_t minBoundPos = newMeanStr.find ( "(min=" );
+			size_t minBoundPos = newMeanStr.find("(min=");
 
-            if ( minBoundPos != string::npos )
-            {
-                size_t boundSepPos = newMeanStr.find_first_of ( ";", minBoundPos );
-                size_t maxBoundPos = newMeanStr.find ( "max=" );
+			if (minBoundPos != string::npos)
+			{
+				size_t boundSepPos = newMeanStr.find_first_of(";", minBoundPos);
+				size_t maxBoundPos = newMeanStr.find("max=");
 
-                float minb = stof ( newMeanStr.substr ( minBoundPos+5, boundSepPos-minBoundPos-5 ) );
-                float maxb = stof ( newMeanStr.substr ( maxBoundPos+4, newMeanStr.find_last_of ( ")" ) - maxBoundPos - 4 ) );
+				float minb = stof(newMeanStr.substr(minBoundPos + 5, boundSepPos - minBoundPos - 5));
+				float maxb = stof(newMeanStr.substr(maxBoundPos + 4, newMeanStr.find_last_of(")") - maxBoundPos - 4));
 
-                boundsF.push_back ( make_pair ( minb, maxb ) );
+				boundsF.push_back(make_pair(minb, maxb));
 
-                newMeanStr = newMeanStr.substr ( 0, minBoundPos );
-            }
-            else boundsF.push_back ( make_pair ( -1,-1 ) );
+				newMeanStr = newMeanStr.substr(0, minBoundPos);
+			}
+			else boundsF.push_back(make_pair(-1, -1));
 
-            if ( i == 0 ) continue;
+			if (i == 0) continue;
 
-            bool isDependant = false;
-            dependantFrom[i] = -1;
+			bool isDependant = false;
+			dependantFrom[i] = -1;
 
-            size_t oBracketPos = newMeanStr.find_first_of ( "[" );
+			size_t oBracketPos = newMeanStr.find_first_of("[");
 
-            if ( oBracketPos != string::npos )
-            {
-                isDependant = true;
+			if (oBracketPos != string::npos)
+			{
+				isDependant = true;
 
-                size_t cBracketPos = newMeanStr.find_first_of ( "]" );
+				size_t cBracketPos = newMeanStr.find_first_of("]");
 
-                if ( cBracketPos == string::npos || cBracketPos < oBracketPos ) return nullptr;
+				if (cBracketPos == string::npos || cBracketPos < oBracketPos) return nullptr;
 
-                dependantFrom[i] = stoi ( newMeanStr.substr ( oBracketPos+1, cBracketPos - oBracketPos - 1 ) );
+				dependantFrom[i] = stoi(newMeanStr.substr(oBracketPos + 1, cBracketPos - oBracketPos - 1));
 
-                meansF.push_back ( stof ( newMeanStr.substr ( cBracketPos+1 ) ) );
-            }
-            else meansF.push_back ( stoi ( newMeanStr ) );
+				meansF.push_back(stof(newMeanStr.substr(cBracketPos + 1)));
+			}
+			else meansF.push_back(stoi(newMeanStr));
 
-            float newMean = dependantFrom[i] == -1 ? meansF[i] : meansF[dependantFrom[i]] + meansF[i];
+			float newMean = dependantFrom[i] == -1 ? meansF[i] : meansF[dependantFrom[i]] + meansF[i];
 
-            if ( newMean < minMean ) minMean = newMean;
-            else if ( newMean > maxMean ) maxMean = newMean;
+			if (newMean < minMean) minMean = newMean;
+			else if (newMean > maxMean) maxMean = newMean;
 
-            if ( dependantFrom[i] == -1 ) funcFormula += ( string ) Form ( " + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [2],2 ) )", 5 + ( i-1 ) * 2, 6 + ( i-1 ) * 2 );
-            else funcFormula += ( string ) Form ( " + [%d]*[%d] * TMath::Exp ( -pow ( x - ([%d]+[%d]),2 ) / pow ( 2 * [2],2 ) )",
-                                                      3 + dependantFrom[i] * 2, 5 + ( i-1 ) * 2, 4 + dependantFrom[i] * 2, 6 + ( i-1 ) * 2 );
-        }
-    }
-    else return nullptr;
+			if (dependantFrom[i] == -1) funcFormula += (string) Form(" + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [2],2 ) )", 5 + (i - 1) * 2, 6 + (i - 1) * 2);
+			else funcFormula += (string) Form(" + [%d]*[%d] * TMath::Exp ( -pow ( x - ([%d]+[%d]),2 ) / pow ( 2 * [2],2 ) )", 3 + dependantFrom[i] * 2, 5 + (i - 1) * 2,
+					4 + dependantFrom[i] * 2, 6 + (i - 1) * 2);
+		}
+	}
+	else return nullptr;
 
-    auto lambdaFitFunc = [=] ( double* x, double* par ) -> double
-    {
-        double res = 0;
+	auto lambdaFitFunc = [=] ( double* x, double* par ) -> double
+	{
+		double res = 0;
 
-        if ( mode == "linear" ) res += par[0] + par[1]*x[0];
+		if ( mode == "linear" ) res += par[0] + par[1]*x[0];
 
-        int parnum = 3;
+		int parnum = 3;
 
-        for ( unsigned int i = 0; i < meansF.size(); i++ )
-        {
-            if ( dependantFrom[i] == -1 ) res += par[parnum] * TMath::Exp ( -pow ( x[0] - par[parnum+1],2 ) / pow ( 2 * par[2],2 ) );
-            else res += par[dependantFrom[i]*2+3]*par[parnum] * TMath::Exp ( -pow ( x[0] - ( par[dependantFrom[i]*2+4]+par[parnum+1] ),2 ) / pow ( 2 * par[2],2 ) );
+		for ( unsigned int i = 0; i < meansF.size(); i++ )
+		{
+			if ( dependantFrom[i] == -1 ) res += par[parnum] * TMath::Exp ( -pow ( x[0] - par[parnum+1],2 ) / pow ( 2 * par[2],2 ) );
+			else res += par[dependantFrom[i]*2+3]*par[parnum] * TMath::Exp ( -pow ( x[0] - ( par[dependantFrom[i]*2+4]+par[parnum+1] ),2 ) / pow ( 2 * par[2],2 ) );
 
-            parnum += 2;
-        }
+			parnum += 2;
+		}
 
-        return res;
-    };
+		return res;
+	};
 
-    int npars = 3 + 2*meansF.size();
+	int npars = 3 + 2 * meansF.size();
 
-    if ( verbose )
-    {
-        cout << "Final Fit Formula (" << npars << " parameters):\n";
-        cout << funcFormula << endl;
-        cout << "***********************************************************************\n";
-    }
+	if (verbose)
+	{
+		cout << "Final Fit Formula (" << npars << " parameters):\n";
+		cout << funcFormula << endl;
+		cout << "***********************************************************************\n";
+	}
 
 //     TF1* fitFunc = new TF1 ( "fitFunc", funcFormula.c_str(), -20, 20 );
-    TF1* fitFunc = new TF1 ( "fitFunc", lambdaFitFunc, -20, 20, npars );
+	TF1* fitFunc = new TF1("fitFunc", lambdaFitFunc, -20, 20, npars);
 
-    float fitMin, fitMax;
+	float fitMin, fitMax;
 
-    float fwhm_mean = ( fwhm_min+fwhm_max ) /2.;
+	float fwhm_mean = (fwhm_min + fwhm_max) / 2.;
 
-    if ( minBound == 0 ) fitMin = minMean - fwhm_mean*3;
-    else fitMin = minBound;
+	if (minBound == 0) fitMin = minMean - fwhm_mean * 3;
+	else fitMin = minBound;
 
-    if ( maxBound == 0 ) fitMax = maxMean + fwhm_mean*3;
-    else fitMax = maxBound;
+	if (maxBound == 0) fitMax = maxMean + fwhm_mean * 3;
+	else fitMax = maxBound;
 
-    fitFunc->SetParameter ( 0, 1 );
-    fitFunc->SetParameter ( 1, 0.1 );
+	fitFunc->SetParameter(0, 1);
+	fitFunc->SetParameter(1, 0.1);
 
-    fitFunc->SetParameter ( 2 , fwhm_mean );
-    fitFunc->SetParLimits ( 2 , fwhm_min, fwhm_max );
+	fitFunc->SetParameter(2, fwhm_mean);
+	fitFunc->SetParLimits(2, fwhm_min, fwhm_max);
 
-    if ( mode == "TSpectrum" )
-    {
-        if ( verbose ) cout << "Fitting with background evaluated using TSpectrum..." << endl;
+	if (mode == "TSpectrum")
+	{
+		if (verbose) cout << "Fitting with background evaluated using TSpectrum..." << endl;
 
-        fitFunc->FixParameter ( 0, 0 );
-        fitFunc->FixParameter ( 1, 0 );
+		fitFunc->FixParameter(0, 0);
+		fitFunc->FixParameter(1, 0);
 
-        hist_cpy->GetXaxis()->SetRangeUser ( minBound-1, maxBound+1 );
+		hist_cpy->GetXaxis()->SetRangeUser(minBound - 1, maxBound + 1);
 
-        TSpectrum* spec = new TSpectrum();
+		TSpectrum* spec = new TSpectrum();
 
-        auto hBack = spec->Background ( hist_cpy, 50 );
+		auto hBack = spec->Background(hist_cpy, 50);
 
-        hist_cpy->Add ( hBack, -1 );
-    }
+		hist_cpy->Add(hBack, -1);
+	}
 
-    for ( unsigned int i = 0; i < mean.size(); i++ )
-    {
-        int parNum = 3 + 2*i;
+	for (unsigned int i = 0; i < mean.size(); i++)
+	{
+		int parNum = 3 + 2 * i;
 
-        fitFunc->SetParameter ( parNum, 10 );
-        fitFunc->SetParameter ( parNum+1, meansF[i] );
+		fitFunc->SetParameter(parNum, 10);
+		fitFunc->SetParameter(parNum + 1, meansF[i]);
 
-        if ( dependantFrom[i] == -1 ) fitFunc->SetParLimits ( parNum, 1, 1e6 );
-        else fitFunc->SetParLimits ( parNum, 0.1, 100 );
+		if (dependantFrom[i] == -1) fitFunc->SetParLimits(parNum, 1, 1e6);
+		else fitFunc->SetParLimits(parNum, 0.1, 100);
 
-        if ( verbose ) cout << "Setting limits for parameter #" << parNum+1 << endl;
-        if ( boundsF[i].first == -1 || boundsF[i].second == -1 )
-        {
-            if ( dependantFrom[i] == -1 )
-            {
-                fitFunc->SetParLimits ( parNum+1, meansF[i]-0.5, meansF[i]+0.5 );
+		if (verbose) cout << "Setting limits for parameter #" << parNum + 1 << endl;
+		if (boundsF[i].first == -1 || boundsF[i].second == -1)
+		{
+			if (dependantFrom[i] == -1)
+			{
+				fitFunc->SetParLimits(parNum + 1, meansF[i] - 0.5, meansF[i] + 0.5);
 
-                if ( verbose ) cout << "Min Bound = " << meansF[i]-0.5 << " / Max Bound = " << meansF[i]+0.5 << endl;
-            }
-            else
-            {
-                fitFunc->SetParLimits ( parNum+1, meansF[i] - 0.1, meansF[i] + 0.1 );
+				if (verbose) cout << "Min Bound = " << meansF[i] - 0.5 << " / Max Bound = " << meansF[i] + 0.5 << endl;
+			}
+			else
+			{
+				fitFunc->SetParLimits(parNum + 1, meansF[i] - 0.1, meansF[i] + 0.1);
 
-                if ( verbose ) cout << "Min Bound = " << meansF[i]-0.1 << " / Max Bound = " << meansF[i]+0.1 << endl;
-            }
-        }
-        else
-        {
-            if ( boundsF[i].first == boundsF[i].second )
-            {
-                fitFunc->FixParameter ( parNum+1, boundsF[i].first );
-            }
-            else fitFunc->SetParLimits ( parNum+1, boundsF[i].first, boundsF[i].second );
+				if (verbose) cout << "Min Bound = " << meansF[i] - 0.1 << " / Max Bound = " << meansF[i] + 0.1 << endl;
+			}
+		}
+		else
+		{
+			if (boundsF[i].first == boundsF[i].second)
+			{
+				fitFunc->FixParameter(parNum + 1, boundsF[i].first);
+			}
+			else fitFunc->SetParLimits(parNum + 1, boundsF[i].first, boundsF[i].second);
 
-            if ( verbose ) cout << "Min Bound = " << boundsF[i].first << " / Max Bound = " << boundsF[i].second << endl;
-        }
-    }
+			if (verbose) cout << "Min Bound = " << boundsF[i].first << " / Max Bound = " << boundsF[i].second << endl;
+		}
+	}
 
-    hist_cpy->Fit ( fitFunc, "Q", "", fitMin, fitMax );
+	hist_cpy->Fit(fitFunc, "Q", "", fitMin, fitMax);
 
-    if ( minBound == 0 || maxBound == 0 )
-    {
-        minMean = fitFunc->GetParameter ( 4 + 2 * ( mean.size()-1 ) );
-        maxMean = fitFunc->GetParameter ( 4 );
+	if (minBound == 0 || maxBound == 0)
+	{
+		minMean = fitFunc->GetParameter(4 + 2 * (mean.size() - 1));
+		maxMean = fitFunc->GetParameter(4);
 
-        for ( unsigned int i = 0; i < mean.size(); i++ )
-        {
-            if ( minMean > fitFunc->GetParameter ( 4 + 2 * i ) ) minMean = fitFunc->GetParameter ( 4 + 2 * i );
-            else if ( maxMean < fitFunc->GetParameter ( 4 + 2 * i ) ) maxMean = fitFunc->GetParameter ( 4 + 2 * i );
-        }
+		for (unsigned int i = 0; i < mean.size(); i++)
+		{
+			if (minMean > fitFunc->GetParameter(4 + 2 * i)) minMean = fitFunc->GetParameter(4 + 2 * i);
+			else if (maxMean < fitFunc->GetParameter(4 + 2 * i)) maxMean = fitFunc->GetParameter(4 + 2 * i);
+		}
 
-        fitMin = minBound == 0 ? ( minMean - 3 * fitFunc->GetParameter ( 2 ) ) : minBound;
-        fitMax = maxBound == 0 ? ( maxMean + 10 * fitFunc->GetParameter ( 2 ) ) : maxBound;
+		fitMin = minBound == 0 ? (minMean - 3 * fitFunc->GetParameter(2)) : minBound;
+		fitMax = maxBound == 0 ? (maxMean + 10 * fitFunc->GetParameter(2)) : maxBound;
 
-        hist_cpy->Fit ( fitFunc, "Q", "", fitMin, fitMax );
-    }
+		hist_cpy->Fit(fitFunc, "Q", "", fitMin, fitMax);
+	}
 
-    if ( verbose )
-    {
-        cout << "Fit Results: \n";
-        for ( unsigned int i = 0; i < mean.size(); i++ )
-        {
-            cout << "Peak #" << std::setw ( 2 ) << std::left << i << " : ";
-            if ( dependantFrom[i] == -1 ) cout << fitFunc->GetParameter ( 4 + 2*i ) << " +/- " << fitFunc->GetParError ( 4 + 2*i ) << " MeV\n";
-            else
-            {
-                cout << fitFunc->GetParameter ( 4 + dependantFrom[i]*i ) + fitFunc->GetParameter ( 4 + 2*i );
-                cout << " +/- " << fitFunc->GetParError ( 4 + dependantFrom[i]*i ) + fitFunc->GetParError ( 4 + 2*i ) << " MeV ( Depends from Peak #" << dependantFrom[i] << " : ";
-                cout << " energy difference = " << fabs ( fitFunc->GetParameter ( 4 + 2*i ) ) << " +/- " << fitFunc->GetParError ( 4 + 2*i );
-                cout << " / Ratio = " << fitFunc->GetParameter ( 3 + 2*i ) << " )\n";
-            }
-        }
-        cout << "Sigma = " << fitFunc->GetParameter ( 2 ) << " MeV\n";
-        cout << "Chi2 = " << fitFunc->GetChisquare() << "\n";
-    }
+	if (verbose)
+	{
+		cout << "Fit Results: \n";
+		for (unsigned int i = 0; i < mean.size(); i++)
+		{
+			cout << "Peak #" << std::setw(2) << std::left << i << " : ";
+			if (dependantFrom[i] == -1) cout << fitFunc->GetParameter(4 + 2 * i) << " +/- " << fitFunc->GetParError(4 + 2 * i) << " MeV\n";
+			else
+			{
+				cout << fitFunc->GetParameter(4 + dependantFrom[i] * i) + fitFunc->GetParameter(4 + 2 * i);
+				cout << " +/- " << fitFunc->GetParError(4 + dependantFrom[i] * i) + fitFunc->GetParError(4 + 2 * i) << " MeV ( Depends from Peak #" << dependantFrom[i] << " : ";
+				cout << " energy difference = " << fabs(fitFunc->GetParameter(4 + 2 * i)) << " +/- " << fitFunc->GetParError(4 + 2 * i);
+				cout << " / Ratio = " << fitFunc->GetParameter(3 + 2 * i) << " )\n";
+			}
+		}
+		cout << "Sigma = " << fitFunc->GetParameter(2) << " MeV\n";
+		cout << "Chi2 = " << fitFunc->GetChisquare() << "\n";
+	}
 
-    return fitFunc;
+	return fitFunc;
 }
 
-TF1* FitQValGS ( TH1* hist, vector<float> mean, float fwhm, float peakRatio, float minBound, float maxBound, bool verbose )
+TF1* FitQValGS(TH1* hist, vector<float> mean, float fwhm, float peakRatio, float minBound, float maxBound, bool verbose)
 {
-    if ( mean.size() == 0 ) return nullptr;
+	if (mean.size() == 0) return nullptr;
 
-    string funcFormula = "[0] + [1] * x + [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [3],2 ) ) + [4]*[2] * TMath::Exp ( -pow ( x - ([5]-0.288),2 ) / pow ( 2 * [3],2 ) )";
+	string funcFormula = "[0] + [1] * x + [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [3],2 ) ) + [4]*[2] * TMath::Exp ( -pow ( x - ([5]-0.288),2 ) / pow ( 2 * [3],2 ) )";
 
-    float minMean = mean[0], maxMean = mean[0];
+	float minMean = mean[0], maxMean = mean[0];
 
-    if ( mean.size() > 0 )
-    {
-        for ( unsigned int i = 1; i < mean.size(); i++ )
-        {
-            if ( mean[i] < minMean ) minMean = mean[i];
-            else if ( mean[i] > maxMean ) maxMean = mean[i];
+	if (mean.size() > 0)
+	{
+		for (unsigned int i = 1; i < mean.size(); i++)
+		{
+			if (mean[i] < minMean) minMean = mean[i];
+			else if (mean[i] > maxMean) maxMean = mean[i];
 
-            funcFormula += ( string ) Form ( " + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [3],2 ) )", 6 + ( i-1 ) * 2, 7 + ( i-1 ) * 2 );
-        }
-    }
+			funcFormula += (string) Form(" + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [3],2 ) )", 6 + (i - 1) * 2, 7 + (i - 1) * 2);
+		}
+	}
 
-    TF1* fitFunc = new TF1 ( "fitFunc", funcFormula.c_str(), -20, 20 );
+	TF1* fitFunc = new TF1("fitFunc", funcFormula.c_str(), -20, 20);
 
-    float fitMin, fitMax;
+	float fitMin, fitMax;
 
-    if ( minBound == 0 ) fitMin = minMean - fwhm;
-    else fitMin = minBound;
+	if (minBound == 0) fitMin = minMean - fwhm;
+	else fitMin = minBound;
 
-    if ( maxBound == 0 ) fitMax = maxMean + fwhm*3;
-    else fitMax = maxBound;
+	if (maxBound == 0) fitMax = maxMean + fwhm * 3;
+	else fitMax = maxBound;
 
-    fitFunc->SetParameter ( 2, peakRatio );
-    fitFunc->SetParLimits ( 2, 0, 1 );
+	fitFunc->SetParameter(2, peakRatio);
+	fitFunc->SetParLimits(2, 0, 1);
 
-    fitFunc->SetParameter ( 0, 1 );
-    fitFunc->SetParameter ( 1, 0.1 );
+	fitFunc->SetParameter(0, 1);
+	fitFunc->SetParameter(1, 0.1);
 
-    fitFunc->SetParameter ( 3, fwhm );
-    fitFunc->SetParLimits ( 3, 0.01, 0.1 );
+	fitFunc->SetParameter(3, fwhm);
+	fitFunc->SetParLimits(3, 0.01, 0.1);
 
-    for ( unsigned int i = 0; i < mean.size(); i++ )
-    {
-        int parNum = 4 + 2*i;
+	for (unsigned int i = 0; i < mean.size(); i++)
+	{
+		int parNum = 4 + 2 * i;
 
-        fitFunc->SetParameter ( parNum, 10 );
-        fitFunc->SetParameter ( parNum+1, mean[i] );
+		fitFunc->SetParameter(parNum, 10);
+		fitFunc->SetParameter(parNum + 1, mean[i]);
 
-        fitFunc->SetParLimits ( parNum, 0, 1e6 );
-    }
+		fitFunc->SetParLimits(parNum, 0, 1e6);
+	}
 
-    hist->Fit ( fitFunc, "Q", "", fitMin, fitMax );
+	hist->Fit(fitFunc, "Q", "", fitMin, fitMax);
 
-    if ( minBound == 0 || maxBound == 0 )
-    {
-        minMean = fitFunc->GetParameter ( 5 + 2 * ( mean.size()-1 ) );
-        maxMean = fitFunc->GetParameter ( 5 );
+	if (minBound == 0 || maxBound == 0)
+	{
+		minMean = fitFunc->GetParameter(5 + 2 * (mean.size() - 1));
+		maxMean = fitFunc->GetParameter(5);
 
-        for ( unsigned int i = 0; i < mean.size(); i++ )
-        {
-            if ( minMean > fitFunc->GetParameter ( 5 + 2 * i ) ) minMean = fitFunc->GetParameter ( 5 + 2 * i );
-            else if ( maxMean < fitFunc->GetParameter ( 5 + 2 * i ) ) maxMean = fitFunc->GetParameter ( 5 + 2 * i );
-        }
+		for (unsigned int i = 0; i < mean.size(); i++)
+		{
+			if (minMean > fitFunc->GetParameter(5 + 2 * i)) minMean = fitFunc->GetParameter(5 + 2 * i);
+			else if (maxMean < fitFunc->GetParameter(5 + 2 * i)) maxMean = fitFunc->GetParameter(5 + 2 * i);
+		}
 
-        fitMin = minBound == 0 ? ( minMean - 3 * fitFunc->GetParameter ( 3 ) ) : minBound;
-        fitMax = maxBound == 0 ? ( maxMean + 10 * fitFunc->GetParameter ( 3 ) ) : maxBound;
+		fitMin = minBound == 0 ? (minMean - 3 * fitFunc->GetParameter(3)) : minBound;
+		fitMax = maxBound == 0 ? (maxMean + 10 * fitFunc->GetParameter(3)) : maxBound;
 
-        hist->Fit ( fitFunc, "Q", "", fitMin, fitMax );
-    }
+		hist->Fit(fitFunc, "Q", "", fitMin, fitMax);
+	}
 
-    if ( verbose )
-    {
-        cout << "Fit Results for the G.S. and 1st Exited State: \n";
-        cout << std::setw ( 16 ) << std::left << "G.S. @ " << fitFunc->GetParameter ( 5 ) << " MeV\n";
-        //         cout << std::setw ( 16 ) << std::left << "1st Ex. State @ " << fitFunc->GetParameter ( 7 ) << " MeV\n";
-        //         cout << "Energy Difference = " << fabs ( fitFunc->GetParameter ( 7 ) - fitFunc->GetParameter ( 5 ) ) << " MeV\n";
-        cout << "Sigma = " << fitFunc->GetParameter ( 3 ) << " MeV\n";
-        cout << "Peak Ratio = " << fitFunc->GetParameter ( 2 ) << " MeV\n";
-    }
+	if (verbose)
+	{
+		cout << "Fit Results for the G.S. and 1st Exited State: \n";
+		cout << std::setw(16) << std::left << "G.S. @ " << fitFunc->GetParameter(5) << " MeV\n";
+		//         cout << std::setw ( 16 ) << std::left << "1st Ex. State @ " << fitFunc->GetParameter ( 7 ) << " MeV\n";
+		//         cout << "Energy Difference = " << fabs ( fitFunc->GetParameter ( 7 ) - fitFunc->GetParameter ( 5 ) ) << " MeV\n";
+		cout << "Sigma = " << fitFunc->GetParameter(3) << " MeV\n";
+		cout << "Peak Ratio = " << fitFunc->GetParameter(2) << " MeV\n";
+	}
 
-    return fitFunc;
+	return fitFunc;
 }
 
 // vector<double> GoddessCalib::AdjustQValSpectrum ( vector<std::map<int, TH1F*>>* hists, float peakPos, float fwhm, string crossSectionInput,
@@ -2540,100 +2554,76 @@ TF1* FitQValGS ( TH1* hist, vector<float> mean, float fwhm, float peakRatio, flo
 
 // --------------------------------------------- Display Help Functions ----------------------------- //
 
-TH2F* GoddessCalib::PlotSX3ResStripCalGraph ( TChain* chain, bool isUpstream, unsigned short sector, unsigned short strip )
+TH2F* GoddessCalib::PlotSX3ResStripCalGraph(TChain* chain, bool isUpstream, unsigned short sector, unsigned short strip)
 {
-    string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream" ;
-    string cond = "si.isBarrel && " + upstreamCond;
+	string upstreamCond = isUpstream ? "si.isUpstream" : "!si.isUpstream";
+	string cond = "si.isBarrel && " + upstreamCond;
 
-    return PlotSX3ResStripCalGraph ( chain, "si.E1.en.n:si.E1.en.p", sector, strip, cond );
+	return PlotSX3ResStripCalGraph(chain, "si.E1.en.n:si.E1.en.p", sector, strip, cond);
 }
 
 void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree()
 {
-    cout << "To generate the graphs for several sectors without drawing them (MUCH faster), call" << endl;
-    cout << "PlotSX3ResStripsCalGraphsFromTree(TChain* chain, bool isUpstream, int nentries, int sector1, int sector2, int sector3, int ....)" << endl;
-    cout << "where \"nenteries\" controls the number of entries to treat (0 == all the entries)" << endl;
+	cout << "To generate the graphs for several sectors without drawing them (MUCH faster), call" << endl;
+	cout << "PlotSX3ResStripsCalGraphsFromTree(TChain* chain, bool isUpstream, int nentries, int sector1, int sector2, int sector3, int ....)" << endl;
+	cout << "where \"nenteries\" controls the number of entries to treat (0 == all the entries)" << endl;
 }
 
 void GoddessCalib::PlotSX3ResStripsCalGraphs()
 {
-    cout << "To plot several sectors in a row, call" << endl;
-    cout << "PlotSX3ResStripsCalGraphs(TChain* chain, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << endl;
-    cout << endl;
-    cout << "You can also change what to plot and specify the conditions by hand by calling" << endl;
-    cout << "PlotSX3ResStripsCalGraphs(TChain* chain, string \"what to plot\", string conditions, sector1, sector2, sector3, ....)" << endl;
+	cout << "To plot several sectors in a row, call" << endl;
+	cout << "PlotSX3ResStripsCalGraphs(TChain* chain, bool isUpstream, int sector1, int sector2, int sector3, int ....)" << endl;
+	cout << endl;
+	cout << "You can also change what to plot and specify the conditions by hand by calling" << endl;
+	cout << "PlotSX3ResStripsCalGraphs(TChain* chain, string \"what to plot\", string conditions, sector1, sector2, sector3, ....)" << endl;
 }
 
 void GoddessCalib::Help()
 {
-    cout << "To plot the Enear vs Efar graph for strip X of sector Y, call" << endl;
-    cout << "PlotSX3ResStripCalGraph(TChain* chain, bool isUpstream, int sector1, int strip)" << endl;
-    cout << endl;
-    PlotSX3ResStripsCalGraphs();
-    cout << endl;
-    PlotSX3ResStripsCalGraphsFromTree();
-    cout << endl;
-    cout << "To get help with the energy calibration procedure, call \"GoddessCalib::EnCalibHelp()\"" << endl;
-    cout << endl;
-    cout << "To get help with the position calibration procedure, call \"GoddessCalib::PosCalibHelp()\"" << endl;
-    cout << endl;
-    cout << "To reload a file containing previous calibration and update it, call" << endl;
-    cout << "DumpFileToResCalMap(string \"previous calib file name\")" << endl;
-    cout << endl;
+	cout << "To plot the Enear vs Efar graph for strip X of sector Y, call" << endl;
+	cout << "PlotSX3ResStripCalGraph(TChain* chain, bool isUpstream, int sector1, int strip)" << endl;
+	cout << endl;
+	PlotSX3ResStripsCalGraphs();
+	cout << endl;
+	PlotSX3ResStripsCalGraphsFromTree();
+	cout << endl;
+	cout << "To get help with the energy calibration procedure, call \"GoddessCalib::EnCalibHelp()\"" << endl;
+	cout << endl;
+	cout << "To get help with the position calibration procedure, call \"GoddessCalib::PosCalibHelp()\"" << endl;
+	cout << endl;
+	cout << "To reload a file containing previous calibration and update it, call" << endl;
+	cout << "DumpFileToResCalMap(string \"previous calib file name\")" << endl;
+	cout << endl;
 }
 
 void GoddessCalib::EnCalibHelp()
 {
-    cout << "To start the SX3 energy calibration porecedure, type \"GoddessCalib::StartSX3EnCalib()\" after opening a TBrowser or TCanvas." << endl;
-    cout << endl;
-    cout << "The energy calibration for the resistive strips needs several items:" << endl;
-    cout << "2 TLines following the edges of the strip in the Enear vs. Efar graph" << endl;
-    cout << "One TLine following the alpha line from a run with source in the Enear vs. Efar graph" << endl;
-    cout << "NOTE: You can draw the TLine following the alpha peak separately but the 2 TLine for the edges has to be done from the same graph." << endl;
-    cout << "To save the info about the TLine which have been drawn, click on the \"Save TLines Info\" button (top right of the canvas)" << endl;
-    cout << endl;
-    cout << "The info about the TLines drawn are stored in a map that can be saved at any time."<< endl;
-    cout << "To write the results of the calibrations made during the last session, call" << endl;
-    cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << endl;
-    cout << endl;
-    cout << "To update a config file with the results of the calibrations made during the last session, call" << endl;
-    cout << "UpdateParamsInConf(string \"config file name\", string detType = \"superX3\", bool invertContactMidDet = true, string mode = \"protected\")" << endl;
-    cout << "* invertContactMidDet should be set to \"true\" for SuperX3 because of the way the contacts numbers are incremented" << endl;
-    cout << "* the \"protected\" mode will prevent you to overwrite your config file and generate a new config file from the input..." << endl;
-    cout << "  switch it to \"overwrite\" if you really know what you're doing" << endl;
-    cout << endl;
+	cout << "To start the SX3 energy calibration porecedure, type \"GoddessCalib::StartSX3EnCalib()\" after opening a TBrowser or TCanvas." << endl;
+	cout << endl;
+	cout << "The energy calibration for the resistive strips needs several items:" << endl;
+	cout << "2 TLines following the edges of the strip in the Enear vs. Efar graph" << endl;
+	cout << "One TLine following the alpha line from a run with source in the Enear vs. Efar graph" << endl;
+	cout << "NOTE: You can draw the TLine following the alpha peak separately but the 2 TLine for the edges has to be done from the same graph." << endl;
+	cout << "To save the info about the TLine which have been drawn, click on the \"Save TLines Info\" button (top right of the canvas)" << endl;
+	cout << endl;
+	cout << "The info about the TLines drawn are stored in a map that can be saved at any time." << endl;
+	cout << "To write the results of the calibrations made during the last session, call" << endl;
+	cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << endl;
+	cout << endl;
+	cout << "To update a config file with the results of the calibrations made during the last session, call" << endl;
+	cout << "UpdateParamsInConf(string \"config file name\", string detType = \"superX3\", bool invertContactMidDet = true, string mode = \"protected\")" << endl;
+	cout << "* invertContactMidDet should be set to \"true\" for SuperX3 because of the way the contacts numbers are incremented" << endl;
+	cout << "* the \"protected\" mode will prevent you to overwrite your config file and generate a new config file from the input..." << endl;
+	cout << "  switch it to \"overwrite\" if you really know what you're doing" << endl;
+	cout << endl;
 
 }
 
 void GoddessCalib::PosCalibHelp()
 {
-    cout << "Not written yet... Come back later!" << endl;
-    cout << endl;
+	cout << "Not written yet... Come back later!" << endl;
+	cout << endl;
 }
 
-ClassImp ( GoddessCalib )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ClassImp(GoddessCalib)
 
