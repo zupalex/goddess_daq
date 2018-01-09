@@ -16,6 +16,6 @@ Once the compilation is done, you should add the following lines in your .rootlo
       gROOT->ProcessLine("goddess_analysis_macro(\"<path/to/goddess_daq>\")");  
 }  
 ```
-Simply replace <path/to/goddess_daq> to the actual path to the cloned repository.  
+Simply replace <path/to/goddess_daq> with the actual path to the cloned repository.  
 **Replace only the part enclosed in <> (including the < and > sign) while leaving the rest as is.  
 Escaping the quotes properly in the second line is mandatory.**
