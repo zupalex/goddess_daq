@@ -327,34 +327,6 @@ bool FillEvsAHist ( UserAnalysis* analysis_ )
 
 void InitQvalHist ( unsigned int nBinsX, int minX, int maxX )
 {
-//     MakeNewHist ( "Qvalue_tot", "Q-value tot", nBinsX, minX, maxX );
-//     MakeNewHist ( "Qvalue_SX3U_tot", "Q-value SX3s Upstream", nBinsX, minX, maxX );
-//     MakeNewHist ( "Qvalue_QQQ5U_tot", "Q-value QQQ5s Upstream", nBinsX, minX, maxX );
-//
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "Qvalue_SX3U%d", i ), Form ( "Qvalue SX3 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "Qvalue_QQQ5U%d", i ), Form ( "Qvalue QQQ5 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Ex_tot", "Excitation Energy tot", nBinsX, minX, maxX );
-//     MakeNewHist ( "Ex_SX3U_tot", "Excitation Energy SX3s Upstream", nBinsX, minX, maxX );
-//     MakeNewHist ( "Ex_QQQ5U_tot", "Excitation Energy QQQ5s Upstream", nBinsX, minX, maxX );
-//
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "Ex_SX3U%d", i ), Form ( "Excitation Energy SX3 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "Ex_QQQ5U%d", i ), Form ( "Excitation Energy QQQ5 U%d", i ), nBinsX, minX, maxX );
-//     }
-
     MakeNewHist ( "Qval_vs_Strips", "Q-value vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)", 500, 0, 500, nBinsX, minX, maxX, false );
     MakeNewHist ( "Ex_vs_Strips", "Excitation Energy vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)", 500, 0, 500, nBinsX, minX, maxX, false );
 }
@@ -363,34 +335,10 @@ bool FillQvalHist ( UserAnalysis* analysis_ )
 {
     bool filled = false;
 
-//     string histsBaseName = "";
-//
-//     if ( analysis_->si.isBarrel ) histsBaseName += "SX3";
-//     else histsBaseName += "QQQ5";
-//
-//     if ( analysis_->si.isUpstream ) histsBaseName += "U";
-//     else histsBaseName += "D";
-//
-//     TH1F* hQvalBorE = ( TH1F* ) histsMap[ ( string ) Form ( "Qvalue_%s_tot", histsBaseName.c_str() )].first;
-//     TH1F* hExBorE = ( TH1F* ) histsMap[ ( string ) Form ( "Ex_%s_tot", histsBaseName.c_str() )].first;
-//
-//     string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), analysis_->si.sector );
-//     TH1F* hQvalSector = ( TH1F* ) histsMap[ ( string ) Form ( "Qvalue_%s", histsSectorName.c_str() )].first;
-//     TH1F* hExSector = ( TH1F* ) histsMap[ ( string ) Form ( "Ex_%s", histsSectorName.c_str() )].first;
-
     int globStripID = ToStripID ( analysis_->si.isUpstream, analysis_->si.isBarrel, true, analysis_->si.sector, analysis_->si.strip );
 
     if ( analysis_->si.isUpstream && analysis_->si.angle != 0 && analysis_->si.fEn > 0 )
     {
-//         hQvalSector->Fill ( analysis_->si.qval );
-//         hExSector->Fill ( analysis_->si.ex );
-//
-//         ( ( TH1F* ) histsMap["Qvalue_tot"].first )->Fill ( analysis_->si.qval );
-//         ( ( TH1F* ) histsMap["Ex_tot"].first )->Fill ( analysis_->si.ex );
-//
-//         hQvalBorE->Fill ( analysis_->si.qval );
-//         hExBorE->Fill ( analysis_->si.ex );
-
         ( ( TH2F* ) histsMap["Qval_vs_Strips"].first )->Fill ( globStripID, analysis_->si.qval );
         ( ( TH2F* ) histsMap["Ex_vs_Strips"].first )->Fill ( globStripID, analysis_->si.ex );
 
@@ -434,18 +382,6 @@ void InitGsVsExHists ( unsigned int nBinsX, int minX, int maxX, unsigned int nBi
     {
         MakeNewHist ( Form ( "GsBGOVetoVsEx_QQQ5U%d", i ), Form ( "Gamma Energy BGO Veto vs. Excitation Energy QQQ5 U%d", i ), nBinsX, minX, maxX, nBinsY, minY, maxY );
     }
-
-//     MakeNewHist ( "Gs_vs_Ex_nocheck_vs_Strips", "Gamma Energy vs. Excitation Energy No Check vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)",
-//                   nBinsX, minX, maxX, nBinsY, minY, maxY, 500, 0, 500, false );
-//
-//     MakeNewHist ( "Gs_vs_Ex_vs_Strips", "Gamma Energy vs. Excitation Energy vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)",
-//                   nBinsX, minX, maxX, nBinsY, minY, maxY, 500, 0, 500, true );
-//
-//     MakeNewHist ( "Gs_BGOVeto_vs_Ex_nocheck_vs_Strips", "Gamma Energy BGO Veto vs. Excitation Energy No Check vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)",
-//                   nBinsX, minX, maxX, nBinsY, minY, maxY, 500, 0, 500, false );
-//
-//     MakeNewHist ( "Gs_BGOVeto_vs_Ex_vs_Strips", "Gamma Energy BGO Veto vs. Excitation Energy vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)",
-//                   nBinsX, minX, maxX, nBinsY, minY, maxY, 500, 0, 500, true );
 }
 
 bool FillGsVsExHist ( UserAnalysis* analysis_, bool vetoBGO )
@@ -529,28 +465,6 @@ bool FillGsVsExHist ( UserAnalysis* analysis_, bool vetoBGO )
 
 void InitdTGsORRUBAHists ( unsigned int nBinsX = 1000, int minX = -500, int maxX = 500 )
 {
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "dT_GS_SX3U%d", i ), Form ( "dT GS SX3 U%d", i ), nBinsX, minX, maxX );
-//
-//         MakeNewHist ( Form ( "dT_GS_SX3D%d", i ), Form ( "dT GS SX3 D%d", i ), nBinsX, minX, maxX );
-//
-//         MakeNewHist ( Form ( "dT_GS_BGOVeto_SX3U%d", i ), Form ( "dT GS No BGO SX3 U%d", i ), nBinsX, minX, maxX );
-//
-//         MakeNewHist ( Form ( "dT_GS_BGOVeto_SX3D%d", i ), Form ( "dT GS No BGO SX3 D%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "dT_GS_QQQ5U%d", i ), Form ( "dT GS QQQ5 U%d", i ), nBinsX, minX, maxX );
-//
-//         MakeNewHist ( Form ( "dT_GS_QQQ5D%d", i ), Form ( "dT GS QQQ5 D%d", i ), nBinsX, minX, maxX );
-//
-//         MakeNewHist ( Form ( "dT_GS_BGOVeto_QQQ5U%d", i ), Form ( "dT GS No BGO QQQ5 U%d", i ), nBinsX, minX, maxX );
-//
-//         MakeNewHist ( Form ( "dT_GS_BGOVeto_QQQ5D%d", i ), Form ( "dT GS No BGO QQQ5 D%d", i ), nBinsX, minX, maxX );
-//     }
-
     MakeNewHist ( "dT_GS_vs_Strips", "dT GS vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)", 500, 0, 500, nBinsX, minX, maxX, false );
 
     MakeNewHist ( "dT_GS_BGOVeto_vs_Strips", "dT GS BGO Veto vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)", 500, 0, 500, nBinsX, minX, maxX, false );
@@ -561,21 +475,6 @@ bool FilldTGammaORRUBA ( UserAnalysis* analysis_, bool vetoBGO = false )
     bool filled = false;
 
     if ( analysis_->gam.type == 2 ) return false;
-
-//     string histsBaseName = "dT_GS_";
-//
-//     if ( vetoBGO ) histsBaseName += "BGOVeto_";
-//
-//     if ( analysis_->si.isBarrel ) histsBaseName += "SX3";
-//     else histsBaseName += "QQQ5";
-//
-//     if ( analysis_->si.isUpstream ) histsBaseName += "U";
-//     else histsBaseName += "D";
-//
-//     string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), analysis_->si.sector );
-//     TH1F* dThist = ( TH1F* ) histsMap[histsSectorName].first;
-//
-//     dThist->Fill ( analysis_->gam.gsTs - analysis_->si.ts );
 
     int globStripID = ToStripID ( analysis_->si.isUpstream, analysis_->si.isBarrel, true, analysis_->si.sector, analysis_->si.strip );
 
@@ -594,81 +493,6 @@ bool FilldTGammaORRUBA ( UserAnalysis* analysis_, bool vetoBGO = false )
 
 void InitGsGateORRUBAHists ( unsigned int nBinsX = 5000, int minX = 0, int maxX = 5000 )
 {
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_Gates_SX3U%d", i ), Form ( "GammaSphere Gates SX3 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_Gates_SX3U", "GammaSphere Gates SX3 Upstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_SX3U_Analog", "GammaSphere Gates SX3 Upstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_SX3U_Digital", "GammaSphere Gates SX3 Upstream Digital", nBinsX, minX, maxX, true );
-//
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_Gates_SX3D%d", i ), Form ( "GammaSphere Gates SX3 D%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_Gates_SX3D", "GammaSphere Gates SX3 Downstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_SX3D_Analog", "GammaSphere Gates SX3 Downstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_SX3D_Digital", "GammaSphere Gates SX3 Downstream Digital", nBinsX, minX, maxX, true );
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_Gates_QQQ5U%d", i ), Form ( "GammaSphere Gates QQQ5 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_Gates_QQQ5U", "GammaSphere Gates QQQ5 Upstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_QQQ5U_Analog", "GammaSphere Gates QQQ5 Upstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_QQQ5U_Digital", "GammaSphere Gates QQQ5 Upstream Digital", nBinsX, minX, maxX, true );
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_Gates_QQQ5D%d", i ), Form ( "GammaSphere Gates QQQ5 D%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_Gates_QQQ5D", "GammaSphere Gates QQQ5 Downstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_QQQ5D_Analog", "GammaSphere Gates QQQ5 Downstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_Gates_QQQ5D_Digital", "GammaSphere Gates QQQ5 Downstream Digital", nBinsX, minX, maxX, true );
-//
-//
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_BGOVeto_Gates_SX3U%d", i ), Form ( "GammaSphere BGO Veto SX3 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_BGOVeto_Gates_SX3U", "GammaSphere BGO Veto SX3 Upstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_SX3U_Analog", "GammaSphere BGO Veto SX3 Upstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_SX3U_Digital", "GammaSphere BGO Veto SX3 Upstream Digital", nBinsX, minX, maxX, true );
-//
-//     for ( int i = 0; i < 12; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_BGOVeto_Gates_SX3D%d", i ), Form ( "GammaSphere BGO Veto SX3 D%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_BGOVeto_Gates_SX3D", "GammaSphere BGO Veto SX3 Downstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_SX3D_Analog", "GammaSphere BGO Veto SX3 Downstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_SX3D_Digital", "GammaSphere BGO Veto SX3 Downstream Digital", nBinsX, minX, maxX, true );
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_BGOVeto_Gates_QQQ5U%d", i ), Form ( "GammaSphere BGO Veto QQQ5 U%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5U", "GammaSphere BGO Veto QQQ5 Upstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5U_Analog", "GammaSphere BGO Veto QQQ5 Upstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5U_Digital", "GammaSphere BGO Veto QQQ5 Upstream Digital", nBinsX, minX, maxX, true );
-//
-//     for ( int i = 0; i < 4; i++ )
-//     {
-//         MakeNewHist ( Form ( "Gs_BGOVeto_Gates_QQQ5D%d", i ), Form ( "GammaSphere BGO Veto QQQ5 D%d", i ), nBinsX, minX, maxX );
-//     }
-//
-//     MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5D", "GammaSphere BGO Veto QQQ5 Downstream", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5D_Analog", "GammaSphere BGO Veto QQQ5 Downstream Analog", nBinsX, minX, maxX, true );
-//     MakeNewHist ( "Gs_BGOVeto_Gates_QQQ5D_Digital", "GammaSphere BGO Veto QQQ5 Downstream Digital", nBinsX, minX, maxX, true );
-//
-//     MakeNewHist ( "Gs_NoTS_BGOVeto_Gates_QQQ5U", "GammaSphere No Timestamp gates, BGO Veto QQQ5 Downstream Digital", nBinsX, minX, maxX, true );
-
     MakeNewHist ( "Gs_Gates_ORRUBA_vs_Strips", "GammaSphere Gates ORRUBA vs. Strip Number (Upstream: [0-143]=QQQ5s , [144-239]=SX3s / Downstream: Upstream+240)",
                   500, 0, 500, nBinsX, minX, maxX, true );
 
@@ -699,39 +523,9 @@ bool FillGsGateORRUBA ( UserAnalysis* analysis_, bool vetoBGO = false )
 
     string histsBaseName;
 
-//     if ( vetoBGO ) histsBaseName = "Gs_BGOVeto_Gates_";
-//     else histsBaseName = "Gs_Gates_";
-//
-//     if ( analysis_->si.isBarrel ) histsBaseName += "SX3";
-//     else histsBaseName += "QQQ5";
-//
-//     if ( analysis_->si.isUpstream ) histsBaseName += "U";
-//     else histsBaseName += "D";
-//     TH1F* gsTot = ( TH1F* ) histsMap[histsBaseName].first;
-//
-//     string histsAorDName = histsBaseName + ( analysis_->si.isDigital ? "_Digital" : "_Analog" );
-//     TH1F* gsDorA = ( TH1F* ) histsMap[histsAorDName].first;
-//
-//     string histsSectorName = Form ( "%s%d", histsBaseName.c_str(), analysis_->si.sector );
-//     TH1F* gsSector = ( TH1F* ) histsMap[histsSectorName].first;
-
     if ( doFill )
     {
         int globStripID = ToStripID ( analysis_->si.isUpstream, analysis_->si.isBarrel, true, analysis_->si.sector, analysis_->si.strip );
-
-//         gsSector->Fill ( analysis_->gam.gsEn );
-//
-//         if ( !CheckHistState ( gsDorA, analysis_->gamDataPtr ) )
-//         {
-//             gsDorA->Fill ( analysis_->gam.gsEn );
-//             AddToHistState ( gsDorA, analysis_->gamDataPtr );
-//         }
-//
-//         if ( !CheckHistState ( gsTot, analysis_->gamDataPtr ) )
-//         {
-//             gsTot->Fill ( analysis_->gam.gsEn );
-//             AddToHistState ( gsTot, analysis_->gamDataPtr );
-//         }
 
         if ( vetoBGO && !CheckHistState ( histsMap["Gs_BGOVeto_vs_DetNum_Gate_ORRUBA"].first, analysis_->gamDataPtr ) )
         {

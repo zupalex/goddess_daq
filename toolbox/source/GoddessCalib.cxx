@@ -1694,7 +1694,7 @@ void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, double projW
 
 	for (int i = 0; i < lOK->GetSize(); i++)
 	{
-		TH2F* hist = dynamic_cast<TH2F*>(input->Get(lOK->At(i)->GetName()));
+		TH2* hist = dynamic_cast<TH2*>(input->Get(lOK->At(i)->GetName()));
 
 		if (hist != nullptr)
 		{
@@ -1712,7 +1712,7 @@ void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, double projW
 
 			int projCenterBin = hist->GetYaxis()->FindBin(projWinMin + (projWinMax - projWinMin) / 2.);
 
-			GetStripsEdges(hist, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
+			GetStripsEdges((TH2F*) hist, projCenterBin, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
 		}
 	}
 
@@ -1727,7 +1727,7 @@ void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, int projWidt
 
 	for (int i = 0; i < lOK->GetSize(); i++)
 	{
-		TH2F* hist = dynamic_cast<TH2F*>(input->Get(lOK->At(i)->GetName()));
+		TH2* hist = dynamic_cast<TH2*>(input->Get(lOK->At(i)->GetName()));
 
 		if (hist != nullptr)
 		{
@@ -1739,9 +1739,9 @@ void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, int projWidt
 
 			if (std::find(sectors.begin(), sectors.end(), sect) == sectors.end()) continue;
 
-			int binMaxY = GetPosCalEnBinMax(hist, threshold);
+			int binMaxY = GetPosCalEnBinMax((TH2F*) hist, threshold);
 
-			GetStripsEdges(hist, binMaxY, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
+			GetStripsEdges((TH2F*) hist, binMaxY, projWidth, peakPos, threshold, shiftGrNPoints, drawResults);
 		}
 	}
 
