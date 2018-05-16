@@ -210,6 +210,8 @@ void UserAnalysis::SetSiData ( SiDataDetailed* siData )
     si.sectorOK = OrrubaGoodSector ( siData );
 }
 
+float gs_gain_coeff = 3.;
+
 void UserAnalysis::SetGamData ( GamData* gamData )
 {
     gamDataPtr = gamData;
@@ -218,7 +220,7 @@ void UserAnalysis::SetGamData ( GamData* gamData )
 
     gam.detNum = gamData->num;
 
-    gam.gsEn = gamData->en/3.;
+    gam.gsEn = gamData->en/gs_gain_coeff;
     gam.gsTs = gamData->time;
     gam.timestampOK = OrrubaGsGoodTs ( ( siDataPtr != nullptr ? siDataPtr : siDataDPtr ), gamData );
 }
@@ -674,8 +676,10 @@ bool FillGsVsGsBGOVeto ( UserAnalysis* analysis_, vector<GamData>* vectGam_ )
 // --------- Put here the functions you want to be processed ---------------- //
 // -------------------------------------------------------------------------- //
 
-void FillUserHists ( long long int maxEvents = 0 )
+void FillUserHists ( long long int maxEvents = 0, float gs_gain = 3. )
 {
+	gs_gain_coeff = gs_gain;
+
     TChain* uChain = gA->userChain;
 
     if ( uChain == nullptr )
