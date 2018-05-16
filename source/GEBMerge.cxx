@@ -30,6 +30,8 @@ using std::string;
 #include <ucontext.h>
 #include <unistd.h>
 
+bool specialDebug = false;
+
 /* This structure mirrors the one found in /usr/include/asm/ucontext.h */
 typedef struct _sig_ucontext {
 		unsigned long uc_flags;
@@ -111,7 +113,33 @@ EVENT* GTGetDiskEv(InDataInfo* inFile, EVENT* bufEvent, bool printInfo)
 
 	if (printDebug) std::cerr << "*** Reading the header...\n";
 
+	if (specialDebug)
+	{
+		cout << "GTGetDiskEv before reading gd" << endl;
+		cout << "bufEvent = " << bufEvent << endl;
+		cout << "bufEvent->key = " << bufEvent->key << endl;
+		cout << "bufEvent->gd->length = " << bufEvent->gd->length << endl;
+		cout << "bufEvent->gd->type = " << bufEvent->gd->type << endl;
+		cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+	}
+
+	int prev_size = bufEvent->gd->length;
+
 	(inFile->istream)->read((char*) bufEvent->gd, sizeof(GebData));
+
+	if (specialDebug)
+	{
+		cout << "GTGetDiskEv after reading gd" << endl;
+		cout << "bufEvent = " << bufEvent << endl;
+		cout << "bufEvent->key = " << bufEvent->key << endl;
+		cout << "bufEvent->gd->length = " << bufEvent->gd->length << endl;
+		cout << "bufEvent->gd->type = " << bufEvent->gd->type << endl;
+		cout << endl;
+		if (bufEvent->key > 0) cout << "inFile->istream = " << inFile->istream << "   /   theMergeManager->inData->at(bufEvent->key)->istream = "
+				<< theMergeManager->inData->at(bufEvent->key)->istream << endl;
+		cout << "************************************************" << endl;
+		cout << "************************************************" << endl;
+	}
 
 	if (printDebug)
 	{
@@ -164,6 +192,38 @@ EVENT* GTGetDiskEv(InDataInfo* inFile, EVENT* bufEvent, bool printInfo)
 	/* attempt to read payload */
 
 	i1 = bufEvent->gd->length;
+
+//	if (specialDebug) cout << bufEvent->gd->type << "    /    " << bufEvent->gd->length << endl;
+
+	if (bufEvent->gd->type != inFile->type)
+	{
+		if (bufEvent->gd->type != inFile->type)
+			{
+			cerr << "bufEvent->gd->type has an unexpected value! >> " << bufEvent->gd->type << " =/= " << inFile->type << " in " << inFile->fileName << endl;
+			cerr << "Forcing payload read size to " << prev_size << endl;
+			i1 = prev_size;
+			bufEvent->gd->length = i1;
+		}
+
+		unsigned long long currFilePos = (inFile->istream)->tellg();
+		cerr << "Current position and remaining bytes in file: " << currFilePos << "   /   " << inFile->fileLength - currFilePos << endl;
+
+		(inFile->istream)->read((char *) bufEvent->payload, i1);
+		return GTGetDiskEv(inFile, bufEvent, printInfo);
+//		specialDebug = true;
+//		return nullptr;
+	}
+//
+//	if(i1 > 2000)
+//	{
+//		cerr << "bufEvent->gd->length bigger than expected! >> " << bufEvent->gd->length << " > " << 2000 << endl;
+//	}
+
+	if (bufEvent->gd->type != inFile->type)
+	{
+		cout << "bufEvent->gd->type != inFile->type => " << bufEvent->gd->type << " != " << inFile->type << endl;
+		specialDebug = true;
+	}
 
 	//     bufEvent->payload = new char[i1];
 
@@ -487,7 +547,8 @@ int main(int argc, char **argv)
 		ifstreamArray[i]->open(argv[nn], std::ios_base::in);
 
 		ifstreamArray[i]->seekg(0, ifstreamArray[i]->end);
-		totBytesCount += ifstreamArray[i]->tellg();
+		unsigned long long fileLength = ifstreamArray[i]->tellg();
+		totBytesCount += fileLength;
 		ifstreamArray[i]->seekg(0, ifstreamArray[i]->beg);
 
 		InDataInfo* newInDataInfo = new InDataInfo(ifstreamArray[i]);
@@ -500,6 +561,24 @@ int main(int argc, char **argv)
 
 		newInDataInfo->fileName = argv[nn];
 		newInDataInfo->fileNum = i;
+		newInDataInfo->fileLength = fileLength;
+
+		if (newInDataInfo->fileName.find("dgs") != string::npos)
+		{
+			newInDataInfo->type = 14;
+			newInDataInfo->typical_payload_length = 64;
+		}
+		else if (newInDataInfo->fileName.find("gsfma") != string::npos)
+		{
+			newInDataInfo->type = 16;
+			newInDataInfo->typical_payload_length = 2000;
+		}
+		else if (newInDataInfo->fileName.find(".geb") != string::npos)
+		{
+			newInDataInfo->type = 19;
+			newInDataInfo->typical_payload_length = 64;
+		}
+		else cerr << "Unknown file type" << endl;
 
 		inData->push_back(newInDataInfo);
 
@@ -608,7 +687,7 @@ int main(int argc, char **argv)
 
 	theMergeManager->loopCounter = 0;
 
-	unsigned long long int evCounter = 0;
+	volatile unsigned long long int evCounter = 0;
 
 	static unsigned int maxEventListSize = 50;
 
@@ -672,14 +751,14 @@ int main(int argc, char **argv)
 //                         masterItr++;
 //                     }
 
-					entriesList.push_back(new EVENT());
+					EVENT* newEv = new EVENT();
 
-					if (GTGetDiskEv(inData->at(fid), entriesList.back(), false) != nullptr)
+					if (GTGetDiskEv(inData->at(fid), newEv, false) != nullptr)
 					{
-						entriesList.back()->key = fid;
-						eventQueue.push_back(entriesList.back());
+						newEv->key = fid;
+						eventQueue.push_back(newEv);
 					}
-					else entriesList.erase(entriesList.end() - 1);
+					else delete newEv;
 				}
 			}
 
@@ -778,43 +857,7 @@ int main(int argc, char **argv)
 			}
 		}
 
-//             masterEntriesList.sort ( CompareTimestamps );
-		//         std::sort ( masterEntriesList.begin(), masterEntriesList.end(), CompareTimestamps );
-
-//             auto masterItr = masterEntriesList.begin();
-
-//             unsigned int writeCounter = 0;
-//
-//             while ( writeCounter < maxEventListSize && masterItr != masterEntriesList.end() )
-//             {
-//                 evCounter++;
-//
-//                 //                     unsigned long long int evtTs = readItr->second->at ( m )->gd->timestamp;
-//                 int evtLength = ( *masterItr )->gd->length;
-//                 int fid = ( *masterItr )->key;
-//
-//                 theMergeManager->outData.write ( ( char* ) ( *masterItr )->gd, sizeof ( GebData ) );
-//                 theMergeManager->outData.write ( ( char* ) ( *masterItr )->payload, evtLength );
-//
-//                 //             if ( currBuffSize + sizeof ( GebData ) + evtLength >= maxBigBuffSize )
-//                 //             {
-//                 //                 theMergeManager->outData.write ( bigBuffer, currBuffSize );
-//                 //                 currBuffSize = 0;
-//                 //             }
-//                 //
-//                 //             memcpy ( ( void* ) ( bigBuffer + currBuffSize ), ( void* ) ( *masterItr )->gd, sizeof ( GebData ) );
-//                 //             currBuffSize += sizeof ( GebData );
-//                 //
-//                 //             memcpy ( ( void* ) ( bigBuffer + currBuffSize ), ( void* ) ( *masterItr )->payload, evtLength );
-//                 //             currBuffSize += evtLength;
-//
-//                 writeCounter++;
-//
-//                 if ( GTGetDiskEv ( inData->at ( fid ), *masterItr, false ) == nullptr )  masterItr = masterEntriesList.erase ( masterItr );
-//                 else masterItr++;
-//             }
-
-		int coincCounter = 0;
+		volatile int coincCounter = 0;
 		sortingQueue.clear();
 
 		while (coincCounter < maxEventListSize)
@@ -824,7 +867,42 @@ int main(int argc, char **argv)
 			evCounter++;
 			coincCounter++;
 
+//			auto evItr = eventQueue.begin();
+//			EVENT* readEv = *evItr;
+
 			EVENT* readEv = eventQueue.front();
+
+//			if (specialDebug)
+//			{
+//				cout << "eventQueue.size() = " << eventQueue.size() << endl;
+//				cout << "readEv = " << readEv << "   /   eventQueue.front() = " << eventQueue.front() << endl;
+//				cout << "readEv->key = " << readEv->key << endl;
+//				cout << "readEv->gd->length = " << readEv->gd->length << endl;
+//				cout << "readEv->gd->type = " << readEv->gd->type << endl;
+//				cout << "----------------------" << endl;
+//
+//				auto litr = eventQueue.begin();
+//				cout << "*litr = " << *litr << endl;
+//				cout << "(*litr)->key = " << (*litr)->key << endl;
+//				cout << "(*litr)->gd->length = " << (*litr)->gd->length << endl;
+//				cout << "(*litr)->gd->type = " << (*litr)->gd->type << endl;
+//				cout << "----------------------" << endl;
+//
+//				litr++;
+//				if (litr != eventQueue.end())
+//				{
+//					cout << "*(litr+1) = " << *litr << endl;
+//					cout << "(*(litr+1))->key = " << (*litr)->key << endl;
+//					cout << "(*(litr+1))->gd->length = " << (*litr)->gd->length << endl;
+//					cout << "(*(litr+1))->gd->type = " << (*litr)->gd->type << endl;
+//					cout << "----------------------" << endl;
+//				}
+//
+//				cout << "#############################\n#############################\n";
+//			}
+
+//			if (readEv == nullptr) cerr << "readEv is nullptr (wut?) with eventQueue.size() == " << eventQueue.size() << endl;
+//			else if (readEv->gd == nullptr) cerr << "readEv->gd is nullptr (wut?) with eventQueue.size() == " << eventQueue.size() << endl;
 
 			int evtLength = readEv->gd->length;
 			int fid = readEv->key;
@@ -832,9 +910,12 @@ int main(int argc, char **argv)
 			theMergeManager->outData.write((char*) readEv->gd, sizeof(GebData));
 			theMergeManager->outData.write((char*) readEv->payload, evtLength);
 
+//			evItr++;
+
 			eventQueue.pop_front();
 
 //			if (GTGetDiskEv(inData->at(fid), readEv, false) != nullptr) eventQueue.push_back(readEv);
+
 			if (GTGetDiskEv(inData->at(fid), readEv, false) != nullptr) sortingQueue.push_back(readEv);
 		}
 
@@ -844,7 +925,7 @@ int main(int argc, char **argv)
 
 		auto evItr = eventQueue.begin();
 
-		if(eventQueue.size() == 0 && sortingQueue.size() > 0) eventQueue = sortingQueue;
+		if (eventQueue.size() == 0 && sortingQueue.size() > 0) eventQueue = sortingQueue;
 		else if (*evItr != nullptr)
 		{
 			for (auto qItr = sortingQueue.begin(); qItr != sortingQueue.end(); qItr++)
@@ -862,7 +943,7 @@ int main(int argc, char **argv)
 
 //         cerr << "Event Queue size is " << eventQueue.size() << endl;
 //         theMergeManager->goBackToTop = false;
-		if (eventQueue.empty()) cerr << "Event queue is empty: finihsing merging process..." << endl;
+		if (eventQueue.empty()) cerr << "Event queue is empty: finishing merging process..." << endl;
 	}
 
 	theMergeManager->outData.close();

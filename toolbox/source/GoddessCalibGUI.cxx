@@ -839,8 +839,9 @@ void GoddessCalib::OnClickGetLinesInfo()
 		if (stripPos == string::npos)
 		{
 			stripPos = grName_.find("Strip");
-			if (stripPos != string::npos) strip_ = std::stoi(grName_.substr(stripPos + 5));
 		}
+
+		if (stripPos != string::npos) strip_ = std::stoi(grName_.substr(stripPos + 5));
 
 		if (sectPos != string::npos && stripPos != string::npos && separatorPos != string::npos)
 		{

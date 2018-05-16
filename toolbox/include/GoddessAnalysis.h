@@ -385,7 +385,7 @@ void DrawSum ( string toSum, TH2F*& dest );
 TGraph* DrawGraphFromDataset ( vector<double> xSet, vector<double> ySet );
 
 TH2F* DrawCombinedKinematics ( string qqq5List, string sX3List );
-TGraph* SuperimposeCalculatedKinematics ( string input, string xStr = "Ejectile Lab Angle", string yStr = "Ejectile Lab Energy" );
+TGraph* SuperimposeCalculatedKinematics ( string input, string xStr = "Ejectile Lab Angle", string yStr = "Ejectile Lab Energy", TVector3 beam_off = TVector3(0, 0, 0), double barrel_radius = 98.43 );
 
 void PrintProgress ( long long int maxEvents_, long long int currEvt, int fileNbr = -1 );
 

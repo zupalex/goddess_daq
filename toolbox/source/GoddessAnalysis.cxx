@@ -1007,7 +1007,7 @@ TH2F* DrawCombinedKinematics ( string qqq5List, string sX3List )
     return combinedHist;
 }
 
-TGraph* SuperimposeCalculatedKinematics ( string input, string xStr, string yStr )
+TGraph* SuperimposeCalculatedKinematics ( string input, string xStr, string yStr, TVector3 beam_off, double barrel_radius )
 {
     std::ifstream indata ( input.c_str() );
 
@@ -1047,6 +1047,19 @@ TGraph* SuperimposeCalculatedKinematics ( string input, string xStr, string yStr
 
             float* xData;
             float* yData;
+
+            if(beam_off.Mag() > 0)
+            {
+            	cout << "Warning: Shift for C>M> Angle not yet computed..." << endl;
+
+            	int angle_adjust = 0;
+
+            	if(ejecLabAngle>90) angle_adjust = 180;
+            	else if(angle_adjust<-90) angle_adjust = -180;
+
+            	ejecLabAngle = TMath::ATan( (beam_off.Y()-barrel_radius) / (barrel_radius/TMath::Tan(ejecLabAngle*TMath::DegToRad()) - beam_off.Z()) )*TMath::RadToDeg() + angle_adjust;
+            	recoilLabAngle = TMath::ATan( (beam_off.Y()-barrel_radius) / (barrel_radius/TMath::Tan(recoilLabAngle*TMath::DegToRad()) - beam_off.Z()) )*TMath::RadToDeg() + angle_adjust;
+            }
 
             if ( xStr == "Ejectile Lab Angle" ) xData = &ejecLabAngle;
             else if ( xStr == "Ejectile Lab Energy" ) xData = &ejecLabEnergy;

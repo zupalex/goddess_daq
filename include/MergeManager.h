@@ -41,6 +41,8 @@ public:
     int type;
     long long unsigned int firstTimestamp;
     std::ifstream* istream;
+    unsigned long long fileLength;
+    int typical_payload_length;
 };
 
 class EVENT
