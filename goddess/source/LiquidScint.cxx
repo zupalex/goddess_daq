@@ -17,10 +17,8 @@ LiquidScint::~LiquidScint()
 
 }
 
-void LiquidScint::SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int ignThr )
+void LiquidScint::SetRawValue ( unsigned int detectorChannel, bool secondaryType, unsigned int rawValue, int /*ignThr*/ )
 {
-    ( void ) ignThr; // to prevent useless warning about this variable not being used currently...
-
     if ( secondaryType )
     {
         std::cerr << " No secondary type for Liquid Scint " << std::endl;

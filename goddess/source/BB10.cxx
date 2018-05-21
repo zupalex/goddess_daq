@@ -143,10 +143,8 @@ int BB10::GetContactMult ( bool calibrated )
     else return enRawP.size();
 }
 
-int BB10::GetContactMult ( bool contactType, bool calibrated )
+int BB10::GetContactMult ( bool /*contactType*/, bool calibrated )
 {
-    ( void ) contactType;
-
     if ( calibrated ) return enRawP.size();
     else return enRawP.size();
 }
@@ -192,11 +190,8 @@ std::vector< long long unsigned int > BB10::GetHitsInfo ( std::string info, std:
     return request;
 }
 
-void BB10::GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated )
+void BB10::GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* /*stripMaxN*/, long long unsigned int* /*timeSampMaxN*/, bool calibrated )
 {
-    ( void ) stripMaxN;
-    ( void ) timeSampMaxN;
-
     std::vector<float>* energiesP_;
 
     if ( calibrated ) energiesP_ = &enCalP;
@@ -215,10 +210,8 @@ void BB10::GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP,
     }
 }
 
-int BB10::GetMultiplicity ( bool nType, bool calibrated )
+int BB10::GetMultiplicity ( bool /*nType*/, bool calibrated )
 {
-    ( void ) nType;
-
     if ( calibrated ) return enCalP.size();
     else if ( !calibrated ) return enRawP.size();
     else return 0;
@@ -226,7 +219,7 @@ int BB10::GetMultiplicity ( bool nType, bool calibrated )
 
 TVector3 BB10::GetEventPosition ( bool calibrated )
 {
-    int pStripHit;
+    int pStripHit = 0;
     GetMaxHitInfo ( &pStripHit, nullptr, nullptr, nullptr, calibrated );
 
     TVector3 interactionPos = pStripCenterPos[pStripHit];

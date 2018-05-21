@@ -827,7 +827,7 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
         }
     } //End loop over liquid scintillators.
 
-    //Fill the detector and position multiplicty histograms.
+    //Fill the detector and position multiplicity histograms.
     detMult->Fill ( numDetsOverThresh );
     hDetPosMult->Fill ( numSectorHits.size() );
 }

@@ -33,7 +33,8 @@ using std::string;
 bool specialDebug = false;
 
 /* This structure mirrors the one found in /usr/include/asm/ucontext.h */
-typedef struct _sig_ucontext {
+typedef struct _sig_ucontext
+{
 		unsigned long uc_flags;
 		struct ucontext *uc_link;
 		stack_t uc_stack;
@@ -74,7 +75,10 @@ void crit_err_hdlr(int sig_num, siginfo_t * info, void * ucontext)
 
 		char syscom[256];
 		sprintf(syscom, "addr2line %p -e GEBMerge", array[i]);
-		system(syscom);
+		if (system(syscom) == -1)
+		{
+			cerr << "There was a problem here..." << endl;
+		}
 	}
 
 	free(messages);
@@ -198,7 +202,7 @@ EVENT* GTGetDiskEv(InDataInfo* inFile, EVENT* bufEvent, bool printInfo)
 	if (bufEvent->gd->type != inFile->type)
 	{
 		if (bufEvent->gd->type != inFile->type)
-			{
+		{
 			cerr << "bufEvent->gd->type has an unexpected value! >> " << bufEvent->gd->type << " =/= " << inFile->type << " in " << inFile->fileName << endl;
 			cerr << "Forcing payload read size to " << prev_size << endl;
 			i1 = prev_size;
@@ -683,24 +687,13 @@ int main(int argc, char **argv)
 
 	if (printDebug) std::cerr << "Starting the merge procedure... (theMergeManager->inData size is " << theMergeManager->inData->size() << ")\n";
 
-	bool firstExec = true;
-
 	theMergeManager->loopCounter = 0;
 
 	volatile unsigned long long int evCounter = 0;
 
 	static unsigned int maxEventListSize = 50;
 
-	//     std::list<EVENT*> masterEntriesList;
-	//     std::vector<EVENT*> masterEntriesList;
-	//     std::vector<int> nFileEntries;
 	vector<EVENT*> entriesList;
-
-//     for ( int i = 0; i < nfiles; i++ )
-//     {
-//                 for ( unsigned int j = 0; j < maxEventListSize; j++ ) masterEntriesList.push_back ( new EVENT() );
-//                 nFileEntries.push_back ( 0 );
-//     }
 
 	auto gebev_comparator = [] ( EVENT* ev1, EVENT* ev2 )
 	{
@@ -709,22 +702,9 @@ int main(int argc, char **argv)
 
 	list<EVENT*> eventQueue, sortingQueue;
 
-	int maxBigBuffSize = 10 * maxEventListSize * (sizeof(GebData) + payloadMaxSize);
-
-	char* bigBuffer = new char[maxBigBuffSize];
-	int currBuffSize = 0;
-
-	unsigned long long int dTWarning = 3e9;
-
-	EVENT* weirdTsNextEvt = new EVENT();
-
 	theMergeManager->readBytesCount = 0;
 
-	unsigned long long int ignoredBytesCount = 0;
-
 	map<unsigned long long int, unsigned long long int> tsOutputPosMap;
-
-	unsigned long long int prevBytesDiff = 0;
 
 	theMergeManager->goBackToTop = false;
 
@@ -732,25 +712,14 @@ int main(int argc, char **argv)
 
 	bool listInitialized = false;
 
-//     while ( masterEntriesList.size() > 0 )
 	while (!listInitialized || !eventQueue.empty())
 	{
 		if (!listInitialized)
 		{
-//             auto masterItr = masterEntriesList.begin();
-
 			for (int fid = 0; fid < nfiles; fid++)
 			{
 				for (unsigned int evid = 0; evid < maxEventListSize; evid++)
 				{
-//                     if ( GTGetDiskEv ( inData->at ( fid ), *masterItr, false ) != nullptr )
-//                     {
-//                         ( *masterItr )->key = fid;
-//                         nFileEntries[fid]++;
-//
-//                         masterItr++;
-//                     }
-
 					EVENT* newEv = new EVENT();
 
 					if (GTGetDiskEv(inData->at(fid), newEv, false) != nullptr)
@@ -766,33 +735,11 @@ int main(int argc, char **argv)
 
 			listInitialized = true;
 
-//             cerr << "Event Queue size is " << eventQueue.size() << endl;
 		}
 
 		if (printProgress)
 		{
-			//             auto ofInfo = theMergeManager->GetSizeAndBytesCount ( true );
-			//             unsigned int ofEvSize = ofInfo.first;
-			//             unsigned long long int ofBytesCount = ofInfo.second;
-
-			//             auto writeBufInfo = theMergeManager->GetSizeAndBytesCount ( false );
-			//             unsigned int writeBufSize = writeBufInfo.first;
-			//             unsigned long long int bufferBytesCount = writeBufInfo.second;
-
 			unsigned long long int outSize = outData->tellp();
-
-			//             unsigned long long int bytesDiff = ( long long int ) ( theMergeManager->readBytesCount - outSize - bufferBytesCount - ofBytesCount - ignoredBytesCount );
-
-			//             if ( bytesDiff != 0 && prevBytesDiff != bytesDiff )
-			//             {
-			//                 std::cerr << "\n\n\n" << esc << "[31;1m/!\\WARNING/!\\ Loop #" << theMergeManager->loopCounter << " : Amount of bytes read differs from amount of bytes treated !!! (diff = " << bytesDiff << ")" << esc << "[0m\n\n\n";
-			//
-			//                 printf ( "\n\n/!\\WARNING/!\\ Loop #%llu : Amount of bytes read differs from amount of bytes treated !!! (diff = %llu)\n\n\n", theMergeManager->loopCounter, bytesDiff );
-			//
-			//                 prevBytesDiff = bytesDiff;
-			//
-			//                 theMergeManager->goBackToTop = false;
-			//             }
 
 			if (theMergeManager->loopCounter % 1000 == 0 || theMergeManager->loopCounter == 1 || alwaysCalcBytesDiff)
 			{
@@ -828,23 +775,12 @@ int main(int argc, char **argv)
 					std::cerr << " ( " << std::fixed << std::showpoint << std::setprecision(2) << std::setw(6) << std::right
 							<< (float) theMergeManager->readBytesCount / totBytesCount * 100. << "% )\n";
 
-					//                     std::cerr << "Bytes in buffer: " << std::setw ( 10 ) << std::left << ofBytesCount << " + " << std::setw ( 10 ) << bufferBytesCount;
-					//                     std::cerr << " / Ignored: " << std::setw ( 10 ) << ignoredBytesCount << "\n";
-
 					std::cerr << "Output file size (bytes): " << std::left << std::setw(15) << outSize;
-					//                     std::cerr << esc << ( bytesDiff > 0 ? "[31;1m" : "[0m" ) << " ( diff = " << bytesDiff << " )..." << esc << "[0m\n";
 
 					std::cerr << "Events treated: " << std::setw(15) << evCounter << "\n";
 
-					//                     std::cerr << "Events buffered: " << std::setw ( 4 ) << writeBufSize << "\n";
-
-					//                     std::cerr << "Awaiting treatment: " << std::setw ( 4 ) << ofEvSize << " ( Map entries: " << std::setw ( 4 ) << theMergeManager->overflowEvent.size() << " )\n";
-
 					std::cerr << "Total amount of files: " << std::setw(4) << theMergeManager->inData->size() << " / Files treated: " << theMergeManager->pendingFiles.size()
 							<< "\n";
-
-					//                     std::cerr << esc << weirdTsWarningLevel << "Weird Timestamp: " << std::setw ( 8 ) << weirdTsCounter;
-					//                     std::cerr << esc << "[0m" << ( weirdTsCounter > 0 ? "(see log for more details)" : "" ) << "\n";
 
 #ifdef __unix
 					std::cerr << "Memory used (MB): " << physMemUsed / 1000000 << " ( " << totalPhysMem / 1000000 << " total )\n";
@@ -857,7 +793,7 @@ int main(int argc, char **argv)
 			}
 		}
 
-		volatile int coincCounter = 0;
+		unsigned int coincCounter = 0;
 		sortingQueue.clear();
 
 		while (coincCounter < maxEventListSize)
@@ -867,42 +803,7 @@ int main(int argc, char **argv)
 			evCounter++;
 			coincCounter++;
 
-//			auto evItr = eventQueue.begin();
-//			EVENT* readEv = *evItr;
-
 			EVENT* readEv = eventQueue.front();
-
-//			if (specialDebug)
-//			{
-//				cout << "eventQueue.size() = " << eventQueue.size() << endl;
-//				cout << "readEv = " << readEv << "   /   eventQueue.front() = " << eventQueue.front() << endl;
-//				cout << "readEv->key = " << readEv->key << endl;
-//				cout << "readEv->gd->length = " << readEv->gd->length << endl;
-//				cout << "readEv->gd->type = " << readEv->gd->type << endl;
-//				cout << "----------------------" << endl;
-//
-//				auto litr = eventQueue.begin();
-//				cout << "*litr = " << *litr << endl;
-//				cout << "(*litr)->key = " << (*litr)->key << endl;
-//				cout << "(*litr)->gd->length = " << (*litr)->gd->length << endl;
-//				cout << "(*litr)->gd->type = " << (*litr)->gd->type << endl;
-//				cout << "----------------------" << endl;
-//
-//				litr++;
-//				if (litr != eventQueue.end())
-//				{
-//					cout << "*(litr+1) = " << *litr << endl;
-//					cout << "(*(litr+1))->key = " << (*litr)->key << endl;
-//					cout << "(*(litr+1))->gd->length = " << (*litr)->gd->length << endl;
-//					cout << "(*(litr+1))->gd->type = " << (*litr)->gd->type << endl;
-//					cout << "----------------------" << endl;
-//				}
-//
-//				cout << "#############################\n#############################\n";
-//			}
-
-//			if (readEv == nullptr) cerr << "readEv is nullptr (wut?) with eventQueue.size() == " << eventQueue.size() << endl;
-//			else if (readEv->gd == nullptr) cerr << "readEv->gd is nullptr (wut?) with eventQueue.size() == " << eventQueue.size() << endl;
 
 			int evtLength = readEv->gd->length;
 			int fid = readEv->key;
@@ -910,16 +811,10 @@ int main(int argc, char **argv)
 			theMergeManager->outData.write((char*) readEv->gd, sizeof(GebData));
 			theMergeManager->outData.write((char*) readEv->payload, evtLength);
 
-//			evItr++;
-
 			eventQueue.pop_front();
-
-//			if (GTGetDiskEv(inData->at(fid), readEv, false) != nullptr) eventQueue.push_back(readEv);
 
 			if (GTGetDiskEv(inData->at(fid), readEv, false) != nullptr) sortingQueue.push_back(readEv);
 		}
-
-//		eventQueue.sort(gebev_comparator);
 
 		sortingQueue.sort(gebev_comparator);
 
@@ -937,12 +832,8 @@ int main(int argc, char **argv)
 			}
 		}
 
-		//         cerr << "End of loop #" << theMergeManager->loopCounter << endl;
-
 		theMergeManager->loopCounter++;
 
-//         cerr << "Event Queue size is " << eventQueue.size() << endl;
-//         theMergeManager->goBackToTop = false;
 		if (eventQueue.empty()) cerr << "Event queue is empty: finishing merging process..." << endl;
 	}
 

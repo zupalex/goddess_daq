@@ -836,9 +836,9 @@ void GoddessCalib::PlotSX3ResStripsCalGraphsFromTree(TChain* chain, long int nen
 
 			cout << "Creating graph " << grID << endl;
 
-			int binnum;
-			int starthere;
-			int endhere;
+			int binnum = 0;
+			int starthere = 0;
+			int endhere = 0;
 
 			if (sectorsList[i] <= 6 && sectorsList[i] != 0)
 			{
@@ -1497,8 +1497,7 @@ vector<float> GoddessCalib::GetOverlapPoints(TH2F* input, float xMin, float xMax
 
 std::tuple<TGraph*, vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition(TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos)
 {
-	if (input->GetEntries() == 0) return std::make_tuple<TGraph*, vector<vector<float>>>(nullptr,
-		{ });
+	if (input->GetEntries() == 0) return std::make_tuple<TGraph*, vector<vector<float>>>(nullptr, { });
 
 	string graphName = "SuperX3_" + (string) input->GetName();
 
@@ -1569,8 +1568,7 @@ std::tuple<TGraph*, vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPositio
 	}
 
 	if (std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin()) && std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax())) return std::make_tuple<TGraph*,
-			vector<vector<float>>>(nullptr,
-		{ });
+			vector<vector<float>>>(nullptr, { });
 
 	return std::make_tuple(enShiftVsPosGraphs[graphName], overlapCoords);
 }
@@ -1640,8 +1638,8 @@ void GoddessCalib::GetStripsEdges(TH2F* input, int projCenterBin, int projWidth,
 
 					m2->Draw();
 
-					cout << "*** Searching for points between " << std::min(overlapCoords[i][8], overlapCoords[i][9]) << " and " << std::max(overlapCoords[i][8], overlapCoords[i][9])
-							<< " ***\n";
+					cout << "*** Searching for points between " << std::min(overlapCoords[i][8], overlapCoords[i][9]) << " and "
+							<< std::max(overlapCoords[i][8], overlapCoords[i][9]) << " ***\n";
 
 					int realPointNum = 0;
 
@@ -2050,7 +2048,8 @@ void GoddessCalib::GenerateGainAdjustfile(string filesname, string treename, lon
 				if (siData.isUpstream && !siData.isBarrel && sector >= 0 && sector <= 3 && strip >= 0 && strip <= 31)
 				{
 					double effThickness = GetEffectiveThickness(siData.PosE1().Angle(targetLadderDir) - TMath::PiOver2(), reacInfo->targetThickness);
-					double estELoss = ComputeEnergyLoss(energyLossData.first, energyLossData.second, energy / reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation");
+					double estELoss = ComputeEnergyLoss(energyLossData.first, energyLossData.second, energy / reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01,
+							"Interpolation");
 
 					//             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
 

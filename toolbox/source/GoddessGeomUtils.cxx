@@ -232,6 +232,8 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile(string filesname, string treen
 //
 //     TVector3 beamDir ( 0, 0, 1 );
 
+	TFile* outf = new TFile(outfname.c_str(), "recreate");
+
 	TTree* outtree = new TTree("godGeom", "godGeom");
 
 	bool isBarrel;
@@ -240,8 +242,6 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile(string filesname, string treen
 	double energy;
 //     double angle;
 	TVector3 pos;
-
-	bool hasBGO;
 
 	double gam_energy;
 	int crystal_num;
@@ -255,6 +255,8 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile(string filesname, string treen
 
 	outtree->Branch("gam_energy", &gam_energy);
 	outtree->Branch("crystal_num", &crystal_num);
+
+	outtree->Write();
 
 	vector<SiDataBase>* vectSiData = new vector<SiDataBase>;
 	vector<GamData>* vectGamData = new vector<GamData>;
@@ -274,6 +276,8 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile(string filesname, string treen
 			cout << "Entry " << std::setw(15) << ev << " / " << nEntries;
 			cout << " ( " << std::fixed << std::setprecision(2) << std::setw(6) << ((float) ev / nEntries) * 100. << " % )\r" << std::flush;
 		}
+
+		if (ev % 1000000 == 0) outf->Flush();
 
 		chain->GetEntry(ev);
 
@@ -312,11 +316,7 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile(string filesname, string treen
 		}
 	}
 
-	TFile* outf = new TFile(outfname.c_str(), "recreate");
-
-	outf->cd();
-
-	outtree->Write();
+	outtree->Write("godGeom", TObject::kOverwrite);
 
 	outf->mkdir("infos");
 	outf->cd("infos");
@@ -367,8 +367,8 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal(void* args)
 					//             }
 
 					double effThickness = GetEffectiveThickness(adjustPos.Angle(gAD.targetLadderDir) - TMath::PiOver2(), reacInfo->targetThickness);
-					double estELoss = ComputeEnergyLoss(gAD.energyLossData.first, gAD.energyLossData.second, gAD.initialEnergy / reacInfo->ejecA,
-							reacInfo->ejecA, 0, effThickness, 0.01, "Interpolation");
+					double estELoss = ComputeEnergyLoss(gAD.energyLossData.first, gAD.energyLossData.second, gAD.initialEnergy / reacInfo->ejecA, reacInfo->ejecA, 0, effThickness,
+							0.01, "Interpolation");
 
 					//             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
 
@@ -394,10 +394,10 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal(void* args)
 
 				float qval;
 
-				string commonKey = Form("_QQQ5_mod_%s_%s_%s_%d_SX3_mod_%s_%s_%s_%d_target_off_%s_%s_%s_beamEk_%d%s", gAD.qqq5OffXStr[q].c_str(),
-						gAD.qqq5OffYStr[q].c_str(), gAD.qqq5OffZStr[q].c_str(), RoundValue(gri->qqq5EnGain * 100), gAD.sX3OffXStr[s].c_str(),
-						gAD.sX3OffYStr[s].c_str(), gAD.sX3OffZStr[s].c_str(), RoundValue(gri->sX3EnGain * 100), gAD.targetOffXStr[t].c_str(),
-						gAD.targetOffYStr[t].c_str(), gAD.targetOffZStr[t].c_str(), RoundValue(gri->beamEk), computeELossStr.c_str());
+				string commonKey = Form("_QQQ5_mod_%s_%s_%s_%d_SX3_mod_%s_%s_%s_%d_target_off_%s_%s_%s_beamEk_%d%s", gAD.qqq5OffXStr[q].c_str(), gAD.qqq5OffYStr[q].c_str(),
+						gAD.qqq5OffZStr[q].c_str(), RoundValue(gri->qqq5EnGain * 100), gAD.sX3OffXStr[s].c_str(), gAD.sX3OffYStr[s].c_str(), gAD.sX3OffZStr[s].c_str(),
+						RoundValue(gri->sX3EnGain * 100), gAD.targetOffXStr[t].c_str(), gAD.targetOffYStr[t].c_str(), gAD.targetOffZStr[t].c_str(), RoundValue(gri->beamEk),
+						computeELossStr.c_str());
 
 				if (gAD.isBarrel)
 				{
@@ -432,8 +432,8 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal(void* args)
 	return nullptr;
 }
 
-void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, long long int nEntries, vector<TVector3> qqq5Offsets,
-		vector<TVector3> sx3Offsets, vector<TVector3> targetOffsets, function<bool()> testfn)
+void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, long long int nEntries, vector<TVector3> qqq5Offsets, vector<TVector3> sx3Offsets,
+		vector<TVector3> targetOffsets, function<bool()> testfn)
 {
 	TFile* inFile = new TFile(filename.c_str(), "read");
 
@@ -524,8 +524,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 	{
 		double beamEffThickness = GetEffectiveThickness(gAD.beamDir.Angle(gAD.targetLadderDir) - TMath::PiOver2(), gAD.localReacInfo->targetThickness);
 
-		gAD.localReacInfo->beamEk = TryGetRemainingEnergy(pathToGDAQ + "/share/mass_db.dat", gAD.localReacInfo->beamA, gAD.localReacInfo->beamZ,
-				gAD.localReacInfo->beamEk, beamEffThickness, 0.001, gAD.localReacInfo->targetType, gAD.localReacInfo->targetDensity, "./", "Interpolation");
+		gAD.localReacInfo->beamEk = TryGetRemainingEnergy(pathToGDAQ + "/share/mass_db.dat", gAD.localReacInfo->beamA, gAD.localReacInfo->beamZ, gAD.localReacInfo->beamEk,
+				beamEffThickness, 0.001, gAD.localReacInfo->targetType, gAD.localReacInfo->targetDensity, "./", "Interpolation");
 
 		cout << "Beam Energy after computing energy loss: " << gAD.localReacInfo->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
 	}
@@ -538,7 +538,7 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 	cout << "Will apply the following gain: SuperX3 = " << reacInfo->sX3EnGain << " / QQQ5 = " << reacInfo->qqq5EnGain << "\n";
 
-	int startBELiter;
+	int startBELiter = 0;
 	switch (nGP.computeBeamELoss)
 	{
 		case 0:
@@ -552,7 +552,7 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 			break;
 	}
 
-	int maxBELiter;
+	int maxBELiter = 0;
 	switch (nGP.computeBeamELoss)
 	{
 		case 0:
@@ -566,7 +566,7 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 			break;
 	}
 
-	int startEELiter;
+	int startEELiter = 0;
 	switch (nGP.computeEjectileELoss)
 	{
 		case 0:
@@ -580,7 +580,7 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 			break;
 	}
 
-	int maxEELiter;
+	int maxEELiter = 0;
 	switch (nGP.computeEjectileELoss)
 	{
 		case 0:
@@ -595,8 +595,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 	}
 
 	// sector ID in this case are sector number + 4 if superX3 + 16 if upstream
-	vector<int> ignoreSectorsList = { 0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 6, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 1, 16 + 4 + 2, 16 + 4 + 3, 16 + 4
-			+ 4, 16 + 4 + 5, 16 + 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 10 };
+	vector<int> ignoreSectorsList = { 0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 6, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 1, 16 + 4 + 2, 16 + 4 + 3, 16 + 4 + 4, 16 + 4 + 5, 16
+			+ 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 10 };
 
 	bool fillQQQ5Pos = true;
 	bool fillSX3Pos = true;
@@ -643,22 +643,20 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 						else gri = gAD.localReacInfo;
 
 						string commonName = Form("_QQQ5_mod_%s_%s_%s_%d_SX3_mod_%s_%s_%s_%d_target_off_%s_%s_%s_beamEk_%d%s", gAD.qqq5OffXStr[q].c_str(),
-								gAD.qqq5OffYStr[q].c_str(), gAD.qqq5OffZStr[q].c_str(), RoundValue(gri->qqq5EnGain * 100), gAD.sX3OffXStr[s].c_str(),
-								gAD.sX3OffYStr[s].c_str(), gAD.sX3OffZStr[s].c_str(), RoundValue(gri->sX3EnGain * 100), gAD.targetOffXStr[t].c_str(),
-								gAD.targetOffYStr[t].c_str(), gAD.targetOffZStr[t].c_str(), RoundValue(gri->beamEk), computeELossStr.c_str());
+								gAD.qqq5OffYStr[q].c_str(), gAD.qqq5OffZStr[q].c_str(), RoundValue(gri->qqq5EnGain * 100), gAD.sX3OffXStr[s].c_str(), gAD.sX3OffYStr[s].c_str(),
+								gAD.sX3OffZStr[s].c_str(), RoundValue(gri->sX3EnGain * 100), gAD.targetOffXStr[t].c_str(), gAD.targetOffYStr[t].c_str(),
+								gAD.targetOffZStr[t].c_str(), RoundValue(gri->beamEk), computeELossStr.c_str());
 
-						string commonTitle =
-								Form(
-										" / QQQ5 mod X: %d, Y: %d, Z: %d, gain: %4.2f / SuperX3 mod X: %d, Y: %d, Z: %d, gain: %4.2f / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / %s",
-										qqq5OffX, qqq5OffY, qqq5OffZ, gri->qqq5EnGain, sX3OffX, sX3OffY, sX3OffZ, gri->sX3EnGain, targetOffX, targetOffY,
-										targetOffZ, gri->beamEk, nGP.computeEjectileELoss ? "" : "ignore ejectile energy loss");
+						string commonTitle = Form(
+								" / QQQ5 mod X: %d, Y: %d, Z: %d, gain: %4.2f / SuperX3 mod X: %d, Y: %d, Z: %d, gain: %4.2f / target X: %d, Y: %d, Z: %d / Beam Ek: %3.1f / %s",
+								qqq5OffX, qqq5OffY, qqq5OffZ, gri->qqq5EnGain, sX3OffX, sX3OffY, sX3OffZ, gri->sX3EnGain, targetOffX, targetOffY, targetOffZ, gri->beamEk,
+								nGP.computeEjectileELoss ? "" : "ignore ejectile energy loss");
 
 						string histKey = "QVal_vs_Strips" + commonName;
 
 						if (hQval_NewGeom.find(histKey) == hQval_NewGeom.end())
 						{
-							hQval_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Q-Value new geom vs. Strips" + commonTitle).c_str(), 500, 0, 500, 800,
-									-20, 20);
+							hQval_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Q-Value new geom vs. Strips" + commonTitle).c_str(), 500, 0, 500, 800, -20, 20);
 						}
 						hQval_NewGeom[histKey]->Reset();
 
@@ -666,8 +664,7 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 						if (hEx_NewGeom.find(histKey) == hEx_NewGeom.end())
 						{
-							hEx_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Excitation Energy new geom vs. Strips" + commonTitle).c_str(), 500, 0,
-									500, 800, -20, 20);
+							hEx_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Excitation Energy new geom vs. Strips" + commonTitle).c_str(), 500, 0, 500, 800, -20, 20);
 						}
 						hEx_NewGeom[histKey]->Reset();
 
@@ -691,8 +688,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 										if (hEpvsA_SX3_NewGeom.find(histKey) == hEpvsA_SX3_NewGeom.end())
 										{
-											hEpvsA_SX3_NewGeom[histKey] = new TH2F(histKey.c_str(),
-													((string) "Proton Energy vs. Angle new geom" + commonTitle).c_str(), 1800, 0, 180, 1500, 0, 15);
+											hEpvsA_SX3_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Proton Energy vs. Angle new geom" + commonTitle).c_str(), 1800, 0,
+													180, 1500, 0, 15);
 										}
 										hEpvsA_SX3_NewGeom[histKey]->Reset();
 
@@ -700,8 +697,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 										if (hExvsA_SX3_NewGeom.find(histKey) == hExvsA_SX3_NewGeom.end())
 										{
-											hExvsA_SX3_NewGeom[histKey] = new TH2F(histKey.c_str(),
-													((string) "Excitation Energy vs. Angle new geom" + commonTitle).c_str(), 1800, 0, 180, 800, -20, 20);
+											hExvsA_SX3_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Excitation Energy vs. Angle new geom" + commonTitle).c_str(), 1800,
+													0, 180, 800, -20, 20);
 										}
 										hExvsA_SX3_NewGeom[histKey]->Reset();
 
@@ -783,9 +780,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 										if (hEpvsA_QQQ5_NewGeom.find(histKey) == hEpvsA_QQQ5_NewGeom.end())
 										{
-											hEpvsA_QQQ5_NewGeom[histKey] = new TH2F((histKey).c_str(),
-													((string) "Proton Energy vs. Angle new geom" + commonTitle).c_str(), binsEdgesList.size() - 1,
-													qqq5BinsEdges, 1500, 0, 15);
+											hEpvsA_QQQ5_NewGeom[histKey] = new TH2F((histKey).c_str(), ((string) "Proton Energy vs. Angle new geom" + commonTitle).c_str(),
+													binsEdgesList.size() - 1, qqq5BinsEdges, 1500, 0, 15);
 										}
 										hEpvsA_QQQ5_NewGeom[histKey]->Reset();
 									}
@@ -871,8 +867,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 	return;
 }
 
-void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, long long int nEntries, int qqq5OffX, int qqq5OffY, int qqq5OffZ, int sX3OffX,
-		int sX3OffY, int sX3OffZ, int targetOffX, int targetOffY, int targetOffZ, function<bool()> testfn)
+void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, long long int nEntries, int qqq5OffX, int qqq5OffY, int qqq5OffZ, int sX3OffX, int sX3OffY,
+		int sX3OffZ, int targetOffX, int targetOffY, int targetOffZ, function<bool()> testfn)
 {
 	vector<TVector3> sx3Offs, qqq5Offs, targOffs;
 
@@ -911,10 +907,9 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 	GetQValWithNewGeometry(filename, treeName, nEntries, qqq5Offs, sx3Offs, targetOffs, testfn);
 }
 
-void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, long long int nEntries, int minQQQ5OffX, int maxQQQ5OffX, int minQQQ5OffY,
-		int maxQQQ5OffY, int minQQQ5OffZ, int maxQQQ5OffZ, int stepQQQ5, int minSX3OffX, int maxSX3OffX, int minSX3OffY, int maxSX3OffY, int minSX3OffZ,
-		int maxSX3OffZ, int stepSX3, int minTargetOffX, int maxTargetOffX, int minTargetOffY, int maxTargetOffY, int minTargetOffZ, int maxTargetOffZ,
-		int stepTarget, function<bool()> testfn)
+void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, long long int nEntries, int minQQQ5OffX, int maxQQQ5OffX, int minQQQ5OffY, int maxQQQ5OffY,
+		int minQQQ5OffZ, int maxQQQ5OffZ, int stepQQQ5, int minSX3OffX, int maxSX3OffX, int minSX3OffY, int maxSX3OffY, int minSX3OffZ, int maxSX3OffZ, int stepSX3,
+		int minTargetOffX, int maxTargetOffX, int minTargetOffY, int maxTargetOffY, int minTargetOffZ, int maxTargetOffZ, int stepTarget, function<bool()> testfn)
 {
 	vector<TVector3> sx3Offs, qqq5Offs, targetOffs;
 
@@ -976,9 +971,7 @@ std::pair<double, double> GoddessGeomUtils::FindPeakPos(TH1* input, int nPeaks, 
 		TF1* fitFunc = FitQVal(input, means, 0.01, 0.3, peaksX[i] - 0.6, peaksX[i] + 0.6, "TSpectrum", true);
 
 		double ampDiff = fabs(fitFunc->GetParameter(3) - input->GetBinContent(floor(fitFunc->GetParameter(4) / input->GetXaxis()->GetBinWidth(1)) + 1));
-		ampDiff += fabs(
-				fitFunc->GetParameter(5)
-						- input->GetBinContent(floor((fitFunc->GetParameter(4) + fitFunc->GetParameter(6)) / input->GetXaxis()->GetBinWidth(1)) + 1));
+		ampDiff += fabs(fitFunc->GetParameter(5) - input->GetBinContent(floor((fitFunc->GetParameter(4) + fitFunc->GetParameter(6)) / input->GetXaxis()->GetBinWidth(1)) + 1));
 		ampDiff /= 2;
 
 		if (ampDiff < bestAmpDiff)
@@ -1050,22 +1043,22 @@ TGraph* GoddessGeomUtils::FindKinematicsLines(TH2* input, int projWidth)
 	return gr;
 }
 
-vector<TH2F*> GoddessGeomUtils::FindBestGeomV2(string fName, string baseHistName, double pmin, double pmax, int step_iy, int iy_min, int iy_max, int step_iz,
-		int iz_min, int iz_max)
+vector<TH2F*> GoddessGeomUtils::FindBestGeomV2(string fName, string baseHistName, double pmin, double pmax, int step_iy, int iy_min, int iy_max, int step_iz, int iz_min,
+		int iz_max)
 {
 	vector<TH2F*> diag_plots;
 	diag_plots.resize(6);
 
-	diag_plots[0] = new TH2F("chi2_toff", "Chi Square vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
-			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
+	diag_plots[0] = new TH2F("chi2_toff", "Chi Square vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy, (iz_max + step_iz - iz_min) / step_iz,
+			iz_min, iz_max + step_iz);
 	diag_plots[1] = new TH2F("ediff1_toff", "288keV state energy diff. vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
 	diag_plots[2] = new TH2F("ediff2_toff", "2.4MeV state energy diff. vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
 	diag_plots[3] = new TH2F("ediff3_toff", "2.8MeV state energy diff. vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
-	diag_plots[4] = new TH2F("sigma_toff", "Sigma vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
-			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
+	diag_plots[4] = new TH2F("sigma_toff", "Sigma vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy, (iz_max + step_iz - iz_min) / step_iz,
+			iz_min, iz_max + step_iz);
 	diag_plots[5] = new TH2F("score_toff", "Matching Score vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
 
@@ -1113,8 +1106,7 @@ vector<TH2F*> GoddessGeomUtils::FindBestGeomV2(string fName, string baseHistName
 	{
 		for (int iz = iz_min; iz <= iz_max; iz += step_iz)
 		{
-			hExvsStrip = (*hmap)[(string) baseHistName + (iy < 0 ? "m" : "") + to_string(abs(iy)) + "_" + (iz < 0 ? "m" : "") + to_string(abs(iz))
-					+ "_beamEk_1337"];
+			hExvsStrip = (*hmap)[(string) baseHistName + (iy < 0 ? "m" : "") + to_string(abs(iy)) + "_" + (iz < 0 ? "m" : "") + to_string(abs(iz)) + "_beamEk_1337"];
 
 			char projname[20];
 
@@ -1152,14 +1144,14 @@ vector<TH2F*> GoddessGeomUtils::FindBestGeomV2(string fName, string baseHistName
 	return diag_plots;
 }
 
-vector<TH2F*> GoddessGeomUtils::FindBestGeomV3(string fName, string baseHistName, double pmin, double pmax, int step_iy, int iy_min, int iy_max, int step_iz,
-		int iz_min, int iz_max)
+vector<TH2F*> GoddessGeomUtils::FindBestGeomV3(string fName, string baseHistName, double pmin, double pmax, int step_iy, int iy_min, int iy_max, int step_iz, int iz_min,
+		int iz_max)
 {
 	vector<TH2F*> diag_plots;
 	diag_plots.resize(8);
 
-	diag_plots[0] = new TH2F("chi2_toff", "Chi Square vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
-			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
+	diag_plots[0] = new TH2F("chi2_toff", "Chi Square vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy, (iz_max + step_iz - iz_min) / step_iz,
+			iz_min, iz_max + step_iz);
 	diag_plots[1] = new TH2F("ediff1_toff", "Ground State energy diff. vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
 	diag_plots[2] = new TH2F("ediff2_toff", "288keV state energy diff. vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
@@ -1170,8 +1162,8 @@ vector<TH2F*> GoddessGeomUtils::FindBestGeomV3(string fName, string baseHistName
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
 	diag_plots[5] = new TH2F("ediff5_toff", "2.8MeV state energy diff. vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
-	diag_plots[6] = new TH2F("sigma_toff", "Sigma vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
-			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
+	diag_plots[6] = new TH2F("sigma_toff", "Sigma vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy, (iz_max + step_iz - iz_min) / step_iz,
+			iz_min, iz_max + step_iz);
 	diag_plots[7] = new TH2F("score_toff", "Matching Score vs. Target Offsets", (iy_max + step_iy - iy_min) / step_iy, iy_min, iy_max + step_iy,
 			(iz_max + step_iz - iz_min) / step_iz, iz_min, iz_max + step_iz);
 
@@ -1216,8 +1208,7 @@ vector<TH2F*> GoddessGeomUtils::FindBestGeomV3(string fName, string baseHistName
 	{
 		for (int iz = iz_min; iz <= iz_max; iz += step_iz)
 		{
-			hExvsStrip = (*hmap)[(string) baseHistName + (iy < 0 ? "m" : "") + to_string(abs(iy)) + "_" + (iz < 0 ? "m" : "") + to_string(abs(iz))
-					+ "_beamEk_1337"];
+			hExvsStrip = (*hmap)[(string) baseHistName + (iy < 0 ? "m" : "") + to_string(abs(iy)) + "_" + (iz < 0 ? "m" : "") + to_string(abs(iz)) + "_beamEk_1337"];
 
 			char projname[20];
 
@@ -1346,13 +1337,11 @@ TF1* GoddessGeomUtils::FindBestGeom(string fName, string detStr)
 				 && fabs ( newFit->GetParameter ( 8 ) - 2.035 ) <=0.02 && fabs ( newFit->GetParameter ( 10 ) - 2.406 ) <=0.02*/))
 						|| (bestFit != nullptr
 						/*&& fabs ( bestChi2-newFit->GetChisquare() ) / bestChi2 <= 0.5*/
-						&& fabs(newFit->GetParameter(4)) <= fabs(bestFit->GetParameter(4))
-								&& fabs(newFit->GetParameter(6) - 0.288) <= fabs(bestFit->GetParameter(6) - 0.288)
+						&& fabs(newFit->GetParameter(4)) <= fabs(bestFit->GetParameter(4)) && fabs(newFit->GetParameter(6) - 0.288) <= fabs(bestFit->GetParameter(6) - 0.288)
 								&& fabs(newFit->GetParameter(8) - 2.035) <= fabs(bestFit->GetParameter(8) - 2.035)
-								&& fabs(newFit->GetParameter(10) - 2.406) <= fabs(bestFit->GetParameter(10) - 2.406)
-								&& newFit->GetParameter(2) <= bestFit->GetParameter(2)
+								&& fabs(newFit->GetParameter(10) - 2.406) <= fabs(bestFit->GetParameter(10) - 2.406) && newFit->GetParameter(2) <= bestFit->GetParameter(2)
 						/*&& newFit->GetParameter ( 5 ) / newFit->GetParameter ( 3 ) > 1 && newFit->GetParameter ( 5 ) / newFit->GetParameter ( 3 ) < 5
-						 /*&& newIntegral >= bestIntegral*/))
+						 && newIntegral >= bestIntegral*/))
 				{
 					if (bestChi2 < 0) bestChi2 = newFit->GetChisquare();
 					else if (newFit->GetChisquare() < bestChi2) bestChi2 = newFit->GetChisquare();
@@ -1565,8 +1554,8 @@ void GoddessGeomUtils::WriteNewGeomGraphs(string outFName, string opts)
 {
 	if (outFName.empty())
 	{
-		outFName = Form("NewGeomHists_QQQ5_%0.2f_%0.2f_%0.2f_SX3_%0.2f_%0.2f_%0.2f.root", lastQQQ5Offsets[0], lastQQQ5Offsets[1], lastQQQ5Offsets[2],
-				lastSX3Offsets[0], lastSX3Offsets[1], lastSX3Offsets[2]);
+		outFName = Form("NewGeomHists_QQQ5_%0.2f_%0.2f_%0.2f_SX3_%0.2f_%0.2f_%0.2f.root", lastQQQ5Offsets[0], lastQQQ5Offsets[1], lastQQQ5Offsets[2], lastSX3Offsets[0],
+				lastSX3Offsets[1], lastSX3Offsets[2]);
 	}
 
 	TFile* outf = new TFile(outFName.c_str(), opts.c_str());
