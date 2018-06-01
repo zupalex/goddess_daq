@@ -309,8 +309,8 @@ std::vector<std::string> DecodeTags(std::string tagsStr)
 	return tags;
 }
 
-vector<string> GetDirContent(string dirName, string mode, string endWith, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith, bool caseSensitive,
-		bool includePath)
+vector<string> GetDirContent(string dirName, string mode, string endWith, string mustHaveAll, string cantHaveAny, string mustHaveOneOf, string startWith,
+		bool caseSensitive, bool includePath)
 {
 	std::vector<std::string> fileList, mustAllTags, cantTags, mustOneOfTags, endWithVec;
 
@@ -458,14 +458,16 @@ vector<string> GetDirContent(string dirName, string mode, string endWith, string
 		}
 		else if (endWith.empty() || (endWith.length() == 1 && endWith[0] == entName[entName.length() - 1])
 				|| (!endWith.empty()
-						&& std::search(entName.begin(), entName.end(), endWith.begin(), endWith.end(), ignoreCharCasePred(caseSensitive)) == entName.end() - endWith.length()))
+						&& std::search(entName.begin(), entName.end(), endWith.begin(), endWith.end(), ignoreCharCasePred(caseSensitive))
+								== entName.end() - endWith.length()))
 		{
 //             cout << "Found matching end" << endl;
 			endOK = true;
 		}
 
 		if (startWith.empty()
-				|| (!startWith.empty() && std::search(entName.begin(), entName.end(), startWith.begin(), startWith.end(), ignoreCharCasePred(caseSensitive)) == entName.begin()))
+				|| (!startWith.empty()
+						&& std::search(entName.begin(), entName.end(), startWith.begin(), startWith.end(), ignoreCharCasePred(caseSensitive)) == entName.begin()))
 		{
 			if (endOK)
 			{
@@ -479,7 +481,8 @@ vector<string> GetDirContent(string dirName, string mode, string endWith, string
 					{
 						string::iterator startSearch = prevTagPos;
 
-						string::iterator currTagPos = std::search(startSearch, entName.end(), mustAllTags[i].begin(), mustAllTags[i].end(), ignoreCharCasePred(caseSensitive));
+						string::iterator currTagPos = std::search(startSearch, entName.end(), mustAllTags[i].begin(), mustAllTags[i].end(),
+								ignoreCharCasePred(caseSensitive));
 
 						if (currTagPos == entName.end())
 						{
@@ -496,7 +499,8 @@ vector<string> GetDirContent(string dirName, string mode, string endWith, string
 				{
 					for (unsigned int i = 0; i < cantTags.size(); i++)
 					{
-						if (std::search(entName.begin(), entName.end(), cantTags[i].begin(), cantTags[i].end(), ignoreCharCasePred(caseSensitive)) != entName.end())
+						if (std::search(entName.begin(), entName.end(), cantTags[i].begin(), cantTags[i].end(), ignoreCharCasePred(caseSensitive))
+								!= entName.end())
 						{
 							cantFlag = true;
 							continue;
@@ -508,8 +512,8 @@ vector<string> GetDirContent(string dirName, string mode, string endWith, string
 				{
 					for (unsigned int i = 0; i < mustOneOfTags.size(); i++)
 					{
-						if (std::search(entName.begin(), entName.end(), mustOneOfTags[i].begin(), mustOneOfTags[i].end(), ignoreCharCasePred(caseSensitive)) != entName.end()) mustOneOfFlag =
-								true;
+						if (std::search(entName.begin(), entName.end(), mustOneOfTags[i].begin(), mustOneOfTags[i].end(), ignoreCharCasePred(caseSensitive))
+								!= entName.end()) mustOneOfFlag = true;
 					}
 				}
 
@@ -1233,7 +1237,8 @@ double GetEffectiveThickness(double angle, double targetThickness_)
 	return fabs(targetThickness_ / (2 * TMath::Cos(angle)));
 }
 
-double ComputeEnergyLoss(vector<double> energies_, vector<double> rangeOrStoppingPower_, double startingEnergy, float mass, double xMin_, double xMax_, double dx_, string mode)
+double ComputeEnergyLoss(vector<double> energies_, vector<double> rangeOrStoppingPower_, double startingEnergy, float mass, double xMin_, double xMax_,
+		double dx_, string mode)
 {
 	if (xMin_ >= xMax_) return 0.0;
 
@@ -1265,8 +1270,8 @@ double ComputeEnergyLoss(vector<double> energies_, vector<double> rangeOrStoppin
 	else return 0.0;
 }
 
-double TryGetRemainingEnergy(string mass_db, int mass, int charge, double startingEnergy, double thickness_, double dx_, string targetStr, double density, string tablePath,
-		string mode)
+double TryGetRemainingEnergy(string mass_db, int mass, int charge, double startingEnergy, double thickness_, double dx_, string targetStr, double density,
+		string tablePath, string mode)
 {
 	std::ifstream mass_input(mass_db.c_str(), std::ios_base::in);
 
@@ -1300,9 +1305,18 @@ double TryGetRemainingEnergy(string mass_db, int mass, int charge, double starti
 
 		double eLoss = ComputeEnergyLoss(beamTable.first, beamTable.second, startingEnergy / mass, mass, 0, thickness_, dx_, mode);
 
-		//         std::cout << "Computed energy loss using table " << tryFindTable[0] << " : " << eLoss << " MeV" << std::endl;
+		std::cout << "Computed energy loss using table " << tryFindTable[0] << " : " << eLoss << " MeV" << std::endl;
 
 		remainingEnergy -= eLoss;
+	}
+	else
+	{
+		cerr << "Could not compute beam energy loss. Found " << tryFindTable.size() << " match for the energy loss table ( " << tryFindStr << " )" << endl;
+
+		for (unsigned int i = 0; i < tryFindTable.size(); i++)
+			cerr << "---> " << tryFindTable[i] << endl;
+
+		cerr << endl;
 	}
 
 	return remainingEnergy; // in MeV
@@ -1566,8 +1580,8 @@ void GetAtomicFormula(std::ifstream& mass_db, int mass, int charge, string& toRe
 
 bool CharIsDigit(char toCheck)
 {
-	if (toCheck == '0' || toCheck == '1' || toCheck == '2' || toCheck == '3' || toCheck == '4' || toCheck == '5' || toCheck == '6' || toCheck == '7' || toCheck == '8'
-			|| toCheck == '9') return true;
+	if (toCheck == '0' || toCheck == '1' || toCheck == '2' || toCheck == '3' || toCheck == '4' || toCheck == '5' || toCheck == '6' || toCheck == '7'
+			|| toCheck == '8' || toCheck == '9') return true;
 	else return false;
 }
 
@@ -1954,7 +1968,8 @@ bool GEBBinaryEvFilter(std::pair<BinDecHeadStruct*, char*>* readWord_)
 	else return false;
 }
 
-void DecodeGEBBinary(string fname, unsigned long int nevents, unsigned long int fstevent, bool invertWords, bool quietMode, string outRootName, string mapFileName)
+void DecodeGEBBinary(string fname, unsigned long int nevents, unsigned long int fstevent, bool invertWords, bool quietMode, string outRootName,
+		string mapFileName)
 {
 	unsigned int chMap[2410];
 	fill(chMap, chMap + 2410, -1);

@@ -95,6 +95,8 @@ class GoddessGeomUtils: public GoddessAnalysis
 
 		map<string, TH2F*> hExvsA_SX3_NewGeom;
 
+		map<string, TH2F*> hExvsGS_NewGeom;
+
 		map<string, TH2F*> hQvalvsStrip_QQQ5_NewGeom;
 
 		vector<float> lastQQQ5Offsets, lastSX3Offsets;
