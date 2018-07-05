@@ -3,6 +3,68 @@
 
 GoddessGeomUtils* gGU = new GoddessGeomUtils();
 
+void GoddessGeomUtils::SetIgnoreSectors(bool turn_off, char* ignoreStr)
+{
+	SetIgnoreSectors(turn_off, (string) ignoreStr);
+}
+
+void GoddessGeomUtils::SetIgnoreSectors(bool turn_off, const char* ignoreStr)
+{
+	SetIgnoreSectors(turn_off, (string) ignoreStr);
+}
+
+void GoddessGeomUtils::SetIgnoreSectors(bool turn_off, string ignoreStr)
+{
+	transform(ignoreStr.begin(), ignoreStr.end(), ignoreStr.begin(), ::tolower);
+
+	if (ignoreStr.empty())
+	{
+		ignoreSectorsList.clear();
+
+		if (turn_off)
+		{
+			for (int i = 0; i <= 16 + 4 + 11; i++)
+				ignoreSectorsList.push_back(i);
+		}
+	}
+
+	else if (ignoreStr.find("upstream") != string::npos)
+	{
+		if (ignoreStr.find("superx3") != string::npos || ignoreStr.find("sx3") != string::npos || ignoreStr.find("superx3s") != string::npos
+				|| ignoreStr.find("sx3s") != string::npos)
+		{
+			SetIgnoreSectors(turn_off, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 4, 4 + 5, 4 + 6, 4 + 7, 4 + 8, 4 + 9, 4 + 10, 4 + 11);
+		}
+		else if (ignoreStr.find("qqq5") != string::npos || ignoreStr.find("qqq5s") != string::npos)
+		{
+			SetIgnoreSectors(turn_off, 0, 1, 2, 3);
+		}
+		else
+		{
+			SetIgnoreSectors(turn_off, 0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 4, 4 + 5, 4 + 6, 4 + 7, 4 + 8, 4 + 9, 4 + 10, 4 + 11);
+		}
+	}
+
+	else if (ignoreStr.find("downstream") != string::npos)
+	{
+		if (ignoreStr.find("superx3") != string::npos || ignoreStr.find("sx3") != string::npos || ignoreStr.find("superx3s") != string::npos
+				|| ignoreStr.find("sx3s") != string::npos)
+		{
+			SetIgnoreSectors(turn_off, 4 + 16 + 0, 4 + 16 + 1, 4 + 16 + 2, 4 + 16 + 3, 4 + 16 + 4, 4 + 16 + 5, 4 + 16 + 6, 4 + 16 + 7, 4 + 16 + 8, 4 + 16 + 9,
+					4 + 16 + 10, 4 + 16 + 11);
+		}
+		else if (ignoreStr.find("qqq5") != string::npos || ignoreStr.find("qqq5s") != string::npos)
+		{
+			SetIgnoreSectors(turn_off, 16 + 0, 16 + 1, 16 + 2, 16 + 3);
+		}
+		else
+		{
+			SetIgnoreSectors(turn_off, 16 + 0, 16 + 1, 16 + 2, 16 + 3, 4 + 16 + 0, 4 + 16 + 1, 4 + 16 + 2, 4 + 16 + 3, 4 + 16 + 4, 4 + 16 + 5, 4 + 16 + 6,
+					4 + 16 + 7, 4 + 16 + 8, 4 + 16 + 9, 4 + 16 + 10, 4 + 16 + 11);
+		}
+	}
+}
+
 void GoddessGeomUtils::PrintOutStripsPositions()
 {
 	cout << "QQQ5 Upstream Strips Positions:\n";
@@ -214,7 +276,7 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile(string filesname, string treen
 	if (reacInfo == nullptr)
 	{
 		cerr << "The rootfile(s) specified have been generated with an outdated version of the sort code.\n";
-		cerr << "Required information reaction are missing...\n";
+		cerr << "Required information about the reaction are missing...\n";
 		cerr << "Aborting...\n";
 		return;
 	}
@@ -579,10 +641,6 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 			break;
 	}
 
-	// sector ID in this case are sector number + 4 if superX3 + 16 if upstream
-	vector<int> ignoreSectorsList = { 0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 6, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 1, 16 + 4 + 2, 16 + 4 + 3, 16 + 4
-			+ 4, 16 + 4 + 5, 16 + 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 10 };
-
 	bool fillQQQ5Pos = true;
 	bool fillSX3Pos = true;
 
@@ -642,8 +700,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 						if (hQval_NewGeom.find(histKey) == hQval_NewGeom.end())
 						{
-							hQval_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Q-Value new geom vs. Strips" + commonTitle).c_str(), 500, 0, 500, 4000,
-									-20, 20);
+							hQval_NewGeom[histKey] = new TH2F(histKey.c_str(), ((string) "Q-Value new geom vs. Strips" + commonTitle).c_str(), 500, 0, 500,
+									4000, -20, 20);
 						}
 						hQval_NewGeom[histKey]->Reset();
 
@@ -695,7 +753,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 										if (hExvsGS_NewGeom.find(histKey) == hExvsGS_NewGeom.end())
 										{
 											hExvsGS_NewGeom[histKey] = new TH2F(histKey.c_str(),
-													((string) "Excitation Energy vs. Gammasphere new geom" + commonTitle).c_str(), 4000, -20, 20, 6000, 0, 6000);
+													((string) "Excitation Energy vs. Gammasphere new geom" + commonTitle).c_str(), 4000, -20, 20, 6000, 0,
+													6000);
 										}
 										hExvsGS_NewGeom[histKey]->Reset();
 									}
@@ -787,7 +846,8 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 										if (hExvsGS_NewGeom.find(histKey) == hExvsGS_NewGeom.end())
 										{
 											hExvsGS_NewGeom[histKey] = new TH2F(histKey.c_str(),
-													((string) "Excitation Energy vs. Gammasphere new geom" + commonTitle).c_str(), 4000, -20, 20, 6000, 0, 6000);
+													((string) "Excitation Energy vs. Gammasphere new geom" + commonTitle).c_str(), 4000, -20, 20, 6000, 0,
+													6000);
 										}
 										hExvsGS_NewGeom[histKey]->Reset();
 									}
@@ -845,15 +905,15 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 		if (std::find(ignoreSectorsList.begin(), ignoreSectorsList.end(), gAD.sectorID) != ignoreSectorsList.end()) continue;
 
-		if (!testfn()) continue;
-
 //		if (gAD.gam_energy / 3. < 263 || gAD.gam_energy / 3. > 313) continue;
 
-		//         unsigned int strip = RoundValue ( ( sector_strip-sector ) * 100 );
+//         unsigned int strip = RoundValue ( ( sector_strip-sector ) * 100 );
 
 		gAD.strip = RoundValue((gAD.sector_strip - gAD.sector) * 100);
 
 		gAD.globStripID = ToStripID(gAD.isUpstream, gAD.isBarrel, true, gAD.sector, gAD.strip);
+
+		if (!testfn()) continue;
 
 		for (int belItr = startBELiter; belItr <= maxBELiter; belItr++)
 		{

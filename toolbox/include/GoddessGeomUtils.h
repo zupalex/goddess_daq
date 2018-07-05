@@ -101,6 +101,20 @@ class GoddessGeomUtils: public GoddessAnalysis
 
 		vector<float> lastQQQ5Offsets, lastSX3Offsets;
 
+		// sector ID in this case are sector number + 4 if superX3 + 16 if upstream
+		vector<int> ignoreSectorsList =
+		{	0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 6, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 1, 16 + 4 + 2, 16 + 4 + 3, 16 + 4
+			+ 4, 16 + 4 + 5, 16 + 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 10};
+
+		void SetIgnoreSectors(bool /*turn_off*/)
+		{}
+
+		void SetIgnoreSectors(bool turn_off, string ignoreStr);
+		void SetIgnoreSectors(bool turn_off, char* ignoreStr);
+		void SetIgnoreSectors(bool turn_off, const char* ignoreStr);
+		template<typename T> void SetIgnoreSectors(bool turn_off, T sect);
+		template<typename T, typename... R> void SetIgnoreSectors(bool turn_off, T sect, R... rest);
+
 		void PrintOutStripsPositions ( );
 		void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
 		TVector3 GetFinalHitPosition ( int isUpstream_, int isBarrel_, int sector_, int strip_, float eNear_, float eFar_ );
@@ -141,6 +155,25 @@ class GoddessGeomUtils: public GoddessAnalysis
 
 		ClassDef ( GoddessGeomUtils, 1 )
 	};
+
+template<typename T> void GoddessGeomUtils::SetIgnoreSectors(bool turn_off, T sect)
+{
+	if (turn_off)
+	{
+		if (std::find(ignoreSectorsList.begin(), ignoreSectorsList.end(), (int) sect) == ignoreSectorsList.end()) ignoreSectorsList.push_back((int) sect);
+	}
+	else
+	{
+		auto sItr = std::find(ignoreSectorsList.begin(), ignoreSectorsList.end(), (int) sect);
+		if (sItr != ignoreSectorsList.end()) ignoreSectorsList.erase(sItr);
+	}
+}
+
+template<typename T, typename ... R> void GoddessGeomUtils::SetIgnoreSectors(bool turn_off, T sect, R ... rest)
+{
+	SetIgnoreSectors(turn_off, sect);
+	SetIgnoreSectors(turn_off, rest...);
+}
 
 extern GoddessGeomUtils* gGU;
 
