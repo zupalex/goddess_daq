@@ -52,8 +52,8 @@ struct GeomAdjustData
 		unsigned int strip;
 		int globStripID;
 
-		double gam_energy;
-		int crystal_num;
+		vector<double>* gam_energy = new vector<double>();
+		vector<int>* crystal_num = new vector<int>();
 };
 
 class GoddessGeomUtils: public GoddessAnalysis
@@ -100,6 +100,8 @@ class GoddessGeomUtils: public GoddessAnalysis
 		map<string, TH2F*> hQvalvsStrip_QQQ5_NewGeom;
 
 		vector<float> lastQQQ5Offsets, lastSX3Offsets;
+		
+		TH2F* GammaGamma;
 
 		void PrintOutStripsPositions ( );
 		void FillStripsPositionsArray ( float qqq5OffX, float qqq5OffY, float QQQ5OffZ, float sX3OffX, float sX3OffY, float sX3OffZ );
