@@ -11,12 +11,16 @@ struct NewGeomPars
 		int computeEjectileELoss;
 		int computeBeamELoss;
 
+		float gainOverride;
+
 		void Init()
 		{
 			overrideGeom = false;
 			overrideReac = false;
 			computeBeamELoss = 1;
 			computeEjectileELoss = 1;
+
+			gainOverride = 1.0;
 		}
 };
 
@@ -100,7 +104,7 @@ class GoddessGeomUtils: public GoddessAnalysis
 		map<string, TH2F*> hQvalvsStrip_QQQ5_NewGeom;
 
 		vector<float> lastQQQ5Offsets, lastSX3Offsets;
-		
+
 		TH2F* GammaGamma;
 
 		// sector ID in this case are sector number + 4 if superX3 + 16 if upstream
@@ -154,6 +158,9 @@ class GoddessGeomUtils: public GoddessAnalysis
 		TF1* FindBestGeom ( string fName, string detStr );
 		vector<TH2F*> FindBestGeomV2( string fName, string baseHistName = "", double pmin = 1, double pmax = 32, int step_iy = 200, int iy_min = -1000, int iy_max = 1000, int step_iz = 200, int iz_min = -1000, int iz_max = 1000 );
 		vector<TH2F*> FindBestGeomV3( string fName, string baseHistName = "", double pmin = 1, double pmax = 32, int step_iy = 200, int iy_min = -1000, int iy_max = 1000, int step_iz = 200, int iz_min = -1000, int iz_max = 1000 );
+
+		void GenerateGainAdjustHistograms(string filename, string treeName, long long int nEntries, function<bool()> testfn = []() -> double
+				{	return true;});
 
 		ClassDef ( GoddessGeomUtils, 1 )
 	};
