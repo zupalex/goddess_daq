@@ -306,8 +306,8 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile ( string filesname, string tre
 //     double angle;
     TVector3 pos;
 
-    vector<double> gam_energy;
-    vector<int> crystal_num;
+    vector<double> gam_energy ( {0,0} );
+    vector<int> crystal_num ( {0,0} );
 
     outtree->Branch ( "isBarrel", &isBarrel );
     outtree->Branch ( "isUpstream", &isUpstream );
@@ -344,29 +344,28 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile ( string filesname, string tre
 
         chain->GetEntry ( ev );
 
-        gam_energy.clear();
-        crystal_num.clear();
+        gam_energy.at ( 0 ) = 0;
+        crystal_num.at ( 0 ) = 0;
+        gam_energy.at ( 1 ) = 0;
+        crystal_num.at ( 1 ) = 0;
 
         if ( vectGamData->size() > 0 && vectGamData->size() <= 2 )
         {
-            gamData = &vectGamData->at ( 0 );
-
-            if ( gamData->type == 1 )
+            for ( unsigned sg = 0; sg < vectGamData->size(); sg++ )
             {
-                gam_energy.push_back ( gamData->en );
-                crystal_num.push_back ( gamData->num );
-            }
-            if ( vectGamData->size() == 2 )
-            {
-                gamData += 1;
+                gamData = &vectGamData->at ( sg );
 
                 if ( gamData->type == 1 )
                 {
-                    gam_energy.push_back ( gamData->en );
-                    crystal_num.push_back ( gamData->num );
+                    gam_energy[sg] = gamData->en/3;
+                    crystal_num[sg] = gamData->num;
                 }
             }
-
+            if ( gam_energy[0]>gam_energy[1] )
+            {
+                swap ( gam_energy[0],gam_energy[1] );
+                swap ( crystal_num[0],crystal_num[1] );
+            }
         }
 
         if ( vectSiData->size() > 0 )
@@ -384,8 +383,12 @@ void GoddessGeomUtils::GenerateGeomAdjustRootfile ( string filesname, string tre
                 pos = siData->PosE1();
 //                 angle = siData.Angle ( 1 );
 
-//                 if ( energy > 0 && angle > 0 ) outtree->Fill();
-                if ( energy > 0 && pos.Mag() > 0 ) outtree->Fill();
+// //                 if ( energy > 0 && angle > 0 ) outtree->Fill();
+                if ( energy > 0 && pos.Mag() > 0 )
+                {
+                    outtree->Fill();
+                    //cout<<outtree<<endl;
+                }
             }
         }
     }
