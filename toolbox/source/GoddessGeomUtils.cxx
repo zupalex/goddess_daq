@@ -426,7 +426,7 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal ( void* args )
 
                 float angle = adjustPos.Angle ( gAD.beamDir );
 
-                double correctedEnergy = gAD.initialEnergy;
+                double correctedEnergy = gAD.initialEnergy*nGP.gainOverride;
 
                 if ( nGP.computeEjectileELoss > 0 )
                 {
@@ -1019,6 +1019,40 @@ void GoddessGeomUtils::GetQValWithNewGeometry ( string filename, string treeName
     }
 
     GetQValWithNewGeometry ( filename, treeName, nEntries, qqq5Offs, sx3Offs, targetOffs, testfn );
+}
+
+void GoddessGeomUtils::GenerateGainAdjustHistograms(string filename, string treeName, long long int nEntries, function<bool()> testfn)
+{
+	float coeff = 0.9;
+
+	TFile* outf = new TFile("test_gain.root", "recreate");
+
+	while(coeff < 1.11)
+	{
+		nGP.gainOverride = coeff;
+
+		GetQValWithNewGeometry(filename, treeName, nEntries, {TVector3(0,0,0)}, {TVector3(0,0,0)}, {TVector3(0,0,0)}, testfn);
+
+		TH2F* hExVsStrips = (TH2F*) gDirectory->FindObjectAny("Ex_vs_Strips_QQQ5_mod_0_0_0_100_SX3_mod_0_0_0_100_target_off_0_0_0_beamEk_1309");
+
+		TDirectory cdir;
+		cdir.cd(gDirectory->GetPath());
+
+		outf->cd();
+
+		for(unsigned int i = 0; i < 32; i++)
+		{
+			TH1D* py = hExVsStrips->ProjectionY(((string)"py_"+to_string(i)).c_str(), i, i);
+			py->Write();
+		}
+
+		cdir.cd();
+		cdir.Clear();
+
+		coeff += 0.1;
+	}
+
+	outf->Close();
 }
 
 std::pair<double, double> GoddessGeomUtils::FindPeakPos ( TH1* input, int nPeaks, double resolution, double sigma, double threshold )
