@@ -9,7 +9,7 @@ string pathToGDAQ;
 string GetLocalTimeAndDate(bool doPrint)
 {
 	time_t t = time(nullptr);
-	struct tm* localt = localtime(&t);
+	tm* localt = localtime(&t);
 
 	char* timeAndDate = new char[256];
 
@@ -1738,13 +1738,9 @@ float findAzimuthFromCartesian(float xx, float yy)
 
 int GetASeed(unsigned int *seed)
 {
-	/* delarations */
-
-	struct timeval tp;
+	timeval tp;
 	int i;
 	unsigned short int i1;
-
-	/* make the random seed */
 
 	for (i = 0; i < 31; i++)
 	{
@@ -1752,8 +1748,7 @@ int GetASeed(unsigned int *seed)
 		i1 = (unsigned int) tp.tv_usec;
 		i1 &= 0x0001;
 		*seed += i1 << i;
-	};
-	/* printf("GetASeed:: %i\n", *seed); */
+	}
 
 	return 0;
 }
@@ -2066,14 +2061,14 @@ void DecodeGEBBinary(string fname, unsigned long int nevents, unsigned long int 
 		if (i >= fstevent)
 		{
 			int boardID, channelNumber;
-			unsigned long int preRise, postRise1, postRise2;
+			unsigned int preRise, postRise1, postRise2;
 
 			boardID = ReadPayload<int>(0, 4, 15, 0, false);
 			channelNumber = ReadPayload<int>(0, 0, 3, 0, false);
 
-			postRise1 = ReadPayload<unsigned long int>(7, 24, 31, 0, false);
-			postRise2 = ReadPayload<unsigned long int>(8, 0, 15, 8, false);
-			preRise = ReadPayload<unsigned long int>(7, 0, 23, 0, false);
+			postRise1 = ReadPayload<unsigned int>(7, 24, 31, 0, false);
+			postRise2 = ReadPayload<unsigned int>(8, 0, 15, 8, false);
+			preRise = ReadPayload<unsigned int>(7, 0, 23, 0, false);
 
 			// 	    cout << "Done reading the payload...\n";
 

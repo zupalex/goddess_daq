@@ -7,8 +7,8 @@ map<string, string> stoppingPowerTable;
 
 map<string, std::pair<float, float>> configCalPars;
 
-GoddessCalib::GoddessCalib()
-		: GoddessAnalysis()
+GoddessCalib::GoddessCalib() :
+		GoddessAnalysis()
 {
 	calChain = nullptr;
 
@@ -107,7 +107,8 @@ string GoddessCalib::GetAutoOutFileName(string baseName)
 					std::size_t begRunName = treeFName.find("run");
 					std::size_t endRunName = treeFName.find("_", begRunName);
 
-					if (begRunName != string::npos && endRunName != string::npos) rootFileName += "_" + treeFName.substr(begRunName, endRunName - begRunName) + ".root";
+					if (begRunName != string::npos && endRunName != string::npos) rootFileName += "_" + treeFName.substr(begRunName, endRunName - begRunName)
+							+ ".root";
 					else rootFileName += "_" + treeFName;
 
 					break;
@@ -433,8 +434,8 @@ bool GoddessCalib::DumpFileToResCalMap(string fileName)
 
 			InitializeCalMapKey(detID, stripNbr);
 
-			cout << "Read the following values for strip #" << stripNbr << ": " << xinter << " / " << yinter << " / " << slope_gm << " / " << slope_encal << " / " << pos_left_edge
-					<< " / " << pos_right_edge << endl;
+			cout << "Read the following values for strip #" << stripNbr << ": " << xinter << " / " << yinter << " / " << slope_gm << " / " << slope_encal
+					<< " / " << pos_left_edge << " / " << pos_right_edge << endl;
 
 			vector<double>* readCal = &resStripsCalMap[detID][stripNbr];
 
@@ -445,8 +446,8 @@ bool GoddessCalib::DumpFileToResCalMap(string fileName)
 			if (readCal->at(4) == -100) readCal->at(4) = pos_left_edge == -100 ? readCal->at(4) : pos_left_edge;
 			if (readCal->at(5) == -100) readCal->at(5) = pos_right_edge == -100 ? readCal->at(5) : pos_right_edge;
 
-			cout << "New values: " << readCal->at(0) << " / " << readCal->at(1) << " / " << readCal->at(2) << " / " << readCal->at(3) << " / " << readCal->at(4) << " / "
-					<< readCal->at(5) << endl;
+			cout << "New values: " << readCal->at(0) << " / " << readCal->at(1) << " / " << readCal->at(2) << " / " << readCal->at(3) << " / " << readCal->at(4)
+					<< " / " << readCal->at(5) << endl;
 		}
 	}
 
@@ -470,8 +471,8 @@ void GoddessCalib::WriteResCalResults(string fileName, string mode)
 
 		for (auto stripItr = itr->second.begin(); stripItr != itr->second.end(); stripItr++)
 		{
-			outStream << "Res. Strip #" << stripItr->first << "   " << stripItr->second[0] << "   " << stripItr->second[1] << "   " << stripItr->second[2] << "   "
-					<< stripItr->second[3];
+			outStream << "Res. Strip #" << stripItr->first << "   " << stripItr->second[0] << "   " << stripItr->second[1] << "   " << stripItr->second[2]
+					<< "   " << stripItr->second[3];
 			outStream << "   " << stripItr->second[4] << "   " << stripItr->second[5] << "\n";
 		}
 	}
@@ -772,7 +773,8 @@ TH2F* GoddessCalib::PlotSX3ResStripCalGraph(TChain* chain, string varToPlot, uns
 
 	cout << "Plotting sector #" << sector << " strip #" << strip << "..." << endl;
 
-	chain->Draw(Form("%s", varToPlot.c_str()), Form("%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip), "colz");
+	chain->Draw(Form("%s", varToPlot.c_str()),
+			Form("%s && si.sector == %d && si.E1.strip.p@.size() > 0 && si.E1.strip.p == %d", conditions.c_str(), sector, strip), "colz");
 
 	int binnum;
 	int starthere;
@@ -958,8 +960,8 @@ TGraph* GoddessCalib::DrawPosCalGraph(TChain* chain, bool isUpstream_, int nentr
 	return newGraph;
 }
 
-TH2F* GoddessCalib::DrawPosCalHist(TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY, string drawOpts,
-		unsigned short sector_, unsigned short strip_)
+TH2F* GoddessCalib::DrawPosCalHist(TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
+		string drawOpts, unsigned short sector_, unsigned short strip_)
 {
 	string hname = Form("hPosCal_sector%s%d_strip%d", isUpstream_ ? "U" : "D", sector_, strip_);
 
@@ -974,14 +976,14 @@ TH2F* GoddessCalib::DrawPosCalHist(TChain* chain, bool isUpstream_, int nentries
 	return resStripsPosCalGraphsMap[hKey.c_str()];
 }
 
-std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY, int binMinY, int binMaxY,
-		string drawOpts, unsigned short sector_, string configFileName)
+std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool isUpstream_, int nentries, int nbinsX, int binMinX, int binMaxX, int nbinsY,
+		int binMinY, int binMaxY, string drawOpts, unsigned short sector_, string configFileName)
 {
 	return DrawPosCalHistBatch(chain, isUpstream_, nentries, nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY, drawOpts, sector_, configFileName);
 }
 
-std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool isUpstream_, int nentries, int nbinsX, float binMinX, float binMaxX, int nbinsY, float binMinY,
-		float binMaxY, string drawOpts, vector<int> sectorsList, string configFileName)
+std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool isUpstream_, int nentries, int nbinsX, float binMinX, float binMaxX, int nbinsY,
+		float binMinY, float binMaxY, string drawOpts, vector<int> sectorsList, string configFileName)
 {
 	drawOpts = ""; // to avoid useless warning about that variable not being used for the moment...
 
@@ -993,7 +995,8 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool is
 		{
 			string hname = Form("%s%d_%d", isUpstreamID.c_str(), sectorsList[i], j);
 
-			cout << "Initializing graph for sector " << isUpstreamID << sectorsList[i] << " strip " << j << " and storing it in the map at key \"" << hname << "\"" << endl;
+			cout << "Initializing graph for sector " << isUpstreamID << sectorsList[i] << " strip " << j << " and storing it in the map at key \"" << hname
+					<< "\"" << endl;
 
 			resStripsPosCalGraphsMap[hname.c_str()] = new TH2F(hname.c_str(), hname.c_str(), nbinsX, binMinX, binMaxX, nbinsY, binMinY, binMaxY);
 		}
@@ -1060,6 +1063,8 @@ std::map<string, TH2F*> GoddessCalib::DrawPosCalHistBatch(TChain* chain, bool is
 
 					for (unsigned short k = 0; k < siData.E1.en.p.size(); k++)
 					{
+						if (siData.E1.strip.n[k] != -1) continue;
+
 						int strip = siData.E1.strip.p[k];
 
 						float offNear, slopeNear, offFar, slopeFar, enCalPar;
@@ -1315,10 +1320,11 @@ TF1* GoddessCalib::FitEdges(TH2F* input, int projCenterBin, int projWidth, bool 
 		startBinContent = projX->GetBinContent(startBin);
 	}
 
-	if (!quietMode) cout << "Found the " << (fitRight ? "right" : "left") << " shoulder at bin #" << binShoulder << " (value = " << projX->GetBinCenter(binShoulder) << ")" << endl;
+	if (!quietMode) cout << "Found the " << (fitRight ? "right" : "left") << " shoulder at bin #" << binShoulder << " (value = "
+			<< projX->GetBinCenter(binShoulder) << ")" << endl;
 
-	TF1 *fitfunc = new TF1(Form("myfit_left_%s", input->GetName()), (fitRight ? flatTopGaussRight : flatTopGaussLeft), projX->GetBinCenter(binShoulder - 2 * windowWidth),
-			projX->GetBinCenter(binShoulder + windowWidth), 4);
+	TF1 *fitfunc = new TF1(Form("myfit_left_%s", input->GetName()), (fitRight ? flatTopGaussRight : flatTopGaussLeft),
+			projX->GetBinCenter(binShoulder - 2 * windowWidth), projX->GetBinCenter(binShoulder + windowWidth), 4);
 
 	if (binShoulder != -1)
 	{
@@ -1331,7 +1337,8 @@ TF1* GoddessCalib::FitEdges(TH2F* input, int projCenterBin, int projWidth, bool 
 		projX->Fit(fitfunc, "QRMN");
 
 		//         float edge = fitfunc->GetParameter ( 1 ) - TMath::Sqrt ( -2*pow ( fitfunc->GetParameter ( 2 ),2 ) * TMath::Log ( 0.7 ) );
-		float edge = fitfunc->GetX(0.7 * fitfunc->GetParameter(0), (fitRight ? fitfunc->GetParameter(1) : fitfunc->GetParameter(1) - 5 * fitfunc->GetParameter(2)),
+		float edge = fitfunc->GetX(0.7 * fitfunc->GetParameter(0),
+				(fitRight ? fitfunc->GetParameter(1) : fitfunc->GetParameter(1) - 5 * fitfunc->GetParameter(2)),
 				(fitRight ? fitfunc->GetParameter(1) + 5 * fitfunc->GetParameter(2) : fitfunc->GetParameter(1)));
 
 		if (!quietMode) cout << "Found the " << (fitRight ? "right" : "left") << " strip edge at " << edge << endl;
@@ -1495,7 +1502,8 @@ vector<float> GoddessCalib::GetOverlapPoints(TH2F* input, float xMin, float xMax
 	{	xright, yright, xleft, yleft, eNearMin, ( eNearMin == eNear1 ? eFar1 : eFar2 ), eNearMax, ( eNearMax == eNear1 ? eFar1 : eFar2 )};
 }
 
-std::tuple<TGraph*, vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition(TH2F* input, int nPoints, float startPoint, float endPoint, double threshold, double peakPos)
+std::tuple<TGraph*, vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPosition(TH2F* input, int nPoints, float startPoint, float endPoint, double threshold,
+		double peakPos)
 {
 	if (input->GetEntries() == 0) return std::make_tuple<TGraph*, vector<vector<float>>>(nullptr, { });
 
@@ -1567,8 +1575,8 @@ std::tuple<TGraph*, vector<vector<float>>> GoddessCalib::GetEnergyShiftVsPositio
 		}
 	}
 
-	if (std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin()) && std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax())) return std::make_tuple<TGraph*,
-			vector<vector<float>>>(nullptr, { });
+	if (std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmin()) && std::isnan(enShiftVsPosGraphs[graphName]->GetXaxis()->GetXmax())) return std::make_tuple<
+			TGraph*, vector<vector<float>>>(nullptr, { });
 
 	return std::make_tuple(enShiftVsPosGraphs[graphName], overlapCoords);
 }
@@ -1684,7 +1692,8 @@ void GoddessCalib::GetStripsEdges(int projCenterBin, int projWidth, double peakP
 	return;
 }
 
-void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, int shiftGrNPoints, bool drawResults)
+void GoddessCalib::GetStripsEdges(TFile* input, string sectorsList, double projWinMin, double projWinMax, double peakPos, double threshold, int shiftGrNPoints,
+		bool drawResults)
 {
 	vector<int> sectors = DecodeNumberString(sectorsList);
 
@@ -1894,8 +1903,8 @@ float GetRatioGSvsFirstEx(string inputName, float minAngle, float maxAngle)
 	int gsMinIndex = std::distance(gsMap.begin(), gsMinIndexItr);
 	int gsMaxIndex = std::distance(gsMap.begin(), gsMaxIndexItr);
 
-	cout << "Integrating the Ground State TGraph between index " << gsMinIndex << " ( " << gsMinIndexItr->first << " ) and " << gsMaxIndex << " ( " << gsMaxIndexItr->first
-			<< " ) ...\n";
+	cout << "Integrating the Ground State TGraph between index " << gsMinIndex << " ( " << gsMinIndexItr->first << " ) and " << gsMaxIndex << " ( "
+			<< gsMaxIndexItr->first << " ) ...\n";
 
 	double gsIntegral = gsGraph->Integral(gsMinIndex, gsMaxIndex);
 
@@ -1908,8 +1917,8 @@ float GetRatioGSvsFirstEx(string inputName, float minAngle, float maxAngle)
 	int fstExMinIndex = std::distance(firstExMap.begin(), fstExMinIndexItr);
 	int fstExMaxIndex = std::distance(firstExMap.begin(), fstExMaxIndexItr);
 
-	cout << "Integrating the First Excited State TGraph between index " << fstExMinIndex << " ( " << fstExMinIndexItr->first << " ) and " << fstExMaxIndex << " ( "
-			<< fstExMaxIndexItr->first << " ) ...\n";
+	cout << "Integrating the First Excited State TGraph between index " << fstExMinIndex << " ( " << fstExMinIndexItr->first << " ) and " << fstExMaxIndex
+			<< " ( " << fstExMaxIndexItr->first << " ) ...\n";
 
 	double fstExIntegral = fstExGraph->Integral(fstExMinIndex, fstExMaxIndex);
 
@@ -1918,7 +1927,8 @@ float GetRatioGSvsFirstEx(string inputName, float minAngle, float maxAngle)
 	return ratio;
 }
 
-void GoddessCalib::GenerateGainAdjustfile(string filesname, string treename, long long int nEntries, string outfname, double minAdjust, double maxAdjust, double stepWidth)
+void GoddessCalib::GenerateGainAdjustfile(string filesname, string treename, long long int nEntries, string outfname, double minAdjust, double maxAdjust,
+		double stepWidth)
 {
 	std::vector<string> rootfiles = DecodeItemsToTreat(filesname, "system", true, true);
 
@@ -1996,8 +2006,8 @@ void GoddessCalib::GenerateGainAdjustfile(string filesname, string treename, lon
 
 	double beamEffThickness = GetEffectiveThickness(beamDir.Angle(targetLadderDir) - TMath::PiOver2(), reacInfo->targetThickness);
 
-	reacInfo->beamEk = TryGetRemainingEnergy(pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001, reacInfo->targetType,
-			reacInfo->targetDensity, "./", "Interpolation");
+	reacInfo->beamEk = TryGetRemainingEnergy(pathToGDAQ + "/share/mass_db.dat", reacInfo->beamA, reacInfo->beamZ, reacInfo->beamEk, beamEffThickness, 0.001,
+			reacInfo->targetType, reacInfo->targetDensity, "./", "Interpolation");
 
 	cout << "Beam Energy after computing energy loss: " << reacInfo->beamEk << "MeV in effective thickness: " << beamEffThickness << " mg/cm2\n";
 
@@ -2048,8 +2058,8 @@ void GoddessCalib::GenerateGainAdjustfile(string filesname, string treename, lon
 				if (siData.isUpstream && !siData.isBarrel && sector >= 0 && sector <= 3 && strip >= 0 && strip <= 31)
 				{
 					double effThickness = GetEffectiveThickness(siData.PosE1().Angle(targetLadderDir) - TMath::PiOver2(), reacInfo->targetThickness);
-					double estELoss = ComputeEnergyLoss(energyLossData.first, energyLossData.second, energy / reacInfo->ejecA, reacInfo->ejecA, 0, effThickness, 0.01,
-							"Interpolation");
+					double estELoss = ComputeEnergyLoss(energyLossData.first, energyLossData.second, energy / reacInfo->ejecA, reacInfo->ejecA, 0, effThickness,
+							0.01, "Interpolation");
 
 					//             cout << "Input energy : " << initialEnergy << " / Estimated energy loss : " << estELoss << " MeV in effective thickness: " << effThickness <<endl;
 
@@ -2165,31 +2175,33 @@ TF1* FitQVal(TH1* hist, vector<string> mean, float fwhm_min, float fwhm_max, flo
 			if (newMean < minMean) minMean = newMean;
 			else if (newMean > maxMean) maxMean = newMean;
 
-			if (dependantFrom[i] == -1) funcFormula += (string) Form(" + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [2],2 ) )", 5 + (i - 1) * 2, 6 + (i - 1) * 2);
-			else funcFormula += (string) Form(" + [%d]*[%d] * TMath::Exp ( -pow ( x - ([%d]+[%d]),2 ) / pow ( 2 * [2],2 ) )", 3 + dependantFrom[i] * 2, 5 + (i - 1) * 2,
-					4 + dependantFrom[i] * 2, 6 + (i - 1) * 2);
+			if (dependantFrom[i] == -1) funcFormula += (string) Form(" + [%d] * TMath::Exp ( -pow ( x - [%d],2 ) / pow ( 2 * [2],2 ) )", 5 + (i - 1) * 2,
+					6 + (i - 1) * 2);
+			else funcFormula += (string) Form(" + [%d]*[%d] * TMath::Exp ( -pow ( x - ([%d]+[%d]),2 ) / pow ( 2 * [2],2 ) )", 3 + dependantFrom[i] * 2,
+					5 + (i - 1) * 2, 4 + dependantFrom[i] * 2, 6 + (i - 1) * 2);
 		}
 	}
 	else return nullptr;
 
-	auto lambdaFitFunc = [=] ( double* x, double* par ) -> double
-	{
-		double res = 0;
+	auto lambdaFitFunc =
+			[=] ( double* x, double* par ) -> double
+			{
+				double res = 0;
 
-		if ( mode == "linear" ) res += par[0] + par[1]*x[0];
+				if ( mode == "linear" ) res += par[0] + par[1]*x[0];
 
-		int parnum = 3;
+				int parnum = 3;
 
-		for ( unsigned int i = 0; i < meansF.size(); i++ )
-		{
-			if ( dependantFrom[i] == -1 ) res += par[parnum] * TMath::Exp ( -pow ( x[0] - par[parnum+1],2 ) / pow ( 2 * par[2],2 ) );
-			else res += par[dependantFrom[i]*2+3]*par[parnum] * TMath::Exp ( -pow ( x[0] - ( par[dependantFrom[i]*2+4]+par[parnum+1] ),2 ) / pow ( 2 * par[2],2 ) );
+				for ( unsigned int i = 0; i < meansF.size(); i++ )
+				{
+					if ( dependantFrom[i] == -1 ) res += par[parnum] * TMath::Exp ( -pow ( x[0] - par[parnum+1],2 ) / pow ( 2 * par[2],2 ) );
+					else res += par[dependantFrom[i]*2+3]*par[parnum] * TMath::Exp ( -pow ( x[0] - ( par[dependantFrom[i]*2+4]+par[parnum+1] ),2 ) / pow ( 2 * par[2],2 ) );
 
-			parnum += 2;
-		}
+					parnum += 2;
+				}
 
-		return res;
-	};
+				return res;
+			};
 
 	int npars = 3 + 2 * meansF.size();
 
@@ -2302,7 +2314,8 @@ TF1* FitQVal(TH1* hist, vector<string> mean, float fwhm_min, float fwhm_max, flo
 			else
 			{
 				cout << fitFunc->GetParameter(4 + dependantFrom[i] * i) + fitFunc->GetParameter(4 + 2 * i);
-				cout << " +/- " << fitFunc->GetParError(4 + dependantFrom[i] * i) + fitFunc->GetParError(4 + 2 * i) << " MeV ( Depends from Peak #" << dependantFrom[i] << " : ";
+				cout << " +/- " << fitFunc->GetParError(4 + dependantFrom[i] * i) + fitFunc->GetParError(4 + 2 * i) << " MeV ( Depends from Peak #"
+						<< dependantFrom[i] << " : ";
 				cout << " energy difference = " << fabs(fitFunc->GetParameter(4 + 2 * i)) << " +/- " << fitFunc->GetParError(4 + 2 * i);
 				cout << " / Ratio = " << fitFunc->GetParameter(3 + 2 * i) << " )\n";
 			}
@@ -2318,7 +2331,8 @@ TF1* FitQValGS(TH1* hist, vector<float> mean, float fwhm, float peakRatio, float
 {
 	if (mean.size() == 0) return nullptr;
 
-	string funcFormula = "[0] + [1] * x + [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [3],2 ) ) + [4]*[2] * TMath::Exp ( -pow ( x - ([5]-0.288),2 ) / pow ( 2 * [3],2 ) )";
+	string funcFormula =
+			"[0] + [1] * x + [4] * TMath::Exp ( -pow ( x - [5],2 ) / pow ( 2 * [3],2 ) ) + [4]*[2] * TMath::Exp ( -pow ( x - ([5]-0.288),2 ) / pow ( 2 * [3],2 ) )";
 
 	float minMean = mean[0], maxMean = mean[0];
 
@@ -2610,7 +2624,8 @@ void GoddessCalib::EnCalibHelp()
 	cout << "WriteResCalResults(string \"result file name\", string option = \"recreate\")" << endl;
 	cout << endl;
 	cout << "To update a config file with the results of the calibrations made during the last session, call" << endl;
-	cout << "UpdateParamsInConf(string \"config file name\", string detType = \"superX3\", bool invertContactMidDet = true, string mode = \"protected\")" << endl;
+	cout << "UpdateParamsInConf(string \"config file name\", string detType = \"superX3\", bool invertContactMidDet = true, string mode = \"protected\")"
+			<< endl;
 	cout << "* invertContactMidDet should be set to \"true\" for SuperX3 because of the way the contacts numbers are incremented" << endl;
 	cout << "* the \"protected\" mode will prevent you to overwrite your config file and generate a new config file from the input..." << endl;
 	cout << "  switch it to \"overwrite\" if you really know what you're doing" << endl;
