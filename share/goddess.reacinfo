@@ -1,0 +1,70 @@
+# Runs range HAVE TO be formated the following way, respecting spaces, etc...
+#    [begin - end]
+# or [run1 , run2 , run3]
+# or [begin1 - end1 , other1 , other2 , begin2 - end2 , other3]
+# or any other combination of the above
+#
+# PLEASE NOTE: the [default] configuration HAS TO be at the end
+
+[41 - 54, 62 - 74]
+Beam = 134Xe, Energy = 1337.0
+Target = d, Type = C2D4, Thickness = 0.763, Density = 1063
+Ejectile = p
+Reaction Q-Value = 4.14
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[55 - 61 , 88 , 89]
+Beam = 134Xe, Energy = 1337.0
+Target = d, Type = C2D4, Thickness = 0.211, Density = 1063
+Ejectile = p
+Reaction Q-Value = 4.14
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[75 - 83 , 87]
+Beam = 134Xe, Energy = 1337.0
+Target = d, Type = C2D4, Thickness = 0.758, Density = 1063
+Ejectile = p
+Reaction Q-Value = 4.14
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[84 , 85 , 90]
+Beam = 134Xe, Energy = 1337.0
+Target = d, Type = C2D4, Thickness = 2.2, Density = 1063
+Ejectile = p
+Reaction Q-Value = 4.14
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[86 , 91 - 146]
+Beam = 134Xe, Energy = 1337.0
+Target = d, Type = C2D4, Thickness = 0.0, Density = 1063
+Ejectile = p
+Reaction Q-Value = 4.14
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[200 - 352]
+Beam = 95Mo, Energy = 760.0
+Target = d, Type = C2D4, Thickness = 0.170, Density = 1063
+Ejectile = p
+Reaction Q-Value = 6.93
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[default]
+Beam = 134Xe, Energy = 1337.0
+Target = d, Type = C2D4, Thickness = 0.763, Density = 1063
+Ejectile = p
+Reaction Q-Value = 4.14
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]

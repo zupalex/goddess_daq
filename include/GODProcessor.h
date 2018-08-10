@@ -15,34 +15,37 @@
 
 class GODProcessor
 {
-private:
+	private:
 
-public:
-    GODProcessor ( int* tlkup_, int* tid_, int* ng_, PARS* pars_, GoddessConfig* gConf_, unsigned int* numDGOD_, unsigned int* numAGOD_, unsigned long long* lastTS_ );
-    ~GODProcessor() {}
+	public:
+		GODProcessor(int* tlkup_, int* tid_, int* ng_, PARS* pars_, GoddessConfig* gConf_, unsigned int* numDGOD_, unsigned int* numAGOD_,
+				unsigned long long* lastTS_);
+		~GODProcessor()
+		{
+		}
 
-    PARS* pars;
-    GoddessConfig* gConf;
+		PARS* pars;
+		GoddessConfig* gConf;
 
-    GoddessData* godData;
+		GoddessData* godData;
 
-    int* tlkup;
-    int* tid;
-    int* ng;
-    unsigned int* numDGOD;
-    unsigned int* numAGOD;
-    unsigned long long* lastTS;
+		int* tlkup;
+		int* tid;
+		int* ng;
+		unsigned int* numDGOD;
+		unsigned int* numAGOD;
+		unsigned long long* lastTS;
 
-    int SupDGOD();
-    int DGODEvDecompose ( unsigned int* ev, int len, DFMAEVENT* thedfmaEvt );
-    int BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt );
+		int SupDGOD();
+		int DGODEvDecompose(unsigned int* ev, int len, DFMAEVENT* thedfmaEvt);
+		int BinDGOD(GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt);
 
-    void AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theagodEvt );
-    void SupAGOD();
-    int BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt );
+		void AGODEvDecompose(unsigned int* ev, int len, AGODEVENT* theagodEvt);
+		void SupAGOD();
+		int BinAGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt);
 
-    void SupGOD();
-    int BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt );
+		void SupGOD();
+		int BinGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt);
 };
 
 #endif

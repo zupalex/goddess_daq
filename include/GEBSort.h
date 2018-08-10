@@ -116,130 +116,138 @@
 
 using std::string;
 
-class GoddessData; // forward declaration
+class GoddessData;
+// forward declaration
 
 class PARS
 {
-private:
+	private:
 
-public:
-    PARS() {}
-    virtual ~PARS() {}
+	public:
+		PARS()
+		{
+		}
+		virtual ~PARS()
+		{
+		}
 
-    char ConfigFile[STRLEN];
-    char GeomFile[STRLEN];
+		char ConfigFile[STRLEN];
+		char GeomFile[STRLEN];
 
-    std::string sx3EnAdjustFile;
-    std::string qqq5EnAdjustFile;
+		std::string sx3EnAdjustFile;
+		std::string qqq5EnAdjustFile;
 
-    short noCalib;
-    bool noMapping;
-    bool noHists;
-    bool noDoppler;
-    unsigned short ignoreThresholds;
-    unsigned short siDetailLvl;
+		unsigned int runNumber;
+		short noCalib;
+		bool noMapping;
+		bool noHists;
+		bool noDoppler;
+		unsigned short ignoreThresholds;
+		unsigned short siDetailLvl;
 
-    std::string userFilter;
-    std::string triggerMode;
-    std::ofstream cleanedMerged;
+		std::string userFilter;
+		std::string triggerMode;
+		std::ofstream cleanedMerged;
 
-    char ROOTFile[STRLEN];
+		char ROOTFile[STRLEN];
 
-    unsigned long long int nEvents;
+		unsigned long long int nEvents;
 
-    char ROOTFileOption[STRLEN];
-    char GTSortInputFile[STRLEN];
-    int UseShareMemFile;
-    unsigned int StartMapAddress;
-    char ShareMemFile[STRLEN];
-    int InputSrc;
-    int HaveRootFileName;
-    int WeWereSignalled;
-    int UseRootFile, SizeShareMemFile;
-    int UpdateRootFile;
-    char spname[STRLEN];
-    unsigned int firstEvent;
-    int GSudpPort;
-    unsigned int NumToPrint;
-    int DumpEvery;
-    TFile* f1;
-    TTree* mainTree;
-    TDirectory* histDir;
-    TDirectory* treeDir;
-    TList* wlist;
-    unsigned long long int curTS;
-    long long int dTS;
-    long long int nbytes;
-    unsigned int CurEvNo;
-    char pHost[16];
-    int grouping;
-    int type;
-    int enabled[MAXDETNO + 1];
-    float CCcal_gain[MAXDETNO + 1];
-    float CCcal_offset[MAXDETNO + 1];
-    float SEGcal_gain[MAXDETPOS + 1][MAXCRYSTALNO + 1];
-    float SEGcal_offset[MAXDETPOS + 1][MAXCRYSTALNO + 1];
-    float timeout;
-    float crmat[MAXDETPOS + 1][MAXCRYSTALNO + 1][4][4];
-    float detpolang[MAXDETPOS + 1];
-    float beta;
-    int GGMAX;
-    int modwrite;
-    unsigned int tsnumwrites;
-    float fomlo[MAXNOSEG];
-    float fomhi[MAXNOSEG];
-    int ndetlimlo;
-    int ndetlimhi;
-    float beamdir[3];
-    int nocrystaltoworldrot;
-    int multlo;
-    int multhi;
-    int requiretracked;
-    float  modCCang[MAXMODNO + 1][4];
-    float  modCCdopfac[MAXDETNO];
-    int AGATA_data;
-    double TrX[NUMAGATAPOS], TrY[NUMAGATAPOS], TrZ[NUMAGATAPOS];
-    double rotxx[NUMAGATAPOS], rotxy[NUMAGATAPOS], rotxz[NUMAGATAPOS];
-    double rotyx[NUMAGATAPOS], rotyy[NUMAGATAPOS], rotyz[NUMAGATAPOS];
-    double rotzx[NUMAGATAPOS], rotzy[NUMAGATAPOS], rotzz[NUMAGATAPOS];
-    int numgggates;
-    int gg_gate_pos[100];
-    int gg_gate_width[100];
-    float target_x, target_y, target_z;
-    float maxsnglintrE;
-    float maxsnglintrEFOM;
-    char AGATA_data_fn[512];
+		char ROOTFileOption[STRLEN];
+		char GTSortInputFile[STRLEN];
+		int UseShareMemFile;
+		unsigned int StartMapAddress;
+		char ShareMemFile[STRLEN];
+		int InputSrc;
+		int HaveRootFileName;
+		int WeWereSignalled;
+		int UseRootFile, SizeShareMemFile;
+		int UpdateRootFile;
+		char spname[STRLEN];
+		unsigned int firstEvent;
+		int GSudpPort;
+		unsigned int NumToPrint;
+		int DumpEvery;
+		TFile* f1;
+		TTree* mainTree;
+		TDirectory* histDir;
+		TDirectory* treeDir;
+		TList* wlist;
+		unsigned long long int curTS;
+		long long int dTS;
+		long long int nbytes;
+		unsigned int CurEvNo;
+		char pHost[16];
+		int grouping;
+		int type;
+		int enabled[MAXDETNO + 1];
+		float CCcal_gain[MAXDETNO + 1];
+		float CCcal_offset[MAXDETNO + 1];
+		float SEGcal_gain[MAXDETPOS + 1][MAXCRYSTALNO + 1];
+		float SEGcal_offset[MAXDETPOS + 1][MAXCRYSTALNO + 1];
+		float timeout;
+		float crmat[MAXDETPOS + 1][MAXCRYSTALNO + 1][4][4];
+		float detpolang[MAXDETPOS + 1];
+		float beta;
+		int GGMAX;
+		int modwrite;
+		unsigned int tsnumwrites;
+		float fomlo[MAXNOSEG];
+		float fomhi[MAXNOSEG];
+		int ndetlimlo;
+		int ndetlimhi;
+		float beamdir[3];
+		int nocrystaltoworldrot;
+		int multlo;
+		int multhi;
+		int requiretracked;
+		float modCCang[MAXMODNO + 1][4];
+		float modCCdopfac[MAXDETNO];
+		int AGATA_data;
+		double TrX[NUMAGATAPOS], TrY[NUMAGATAPOS], TrZ[NUMAGATAPOS];
+		double rotxx[NUMAGATAPOS], rotxy[NUMAGATAPOS], rotxz[NUMAGATAPOS];
+		double rotyx[NUMAGATAPOS], rotyy[NUMAGATAPOS], rotyz[NUMAGATAPOS];
+		double rotzx[NUMAGATAPOS], rotzy[NUMAGATAPOS], rotzz[NUMAGATAPOS];
+		int numgggates;
+		int gg_gate_pos[100];
+		int gg_gate_width[100];
+		float target_x, target_y, target_z;
+		float maxsnglintrE;
+		float maxsnglintrEFOM;
+		char AGATA_data_fn[512];
 };
 
 class GEB_EVENT
 {
-private:
+	private:
 
-public:
-    GEB_EVENT()
-    {
-        ptgd.clear();
-        ptinp.clear();
+	public:
+		GEB_EVENT()
+		{
+			ptgd.clear();
+			ptinp.clear();
 
-        maxGebs = MAXGEBS;
-    }
-    GEB_EVENT ( int maxGebs_ )
-    {
-        ptgd.clear();
-        ptinp.clear();
+			maxGebs = MAXGEBS;
+		}
+		GEB_EVENT(int maxGebs_)
+		{
+			ptgd.clear();
+			ptinp.clear();
 
-        maxGebs = maxGebs_;
-    }
-    virtual ~GEB_EVENT() {}
+			maxGebs = maxGebs_;
+		}
+		virtual ~GEB_EVENT()
+		{
+		}
 
-    int maxGebs;
-    std::vector<GebData*> ptgd;
-    std::vector<char*> ptinp;
+		int maxGebs;
+		std::vector<GebData*> ptgd;
+		std::vector<char*> ptinp;
 };
 
-TH2F* mkTH2F ( char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool recreate = false );
-TH2F* make2D ( const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi );
-TH1D* mkTH1D ( char* str1, char* str2, int nn, double lo, double hi, bool recreate = false );
-TH1D* make1D ( const char* txt, int xln, int xlo, int xhi );
+TH2F* mkTH2F(char* str1, char* str2, int n1, double lo1, double hi1, int n2, double lo2, double hi2, bool recreate = false);
+TH2F* make2D(const char* txt, int xln, int xlo, int xhi, int yln, int ylo, int yhi);
+TH1D* mkTH1D(char* str1, char* str2, int nn, double lo, double hi, bool recreate = false);
+TH1D* make1D(const char* txt, int xln, int xlo, int xhi);
 
 #endif

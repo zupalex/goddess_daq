@@ -91,32 +91,11 @@ public:
     DGSProcessor* theDGSProcessor;
     DGSEVENT dgsEvt[MAXCOINEV];
 
-    GoddessData* godData;
-
     int ShowStatus();
 
     int GEBSort_read_chat ( char* name );
     int GEBacq ( char* ChatFileName );
     int GEBGetEv ( );
-
-    std::vector<GamData>* gammaDets;
-    std::vector<SiDataBase>* siDets;
-    std::vector<IonData>* ionChamber;
-
-    void SetGamDets ( std::vector<GamData>* gd_ )
-    {
-        gammaDets = gd_;
-    }
-
-    void SetSiDets ( std::vector<SiDataBase>* sd_ )
-    {
-        siDets = sd_;
-    }
-
-    void SetIonChamber ( std::vector<IonData>* ic_ )
-    {
-        ionChamber = ic_;
-    }
 
     bool GetWriteEventFlag();
 };

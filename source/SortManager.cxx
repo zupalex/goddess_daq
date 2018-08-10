@@ -124,10 +124,6 @@ SortManager::SortManager()
 {
 	execParams = new PARS();
 
-	gammaDets = new vector<GamData>();
-	siDets = new vector<SiDataBase>();
-	ionChamber = new vector<IonData>();
-
 	strcpy(CommandFileName, "GEBSort.command");
 
 	nn1 = 0;
@@ -1035,7 +1031,8 @@ int SortManager::GEBacq(char* ChatFileName)
 	}
 	printf("deleted %s\n", str);
 
-	gConfig = new GoddessConfig((string) execParams->GeomFile, (string) execParams->ConfigFile, execParams->sx3EnAdjustFile, execParams->qqq5EnAdjustFile);
+	gConfig = new GoddessConfig(execParams->runNumber, (string) execParams->GeomFile, (string) execParams->ConfigFile, execParams->sx3EnAdjustFile,
+			execParams->qqq5EnAdjustFile);
 
 	// Calculate the beta of the beam from its energy, charge, mass and the target properties. Requires a corresponding energy loss lookup table
 

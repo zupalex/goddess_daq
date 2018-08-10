@@ -22,7 +22,6 @@
 #define FALSE 0
 #define NOTDEF -1
 
-
 #define EOE          0xaaaaaaaa
 #define HDRLENBYTES  28
 //#define HDRLENINTS    7
@@ -61,7 +60,6 @@
 #define MAXBIGBUFSIZ 50000
 
 #define STRLEN 256
-
 
 //**** TO CHECK *************//
 
@@ -111,212 +109,165 @@
 
 struct GebData
 {
-    int type; /* type of data following */
-    int length;
-    unsigned long long timestamp;
+		int type; /* type of data following */
+		int length;
+		unsigned long long timestamp;
 };
 
 /*---------------*/
 /* single events */
 /*---------------*/
 
-typedef struct AGODEVENT
+struct AGODEVENT
 {
-    std::vector<unsigned short> channels;
-    std::vector<unsigned short> values;
-    unsigned long long timestamp;
-} AGODEVENT;
+		std::vector<unsigned short> channels;
+		std::vector<unsigned short> values;
+		unsigned long long timestamp;
+};
 
-
-typedef struct DGSEVENT
+struct DGSEVENT
 {
-    float                   ehi;
-    short int               id;
-    //short int               id_pw[MAXPW];
-    unsigned short int      tpe, tid;
-    unsigned short int      flag;
-    unsigned short int      board_id;
-    unsigned short int      chan_id;
-    unsigned short int      geo_addr;
-    unsigned short int      packet_length;
+		float ehi;
+		short int id;
+		//short int               id_pw[MAXPW];
+		unsigned short int tpe, tid;
+		unsigned short int flag;
+		unsigned short int board_id;
+		unsigned short int chan_id;
+		unsigned short int geo_addr;
+		unsigned short int packet_length;
 
-    unsigned short int      header_type;
-    unsigned short int      event_type;
-    unsigned short int      header_length;
+		unsigned short int header_type;
+		unsigned short int event_type;
+		unsigned short int header_length;
 
-    unsigned long long int  event_timestamp;
-    unsigned long long int  last_disc_timestamp;
-    unsigned long long int  peak_timestamp;
+		unsigned long long int event_timestamp;
+		unsigned long long int last_disc_timestamp;
+		unsigned long long int peak_timestamp;
 
-    unsigned short int      timestamp_match_flag;
-    unsigned short int      external_disc_flag;
-    unsigned short int      cfd_valid_flag;
-    unsigned short int      pileup_only_flag;
-    unsigned short int      offset_flag;
-    unsigned short int      sync_error_flag;
-    unsigned short int      general_error_flag;
+		unsigned short int timestamp_match_flag;
+		unsigned short int external_disc_flag;
+		unsigned short int cfd_valid_flag;
+		unsigned short int pileup_only_flag;
+		unsigned short int offset_flag;
+		unsigned short int sync_error_flag;
+		unsigned short int general_error_flag;
 
-    unsigned short int      peak_valid_flag;
-    unsigned short int      pileup_flag ;
+		unsigned short int peak_valid_flag;
+		unsigned short int pileup_flag;
 
-    int                     sampled_baseline;
-    int                     cfd_sample_0;
-    int                     cfd_sample_1;
-    int                     cfd_sample_2;
-    int                     pre_rise_energy;
-    int                     post_rise_energy;
+		int sampled_baseline;
+		int cfd_sample_0;
+		int cfd_sample_1;
+		int cfd_sample_2;
+		int pre_rise_energy;
+		int post_rise_energy;
 
-    unsigned short int      m1_begin_sample;
-    unsigned short int      m1_end_sample;
-    unsigned short int      m2_begin_sample;
-    unsigned short int      m2_end_sample;
-    unsigned short int      peak_sample;
-    unsigned short int      base_sample;
+		unsigned short int m1_begin_sample;
+		unsigned short int m1_end_sample;
+		unsigned short int m2_begin_sample;
+		unsigned short int m2_end_sample;
+		unsigned short int peak_sample;
+		unsigned short int base_sample;
 
-    int                     baseline;
+		int baseline;
 
-    unsigned short int      traceLen;
-    short int               trace[MAXTRACELEN];
+		unsigned short int traceLen;
+		short int trace[MAXTRACELEN];
 
+		//unsigned short int      A[MAXPW];
+		//unsigned short int      B[MAXPW];
+		//unsigned short int      C[MAXPW];
+		//unsigned short int      T[MAXPW];
 
-    //unsigned short int      A[MAXPW];
-    //unsigned short int      B[MAXPW];
-    //unsigned short int      C[MAXPW];
-    //unsigned short int      T[MAXPW];
+		unsigned long long int LEDts;
+		unsigned long long int CFDts;
+		//unsigned long long int  PEAKts;
+		//char                    flag;
+		//short int               baseline;
+		//unsigned short int      traceLen;
+		//short int               trace[MAXTRACELEN];
+};
 
-
-    unsigned long long int  LEDts;
-    unsigned long long int  CFDts;
-    //unsigned long long int  PEAKts;
-    //char                    flag;
-    //short int               baseline;
-    //unsigned short int      traceLen;
-    //short int               trace[MAXTRACELEN];
-}  DGSEVENT;
-
-#define DGSEVENT_BASELEN sizeof(DGSEVENT)-MAXTRACELEN*sizeof(short int)
-
-typedef struct DFMAEVENT
+struct DFMAEVENT
 {
-    int               ehi;    // WAS SHORT INT
-    short int               id;
-    unsigned short int      tpe, tid;
-    unsigned short int      board_id;
-    unsigned short int      chan_id;
-    unsigned long long int  LEDts;
-    unsigned long long int  CFDts;
-    unsigned long long int  PEAKts;
-    char                    flag;
-    char 			  pu;
-    int			  d2t0;
-    int			  d2t1;
-    int                     d2t2;
-    unsigned long long int  prevTS;
-    int               baseline;
-    int               postrisebeg;
-    int               prerisebeg;
-    int               postriseend;
-    int               preriseend;
-    int               peaksample;
-    int               basesample;
-    int		    prerisesum;
-    unsigned short int      traceLen;
-    short int               trace[MAXTRACELEN];
-}  DFMAEVENT;
-
-#define DFMAEVENT_BASELEN sizeof(DFMAEVENT)-MAXTRACELEN*sizeof(short int)
-
-typedef struct GTEVENT
-{
-    /* raw */
-
-    unsigned short int      len;
-    short int               ehi;
-    short int               id;
-    short int               module;
-    unsigned short int      tpe, tid;
-    unsigned short int      board_id;
-    unsigned short int      chan_id;
-    unsigned long long int  LEDts;
-    unsigned long long int  CFDts;
-    unsigned long long int  PEAKts;
-    char                    flag;
-    short int               baseline;
-    int                     rawE;
-    unsigned int            hdr[HDRLENWORDS];
-    unsigned short int      traceLen;
-    short int               trace[MAXTRACELEN];
-}  GTEVENT;
-
-
-
+		int ehi;    // WAS SHORT INT
+		short int id;
+		unsigned short int tpe, tid;
+		unsigned short int board_id;
+		unsigned short int chan_id;
+		unsigned long long int LEDts;
+		unsigned long long int CFDts;
+		unsigned long long int PEAKts;
+		char flag;
+		char pu;
+		int d2t0;
+		int d2t1;
+		int d2t2;
+		unsigned long long int prevTS;
+		int baseline;
+		int postrisebeg;
+		int prerisebeg;
+		int postriseend;
+		int preriseend;
+		int peaksample;
+		int basesample;
+		int prerisesum;
+		unsigned short int traceLen;
+		short int trace[MAXTRACELEN];
+};
 
 /*--------------------*/
 /* coincidence events */
 /*--------------------*/
 
-typedef struct COINEV_struct
-{
-    unsigned short int      len;
-    unsigned char      lenclean;
-    unsigned char      lendirty;
-    unsigned char      lenbgo;
-    unsigned char      lenaux;
-    GTEVENT  GTEvent[MAXCOINEV];
-    DGSEVENT dgsEvt[MAXCOINEV];
-    DFMAEVENT dfmaEvt[MAXCOINEV];
-} COINEV;
-
-
 typedef struct CONTROL_struct
 {
-    int nOpenFiles;
-    int fileActive[MAXFILES];
-    int fileEventsRead[MAXFILES];
-    int filesiz[MAXFILES];
-    int nwritten;
-    int nwritten_chunk;
-    int chunkno;
-    int chunksiz;
-    int nread;
-    int nzeroehi;
-    int minGE;
-    int minFP;
-    int minDSSD;
-    int minmult;
-    int TSlistelen;
-    int noverflowehi;
-    int CurEvNo;
-    long long int dts_min;
-    long long int dts_max;
-    int suppressBadAtRead;
-    int zzipout;
-    int dtsfabort;
-    int dtsbabort;
-    unsigned long long int startTS_lo;
-    unsigned long long int startTS_hi;
-    int startTS;
-    int TSlist_lo;
-    int TSlist_hi;
+		int nOpenFiles;
+		int fileActive[MAXFILES];
+		int fileEventsRead[MAXFILES];
+		int filesiz[MAXFILES];
+		int nwritten;
+		int nwritten_chunk;
+		int chunkno;
+		int chunksiz;
+		int nread;
+		int nzeroehi;
+		int minGE;
+		int minFP;
+		int minDSSD;
+		int minmult;
+		int TSlistelen;
+		int noverflowehi;
+		int CurEvNo;
+		long long int dts_min;
+		long long int dts_max;
+		int suppressBadAtRead;
+		int zzipout;
+		int dtsfabort;
+		int dtsbabort;
+		unsigned long long int startTS_lo;
+		unsigned long long int startTS_hi;
+		int startTS;
+		int TSlist_lo;
+		int TSlist_hi;
 } CONTROL;
-
 
 typedef struct stat_struct
 {
-    long long int inbytes;
-    long long int badid;
-    long long int outbytes;
-    unsigned int ge_hit[NGE+1];
-    unsigned int ge_cs[NGE+1];
-    int nTSjumprecover_f[MAXTID];
-    int nTSjumprecover_b[MAXTID];
-    unsigned int in_hit[MAXTPE][MAXTID];
-    unsigned int out_hit[MAXTPE][MAXTID];
-    int nbigbufreads;
-    int nswaps;
-    unsigned int id_hit[NCHANNELS];
+		long long int inbytes;
+		long long int badid;
+		long long int outbytes;
+		unsigned int ge_hit[NGE + 1];
+		unsigned int ge_cs[NGE + 1];
+		int nTSjumprecover_f[MAXTID];
+		int nTSjumprecover_b[MAXTID];
+		unsigned int in_hit[MAXTPE][MAXTID];
+		unsigned int out_hit[MAXTPE][MAXTID];
+		int nbigbufreads;
+		int nswaps;
+		unsigned int id_hit[NCHANNELS];
 } MSTAT;
-
 
 /*-----------------*/
 /* header for file */
@@ -324,12 +275,10 @@ typedef struct stat_struct
 
 typedef struct DGSHEADER_struct
 {
-    unsigned int      id;
-    char              date[19];
-    unsigned int      nfiles;
-    char              dummy;
+		unsigned int id;
+		char date[19];
+		unsigned int nfiles;
+		char dummy;
 } DGSHEADER;
-
-
 
 #endif

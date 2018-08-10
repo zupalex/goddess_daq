@@ -6,21 +6,22 @@
 
 QQQ5::QQQ5()
 {
-    siDet::SetNumContacts ( 32, 4 );
-    Clear();
+	siDet::SetNumContacts(32, 4);
+	Clear();
 }
 /**We assuming the position provided for the detector is at the radial center of the
  * detector and the clockwise is aligned at the rotation angle.
  */
-QQQ5::QQQ5 ( std::string serial_Num, unsigned short sector_, unsigned short depth_,
-             bool up_Stream, SolidVector position ) :
-    orrubaDet ( serial_Num, sector_, depth_, up_Stream, position )
+QQQ5::QQQ5(std::string serial_Num, unsigned short sector_, unsigned short depth_, bool up_Stream, SolidVector position) :
+		orrubaDet(serial_Num, sector_, depth_, up_Stream, position)
 {
-    siDet::SetNumContacts ( 32, 4 );
-    Clear();
+	siDet::SetNumContacts(32, 4);
+	Clear();
 }
 
-QQQ5::~QQQ5() {}
+QQQ5::~QQQ5()
+{
+}
 
 /**Construct arrays of bin edges for ROOT histograms based on the provided position
  * of the detector. Currently constructs binning in the n, p and z direction in mm
@@ -34,26 +35,26 @@ void QQQ5::ConstructBins()
 {
 //     float QQQ5_active_length = 56.8; // mm
 
-    TVector3 firstStripOffset ( 0, firstStripWidth/2., 0 ); // everything in mm
+	TVector3 firstStripOffset(0, firstStripWidth / 2., 0); // everything in mm
 
-    TVector3 prevStripRefDetCenter = firstStripOffset;
+	TVector3 prevStripRefDetCenter = firstStripOffset;
 
-    pStripCenterPos[0] = detPos.GetTVector3() + firstStripOffset;
+	pStripCenterPos[0] = detPos.GetTVector3() + firstStripOffset;
 //     cerr << "QQQ5 strip #0 : " << pStripCenterPos[0].Y() << endl;
 
-    for ( int i = 1; i < 32; i++ )
-    {
-        float prevStripWidth = firstStripWidth - ( i-1 ) * deltaPitch;
-        float currStripWidth = firstStripWidth - i * deltaPitch;
+	for (int i = 1; i < 32; i++)
+	{
+		float prevStripWidth = firstStripWidth - (i - 1) * deltaPitch;
+		float currStripWidth = firstStripWidth - i * deltaPitch;
 
-        TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3 ( 0, ( prevStripWidth + currStripWidth ) / 2., 0 );
-        prevStripRefDetCenter = pStPosRefDetCenter;
+		TVector3 pStPosRefDetCenter = prevStripRefDetCenter + TVector3(0, (prevStripWidth + currStripWidth) / 2., 0);
+		prevStripRefDetCenter = pStPosRefDetCenter;
 
-        pStPosRefDetCenter.SetPhi ( pStPosRefDetCenter.Phi() + detPos.RotZ() );
+		pStPosRefDetCenter.SetPhi(pStPosRefDetCenter.Phi() + detPos.RotZ());
 
-        pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
+		pStripCenterPos[i] = detPos.GetTVector3() + pStPosRefDetCenter;
 //         cerr << "QQQ5 strip #" << i << " : " << pStripCenterPos[i].Y() << endl;
-    }
+	}
 
 //     for ( int i = 0; i < 4; i++ )
 //     {
@@ -66,55 +67,55 @@ void QQQ5::ConstructBins()
 
 void QQQ5::Clear()
 {
-    siDet::Clear();
+	siDet::Clear();
 
-    stripsP.clear();
-    enRawP.clear();
-    enCalP.clear();
-    timeP.clear();
+	stripsP.clear();
+	enRawP.clear();
+	enCalP.clear();
+	timeP.clear();
 
-    stripsN.clear();
-    enRawN.clear();
-    enCalN.clear();
-    timeN.clear();
+	stripsN.clear();
+	enRawN.clear();
+	enCalN.clear();
+	timeN.clear();
 
-    eventPos.SetXYZ ( 0, 0, 0 );
+	eventPos.SetXYZ(0, 0, 0);
 }
 
 void QQQ5::SetPosID()
 {
-    if ( upStream )
-    {
-        posID.append ( "U" );
-    }
-    else
-    {
-        posID.append ( "D" );
-    }
+	if (upStream)
+	{
+		posID.append("U");
+	}
+	else
+	{
+		posID.append("D");
+	}
 
-    static const char *sectorCode[4] = {"A", "B", "C", "D"};
-    posID.append ( sectorCode[sector] );
+	static const char *sectorCode[4] = { "A", "B", "C", "D" };
+	posID.append(sectorCode[sector]);
 
-    posID.append ( "_" );
+	posID.append("_");
 
-    if ( depth == 0 )
-    {
-        posID.append ( "dE" );
-    }
-    else if ( depth == 1 )
-    {
-        posID.append ( "E1" );
-    }
-    else if ( depth == 2 )
-    {
-        posID.append ( "E2" );
-    }
+	if (depth == 0)
+	{
+		posID.append("dE");
+	}
+	else if (depth == 1)
+	{
+		posID.append("E1");
+	}
+	else if (depth == 2)
+	{
+		posID.append("E2");
+	}
 }
 
-void QQQ5::SetGeomParams ( map< string, double > geomInfos_ )
+void QQQ5::SetGeomParams(map<string, double> geomInfos_)
 {
-    firstStripWidth = geomInfos_["QQQ5 First Strip Width"];
-    deltaPitch = geomInfos_["QQQ5 Delta Pitch"];
+	firstStripWidth = geomInfos_["QQQ5 First Strip Width"];
+	deltaPitch = geomInfos_["QQQ5 Delta Pitch"];
 }
 
 /**This method is called when a contact energy is updated. We call the parent
@@ -126,224 +127,214 @@ void QQQ5::SetGeomParams ( map< string, double > geomInfos_ )
  *  \param[in] rawValue The raw contact value in channels.
  * \param[in] nType Whether the contact was n Type.
  */
-void QQQ5::SetRawValue ( unsigned int contact, bool nType, int rawValue, int ignThr )
+void QQQ5::SetRawValue(unsigned int contact, bool nType, int rawValue, int ignThr)
 {
-    if ( !ValidContact ( contact, nType ) )
-    {
-        ;
-        char type = 'p';
-        if ( nType )
-        {
-            type = 'n';
-        }
-        std::cerr << "ERROR: Unable to set raw value for QQQ5 " << serialNum << " " << type << "-type contact: " << contact << "!\n";
-    }
+	if (!ValidContact(contact, nType)) std::cerr << "ERROR: Unable to set raw value for QQQ5 " << serialNum << " " << (nType ? 'n' : 'p') << "-type contact: "
+			<< contact << "!\n";
 
-    //Call parent method to handle calibration.
-    siDet::SetRawValue ( contact, nType, rawValue, ignThr );
+	//Call parent method to handle calibration.
+	siDet::SetRawValue(contact, nType, rawValue, ignThr);
 }
 
-float QQQ5::GetEnSum ( bool nType, bool calibrated )
+float QQQ5::GetEnSum(bool nType, bool calibrated)
 {
-    float enSum = 0.0;
+	float enSum = 0.0;
 
-    std::vector<float>* toSum;
+	std::vector<float>* toSum;
 
-    if ( nType && calibrated ) toSum = &enCalN;
-    else if ( nType && !calibrated ) toSum = &enRawN;
-    else if ( !nType && calibrated ) toSum = &enCalP;
-    else if ( !nType && !calibrated ) toSum = &enRawP;
-    else return 0.0;
+	if (nType && calibrated) toSum = &enCalN;
+	else if (nType && !calibrated) toSum = &enRawN;
+	else if (!nType && calibrated) toSum = &enCalP;
+	else if (!nType && !calibrated) toSum = &enRawP;
+	else return 0.0;
 
-    for ( unsigned int i = 0; i < ( *toSum ).size(); i++ )
-    {
-        enSum += toSum->at ( i );
-    }
+	for (unsigned int i = 0; i < (*toSum).size(); i++)
+	{
+		enSum += toSum->at(i);
+	}
 
-    return enSum;
+	return enSum;
 }
 
-void QQQ5::SortAndCalibrate ( bool doCalibrate )
+void QQQ5::SortAndCalibrate(bool doCalibrate)
 {
-    siDet::ValueMap enPMap, enNMap;
+	siDet::ValueMap enPMap, enNMap;
 
-    enPMap = GetRawEn ( false );
-    enNMap = GetRawEn ( true );
+	enPMap = GetRawEn(false);
+	enNMap = GetRawEn(true);
 
-    siDet::TimeMap tsPMap, tsNMap;
+	siDet::TimeMap tsPMap, tsNMap;
 
-    tsPMap = GetTsMap ( false );
-    tsNMap = GetTsMap ( true );
+	tsPMap = GetTsMap(false);
+	tsNMap = GetTsMap(true);
 
-    for ( auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr )
-    {
-        int st_ = stripItr->first;
-        float en_ = stripItr->second;
+	for (auto stripItr = enPMap.begin(); stripItr != enPMap.end(); ++stripItr)
+	{
+		int st_ = stripItr->first;
+		float en_ = stripItr->second;
 
-        stripsP.push_back ( st_ );
-        enRawP.push_back ( en_ );
-        timeP.push_back ( tsPMap[st_] );
+		stripsP.push_back(st_);
+		enRawP.push_back(en_);
+		timeP.push_back(tsPMap[st_]);
 
-        if ( doCalibrate )
-        {
-            std::vector<std::vector<float>> calPars = GetEnParCal ( false );
+		if (doCalibrate)
+		{
+			std::vector<std::vector<float>> calPars = GetEnParCal(false);
 
-            enCalP.push_back ( en_ * calPars[st_][1] + calPars[st_][0] );
-        }
-    }
+			enCalP.push_back(en_ * calPars[st_][1] + calPars[st_][0]);
+		}
+	}
 
-    for ( auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr )
-    {
-        int st_ = stripItr->first;
-        float en_ = stripItr->second;
+	for (auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr)
+	{
+		int st_ = stripItr->first;
+		float en_ = stripItr->second;
 
-        stripsN.push_back ( st_ );
-        enRawN.push_back ( en_ );
-        timeN.push_back ( tsNMap[st_] );
+		stripsN.push_back(st_);
+		enRawN.push_back(en_);
+		timeN.push_back(tsNMap[st_]);
 
-        if ( doCalibrate )
-        {
-            std::vector<std::vector<float>> calPars = GetEnParCal ( true );
+		if (doCalibrate)
+		{
+			std::vector<std::vector<float>> calPars = GetEnParCal(true);
 
-            enCalN.push_back ( en_ * calPars[st_][1] + calPars[st_][0] );
-        }
-    }
+			enCalN.push_back(en_ * calPars[st_][1] + calPars[st_][0]);
+		}
+	}
 }
 
-int QQQ5::GetContactMult ( bool calibrated )
+int QQQ5::GetContactMult(bool calibrated)
 {
-    if ( calibrated ) return enCalP.size() + enCalN.size();
-    else return enRawP.size() + enRawN.size();
+	if (calibrated) return enCalP.size() + enCalN.size();
+	else return enRawP.size() + enRawN.size();
 }
 
-int QQQ5::GetContactMult ( bool contactType, bool calibrated )
+int QQQ5::GetContactMult(bool contactType, bool calibrated)
 {
-    if ( contactType == siDet::nType )
-    {
-        if ( calibrated ) return enCalN.size();
-        else return enRawN.size();
-    }
-    else
-    {
-        if ( calibrated ) return enCalP.size();
-        else return enRawP.size();
-    }
+	if (contactType == siDet::nType)
+	{
+		if (calibrated) return enCalN.size();
+		else return enRawN.size();
+	}
+	else
+	{
+		if (calibrated) return enCalP.size();
+		else return enRawP.size();
+	}
 }
 
-std::vector< float > QQQ5::GetHitsInfo ( std::string info, std::vector<float>* dest )
+std::vector<float> QQQ5::GetHitsInfo(std::string info, std::vector<float>* dest)
 {
-    std::vector<float> request;
+	std::vector<float> request;
 
-    if ( info == "front energies raw" ) request = enRawP;
-    else if ( info == "back energies raw" ) request = enRawN;
-    else if ( info == "front energies cal" ) request = enCalP;
-    else if ( info == "back energies cal" ) request = enCalN;
-    else std::cerr << "WARNING in QQQ5::GetHitsInfo -> requested member " << info << " does not exist!\n";
+	if (info == "front energies raw") request = enRawP;
+	else if (info == "back energies raw") request = enRawN;
+	else if (info == "front energies cal") request = enCalP;
+	else if (info == "back energies cal") request = enCalN;
+	else std::cerr << "WARNING in QQQ5::GetHitsInfo -> requested member " << info << " does not exist!\n";
 
-    if ( dest != nullptr ) *dest = request;
+	if (dest != nullptr) *dest = request;
 
-    return request;
+	return request;
 }
 
-std::vector< int > QQQ5::GetHitsInfo ( std::string info, std::vector<int>* dest )
+std::vector<int> QQQ5::GetHitsInfo(std::string info, std::vector<int>* dest)
 {
-    std::vector<int> request;
+	std::vector<int> request;
 
-    if ( info == "front strips" ) request = stripsP;
-    else if ( info == "back strips" ) request = stripsN;
-    else std::cerr << "WARNING in QQQ5::GetHitsInfo -> requested member " << info << " does not exist!\n";
+	if (info == "front strips") request = stripsP;
+	else if (info == "back strips") request = stripsN;
+	else std::cerr << "WARNING in QQQ5::GetHitsInfo -> requested member " << info << " does not exist!\n";
 
-    if ( dest != nullptr ) *dest = request;
+	if (dest != nullptr) *dest = request;
 
-    return request;
+	return request;
 }
 
-std::vector< long long unsigned int > QQQ5::GetHitsInfo ( std::string info, std::vector< long long unsigned int >* dest )
+std::vector<long long unsigned int> QQQ5::GetHitsInfo(std::string info, std::vector<long long unsigned int>* dest)
 {
-    std::vector<long long unsigned int> request;
+	std::vector<long long unsigned int> request;
 
-    if ( info == "front timestamps" ) request = timeP;
-    else if ( info == "back timestamps" ) request = timeN;
-    else std::cerr << "WARNING in QQQ5::GetHitsInfo -> requested member " << info << " does not exist!\n";
+	if (info == "front timestamps") request = timeP;
+	else if (info == "back timestamps") request = timeN;
+	else std::cerr << "WARNING in QQQ5::GetHitsInfo -> requested member " << info << " does not exist!\n";
 
-    if ( dest != nullptr ) *dest = request;
+	if (dest != nullptr) *dest = request;
 
-    return request;
+	return request;
 }
 
-void QQQ5::GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated )
+void QQQ5::GetMaxHitInfo(int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated)
 {
-    std::vector<float>* energiesN_;
-    std::vector<float>* energiesP_;
+	std::vector<float>* energiesN_;
+	std::vector<float>* energiesP_;
 
-    if ( calibrated )
-    {
-        energiesN_ = &enCalN;
-        energiesP_ = &enCalP;
-    }
-    else
-    {
-        energiesN_ = &enRawN;
-        energiesP_ = &enRawP;
-    }
+	if (calibrated)
+	{
+		energiesN_ = &enCalN;
+		energiesP_ = &enCalP;
+	}
+	else
+	{
+		energiesN_ = &enRawN;
+		energiesP_ = &enRawP;
+	}
 
-    float enMax = 0.0;
+	float enMax = 0.0;
 
-    for ( unsigned int i = 0; i < energiesP_->size(); i++ )
-    {
-        if ( energiesP_->at ( i ) > enMax )
-        {
-            if ( stripMaxP != nullptr ) *stripMaxP = stripsP.at ( i );
-            enMax = energiesP_->at ( i );
-            if ( timeSampMaxP != nullptr ) *timeSampMaxP = timeP.at ( i );
-        }
-    }
+	for (unsigned int i = 0; i < energiesP_->size(); i++)
+	{
+		if (energiesP_->at(i) > enMax)
+		{
+			if (stripMaxP != nullptr) *stripMaxP = stripsP.at(i);
+			enMax = energiesP_->at(i);
+			if (timeSampMaxP != nullptr) *timeSampMaxP = timeP.at(i);
+		}
+	}
 
-    enMax = 0;
+	enMax = 0;
 
-    for ( unsigned int i = 0; i < energiesN_->size(); i++ )
-    {
-        if ( energiesN_->at ( i ) > enMax )
-        {
-            if ( stripMaxN != nullptr ) *stripMaxN = stripsN.at ( i );
-            enMax = energiesN_->at ( i );
-            if ( timeSampMaxN != nullptr ) *timeSampMaxN = timeN.at ( i );
-        }
-    }
+	for (unsigned int i = 0; i < energiesN_->size(); i++)
+	{
+		if (energiesN_->at(i) > enMax)
+		{
+			if (stripMaxN != nullptr) *stripMaxN = stripsN.at(i);
+			enMax = energiesN_->at(i);
+			if (timeSampMaxN != nullptr) *timeSampMaxN = timeN.at(i);
+		}
+	}
 }
 
-int QQQ5::GetMultiplicity ( bool nType, bool calibrated )
+int QQQ5::GetMultiplicity(bool nType, bool calibrated)
 {
-    if ( nType && calibrated ) return enCalN.size();
-    else if ( nType && !calibrated ) return enRawN.size();
-    else if ( !nType && calibrated ) return enCalP.size();
-    else if ( !nType && !calibrated ) return enRawP.size();
-    else return 0;
+	if (nType && calibrated) return enCalN.size();
+	else if (nType && !calibrated) return enRawN.size();
+	else if (!nType && calibrated) return enCalP.size();
+	else if (!nType && !calibrated) return enRawP.size();
+	else return 0;
 }
 
-void QQQ5::SetEnShiftVsPosGraph ( std::string graphFileName )
+void QQQ5::SetEnShiftVsPosGraph(std::string graphFileName)
 {
-    if ( !graphFileName.empty() )
-    {
-        TFile* grFile = new TFile ( graphFileName.c_str(), "read" );
+	if (!graphFileName.empty())
+	{
+		TFile* grFile = new TFile(graphFileName.c_str(), "read");
 
-        if ( !grFile->IsOpen() ) return;
-    }
+		if (!grFile->IsOpen()) return;
+	}
 }
 
-TVector3 QQQ5::GetEventPosition ( bool calibrated )
+TVector3 QQQ5::GetEventPosition(bool calibrated)
 {
-    int pStripHit, nStripHit;
-    GetMaxHitInfo ( &pStripHit, nullptr, &nStripHit, nullptr, calibrated );
+	int pStripHit, nStripHit;
+	GetMaxHitInfo(&pStripHit, nullptr, &nStripHit, nullptr, calibrated);
 
-    TVector3 interactionPos = pStripCenterPos[pStripHit];
+	TVector3 interactionPos = pStripCenterPos[pStripHit];
 
-    if ( nStripHit >= 0 ) interactionPos.SetPhi ( interactionPos.Phi() - 3./16. * TMath::Pi() + nStripHit/8. * TMath::Pi() );
+	if (nStripHit >= 0) interactionPos.SetPhi(interactionPos.Phi() - 3. / 16. * TMath::Pi() + nStripHit / 8. * TMath::Pi());
 
-    return interactionPos;
+	return interactionPos;
 }
 
-
-ClassImp ( QQQ5 )
-
+ClassImp(QQQ5)
 
