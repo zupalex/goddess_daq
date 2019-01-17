@@ -421,31 +421,31 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
             event.clear();
             //cout<<"Umm...how about here?"<<endl;
 	    timestamp_0 = global_header.timestamp;
-            cout<<"the global timestamp is: "<<global_header.timestamp<<endl;
-	    repeat_t0 = global_header.timestamp;
+            //cout<<"the global timestamp is: "<<global_header.timestamp<<endl;
+	    //repeat_t0 = global_header.timestamp;
 
-            if ( repeat_t0 < 0 )
-            {
-                cout<<"Timestamp is now negative? "<<repeat_t0<<endl;
-                if ( global_header.timestamp > 0 )
-                {
-                    cout<<"But the global timestamp isn't? "<<global_header.timestamp<<endl;
-                }
-            }
+            //if ( repeat_t0 < 0 )
+            //{
+               // cout<<"Timestamp is now negative? "<<repeat_t0<<endl;
+               // if ( global_header.timestamp > 0 )
+               // {
+               //     cout<<"But the global timestamp isn't? "<<global_header.timestamp<<endl;
+               // }
+            //}
             
-                        if ( repeat_t0<0 )
-            {
-                repeat_t0 = repeat_t0*-7;
-                if ( global_header.timestamp != repeat_t0 )
-                {
-                    cout<<"nope."<<endl;
-                }
-            }
+               //         if ( repeat_t0<0 )
+           // {
+              //  repeat_t0 = repeat_t0*-7;
+              //  if ( global_header.timestamp != repeat_t0 )
+               // {
+               //     cout<<"nope."<<endl;
+               // }
+           // }
             //cout<<repeat_t0<<endl;
             for ( int hit3=0; hit3<sizeof ( header.intpts ); hit3++ )
             {
 
-                //cout<<"read third checkpoint."<<endl;
+               // cout<<"read third checkpoint."<<endl;
                 if ( header.intpts[hit3].e == 0 )
                 {
                     continue;
