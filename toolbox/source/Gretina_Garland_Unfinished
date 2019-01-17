@@ -1,0 +1,582 @@
+\
+
+#include <string.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include "TMath.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TROOT.h"
+#include "TFile.h"
+#include "TChain.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TTree.h"
+#include "TKey.h"
+#include "Riostream.h"
+#include "TSystem.h"
+
+using namespace std;
+
+#define max_inputs 16 //define this as an option in sort. That way if there is ever any more Gretina crystals you can fix this by user instead of hardcode. 
+
+//BinaryReading* BR = new BinaryReading();
+
+struct GlobalHeader
+{
+    int32_t type;
+    int32_t length;
+    int64_t timestamp;
+};
+
+// struct Gretina_data
+// {
+//     float x;
+//     float y;
+//     float z;
+//     float e;
+//     int seg;
+//     float seg_enter;
+// };
+
+struct Gretina_header
+{
+    int type;
+    int crystal_id;
+    int num; //number of interaction points from decomp
+    float tot_e;
+    int core_e[4];
+    long long int timestamp;
+    long long trig_time;
+    float t0;
+    float cfd;
+    float chisq;
+    float norm_chisq;
+    float baseline;
+    float prestep;
+    float poststep;
+    int pad; //non0 gives error type
+    struct
+    {
+        float x;
+        float y;
+        float z;
+        float e;
+        int seg;
+        float seg_ener;
+    } intpts[max_inputs];
+};
+
+struct Gretina_hit
+{
+    float x;
+    float y;
+    float z;
+    float r;
+    float theta;
+    float phi;
+    float e;
+    int seg;
+    float seg_ener;
+};
+
+
+vector<float> Coor_Trans_Gretina ( float R, float theta, float phi, float sphere_split )
+{
+//     float R_new;
+//     float theta_new;
+//     float phi_new;
+
+//     cout<<R<<endl;
+//     cout<<theta<<endl;
+//     cout<<phi<<endl;
+//     cout<<"---------------<<endl;
+
+    float x_1 = R*sin ( phi );
+    float y_1 = R*tan ( theta ) *sin ( phi );
+    float z_1 = R* ( cos ( phi ) /cos ( theta ) );
+
+//     cout<<sin(phi)<<endl;
+//     cout<<tan(theta)*sin(phi)<<endl;
+//     cout<<cos(phi)/cos(theta)<<endl;
+
+    float d = sphere_split/2;
+    float x_2 = d; //remember to add a negative in the other part of the code for the opposite half of the sphere. aka cos90 vs cos180
+    float y_2 = 0;
+    float z_2 = 0;
+
+    vector<float> c = {x_1+x_2, y_1+y_2,z_1+z_2};
+    //float r_f = (c[0]^2+c[1]^2+c[2]^2)^(1/2);
+    //float theta_f = (tan(c[1]/c[0]))^-1;
+    //float phi_f = (cos(c[2]/r_f))^-1;
+
+//     cout<<c[0]<<endl;
+//     cout<<c[1]<<endl;
+//     cout<<c[2]<<endl;
+
+    //vector<float> c_new = {r_f,theta_f,phi_f};
+
+    //This code returns the cartesian coordinates of the front face of the crystals, but you can set it to return the spherical coordates by uncommenting the above line.
+
+    return c;
+};
+
+pair<float,float> Find_Original_Coor ( float hole_number, int det_number )
+{
+    ifstream file ( "Gretina_original_angles.csv", ifstream::in );
+
+    string find_mount_hole;
+    float mount;
+    string phi;
+    string theta;
+    pair<float,float> angles;
+
+    while ( !file.eof() )
+    {
+        getline ( file,find_mount_hole,',' );
+        //cout<<find_mount_hole<<endl;
+        mount = atof ( find_mount_hole.c_str() );
+        //cout<<"mount "<<mount<<endl;
+        //cout<<"find "<<find_mount_hole<<endl;
+
+
+        if ( mount == hole_number )
+        {
+            for ( int move_by = 0; move_by< ( det_number+1 ); move_by++ ) //the file has theta and phi for the mount position too
+            {
+                getline ( file,theta,',' );
+                getline ( file,phi,',' );
+            }
+            //cout<<theta<<endl;
+            //cout<<phi<<endl;
+            angles.first = atof ( theta.c_str() );
+            angles.second = atof ( phi.c_str() );
+// 	    cout<<angles.first<<endl;
+// 	    cout<<angles.second<<endl;
+            break;
+        }
+    }
+    return angles; // reads out first = theta second = phi
+}
+
+
+vector<float> Tot_Gam_Pos ( float hole_num, float det_num, vector<float> crystal_face, float x, float y, float z, float Gretina_split )
+{
+    vector<float> new_pos;
+    pair<float,float> original_face = Find_Original_Coor ( hole_num,det_num );
+    vector<float> new_face = Coor_Trans_Gretina ( 1.78,original_face.first,original_face.second, Gretina_split );
+//   cout<< "the pair reeds first: "<<original_face.first<<" and second: "<<original_face.second<<endl;
+//   cout<<"the new coor read: "<<endl;
+//
+//   for (int fuckme = 0; fuckme<new_face.size(); fuckme++)
+//   {
+//     cout<<new_face[fuckme]<<endl;
+//   }
+//     cout<<"damn it damn it damn it"<<endl;
+
+    float tot_x = x + new_face[0];
+    float tot_y = y + new_face[1];
+    float tot_z = z + new_face[2];
+
+//     cout<<tot_x<<endl;
+//     cout<<tot_y<<endl;
+//     cout<<tot_z<<endl;
+
+    new_pos.push_back ( tot_x );
+    new_pos.push_back ( tot_y );
+    new_pos.push_back ( tot_z );
+
+    float r = pow ( pow ( tot_x,2 ) +pow ( tot_y,2 ) +pow ( tot_z,2 ) , 1/2 );
+    float theta = pow ( tan ( tot_y/tot_x ),-1 );
+    float phi = pow ( tan ( pow ( pow ( tot_x,2 ) +pow ( tot_y,2 ) ,1/2 ) /tot_z ) , -1 );
+
+    new_pos.push_back ( r );
+    //cout<<r<<endl;
+    new_pos.push_back ( theta );
+    new_pos.push_back ( phi );
+
+//     cout<<r<<endl;
+//     cout<<theta<<endl;
+//     cout<<phi<<endl;
+//     cout<<"+++++++++++++++++++++++++++++++++++++"<<endl;
+//     for (int wtf = 0; wtf<new_pos.size(); wtf++)
+//     {
+//       cout<<new_pos[wtf]<<endl;
+//     }
+
+//     cout<<"------------------------------"<<endl;
+
+    return new_pos;
+}
+
+void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
+{
+
+    Gretina_header header;
+//     Gretina_data data_struct;
+    GlobalHeader global_header;
+
+//     vector<Gretina_header> rawdata;
+    //vector<int> type_in;
+//     vector<int> crystalID;
+//     // vector<int> num_of_inter; //number of interaction points from decomp
+//     vector<float> tote;
+//     //vector<int> coree1; //remember there are four pieces to this in the struct
+//     //vector<int> coree2;
+//     //vector<int> coree3;
+//     //vector<int> coree4;
+//     vector<long long int> ts;
+//     vector<long long> tt;
+//     vector<float> t_0;
+//     //vector<float> cfd_two; //The two doesn't mean anything except that it is in the function rather than in the struct
+//     vector<float> chi_sq;
+//     vector<float> norm_chi_sq;
+//     vector<float> bl;
+//     //vector<float> pre;
+//     //vector<float> post;
+//     vector<int> pd;
+//     vector<float> x2; //The two's don't mean anything here except that it is in the function rather than in the struct
+//     vector<float> y2;
+//     vector<float> z2;
+//     vector<float> e2;
+//     vector<int> seg2;
+//     vector<float> seg_ent;
+//
+//     TFile* rootfile = new TFile ( newfile.c_str(),"recreate" );
+//     TTree* tree = new TTree ( "Gretina_tree","Gretina" );
+// //     tree->Branch ("raw_Gretina", &rawdata);
+//     //tree->Branch ( "type", &type_in );
+//     tree->Branch ( "crystal_id", &crystalID );
+//     //tree->Branch ( "count", &num_of_inter );
+//     tree->Branch ( "total_en", &tote );
+//     //tree->Branch ( "core_en1", &coree1 );
+//     //tree->Branch ( "core_en2", &coree2 );
+//     //tree->Branch ( "core_en3", &coree3 );
+//     //tree->Branch ( "core_en4", &coree4 );
+//     tree->Branch ( "timestamp",&ts );
+//     tree->Branch ( "trig_time",&tt );
+//     tree->Branch ( "t_0",&t_0 );
+//     //tree->Branch ( "cfd",&cfd_two ); //The two doesn't mean anything here except that it's the one defined in the function rather than in the struct
+//     tree->Branch ( "chi_sq",&chi_sq );
+//     tree->Branch ( "norm_chi_sq",&norm_chi_sq );
+//     tree->Branch ( "baseline",&bl );
+//     //tree->Branch ( "prestep",&pre );
+//     //tree->Branch ( "poststep",&post );
+//     tree->Branch ( "pad",&pd );
+//     tree->Branch ( "x",&x2 );
+//     tree->Branch ( "y",&y2 );
+//     tree->Branch ( "z",&z2 );
+//     tree->Branch ( "e",&e2 );
+//     tree->Branch ( "segment", &seg2 );
+//     tree->Branch ( "segment_entered",&seg_ent );
+
+
+
+    int32_t timestamp_0 = -1;
+    //int timestamp_f;
+    int32_t delta_t = -1;
+    int32_t event_build_time = 171; // 171 = 1.42ms; 238 = 2.76;
+    //int event_hits = 0;
+    int32_t repeat_t0 = 0;
+    vector<Gretina_hit> event;
+    //vector<vector<Gretina_hit>> events;
+    Gretina_hit one_hit;
+    float hole_num;
+    float crystal_num;
+    pair<float,float> angles;
+    float theta;
+    float phi;
+    float R = 1.78;
+    vector<float> crystal_face;
+    int b = 0; //just a counter
+    vector<float> tot_gamma_pos;
+
+
+
+
+
+    int readsuccess = 1;
+    int buffsuccess = 1;
+
+    int fd = open ( filename.c_str(), O_RDONLY );
+
+    if ( fd == -1 )
+    {
+        cout<<"Could not open file."<<endl;
+        return;
+    }
+
+    cout<<"Opened file."<<endl;
+
+    while ( readsuccess != 0 )
+    {
+        readsuccess = read ( fd, ( void* ) &global_header,sizeof ( global_header ) );
+
+//cout<<global_header.type<<endl;
+        if ( global_header.type != 1 )
+        {
+            cout<<" Global header not Type 1 data."<<endl;
+            return;
+        }
+
+//        if (global_header.timestamp < 0) {cout<<"Timestamp is negative."<<endl;}
+// 	cout<<global_header.length<<endl;
+// 	cout<<global_header.timestamp<<endl;
+
+        buffsuccess = read ( fd, ( void* ) &header,sizeof ( header ) );
+
+// 	cout<<header.type<<endl;
+// 	if (header.crystal_id>120){
+// 	cout<<header.crystal_id<<endl;}
+// 	if(header.type != 1) {cout<<"Crystal header not Type 1 data."<<endl; continue;}
+
+// 	rawdata.push_back(header);
+
+        //type_in.push_back ( header.type );
+//         crystalID.push_back ( header.crystal_id );
+//         //num_of_inter.push_back ( header.num );
+//         tote.push_back ( header.tot_e );
+//         //coree1.push_back ( header.core_e[0] );
+//         //coree2.push_back ( header.core_e[1] );
+//         //coree3.push_back ( header.core_e[2] );
+//         //coree4.push_back ( header.core_e[3] );
+//         ts.push_back ( header.timestamp );
+//         tt.push_back ( header.trig_time );
+//         t_0.push_back ( header.t0 );
+//         //cfd_two.push_back ( header.cfd );
+//         chi_sq.push_back ( header.chisq );
+//         norm_chi_sq.push_back ( header.norm_chisq );
+//         bl.push_back ( header.baseline );
+//         //pre.push_back ( header.prestep );
+//         //post.push_back ( header.poststep );
+//         pd.push_back ( header.pad );
+
+//         for ( int inputs = 0; inputs<16; inputs++ )
+//         {
+//
+//             if ( header.intpts[inputs].x == 0 && header.intpts[inputs].y == 0 && header.intpts[inputs].z == 0 )
+//             {
+//                 continue;
+//             }
+//             x2.push_back ( header.intpts[inputs].x );
+//             y2.push_back ( header.intpts[inputs].y );
+//             z2.push_back ( header.intpts[inputs].z );
+//             e2.push_back ( header.intpts[inputs].e );
+//             seg2.push_back ( header.intpts[inputs].seg );
+//             seg_ent.push_back ( header.intpts[inputs].seg_ener );
+//         }
+// //     }
+// //
+// //     while ( 1 )
+//     {
+
+        hole_num = header.crystal_id/4; //quad number.
+        crystal_num = header.crystal_id%4; //crystal num 0-3 in quad.
+        angles = Find_Original_Coor ( hole_num,crystal_num );
+        theta = angles.first;
+        phi = angles.second;
+        crystal_face = Coor_Trans_Gretina ( R,theta,phi,sphere_split );
+
+
+        //Create events from hit sets;
+        /*
+                if ( repeat_t0 != 0 )
+                {
+                    timestamp_0 = repeat_t0;
+                    //event_hits++;
+                }*/
+//         cout<< "Initial Time: "<<timestamp_0<<endl;
+//         cout<<"Next hit time: "<<global_header.timestamp/2 + 100<<endl;
+
+//         while ( 1 )
+//         {
+
+        if ( timestamp_0 != -1 )
+        {
+            delta_t = ( global_header.timestamp-timestamp_0 ) /2+100;
+            timestamp_0 = global_header.timestamp;
+            repeat_t0 = 0;
+            //cout<<delta_t<<endl;
+
+        }
+        if ( delta_t > event_build_time ) // this is where the event ends
+        {
+
+
+            //cout<<"Do you see me now?"<<endl;
+//             event_hits = 1;
+//             events.push_back(event);
+//
+//             ----------------------------------------------------
+//             this is where the tracking code should go to run through each "event" or separated dt
+//             -----------------------------------------------------
+
+            for ( int interaction = 0; interaction<event.size(); interaction++ )
+            {
+
+            }
+
+            event.clear();
+            //cout<<"Umm...how about here?"<<endl;
+	    timestamp_0 = global_header.timestamp;
+            cout<<"the global timestamp is: "<<global_header.timestamp<<endl;
+	    repeat_t0 = global_header.timestamp;
+
+            if ( repeat_t0 < 0 )
+            {
+                cout<<"Timestamp is now negative? "<<repeat_t0<<endl;
+                if ( global_header.timestamp > 0 )
+                {
+                    cout<<"But the global timestamp isn't? "<<global_header.timestamp<<endl;
+                }
+            }
+            
+                        if ( repeat_t0<0 )
+            {
+                repeat_t0 = repeat_t0*-7;
+                if ( global_header.timestamp != repeat_t0 )
+                {
+                    cout<<"nope."<<endl;
+                }
+            }
+            //cout<<repeat_t0<<endl;
+            for ( int hit3=0; hit3<sizeof ( header.intpts ); hit3++ )
+            {
+
+                //cout<<"read third checkpoint."<<endl;
+                if ( header.intpts[hit3].e == 0 )
+                {
+                    continue;
+                }
+                tot_gamma_pos = Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit3].x, header.intpts[hit3].y, header.intpts[hit3].z, sphere_split );
+                tot_gamma_pos[0] = one_hit.x;
+                tot_gamma_pos[1] = one_hit.y;
+                tot_gamma_pos[2] = one_hit.z;
+                tot_gamma_pos[3] = one_hit.r;
+                tot_gamma_pos[4] = one_hit.theta;
+                tot_gamma_pos[5] = one_hit.phi;
+                tot_gamma_pos.clear();
+                //cout<<tot_gamma_pos[3]<<endl;
+                //cout<<header.intpts[hit3].x<<endl;
+                header.intpts[hit3].e = one_hit.e;
+                //cout<<one_hit.r<<endl;
+                //cout<<one_hit.e<<endl;
+                header.intpts[hit3].seg = one_hit.seg;
+                //cout<<one_hit.seg<<endl;
+                header.intpts[hit3].seg_ener = one_hit.seg_ener;
+                //cout<<one_hit.seg_ener<<endl;
+                event.push_back ( one_hit );
+
+
+            }
+            //timestamp_0 = -1;
+            //delta_t = -1;
+
+        }
+        if ( timestamp_0 == -1 )
+        {
+            timestamp_0 = global_header.timestamp;
+            //cout<<"The current timestamp is "<<timestamp_0<<endl;
+
+            for ( int hit1=0; hit1<16; hit1++ )
+            {
+
+                //cout<<"read first checkpoint."<<endl;
+                if ( header.intpts[hit1].e == 0 )
+                {
+                    continue;
+                }
+                tot_gamma_pos = Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit1].x, header.intpts[hit1].y, header.intpts[hit1].z, sphere_split );
+                //cout<<"Is the problem with tot_gam_pos?"<<endl;
+// 		for (int wtf = 0; wtf<tot_gamma_pos.size(); wtf++)
+// 		{
+// 		  cout<<tot_gamma_pos[wtf]<<endl;
+// 		}
+                tot_gamma_pos[0] = one_hit.x;
+                //cout<<"No...with filling the struct?"<<endl;
+                tot_gamma_pos[1] = one_hit.y;
+                tot_gamma_pos[2] = one_hit.z;
+                tot_gamma_pos[3] = one_hit.r;
+                tot_gamma_pos[4] = one_hit.theta;
+                tot_gamma_pos[5] = one_hit.phi;
+                tot_gamma_pos.clear();
+                //cout<<one_hit.r<<endl;
+                header.intpts[hit1].e = one_hit.e;
+                //cout<<one_hit.e<<endl;
+                //cout<<one_hit.e<<endl;
+                header.intpts[hit1].seg = one_hit.seg;
+                //cout<<one_hit.seg<<endl;
+                header.intpts[hit1].seg_ener = one_hit.seg_ener;
+                //cout<<one_hit.seg_ener<<endl;
+                event.push_back ( one_hit );
+
+            }
+            //event_hits++;
+        }
+        if ( delta_t>=0 && delta_t<event_build_time )
+        {
+            //event_hits++;
+            for ( int hit2=0; hit2<sizeof ( header.intpts ); hit2++ )
+            {
+                //cout<<"read second checkpoint."<<endl;
+                //Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit].x, header.intpts[hit].y, header.intpts[hit].z, sphere_split ) = one_hit.tot_gamma_pos;
+                if ( header.intpts[hit2].e == 0 )
+                {
+                    continue;
+                }
+                tot_gamma_pos= Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit2].x, header.intpts[hit2].y, header.intpts[hit2].z, sphere_split ) ;
+                tot_gamma_pos[0] = one_hit.x;
+                tot_gamma_pos[1] = one_hit.y;
+                tot_gamma_pos[2] = one_hit.z;
+                tot_gamma_pos[3] = one_hit.r;
+                tot_gamma_pos[4] = one_hit.theta;
+                tot_gamma_pos[5] = one_hit.phi;
+                tot_gamma_pos.clear();
+                header.intpts[hit2].e = one_hit.e;
+                header.intpts[hit2].seg = one_hit.seg;
+                header.intpts[hit2].seg_ener = one_hit.seg_ener;
+                event.push_back ( one_hit );
+
+            }
+        }
+        if ( delta_t == -1 )
+        {
+            continue;
+
+        }
+
+        b++;
+        if ( ( int ) b%200 == 0 )
+        {
+            cout<<"Event number: "<<b<<"\r"<<flush;
+        }
+
+
+        /*
+                }*/
+
+//         cout<<"This event had "<<event_hits<<" hits."<<endl;
+//         event_hits = 0;
+//         timestamp_0 = -1;
+//         delta_t = -1;
+
+
+    }
+
+
+
+    cout<<"Finished running through file."<<endl;
+
+
+
+//     tree->Fill();
+//     tree->Write();
+//
+// //     cout<<"It's not the write??"<<endl;
+//     rootfile->Close();
+//     cout<<"Am I having troubling closing? Dipshit. What stupid luck."<<endl;
+
+    return;
+};
