@@ -1,15 +1,10 @@
-\
+#include "HGBinaryStuff.h"
+#include "GoddessStruct.h"
 
 #include <string.h>
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <fstream>
-#include "TMath.h"
-#include "TGraph.h"
-#include "TCanvas.h"
-#include "TROOT.h"
-#include "TFile.h"
 #include "TChain.h"
 #include "TFile.h"
 #include "TH1.h"
@@ -22,24 +17,12 @@ using namespace std;
 
 #define max_inputs 16 //define this as an option in sort. That way if there is ever any more Gretina crystals you can fix this by user instead of hardcode. 
 
-//BinaryReading* BR = new BinaryReading();
-
 struct GlobalHeader
 {
     int32_t type;
     int32_t length;
     int64_t timestamp;
 };
-
-// struct Gretina_data
-// {
-//     float x;
-//     float y;
-//     float z;
-//     float e;
-//     int seg;
-//     float seg_enter;
-// };
 
 struct Gretina_header
 {
@@ -83,24 +66,23 @@ struct Gretina_hit
 };
 
 
+struct Gretina_Gamma_Ray
+{
+    float x;
+    float y;
+    float z;
+    float e;
+    float seg;
+    float seg_ener;
+};
+
 vector<float> Coor_Trans_Gretina ( float R, float theta, float phi, float sphere_split )
 {
-//     float R_new;
-//     float theta_new;
-//     float phi_new;
 
-//     cout<<R<<endl;
-//     cout<<theta<<endl;
-//     cout<<phi<<endl;
-//     cout<<"---------------<<endl;
-
-    float x_1 = R*sin ( phi );
-    float y_1 = R*tan ( theta ) *sin ( phi );
-    float z_1 = R* ( cos ( phi ) /cos ( theta ) );
-
-//     cout<<sin(phi)<<endl;
-//     cout<<tan(theta)*sin(phi)<<endl;
-//     cout<<cos(phi)/cos(theta)<<endl;
+  
+    float x_1 = R*cos (theta)*sin(phi);
+    float y_1 = R*sin ( theta ) *sin ( phi );
+    float z_1 = R* cos ( phi );
 
     float d = sphere_split/2;
     float x_2 = d; //remember to add a negative in the other part of the code for the opposite half of the sphere. aka cos90 vs cos180
@@ -111,10 +93,6 @@ vector<float> Coor_Trans_Gretina ( float R, float theta, float phi, float sphere
     //float r_f = (c[0]^2+c[1]^2+c[2]^2)^(1/2);
     //float theta_f = (tan(c[1]/c[0]))^-1;
     //float phi_f = (cos(c[2]/r_f))^-1;
-
-//     cout<<c[0]<<endl;
-//     cout<<c[1]<<endl;
-//     cout<<c[2]<<endl;
 
     //vector<float> c_new = {r_f,theta_f,phi_f};
 
@@ -136,10 +114,7 @@ pair<float,float> Find_Original_Coor ( float hole_number, int det_number )
     while ( !file.eof() )
     {
         getline ( file,find_mount_hole,',' );
-        //cout<<find_mount_hole<<endl;
         mount = atof ( find_mount_hole.c_str() );
-        //cout<<"mount "<<mount<<endl;
-        //cout<<"find "<<find_mount_hole<<endl;
 
 
         if ( mount == hole_number )
@@ -149,12 +124,8 @@ pair<float,float> Find_Original_Coor ( float hole_number, int det_number )
                 getline ( file,theta,',' );
                 getline ( file,phi,',' );
             }
-            //cout<<theta<<endl;
-            //cout<<phi<<endl;
             angles.first = atof ( theta.c_str() );
             angles.second = atof ( phi.c_str() );
-// 	    cout<<angles.first<<endl;
-// 	    cout<<angles.second<<endl;
             break;
         }
     }
@@ -162,53 +133,46 @@ pair<float,float> Find_Original_Coor ( float hole_number, int det_number )
 }
 
 
-vector<float> Tot_Gam_Pos ( float hole_num, float det_num, vector<float> crystal_face, float x, float y, float z, float Gretina_split )
+vector<float> Tot_Gam_Pos ( vector<float> new_face, float x, float y, float z)
 {
     vector<float> new_pos;
-    pair<float,float> original_face = Find_Original_Coor ( hole_num,det_num );
-    vector<float> new_face = Coor_Trans_Gretina ( 1.78,original_face.first,original_face.second, Gretina_split );
-//   cout<< "the pair reeds first: "<<original_face.first<<" and second: "<<original_face.second<<endl;
-//   cout<<"the new coor read: "<<endl;
-//
-//   for (int fuckme = 0; fuckme<new_face.size(); fuckme++)
-//   {
-//     cout<<new_face[fuckme]<<endl;
-//   }
-//     cout<<"damn it damn it damn it"<<endl;
 
     float tot_x = x + new_face[0];
     float tot_y = y + new_face[1];
     float tot_z = z + new_face[2];
-
-//     cout<<tot_x<<endl;
-//     cout<<tot_y<<endl;
-//     cout<<tot_z<<endl;
 
     new_pos.push_back ( tot_x );
     new_pos.push_back ( tot_y );
     new_pos.push_back ( tot_z );
 
     float r = pow ( pow ( tot_x,2 ) +pow ( tot_y,2 ) +pow ( tot_z,2 ) , 1/2 );
-    float theta = pow ( tan ( tot_y/tot_x ),-1 );
-    float phi = pow ( tan ( pow ( pow ( tot_x,2 ) +pow ( tot_y,2 ) ,1/2 ) /tot_z ) , -1 );
+    float theta = atan ( tot_y/tot_x );
+    float phi = atan ( pow ( pow ( tot_x,2 ) +pow ( tot_y,2 ) ,1/2 ) /tot_z );
 
     new_pos.push_back ( r );
-    //cout<<r<<endl;
     new_pos.push_back ( theta );
     new_pos.push_back ( phi );
 
-//     cout<<r<<endl;
-//     cout<<theta<<endl;
-//     cout<<phi<<endl;
-//     cout<<"+++++++++++++++++++++++++++++++++++++"<<endl;
-//     for (int wtf = 0; wtf<new_pos.size(); wtf++)
-//     {
-//       cout<<new_pos[wtf]<<endl;
-//     }
-
-//     cout<<"------------------------------"<<endl;
-
     return new_pos;
+}
+
+float Angle_Between_Vect ( float x1, float y1, float z1, float x2, float y2, float z2 )
+{
+    float dotproduct = x1*x2+y1*y2+z1*z2;
+    float norm1 = pow ( pow ( x1,2 ) +pow ( y1,2 ) +pow ( z1,2 ),1/2 );
+    float norm2 = pow ( pow ( x2,2 ) +pow ( y2,2 ) +pow ( z2,2 ),1/2 );
+
+    float angle = acos ( dotproduct/ ( norm1*norm2 ) );
+
+    return angle;
+}
+
+float Scattering_Angle (float first_hit_e, float e_d)
+{
+  
+  float angle = acos(1-((1/(first_hit_e-e_d))-1/first_hit_e)*511*3e8);
+  
+  return angle;
 }
 
 void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
@@ -218,11 +182,182 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 //     Gretina_data data_struct;
     GlobalHeader global_header;
 
+
+    pair<int,int> hole_det;
+    pair<float,float> theta_phi;
+    map<pair<int,int>,pair<float,float>> angles_map =
+    {
+        {make_pair<int,int> ( 1,0 ),make_pair<float,float> ( 35.3,19.58 ) },
+        {make_pair<int,int> ( 1,1 ),make_pair<float,float> ( 47.6,42.3 ) },
+        {make_pair<int,int> ( 1,2 ),make_pair<float,float> ( 30.6,54.72 ) },
+        {make_pair<int,int> ( 1,3 ),make_pair<float,float> ( 16.65,19.58 ) },
+
+        {make_pair<int,int> ( 2,0 ),make_pair<float,float> ( 35.3,91.58 ) },
+        {make_pair<int,int> ( 2,1 ),make_pair<float,float> ( 47.6,11.43 ) },
+        {make_pair<int,int> ( 2,2 ),make_pair<float,float> ( 30.6,126.72 ) },
+        {make_pair<int,int> ( 2,3 ),make_pair<float,float> ( 16.65,91.58 ) },
+
+        {make_pair<int,int> ( 3,0 ),make_pair<float,float> ( 35.3,163.58 ) },
+        {make_pair<int,int> ( 3,1 ),make_pair<float,float> ( 47.6,186.3 ) },
+        {make_pair<int,int> ( 3,2 ),make_pair<float,float> ( 30.6,198.72 ) },
+        {make_pair<int,int> ( 3,3 ),make_pair<float,float> ( 16.65,163.58 ) },
+
+        {make_pair<int,int> ( 4,0 ),make_pair<float,float> ( 35.3,235.58 ) },
+        {make_pair<int,int> ( 4,1 ),make_pair<float,float> ( 47.6,258.3 ) },
+        {make_pair<int,int> ( 4,2 ),make_pair<float,float> ( 30.6,270.72 ) },
+        {make_pair<int,int> ( 4,3 ),make_pair<float,float> ( 16.65,235.58 ) },
+
+        {make_pair<int,int> ( 5,0 ),make_pair<float,float> ( 35.3,307.58 ) },
+        {make_pair<int,int> ( 5,1 ),make_pair<float,float> ( 47.6,330.3 ) },
+        {make_pair<int,int> ( 5,2 ),make_pair<float,float> ( 30.6,342.2 ) },
+        {make_pair<int,int> ( 5,3 ),make_pair<float,float> ( 16.65,307.58 ) },
+
+        {make_pair<int,int> ( 6,0 ),make_pair<float,float> ( 67.71,74.63 ) },
+        {make_pair<int,int> ( 6,1 ),make_pair<float,float> ( 55.02,91.23 ) },
+        {make_pair<int,int> ( 6,2 ),make_pair<float,float> ( 48.92,68.77 ) },
+        {make_pair<int,int> ( 6,3 ),make_pair<float,float> ( 64.18,54.55 ) },
+
+        {make_pair<int,int> ( 7,0 ),make_pair<float,float> ( 67.71,146.63 ) },
+        {make_pair<int,int> ( 7,1 ),make_pair<float,float> ( 55.02,163.23 ) },
+        {make_pair<int,int> ( 7,2 ),make_pair<float,float> ( 48.92,140.77 ) },
+        {make_pair<int,int> ( 7,3 ),make_pair<float,float> ( 64.18,126.55 ) },
+
+        {make_pair<int,int> ( 8,0 ),make_pair<float,float> ( 67.71,218.63 ) },
+        {make_pair<int,int> ( 8,1 ),make_pair<float,float> ( 55.02,235.23 ) },
+        {make_pair<int,int> ( 8,2 ),make_pair<float,float> ( 48.92,212.77 ) },
+        {make_pair<int,int> ( 8,3 ),make_pair<float,float> ( 64.18,198.55 ) },
+
+        {make_pair<int,int> ( 9,0 ),make_pair<float,float> ( 67.71,290.63 ) },
+        {make_pair<int,int> ( 9,1 ),make_pair<float,float> ( 55.02,307.23 ) },
+        {make_pair<int,int> ( 9,2 ),make_pair<float,float> ( 48.92,284.77 ) },
+        {make_pair<int,int> ( 9,3 ),make_pair<float,float> ( 64.18,270.55 ) },
+
+        {make_pair<int,int> ( 10,0 ),make_pair<float,float> ( 67.71,2.63 ) },
+        {make_pair<int,int> ( 10,1 ),make_pair<float,float> ( 55.02,19.23 ) },
+        {make_pair<int,int> ( 10,2 ),make_pair<float,float> ( 48.92,356.77 ) },
+        {make_pair<int,int> ( 10,3 ),make_pair<float,float> ( 64.18,342.55 ) },
+
+        {make_pair<int,int> ( 11,0 ),make_pair<float,float> ( 87.15,8.71 ) },
+        {make_pair<int,int> ( 11,1 ),make_pair<float,float> ( 105.79,13.65 ) },
+        {make_pair<int,int> ( 11,2 ),make_pair<float,float> ( 92.85,27.29 ) },
+        {make_pair<int,int> ( 11,3 ),make_pair<float,float> ( 74.21,22.35 ) },
+
+        {make_pair<int,int> ( 12,0 ),make_pair<float,float> ( 97.01,47.25 ) },
+        {make_pair<int,int> ( 12,1 ),make_pair<float,float> ( 100.78,66.39 ) },
+        {make_pair<int,int> ( 12,2 ),make_pair<float,float> ( 82.99,60.75 ) },
+        {make_pair<int,int> ( 12,3 ),make_pair<float,float> ( 79.22,41.61 ) },
+
+        {make_pair<int,int> ( 13,0 ),make_pair<float,float> ( 87.15,80.71 ) },
+        {make_pair<int,int> ( 13,1 ),make_pair<float,float> ( 105.79,85.65 ) },
+        {make_pair<int,int> ( 13,2 ),make_pair<float,float> ( 92.85,99.29 ) },
+        {make_pair<int,int> ( 13,3 ),make_pair<float,float> ( 74.21,94.35 ) },
+
+        {make_pair<int,int> ( 14,0 ),make_pair<float,float> ( 97.01,119.25 ) },
+        {make_pair<int,int> ( 14,1 ),make_pair<float,float> ( 100.78,138.39 ) },
+        {make_pair<int,int> ( 14,2 ),make_pair<float,float> ( 82.99,132.75 ) },
+        {make_pair<int,int> ( 14,3 ),make_pair<float,float> ( 79.22,113.61 ) },
+
+        {make_pair<int,int> ( 15,0 ),make_pair<float,float> ( 87.15,152.71 ) },
+        {make_pair<int,int> ( 15,1 ),make_pair<float,float> ( 105.79,157.65 ) },
+        {make_pair<int,int> ( 15,2 ),make_pair<float,float> ( 92.85,171.29 ) },
+        {make_pair<int,int> ( 15,3 ),make_pair<float,float> ( 74.21,166.35 ) },
+
+        {make_pair<int,int> ( 16,0 ),make_pair<float,float> ( 97.01,191.25 ) },
+        {make_pair<int,int> ( 16,1 ),make_pair<float,float> ( 100.78,210.39 ) },
+        {make_pair<int,int> ( 16,2 ),make_pair<float,float> ( 82.99,204.75 ) },
+        {make_pair<int,int> ( 16,3 ),make_pair<float,float> ( 79.22,185.61 ) },
+
+        {make_pair<int,int> ( 17,0 ),make_pair<float,float> ( 87.15,224.71 ) },
+        {make_pair<int,int> ( 17,1 ),make_pair<float,float> ( 105.79,229.65 ) },
+        {make_pair<int,int> ( 17,2 ),make_pair<float,float> ( 92.85,243.29 ) },
+        {make_pair<int,int> ( 17,3 ),make_pair<float,float> ( 74.21,238.35 ) },
+
+        {make_pair<int,int> ( 18,0 ),make_pair<float,float> ( 97.01,263.25 ) },
+        {make_pair<int,int> ( 18,1 ),make_pair<float,float> ( 100.78,282.39 ) },
+        {make_pair<int,int> ( 18,2 ),make_pair<float,float> ( 82.99,276.75 ) },
+        {make_pair<int,int> ( 18,3 ),make_pair<float,float> ( 79.22,257.61 ) },
+
+        {make_pair<int,int> ( 19,0 ),make_pair<float,float> ( 87.15,296.71 ) },
+        {make_pair<int,int> ( 19,1 ),make_pair<float,float> ( 105.79,301.65 ) },
+        {make_pair<int,int> ( 19,2 ),make_pair<float,float> ( 92.85,315.29 ) },
+        {make_pair<int,int> ( 19,3 ),make_pair<float,float> ( 74.21,310.35 ) },
+
+        {make_pair<int,int> ( 20,0 ),make_pair<float,float> ( 97.01,335.25 ) },
+        {make_pair<int,int> ( 20,1 ),make_pair<float,float> ( 100.78,354.39 ) },
+        {make_pair<int,int> ( 20,2 ),make_pair<float,float> ( 82.99,348.75 ) },
+        {make_pair<int,int> ( 20,3 ),make_pair<float,float> ( 79.22,310.35 ) },
+
+        {make_pair<int,int> ( 21,0 ),make_pair<float,float> ( 112.29,33.37 ) },
+        {make_pair<int,int> ( 21,1 ),make_pair<float,float> ( 124.98,16.77 ) },
+        {make_pair<int,int> ( 21,2 ),make_pair<float,float> ( 131.08,39.23 ) },
+        {make_pair<int,int> ( 21,3 ),make_pair<float,float> ( 115.82,53.45 ) },
+
+        {make_pair<int,int> ( 22,0 ),make_pair<float,float> ( 112.29,105.37 ) },
+        {make_pair<int,int> ( 22,1 ),make_pair<float,float> ( 124.98,88.77 ) },
+        {make_pair<int,int> ( 22,2 ),make_pair<float,float> ( 131.08,111.23 ) },
+        {make_pair<int,int> ( 22,3 ),make_pair<float,float> ( 115.82,125.45 ) },
+
+        {make_pair<int,int> ( 23,0 ),make_pair<float,float> ( 112.29,177.37 ) },
+        {make_pair<int,int> ( 23,1 ),make_pair<float,float> ( 124.98,160.77 ) },
+        {make_pair<int,int> ( 23,2 ),make_pair<float,float> ( 131.08,183.23 ) },
+        {make_pair<int,int> ( 23,3 ),make_pair<float,float> ( 115.82,197.45 ) },
+
+        {make_pair<int,int> ( 24,0 ),make_pair<float,float> ( 112.29,249.37 ) },
+        {make_pair<int,int> ( 24,1 ),make_pair<float,float> ( 124.98,232.77 ) },
+        {make_pair<int,int> ( 24,2 ),make_pair<float,float> ( 131.08,255.23 ) },
+        {make_pair<int,int> ( 24,3 ),make_pair<float,float> ( 115.82,269.45 ) },
+
+        {make_pair<int,int> ( 25,0 ),make_pair<float,float> ( 112.29,321.37 ) },
+        {make_pair<int,int> ( 25,1 ),make_pair<float,float> ( 124.98,304.77 ) },
+        {make_pair<int,int> ( 25,2 ),make_pair<float,float> ( 131.08,327.23 ) },
+        {make_pair<int,int> ( 25,3 ),make_pair<float,float> ( 115.82,341.45 ) },
+
+        {make_pair<int,int> ( 26,0 ),make_pair<float,float> ( 144.7,88.42 ) },
+        {make_pair<int,int> ( 26,1 ),make_pair<float,float> ( 132.4,65.7 ) },
+        {make_pair<int,int> ( 26,2 ),make_pair<float,float> ( 149.4,53.28 ) },
+        {make_pair<int,int> ( 26,3 ),make_pair<float,float> ( 163.35,88.42 ) },
+
+        {make_pair<int,int> ( 27,0 ),make_pair<float,float> ( 144.7,160.42 ) },
+        {make_pair<int,int> ( 27,1 ),make_pair<float,float> ( 132.4,137.7 ) },
+        {make_pair<int,int> ( 27,2 ),make_pair<float,float> ( 149.4,125.8 ) },
+        {make_pair<int,int> ( 27,3 ),make_pair<float,float> ( 163.35,160.42 ) },
+
+        {make_pair<int,int> ( 28,0 ),make_pair<float,float> ( 144.7,232.42 ) },
+        {make_pair<int,int> ( 28,1 ),make_pair<float,float> ( 132.4,209.7 ) },
+        {make_pair<int,int> ( 28,2 ),make_pair<float,float> ( 149.4,197.8 ) },
+        {make_pair<int,int> ( 28,3 ),make_pair<float,float> ( 163.35,232.42 ) },
+
+        {make_pair<int,int> ( 29,0 ),make_pair<float,float> ( 144.7,304.42 ) },
+        {make_pair<int,int> ( 29,1 ),make_pair<float,float> ( 132.4,281.7 ) },
+        {make_pair<int,int> ( 29,2 ),make_pair<float,float> ( 149.4,269.28 ) },
+        {make_pair<int,int> ( 29,3 ),make_pair<float,float> ( 163.35,304.42 ) },
+
+        {make_pair<int,int> ( 30,0 ),make_pair<float,float> ( 144.7,16.42 ) },
+        {make_pair<int,int> ( 30,1 ),make_pair<float,float> ( 132.4,253.7 ) },
+        {make_pair<int,int> ( 30,2 ),make_pair<float,float> ( 149.4,341.28 ) },
+        {make_pair<int,int> ( 30,3 ),make_pair<float,float> ( 163.35,16.42 ) }
+
+    };
+
+
+//     hole_det.first = 1;
+//     hole_det.second = 0;
+    map<pair<int,int>,pair<float,float>>::iterator itr;
+
+//     itr = angles_map.find(hole_det);
+//     if (itr != angles_map.end())
+//     {
+//       theta_phi.first = itr->second.first;
+//       theta_phi.second = itr->second.second;
+//
+//       cout<<theta_phi.first<<theta_phi.second<<endl;
+//     }
+
 //     vector<Gretina_header> rawdata;
     //vector<int> type_in;
 //     vector<int> crystalID;
 //     // vector<int> num_of_inter; //number of interaction points from decomp
-//     vector<float> tote;
+     vector<float> tote;
 //     //vector<int> coree1; //remember there are four pieces to this in the struct
 //     //vector<int> coree2;
 //     //vector<int> coree3;
@@ -240,17 +375,23 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 //     vector<float> x2; //The two's don't mean anything here except that it is in the function rather than in the struct
 //     vector<float> y2;
 //     vector<float> z2;
-//     vector<float> e2;
+     vector<float> e2;
 //     vector<int> seg2;
 //     vector<float> seg_ent;
+
+    Gretina_Gamma_Ray Gamma;
+    vector<Gretina_Gamma_Ray>* Gammas = new vector<Gretina_Gamma_Ray>;
+    vector<float> energy_temp;
+    float tot_energy;
 //
-//     TFile* rootfile = new TFile ( newfile.c_str(),"recreate" );
-//     TTree* tree = new TTree ( "Gretina_tree","Gretina" );
+    TFile* rootfile = new TFile ( newfile.c_str(),"recreate" );
+    TTree* tree = new TTree ( "Gretina_tree","Gretina" );
+    tree->Branch ( "Tracked",&energy_temp );
 // //     tree->Branch ("raw_Gretina", &rawdata);
 //     //tree->Branch ( "type", &type_in );
 //     tree->Branch ( "crystal_id", &crystalID );
 //     //tree->Branch ( "count", &num_of_inter );
-//     tree->Branch ( "total_en", &tote );
+     tree->Branch ( "total_en", &tote );
 //     //tree->Branch ( "core_en1", &coree1 );
 //     //tree->Branch ( "core_en2", &coree2 );
 //     //tree->Branch ( "core_en3", &coree3 );
@@ -268,7 +409,7 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 //     tree->Branch ( "x",&x2 );
 //     tree->Branch ( "y",&y2 );
 //     tree->Branch ( "z",&z2 );
-//     tree->Branch ( "e",&e2 );
+     tree->Branch ( "e",&e2 );
 //     tree->Branch ( "segment", &seg2 );
 //     tree->Branch ( "segment_entered",&seg_ent );
 
@@ -277,9 +418,9 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
     int32_t timestamp_0 = -1;
     //int timestamp_f;
     int32_t delta_t = -1;
-    int32_t event_build_time = 171; // 171 = 1.42ms; 238 = 2.76;
+    int32_t event_build_time = 10; // 171 = 1.42ms; 238 = 2.76; (should be in nanoseconds when written)
     //int event_hits = 0;
-    int32_t repeat_t0 = 0;
+    //int32_t repeat_t0 = 0;
     vector<Gretina_hit> event;
     //vector<vector<Gretina_hit>> events;
     Gretina_hit one_hit;
@@ -288,13 +429,15 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
     pair<float,float> angles;
     float theta;
     float phi;
-    float R = 1.78;
+    float R = 178.2;
     vector<float> crystal_face;
     int b = 0; //just a counter
     vector<float> tot_gamma_pos;
-
-
-
+    float highest_energy;
+    int hit;
+    float angle_between_hit;
+    vector<Gretina_hit> second_event;
+    vector<Gretina_hit> third_event;
 
 
     int readsuccess = 1;
@@ -314,30 +457,18 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
     {
         readsuccess = read ( fd, ( void* ) &global_header,sizeof ( global_header ) );
 
-//cout<<global_header.type<<endl;
         if ( global_header.type != 1 )
         {
             cout<<" Global header not Type 1 data."<<endl;
             return;
         }
 
-//        if (global_header.timestamp < 0) {cout<<"Timestamp is negative."<<endl;}
-// 	cout<<global_header.length<<endl;
-// 	cout<<global_header.timestamp<<endl;
-
         buffsuccess = read ( fd, ( void* ) &header,sizeof ( header ) );
-
-// 	cout<<header.type<<endl;
-// 	if (header.crystal_id>120){
-// 	cout<<header.crystal_id<<endl;}
-// 	if(header.type != 1) {cout<<"Crystal header not Type 1 data."<<endl; continue;}
-
-// 	rawdata.push_back(header);
 
         //type_in.push_back ( header.type );
 //         crystalID.push_back ( header.crystal_id );
 //         //num_of_inter.push_back ( header.num );
-//         tote.push_back ( header.tot_e );
+         tote.push_back ( header.tot_e );
 //         //coree1.push_back ( header.core_e[0] );
 //         //coree2.push_back ( header.core_e[1] );
 //         //coree3.push_back ( header.core_e[2] );
@@ -353,230 +484,347 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 //         //post.push_back ( header.poststep );
 //         pd.push_back ( header.pad );
 
-//         for ( int inputs = 0; inputs<16; inputs++ )
-//         {
+        for ( int inputs = 0; inputs<16; inputs++ )
+        {
 //
 //             if ( header.intpts[inputs].x == 0 && header.intpts[inputs].y == 0 && header.intpts[inputs].z == 0 )
 //             {
 //                 continue;
 //             }
-//             x2.push_back ( header.intpts[inputs].x );
-//             y2.push_back ( header.intpts[inputs].y );
-//             z2.push_back ( header.intpts[inputs].z );
-//             e2.push_back ( header.intpts[inputs].e );
-//             seg2.push_back ( header.intpts[inputs].seg );
-//             seg_ent.push_back ( header.intpts[inputs].seg_ener );
-//         }
-// //     }
+            //x2.push_back ( header.intpts[inputs].x );
+            //y2.push_back ( header.intpts[inputs].y );
+            //z2.push_back ( header.intpts[inputs].z );
+            e2.push_back ( header.intpts[inputs].e );
+            //seg2.push_back ( header.intpts[inputs].seg );
+            //seg_ent.push_back ( header.intpts[inputs].seg_ener );
+        }
+//     }
 // //
 // //     while ( 1 )
 //     {
 
         hole_num = header.crystal_id/4; //quad number.
-        crystal_num = header.crystal_id%4; //crystal num 0-3 in quad.
-        angles = Find_Original_Coor ( hole_num,crystal_num );
-        theta = angles.first;
-        phi = angles.second;
-        crystal_face = Coor_Trans_Gretina ( R,theta,phi,sphere_split );
+        crystal_num = header.crystal_id%4; //crystal num 0-3 in quad
+        hole_det.first = hole_num;
+        hole_det.second = crystal_num;
+
+        itr = angles_map.find ( hole_det );
+        if ( itr != angles_map.end() )
+        {
+            theta_phi.first = itr->second.first;
+            theta_phi.second = itr->second.second;
+	    //cout<<theta_phi.first<<endl;
+	    //cout<<theta_phi.second<<endl;
+        }
+
+        crystal_face = Coor_Trans_Gretina ( R,theta_phi.first,theta_phi.second,sphere_split );
 
 
         //Create events from hit sets;
-        /*
-                if ( repeat_t0 != 0 )
-                {
-                    timestamp_0 = repeat_t0;
-                    //event_hits++;
-                }*/
-//         cout<< "Initial Time: "<<timestamp_0<<endl;
-//         cout<<"Next hit time: "<<global_header.timestamp/2 + 100<<endl;
 
-//         while ( 1 )
-//         {
 
         if ( timestamp_0 != -1 )
         {
-            delta_t = ( global_header.timestamp-timestamp_0 ) /2+100;
-            timestamp_0 = global_header.timestamp;
-            repeat_t0 = 0;
-            //cout<<delta_t<<endl;
+            delta_t = ( header.timestamp-timestamp_0 )/2+100;
+            timestamp_0 = header.timestamp;
+
 
         }
         if ( delta_t > event_build_time ) // this is where the event ends
         {
+            highest_energy = event[0].e;
+            hit = 0;
 
 
-            //cout<<"Do you see me now?"<<endl;
-//             event_hits = 1;
-//             events.push_back(event);
-//
 //             ----------------------------------------------------
 //             this is where the tracking code should go to run through each "event" or separated dt
 //             -----------------------------------------------------
 
-            for ( int interaction = 0; interaction<event.size(); interaction++ )
+            if ( event.size() >1 )
             {
 
+                for ( int interaction = 0; interaction<event.size(); interaction++ )
+                {
+                    if ( event[interaction].e > highest_energy )
+                    {
+                        highest_energy = event[interaction].e;
+
+                        hit = interaction;
+                    }
+                }
+                
+                tot_energy = highest_energy;
+
+                for ( int i = 0; i<event.size(); i++ )
+                {
+                    if ( i == hit )
+                    {
+                        continue;
+                    }
+                    //angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[i].x,event[i].y,event[i].z );
+                    angle_between_hit = Scattering_Angle(highest_energy,event[i].e);
+//                     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
+// 		    cout<<event[hit].x<<endl;
+// 		    cout<<event[hit].y<<endl;
+// 		    cout<<event[hit].z<<endl;
+// 		    cout<<event[i].x<<endl;
+// 		    cout<<event[i].y<<endl;
+// 		    cout<<event[i].z<<endl;
+// 		    cout<<angle_between_hit<<endl;
+                    if ( angle_between_hit> 15 || angle_between_hit<-15 )
+                    {
+                        one_hit.x = event[i].x;
+                        one_hit.y = event[i].y;
+                        one_hit.z = event[i].z ;
+                        one_hit.r = event[i].r;
+                        one_hit.theta = event[i].theta;
+                        one_hit.phi = event[i].phi;
+                        one_hit.e = event[i].e;
+                        one_hit.seg = event[i].seg;
+                        one_hit.seg_ener = event[i].seg_ener;
+                        second_event.push_back ( one_hit );
+
+                        continue;
+                    }
+
+                    tot_energy += event[hit].e;
+
+                }
+                Gamma.e = tot_energy;
             }
 
-            event.clear();
-            //cout<<"Umm...how about here?"<<endl;
-	    timestamp_0 = global_header.timestamp;
-            //cout<<"the global timestamp is: "<<global_header.timestamp<<endl;
-	    //repeat_t0 = global_header.timestamp;
+            Gamma.x = event[hit].x;
+            Gamma.y = event[hit].y;
+            Gamma.z = event[hit].z;
+            if ( event.size() == 1 )
+            {
+                Gamma.e = event[hit].e;
+            }
+            Gamma.seg = event[hit].seg;
+            Gamma.seg_ener = event[hit].seg_ener;
+            Gammas->push_back ( Gamma );
+            energy_temp.push_back ( Gamma.e );
 
-            //if ( repeat_t0 < 0 )
-            //{
-               // cout<<"Timestamp is now negative? "<<repeat_t0<<endl;
-               // if ( global_header.timestamp > 0 )
-               // {
-               //     cout<<"But the global timestamp isn't? "<<global_header.timestamp<<endl;
-               // }
-            //}
+            tot_energy = 0;
+	    
+
+
+            if ( second_event.size() != 0 )
+            {
+	      if (second_event.size() > 1)
+	      {
+                for ( int set = 0; set<second_event.size(); set++ )
+                {
+                    if ( second_event[set].e > highest_energy )
+                    {
+                        highest_energy = second_event[set].e;
+
+                        hit = set;
+                    }
+                }
+                
+               tot_energy = highest_energy;
+
+                for ( int ff = 0; ff<second_event.size(); ff++ )
+                {
+                    if ( ff == hit )
+                    {
+                        continue;
+                    }
+                    //angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[ff].x,event[ff].y,event[ff].z );
+                    angle_between_hit = Scattering_Angle(highest_energy,event[ff].e);
+                    if ( angle_between_hit> 15 )
+                    {
+                        one_hit.x = second_event[ff].x;
+                        one_hit.y = second_event[ff].y;
+                        one_hit.z = second_event[ff].z ;
+                        one_hit.r = second_event[ff].r;
+                        one_hit.theta = second_event[ff].theta;
+                        one_hit.phi = second_event[ff].phi;
+                        one_hit.e = second_event[ff].e;
+                        one_hit.seg = second_event[ff].seg;
+                        one_hit.seg_ener = second_event[ff].seg_ener;
+                        third_event.push_back ( one_hit );
+
+                        continue;
+                    }
+
+                    tot_energy += second_event[hit].e;
+
+
+                }
+                Gamma.e = tot_energy;
+            }
+
+            Gamma.x = second_event[hit].x;
+            Gamma.y = second_event[hit].y;
+            Gamma.z = second_event[hit].z;
+
+            if ( second_event.size() == 1 )
+            {
+                Gamma.e = second_event[hit].e;
+            }
+            Gamma.seg = second_event[hit].seg;
+            Gamma.seg_ener = second_event[hit].seg_ener;
+            Gammas->push_back ( Gamma );
+            energy_temp.push_back ( Gamma.e );
+
+            tot_energy = 0;
+        }
+
+        if ( third_event.size() != 0 )
+        {
+	  if (third_event.size()>1)
+	  {
+            for ( int settwo= 0; settwo<event.size(); settwo++ )
+            {
+                if ( event[settwo].e > highest_energy )
+                {
+                    highest_energy = event[settwo].e;
+
+                    hit = settwo;
+                }
+            }
             
-               //         if ( repeat_t0<0 )
-           // {
-              //  repeat_t0 = repeat_t0*-7;
-              //  if ( global_header.timestamp != repeat_t0 )
-               // {
-               //     cout<<"nope."<<endl;
-               // }
-           // }
-            //cout<<repeat_t0<<endl;
-            for ( int hit3=0; hit3<sizeof ( header.intpts ); hit3++ )
-            {
+            tot_energy = highest_energy;
 
-               // cout<<"read third checkpoint."<<endl;
-                if ( header.intpts[hit3].e == 0 )
+            for ( int fff = 0; fff<third_event.size(); fff++ )
+            {
+                if ( fff == hit )
                 {
                     continue;
                 }
-                tot_gamma_pos = Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit3].x, header.intpts[hit3].y, header.intpts[hit3].z, sphere_split );
-                tot_gamma_pos[0] = one_hit.x;
-                tot_gamma_pos[1] = one_hit.y;
-                tot_gamma_pos[2] = one_hit.z;
-                tot_gamma_pos[3] = one_hit.r;
-                tot_gamma_pos[4] = one_hit.theta;
-                tot_gamma_pos[5] = one_hit.phi;
-                tot_gamma_pos.clear();
-                //cout<<tot_gamma_pos[3]<<endl;
-                //cout<<header.intpts[hit3].x<<endl;
-                header.intpts[hit3].e = one_hit.e;
-                //cout<<one_hit.r<<endl;
-                //cout<<one_hit.e<<endl;
-                header.intpts[hit3].seg = one_hit.seg;
-                //cout<<one_hit.seg<<endl;
-                header.intpts[hit3].seg_ener = one_hit.seg_ener;
-                //cout<<one_hit.seg_ener<<endl;
-                event.push_back ( one_hit );
-
-
-            }
-            //timestamp_0 = -1;
-            //delta_t = -1;
-
-        }
-        if ( timestamp_0 == -1 )
-        {
-            timestamp_0 = global_header.timestamp;
-            //cout<<"The current timestamp is "<<timestamp_0<<endl;
-
-            for ( int hit1=0; hit1<16; hit1++ )
-            {
-
-                //cout<<"read first checkpoint."<<endl;
-                if ( header.intpts[hit1].e == 0 )
+                //angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[fff].x,event[fff].y,event[fff].z );
+                angle_between_hit = Scattering_Angle(highest_energy,event[fff].e);
+                if ( angle_between_hit> 15 )
                 {
+                    cout<<"Sub-gamma would be in a fourth event."<<endl;
                     continue;
                 }
-                tot_gamma_pos = Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit1].x, header.intpts[hit1].y, header.intpts[hit1].z, sphere_split );
-                //cout<<"Is the problem with tot_gam_pos?"<<endl;
-// 		for (int wtf = 0; wtf<tot_gamma_pos.size(); wtf++)
-// 		{
-// 		  cout<<tot_gamma_pos[wtf]<<endl;
-// 		}
-                tot_gamma_pos[0] = one_hit.x;
-                //cout<<"No...with filling the struct?"<<endl;
-                tot_gamma_pos[1] = one_hit.y;
-                tot_gamma_pos[2] = one_hit.z;
-                tot_gamma_pos[3] = one_hit.r;
-                tot_gamma_pos[4] = one_hit.theta;
-                tot_gamma_pos[5] = one_hit.phi;
-                tot_gamma_pos.clear();
-                //cout<<one_hit.r<<endl;
-                header.intpts[hit1].e = one_hit.e;
-                //cout<<one_hit.e<<endl;
-                //cout<<one_hit.e<<endl;
-                header.intpts[hit1].seg = one_hit.seg;
-                //cout<<one_hit.seg<<endl;
-                header.intpts[hit1].seg_ener = one_hit.seg_ener;
-                //cout<<one_hit.seg_ener<<endl;
-                event.push_back ( one_hit );
+
+                tot_energy += third_event[hit].e;
 
             }
-            //event_hits++;
+            Gamma.e = tot_energy;
+	  }
+            Gamma.x = third_event[hit].x;
+            Gamma.y = third_event[hit].y;
+            Gamma.z = third_event[hit].z;
+	    if (third_event.size() == 1)
+	    {
+            Gamma.e = third_event[hit].e;
+	    }
+            Gamma.seg = third_event[hit].seg;
+            Gamma.seg_ener = third_event[hit].seg_ener;
+            Gammas->push_back ( Gamma );
+            energy_temp.push_back ( Gamma.e );
+
+            tot_energy = 0;
         }
-        if ( delta_t>=0 && delta_t<event_build_time )
+
+        event.clear();
+        second_event.clear();
+        third_event.clear();
+
+        for ( int hit3=0; hit3<header.num; hit3++ )
         {
-            //event_hits++;
-            for ( int hit2=0; hit2<sizeof ( header.intpts ); hit2++ )
+            tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit3].x, header.intpts[hit3].y, header.intpts[hit3].z);
+            //cout<< "==============================================="<<endl;
+	    one_hit.x = tot_gamma_pos[0];
+	    //cout<<one_hit.x<<endl;
+             one_hit.y = tot_gamma_pos[1];
+	    //cout<<one_hit.y<<endl;
+            one_hit.z = tot_gamma_pos[2];
+	    //cout<<one_hit.z<<endl;
+            one_hit.r = tot_gamma_pos[3];
+            one_hit.theta = tot_gamma_pos[4];
+            one_hit.phi = tot_gamma_pos[5];
+            tot_gamma_pos.clear();
+            one_hit.e = header.intpts[hit3].e;
+	    //cout<<one_hit.e<<endl;
+            one_hit.seg = header.intpts[hit3].seg;
+            one_hit.seg_ener = header.intpts[hit3].seg_ener;
+            event.push_back ( one_hit );
+        }
+
+    }
+    if ( timestamp_0 == -1 )
+    {
+        timestamp_0 = header.timestamp;
+
+        for ( int hit1=0; hit1<header.num; hit1++ )
+        {
+            if ( header.intpts[hit1].e == 0 )
             {
-                //cout<<"read second checkpoint."<<endl;
-                //Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit].x, header.intpts[hit].y, header.intpts[hit].z, sphere_split ) = one_hit.tot_gamma_pos;
-                if ( header.intpts[hit2].e == 0 )
-                {
-                    continue;
-                }
-                tot_gamma_pos= Tot_Gam_Pos ( hole_num, crystal_num, crystal_face, header.intpts[hit2].x, header.intpts[hit2].y, header.intpts[hit2].z, sphere_split ) ;
-                tot_gamma_pos[0] = one_hit.x;
-                tot_gamma_pos[1] = one_hit.y;
-                tot_gamma_pos[2] = one_hit.z;
-                tot_gamma_pos[3] = one_hit.r;
-                tot_gamma_pos[4] = one_hit.theta;
-                tot_gamma_pos[5] = one_hit.phi;
-                tot_gamma_pos.clear();
-                header.intpts[hit2].e = one_hit.e;
-                header.intpts[hit2].seg = one_hit.seg;
-                header.intpts[hit2].seg_ener = one_hit.seg_ener;
-                event.push_back ( one_hit );
-
+                continue;
             }
+            tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit1].x, header.intpts[hit1].y, header.intpts[hit1].z );
+	    one_hit.x = tot_gamma_pos[0];
+	    //cout<<one_hit.x<<endl;
+             one_hit.y = tot_gamma_pos[1];
+	    //cout<<one_hit.y<<endl;
+            one_hit.z = tot_gamma_pos[2];
+	    //cout<<one_hit.z<<endl;
+            one_hit.r = tot_gamma_pos[3];
+            one_hit.theta = tot_gamma_pos[4];
+            one_hit.phi = tot_gamma_pos[5];
+            tot_gamma_pos.clear();
+            one_hit.e = header.intpts[hit1].e;
+	    //cout<<one_hit.e<<endl;
+            one_hit.seg = header.intpts[hit1].seg;
+            one_hit.seg_ener = header.intpts[hit1].seg_ener;
+            event.push_back ( one_hit );
+
         }
-        if ( delta_t == -1 )
+    }
+    if ( delta_t>=0 && delta_t<event_build_time )
+    {
+        for ( int hit2=0; hit2<header.num; hit2++ )
         {
-            continue;
+            if ( header.intpts[hit2].e == 0 )
+            {
+                continue;
+            }
+            tot_gamma_pos= Tot_Gam_Pos ( crystal_face, header.intpts[hit2].x, header.intpts[hit2].y, header.intpts[hit2].z ) ;
+	    one_hit.x = tot_gamma_pos[0];
+	    //cout<<one_hit.x<<endl;
+             one_hit.y = tot_gamma_pos[1];
+	    //cout<<one_hit.y<<endl;
+            one_hit.z = tot_gamma_pos[2];
+	    //cout<<one_hit.z<<endl;
+            one_hit.r = tot_gamma_pos[3];
+            one_hit.theta = tot_gamma_pos[4];
+            one_hit.phi = tot_gamma_pos[5];
+            tot_gamma_pos.clear();
+            one_hit.e = header.intpts[hit2].e;
+	    //cout<<one_hit.e<<endl;
+            one_hit.seg = header.intpts[hit2].seg;
+            one_hit.seg_ener = header.intpts[hit2].seg_ener;
+            event.push_back ( one_hit );
 
         }
-
-        b++;
-        if ( ( int ) b%200 == 0 )
-        {
-            cout<<"Event number: "<<b<<"\r"<<flush;
-        }
-
-
-        /*
-                }*/
-
-//         cout<<"This event had "<<event_hits<<" hits."<<endl;
-//         event_hits = 0;
-//         timestamp_0 = -1;
-//         delta_t = -1;
-
+    }
+    if ( delta_t == -1 )
+    {
+        continue;
 
     }
 
+    b++;
+    if ( ( int ) b%200 == 0 )
+    {
+        cout<<"Event number: "<<b<<"\r"<<flush;
+    }
+    delta_t = -1;
 
+}
 
-    cout<<"Finished running through file."<<endl;
+cout<<"Finished running through file."<<endl;
 
+tree->Fill();
+tree->Write();
 
+rootfile->Close();
 
-//     tree->Fill();
-//     tree->Write();
-//
-// //     cout<<"It's not the write??"<<endl;
-//     rootfile->Close();
-//     cout<<"Am I having troubling closing? Dipshit. What stupid luck."<<endl;
-
-    return;
+return;
 };
