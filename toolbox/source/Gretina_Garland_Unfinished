@@ -418,7 +418,7 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
     int32_t timestamp_0 = -1;
     //int timestamp_f;
     int32_t delta_t = -1;
-    int32_t event_build_time = 10; // 171 = 1.42ms; 238 = 2.76; (should be in nanoseconds when written)
+    int32_t event_build_time = 171; // 171 = 1.42ms; 238 = 2.76; (should be in nanoseconds when written)
     //int event_hits = 0;
     //int32_t repeat_t0 = 0;
     vector<Gretina_hit> event;
@@ -427,8 +427,8 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
     float hole_num;
     float crystal_num;
     pair<float,float> angles;
-    float theta;
-    float phi;
+    //float theta;
+    //float phi;
     float R = 178.2;
     vector<float> crystal_face;
     int b = 0; //just a counter
@@ -540,8 +540,7 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 //             this is where the tracking code should go to run through each "event" or separated dt
 //             -----------------------------------------------------
 
-            if ( event.size() >1 )
-            {
+
 
                 for ( int interaction = 0; interaction<event.size(); interaction++ )
                 {
@@ -587,19 +586,15 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
                         continue;
                     }
 
-                    tot_energy += event[hit].e;
+                    tot_energy += event[i].e;
 
                 }
                 Gamma.e = tot_energy;
-            }
+            
 
             Gamma.x = event[hit].x;
             Gamma.y = event[hit].y;
             Gamma.z = event[hit].z;
-            if ( event.size() == 1 )
-            {
-                Gamma.e = event[hit].e;
-            }
             Gamma.seg = event[hit].seg;
             Gamma.seg_ener = event[hit].seg_ener;
             Gammas->push_back ( Gamma );
@@ -611,8 +606,6 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 
             if ( second_event.size() != 0 )
             {
-	      if (second_event.size() > 1)
-	      {
                 for ( int set = 0; set<second_event.size(); set++ )
                 {
                     if ( second_event[set].e > highest_energy )
@@ -649,12 +642,11 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
                         continue;
                     }
 
-                    tot_energy += second_event[hit].e;
+                    tot_energy += second_event[ff].e;
 
 
                 }
                 Gamma.e = tot_energy;
-            }
 
             Gamma.x = second_event[hit].x;
             Gamma.y = second_event[hit].y;
@@ -674,8 +666,6 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 
         if ( third_event.size() != 0 )
         {
-	  if (third_event.size()>1)
-	  {
             for ( int settwo= 0; settwo<event.size(); settwo++ )
             {
                 if ( event[settwo].e > highest_energy )
@@ -702,18 +692,14 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
                     continue;
                 }
 
-                tot_energy += third_event[hit].e;
+                tot_energy += third_event[fff].e;
 
             }
             Gamma.e = tot_energy;
-	  }
+	  
             Gamma.x = third_event[hit].x;
             Gamma.y = third_event[hit].y;
             Gamma.z = third_event[hit].z;
-	    if (third_event.size() == 1)
-	    {
-            Gamma.e = third_event[hit].e;
-	    }
             Gamma.seg = third_event[hit].seg;
             Gamma.seg_ener = third_event[hit].seg_ener;
             Gammas->push_back ( Gamma );
@@ -725,6 +711,7 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
         event.clear();
         second_event.clear();
         third_event.clear();
+	}
 
         for ( int hit3=0; hit3<header.num; hit3++ )
         {
@@ -747,7 +734,7 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
             event.push_back ( one_hit );
         }
 
-    }
+    
     if ( timestamp_0 == -1 )
     {
         timestamp_0 = header.timestamp;
