@@ -63,6 +63,9 @@ struct Gretina_hit
     float e;
     int seg;
     float seg_ener;
+    float tot_e;
+    int quad;
+    int crystal;
 };
 
 
@@ -79,8 +82,8 @@ struct Gretina_Gamma_Ray
 vector<float> Coor_Trans_Gretina ( float R, float theta, float phi, float sphere_split )
 {
 
-  
-    float x_1 = R*cos (theta)*sin(phi);
+
+    float x_1 = R*cos ( theta ) *sin ( phi );
     float y_1 = R*sin ( theta ) *sin ( phi );
     float z_1 = R* cos ( phi );
 
@@ -133,7 +136,7 @@ pair<float,float> Find_Original_Coor ( float hole_number, int det_number )
 }
 
 
-vector<float> Tot_Gam_Pos ( vector<float> new_face, float x, float y, float z)
+vector<float> Tot_Gam_Pos ( vector<float> new_face, float x, float y, float z )
 {
     vector<float> new_pos;
 
@@ -167,22 +170,31 @@ float Angle_Between_Vect ( float x1, float y1, float z1, float x2, float y2, flo
     return angle;
 }
 
-float Scattering_Angle (float first_hit_e, float e_d)
+float Scattering_Angle ( float first_hit_e, float e_d )
 {
-  
-  float angle = acos(1-((1/(first_hit_e-e_d))-1/first_hit_e)*511*3e8);
-  
-  return angle;
+
+    float angle = acos ( 1- ( ( 1/ ( first_hit_e-e_d ) )-1/first_hit_e ) *511*3e8 );
+
+    return angle;
 }
+
+float DopplerCorrectSimple ( float e, float v, float theta )
+{
+    float Energy = e* ( 1- ( v/3e8 ) *cos ( theta ) ) /sqrt ( 1-pow ( v/3e8,2 ) );
+
+    return Energy;
+}
+
 
 void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 {
 
+  
+  //create headers to read Gretina
     Gretina_header header;
-//     Gretina_data data_struct;
     GlobalHeader global_header;
 
-
+    //create map to determine crystal coordinates
     pair<int,int> hole_det;
     pair<float,float> theta_phi;
     map<pair<int,int>,pair<float,float>> angles_map =
@@ -339,110 +351,59 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 
     };
 
-
-//     hole_det.first = 1;
-//     hole_det.second = 0;
     map<pair<int,int>,pair<float,float>>::iterator itr;
 
-//     itr = angles_map.find(hole_det);
-//     if (itr != angles_map.end())
-//     {
-//       theta_phi.first = itr->second.first;
-//       theta_phi.second = itr->second.second;
-//
-//       cout<<theta_phi.first<<theta_phi.second<<endl;
-//     }
-
-//     vector<Gretina_header> rawdata;
-    //vector<int> type_in;
-//     vector<int> crystalID;
-//     // vector<int> num_of_inter; //number of interaction points from decomp
-     vector<float> tote;
-//     //vector<int> coree1; //remember there are four pieces to this in the struct
-//     //vector<int> coree2;
-//     //vector<int> coree3;
-//     //vector<int> coree4;
-//     vector<long long int> ts;
-//     vector<long long> tt;
-//     vector<float> t_0;
-//     //vector<float> cfd_two; //The two doesn't mean anything except that it is in the function rather than in the struct
-//     vector<float> chi_sq;
-//     vector<float> norm_chi_sq;
-//     vector<float> bl;
-//     //vector<float> pre;
-//     //vector<float> post;
-//     vector<int> pd;
-//     vector<float> x2; //The two's don't mean anything here except that it is in the function rather than in the struct
-//     vector<float> y2;
-//     vector<float> z2;
-     vector<float> e2;
-//     vector<int> seg2;
-//     vector<float> seg_ent;
+    
+    //vectors & associated structs to make branches
+    vector<int> crystalID;
+    vector<int> num_of_inter; //number of interaction points from decomp
+    vector<float> tote;
+    vector<float> e2;
 
     Gretina_Gamma_Ray Gamma;
     vector<Gretina_Gamma_Ray>* Gammas = new vector<Gretina_Gamma_Ray>;
     vector<float> energy_temp;
     float tot_energy;
 //
+    
+    //make the rootfile
     TFile* rootfile = new TFile ( newfile.c_str(),"recreate" );
-    TTree* tree = new TTree ( "Gretina_tree","Gretina" );
+    TTree* tree = new TTree ( "Gretina","Gretina" );
+    tree->Branch("Crystal_id",&crystalID);
+    tree->Branch("number_iteractions",&num_of_inter);
+    tree->Branch ( "raw_tot_en", &tote );
     tree->Branch ( "Tracked",&energy_temp );
-// //     tree->Branch ("raw_Gretina", &rawdata);
-//     //tree->Branch ( "type", &type_in );
-//     tree->Branch ( "crystal_id", &crystalID );
-//     //tree->Branch ( "count", &num_of_inter );
-     tree->Branch ( "total_en", &tote );
-//     //tree->Branch ( "core_en1", &coree1 );
-//     //tree->Branch ( "core_en2", &coree2 );
-//     //tree->Branch ( "core_en3", &coree3 );
-//     //tree->Branch ( "core_en4", &coree4 );
-//     tree->Branch ( "timestamp",&ts );
-//     tree->Branch ( "trig_time",&tt );
-//     tree->Branch ( "t_0",&t_0 );
-//     //tree->Branch ( "cfd",&cfd_two ); //The two doesn't mean anything here except that it's the one defined in the function rather than in the struct
-//     tree->Branch ( "chi_sq",&chi_sq );
-//     tree->Branch ( "norm_chi_sq",&norm_chi_sq );
-//     tree->Branch ( "baseline",&bl );
-//     //tree->Branch ( "prestep",&pre );
-//     //tree->Branch ( "poststep",&post );
-//     tree->Branch ( "pad",&pd );
-//     tree->Branch ( "x",&x2 );
-//     tree->Branch ( "y",&y2 );
-//     tree->Branch ( "z",&z2 );
-     tree->Branch ( "e",&e2 );
-//     tree->Branch ( "segment", &seg2 );
-//     tree->Branch ( "segment_entered",&seg_ent );
 
-
-
-    int32_t timestamp_0 = -1;
-    //int timestamp_f;
-    int32_t delta_t = -1;
-    int32_t event_build_time = 171; // 171 = 1.42ms; 238 = 2.76; (should be in nanoseconds when written)
-    //int event_hits = 0;
-    //int32_t repeat_t0 = 0;
-    vector<Gretina_hit> event;
-    //vector<vector<Gretina_hit>> events;
-    Gretina_hit one_hit;
-    float hole_num;
-    float crystal_num;
-    pair<float,float> angles;
-    //float theta;
-    //float phi;
-    float R = 178.2;
-    vector<float> crystal_face;
+    
+    //various variables
+    int32_t timestamp_0 = -1; //inital time for delta_t
+    int32_t delta_t = -1; //computed length of gamma ray addback
+    int32_t event_build_time = 25; //predetermined max gamma ray addback time
+    vector<Gretina_hit> event; //one gamma ray vector
+    Gretina_hit one_hit; //sub gamma ray struct
+    float hole_num; //mount hole number for Gretina Quad
+    float crystal_num; //crystal number in associated Quad 0-3
+    pair<float,float> angles; //angles determined from Gretina map
+    float R = 178.2; //radius of Gretina inner sphere
+    vector<float> crystal_face; //coordinates of Gretina crystal face (first->theta, second->phi)
     int b = 0; //just a counter
-    vector<float> tot_gamma_pos;
-    float highest_energy;
-    int hit;
-    float angle_between_hit;
-    vector<Gretina_hit> second_event;
-    vector<Gretina_hit> third_event;
+    vector<float> tot_gamma_pos; //position of the sub gamma ray in relation to the target
+    float highest_energy; //highest energy in gamma ray addback vector
+    int hit; //the position of the highest energy sub gamma ray in the gamma ray addback vector
+    float angle_between_hit; //angle between the determine first hit and the subsequent hits
+    vector<Gretina_hit> second_event; //vector for if there is a second gamma ray in the gamma ray addback vector outside of 15 degrees
+    vector<Gretina_hit> third_event; //see above, but if there is a third
+    float weighted_x = 0; //weighted energy positon x
+    float weighted_y = 0; //weighted energy position y
+    float weighted_z = 0; //weighted energy position z
+    float weighted_e = 0; //tot energy of the sub gamma rays
 
-
+    //for reading the binary
     int readsuccess = 1;
     int buffsuccess = 1;
-
+    
+    
+    //open the binary
     int fd = open ( filename.c_str(), O_RDONLY );
 
     if ( fd == -1 )
@@ -453,8 +414,12 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 
     cout<<"Opened file."<<endl;
 
+    
+    //while loop for reading through the binary file
     while ( readsuccess != 0 )
     {
+      
+      //read global header
         readsuccess = read ( fd, ( void* ) &global_header,sizeof ( global_header ) );
 
         if ( global_header.type != 1 )
@@ -463,46 +428,17 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
             return;
         }
 
+        
+        //read data header
         buffsuccess = read ( fd, ( void* ) &header,sizeof ( header ) );
+	
+	//record initial info for branches
+	crystalID.push_back(header.crystal_id);
+	num_of_inter.push_back(header.num);
+        tote.push_back ( header.tot_e );
 
-        //type_in.push_back ( header.type );
-//         crystalID.push_back ( header.crystal_id );
-//         //num_of_inter.push_back ( header.num );
-         tote.push_back ( header.tot_e );
-//         //coree1.push_back ( header.core_e[0] );
-//         //coree2.push_back ( header.core_e[1] );
-//         //coree3.push_back ( header.core_e[2] );
-//         //coree4.push_back ( header.core_e[3] );
-//         ts.push_back ( header.timestamp );
-//         tt.push_back ( header.trig_time );
-//         t_0.push_back ( header.t0 );
-//         //cfd_two.push_back ( header.cfd );
-//         chi_sq.push_back ( header.chisq );
-//         norm_chi_sq.push_back ( header.norm_chisq );
-//         bl.push_back ( header.baseline );
-//         //pre.push_back ( header.prestep );
-//         //post.push_back ( header.poststep );
-//         pd.push_back ( header.pad );
-
-        for ( int inputs = 0; inputs<16; inputs++ )
-        {
-//
-//             if ( header.intpts[inputs].x == 0 && header.intpts[inputs].y == 0 && header.intpts[inputs].z == 0 )
-//             {
-//                 continue;
-//             }
-            //x2.push_back ( header.intpts[inputs].x );
-            //y2.push_back ( header.intpts[inputs].y );
-            //z2.push_back ( header.intpts[inputs].z );
-            e2.push_back ( header.intpts[inputs].e );
-            //seg2.push_back ( header.intpts[inputs].seg );
-            //seg_ent.push_back ( header.intpts[inputs].seg_ener );
-        }
-//     }
-// //
-// //     while ( 1 )
-//     {
-
+	
+	//determine position of crystal
         hole_num = header.crystal_id/4; //quad number.
         crystal_num = header.crystal_id%4; //crystal num 0-3 in quad
         hole_det.first = hole_num;
@@ -513,26 +449,105 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
         {
             theta_phi.first = itr->second.first;
             theta_phi.second = itr->second.second;
-	    //cout<<theta_phi.first<<endl;
-	    //cout<<theta_phi.second<<endl;
         }
 
         crystal_face = Coor_Trans_Gretina ( R,theta_phi.first,theta_phi.second,sphere_split );
 
 
-        //Create events from hit sets;
-
-
+	
+	// if not the first timestamp in the file or a gamma ray below 100kev, compute delta_t
         if ( timestamp_0 != -1 )
         {
-            delta_t = ( header.timestamp-timestamp_0 )/2+100;
-            timestamp_0 = header.timestamp;
-
-
+            delta_t = ( header.timestamp-timestamp_0 );
         }
-        if ( delta_t > event_build_time ) // this is where the event ends
+
+        
+        //if it is the first timestamp in the file or a gamma ray after a hit below 100kev
+        if ( timestamp_0 == -1 )
         {
-            highest_energy = event[0].e;
+            if ( header.tot_e >515 ) //two methods for determining position based on tot_e. If above 515kev, use binary positions
+            {
+//
+                for ( int hit1=0; hit1<header.num; hit1++ )
+                {
+
+                    if ( header.tot_e<100 ) //get rid of xray noise
+                    {
+                        continue;
+
+                    }
+
+                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit1].x, header.intpts[hit1].y, header.intpts[hit1].z ); //determine total pos of gamma ray with crystal face
+
+
+                    one_hit.x = tot_gamma_pos[0];
+                    //cout<<one_hit.x<<endl;
+                    one_hit.y = tot_gamma_pos[1];
+                    //cout<<one_hit.y<<endl;
+                    one_hit.z = tot_gamma_pos[2];
+                    //cout<<one_hit.z<<endl;
+                    one_hit.r = tot_gamma_pos[3];
+                    one_hit.theta = tot_gamma_pos[4];
+                    one_hit.phi = tot_gamma_pos[5];
+                    tot_gamma_pos.clear();
+                    one_hit.e = header.intpts[hit1].e;
+                    //cout<<one_hit.e<<endl;
+                    //one_hit.e = header.tot_e;
+                    one_hit.seg = header.intpts[hit1].seg;
+                    one_hit.seg_ener = header.intpts[hit1].seg_ener;
+                    one_hit.tot_e = header.tot_e;
+                    one_hit.quad = hole_num;
+                    one_hit.crystal = crystal_num;
+                    event.push_back ( one_hit );
+
+                    timestamp_0 = header.timestamp; 
+
+                }
+            }
+            if ( header.tot_e<515 ) //if crystal tot_e is below 515kev, must use a weighted energy position.
+            {
+                for ( int whit1 = 0; whit1<header.num; whit1++ ) //determine weighted energies by running through all the sub gamma rays
+                {
+
+                    weighted_x += header.intpts[whit1].x*header.intpts[whit1].e;
+                    weighted_y += header.intpts[whit1].y*header.intpts[whit1].e;
+                    weighted_z += header.intpts[whit1].z*header.intpts[whit1].e;
+                    weighted_e += header.intpts[whit1].e;
+                }
+
+                tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e ); //determine hit pos of weighted energy position from the target.
+
+                one_hit.x = tot_gamma_pos[0];
+                //cout<<one_hit.x<<endl;
+                one_hit.y = tot_gamma_pos[1];
+                //cout<<one_hit.y<<endl;
+                one_hit.z = tot_gamma_pos[2];
+                //cout<<one_hit.z<<endl;
+                one_hit.r = tot_gamma_pos[3];
+                one_hit.theta = tot_gamma_pos[4];
+                one_hit.phi = tot_gamma_pos[5];
+                tot_gamma_pos.clear();
+                one_hit.e = weighted_e;
+                //cout<<one_hit.e<<endl;
+                //one_hit.e = header.tot_e;
+                one_hit.seg = 0;;
+                one_hit.seg_ener = 0;
+                one_hit.tot_e = header.tot_e;
+                one_hit.quad = hole_num;
+                one_hit.crystal = crystal_num;
+                event.push_back ( one_hit );
+
+                timestamp_0 = header.timestamp;
+                weighted_e = 0;
+                weighted_x = 0;
+                weighted_y = 0;
+                weighted_z = 0;
+            }
+        }
+
+        if ( delta_t > event_build_time ) // this is where the gamma ray addback addition ends. aka where delta_t is too high.
+        {
+            highest_energy = 0;
             hit = 0;
 
 
@@ -542,55 +557,59 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
 
 
 
-                for ( int interaction = 0; interaction<event.size(); interaction++ )
+            for ( int interaction = 0; interaction<event.size(); interaction++ ) //find the highest energy of the sub gamma rays and use the highest energy as the first interaction
+            {
+
+                if ( event[interaction].e > highest_energy )
                 {
-                    if ( event[interaction].e > highest_energy )
-                    {
-                        highest_energy = event[interaction].e;
+                    highest_energy = event[interaction].e;
 
-                        hit = interaction;
-                    }
+                    hit = interaction;
                 }
-                
-                tot_energy = highest_energy;
 
-                for ( int i = 0; i<event.size(); i++ )
-                {
-                    if ( i == hit )
-                    {
-                        continue;
-                    }
-                    //angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[i].x,event[i].y,event[i].z );
-                    angle_between_hit = Scattering_Angle(highest_energy,event[i].e);
-//                     cout<<"+++++++++++++++++++++++++++++++++++++++++++++++"<<endl;
-// 		    cout<<event[hit].x<<endl;
-// 		    cout<<event[hit].y<<endl;
-// 		    cout<<event[hit].z<<endl;
-// 		    cout<<event[i].x<<endl;
-// 		    cout<<event[i].y<<endl;
-// 		    cout<<event[i].z<<endl;
-// 		    cout<<angle_between_hit<<endl;
-                    if ( angle_between_hit> 15 || angle_between_hit<-15 )
-                    {
-                        one_hit.x = event[i].x;
-                        one_hit.y = event[i].y;
-                        one_hit.z = event[i].z ;
-                        one_hit.r = event[i].r;
-                        one_hit.theta = event[i].theta;
-                        one_hit.phi = event[i].phi;
-                        one_hit.e = event[i].e;
-                        one_hit.seg = event[i].seg;
-                        one_hit.seg_ener = event[i].seg_ener;
-                        second_event.push_back ( one_hit );
-
-                        continue;
-                    }
-
-                    tot_energy += event[i].e;
-
-                }
-                Gamma.e = tot_energy;
+            }
             
+            tot_energy = event[hit].tot_e; //set first interaction position as the pos of tot_e
+
+
+            for ( int i = 0; i<event.size(); i++ )
+            {
+                if ( i == hit ) //ignore the highest interaction
+                {
+                    continue;
+                }
+
+                if ( event[i].quad == event[hit].quad && event[i].crystal == event[hit].crystal )
+                {
+                    continue;
+                }
+                angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[i].x,event[i].y,event[i].z ); //determine how far away your sub gamma rays are. If within 15 degrees addback
+                //angle_between_hit = Scattering_Angle(highest_energy,event[i].e);
+
+                if ( angle_between_hit> 15 || angle_between_hit<-15 ) //outside of 15 degrees save for second gamma ray
+                {
+                    one_hit.x = event[i].x;
+                    one_hit.y = event[i].y;
+                    one_hit.z = event[i].z ;
+                    one_hit.r = event[i].r;
+                    one_hit.theta = event[i].theta;
+                    one_hit.phi = event[i].phi;
+                    one_hit.e = event[i].e;
+                    one_hit.seg = event[i].seg;
+                    one_hit.seg_ener = event[i].seg_ener;
+                    one_hit.tot_e = event[i].tot_e;
+                    one_hit.quad = event[i].quad;
+                    one_hit.crystal = event[i].crystal;
+                    second_event.push_back ( one_hit );
+
+                    continue;
+                }
+
+                tot_energy += event[i].tot_e; //addback
+
+            }
+            Gamma.e = tot_energy;
+
 
             Gamma.x = event[hit].x;
             Gamma.y = event[hit].y;
@@ -600,10 +619,14 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
             Gammas->push_back ( Gamma );
             energy_temp.push_back ( Gamma.e );
 
-            tot_energy = 0;
 	    
+	    //reset variables to zero so as to use in upcoming event
+            tot_energy = 0;
+            highest_energy = 0;
 
 
+
+	    //repeat above but for sub gamma rays saved for second event
             if ( second_event.size() != 0 )
             {
                 for ( int set = 0; set<second_event.size(); set++ )
@@ -615,18 +638,22 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
                         hit = set;
                     }
                 }
-                
-               tot_energy = highest_energy;
+
+                tot_energy = event[hit].tot_e;
 
                 for ( int ff = 0; ff<second_event.size(); ff++ )
                 {
-                    if ( ff == hit )
+                    if ( ff == hit || event[hit].e == highest_energy )
                     {
                         continue;
                     }
-                    //angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[ff].x,event[ff].y,event[ff].z );
-                    angle_between_hit = Scattering_Angle(highest_energy,event[ff].e);
-                    if ( angle_between_hit> 15 )
+
+                    if ( event[ff].quad == event[hit].quad && event[ff].crystal == event[hit].crystal )
+                    {
+                        continue;
+                    }
+                    angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[ff].x,event[ff].y,event[ff].z );
+                    if ( angle_between_hit> 15 || angle_between_hit<-15 )
                     {
                         one_hit.x = second_event[ff].x;
                         one_hit.y = second_event[ff].y;
@@ -642,176 +669,232 @@ void ReadGretina ( string filename, string newfile, float sphere_split = 0 )
                         continue;
                     }
 
-                    tot_energy += second_event[ff].e;
+                    tot_energy += second_event[ff].tot_e;
+                }
+                Gamma.e = tot_energy;
 
+                Gamma.x = second_event[hit].x;
+                Gamma.y = second_event[hit].y;
+                Gamma.z = second_event[hit].z;
+                Gamma.seg = second_event[hit].seg;
+                Gamma.seg_ener = second_event[hit].seg_ener;
+                Gammas->push_back ( Gamma );
+                energy_temp.push_back ( Gamma.e );
+
+                tot_energy = 0;
+                highest_energy = 0;
+            }
+
+            
+            //repeat again for the chance of a third event. However, do not keep for fourth event. Fourth event is very unlikely.
+            if ( third_event.size() != 0 )
+            {
+                for ( int settwo= 0; settwo<event.size(); settwo++ )
+                {
+                    if ( event[settwo].e > highest_energy )
+                    {
+                        highest_energy = event[settwo].e;
+
+                        hit = settwo;
+                    }
+                }
+                
+                tot_energy = event[hit].tot_e;
+
+                for ( int fff = 0; fff<third_event.size(); fff++ )
+                {
+                    if ( fff == hit )
+                    {
+                        continue;
+                    }
+
+                    if ( event[fff].quad == event[hit].quad && event[fff].crystal == event[hit].crystal )
+                    {
+                        continue;
+                    }
+                    angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[fff].x,event[fff].y,event[fff].z );
+                    if ( angle_between_hit> 15 )
+                    {
+                        cout<<"Sub-gamma would be in a fourth event."<<endl;
+                        continue;
+                    }
+
+                    tot_energy += third_event[fff].e;
 
                 }
                 Gamma.e = tot_energy;
 
-            Gamma.x = second_event[hit].x;
-            Gamma.y = second_event[hit].y;
-            Gamma.z = second_event[hit].z;
+                Gamma.x = third_event[hit].x;
+                Gamma.y = third_event[hit].y;
+                Gamma.z = third_event[hit].z;
+                Gamma.seg = third_event[hit].seg;
+                Gamma.seg_ener = third_event[hit].seg_ener;
+                Gammas->push_back ( Gamma );
+                energy_temp.push_back ( Gamma.e );
 
-            if ( second_event.size() == 1 )
-            {
-                Gamma.e = second_event[hit].e;
+                tot_energy = 0;
             }
-            Gamma.seg = second_event[hit].seg;
-            Gamma.seg_ener = second_event[hit].seg_ener;
-            Gammas->push_back ( Gamma );
-            energy_temp.push_back ( Gamma.e );
 
-            tot_energy = 0;
-        }
+            //clear vectors to use for next gamma ray sequence
+            event.clear();
+            second_event.clear();
+            third_event.clear();
 
-        if ( third_event.size() != 0 )
-        {
-            for ( int settwo= 0; settwo<event.size(); settwo++ )
+	    //save the information from the current header for the next gamma ray if over 100kev.
+            for ( int hit3=0; hit3<header.num; hit3++ )
             {
-                if ( event[settwo].e > highest_energy )
+                if ( header.tot_e<100 )
                 {
-                    highest_energy = event[settwo].e;
+                    continue;
+                    timestamp_0 = -1;
+                }
 
-                    hit = settwo;
+                if ( header.tot_e > 515 )
+                {
+
+                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit3].x, header.intpts[hit3].y, header.intpts[hit3].z );
+                    one_hit.x = tot_gamma_pos[0];
+                    one_hit.y = tot_gamma_pos[1];
+                    one_hit.z = tot_gamma_pos[2];
+                    one_hit.r = tot_gamma_pos[3];
+                    one_hit.theta = tot_gamma_pos[4];
+                    one_hit.phi = tot_gamma_pos[5];
+                    tot_gamma_pos.clear();
+                    one_hit.e = header.tot_e;
+                    one_hit.seg = header.intpts[hit3].seg;
+                    one_hit.seg_ener = header.intpts[hit3].seg_ener;
+                    one_hit.tot_e = header.tot_e;
+                    one_hit.quad = hole_num;
+                    one_hit.crystal = crystal_num;
+                    event.push_back ( one_hit );
+
+                    timestamp_0 = header.timestamp;
                 }
             }
-            
-            tot_energy = highest_energy;
-
-            for ( int fff = 0; fff<third_event.size(); fff++ )
+            if ( header.tot_e<515 )
             {
-                if ( fff == hit )
+                for ( int thit1 = 0; thit1<header.num; thit1++ )
+                {
+
+                    weighted_x += header.intpts[thit1].x*header.intpts[thit1].e;
+                    weighted_y += header.intpts[thit1].y*header.intpts[thit1].e;
+                    weighted_z += header.intpts[thit1].z*header.intpts[thit1].e;
+                    weighted_e += header.intpts[thit1].e;
+                }
+
+                tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e );
+
+                one_hit.x = tot_gamma_pos[0];
+                one_hit.y = tot_gamma_pos[1];
+                one_hit.z = tot_gamma_pos[2];
+                one_hit.r = tot_gamma_pos[3];
+                one_hit.theta = tot_gamma_pos[4];
+                one_hit.phi = tot_gamma_pos[5];
+                tot_gamma_pos.clear();
+                one_hit.e = weighted_e;
+                one_hit.seg = 0;;
+                one_hit.seg_ener = 0;
+                one_hit.tot_e = header.tot_e;
+                one_hit.quad = hole_num;
+                one_hit.crystal = crystal_num;
+                event.push_back ( one_hit );
+
+                timestamp_0 = header.timestamp;
+                weighted_e = 0;
+                weighted_x = 0;
+                weighted_y = 0;
+                weighted_z = 0;
+            }
+
+            delta_t = -1;
+
+        }
+        
+        //If delta_t is within event build time add to the current gamma ray
+        if ( delta_t>=0 && delta_t<event_build_time )
+        {
+
+            for ( int hit2=0; hit2<header.num; hit2++ )
+            {
+                if ( header.intpts[hit2].e == 0 )
                 {
                     continue;
                 }
-                //angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[fff].x,event[fff].y,event[fff].z );
-                angle_between_hit = Scattering_Angle(highest_energy,event[fff].e);
-                if ( angle_between_hit> 15 )
+
+                if ( header.tot_e > 515 )
                 {
-                    cout<<"Sub-gamma would be in a fourth event."<<endl;
-                    continue;
+
+                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit2].x, header.intpts[hit2].y, header.intpts[hit2].z );
+                    one_hit.x = tot_gamma_pos[0];
+                    one_hit.y = tot_gamma_pos[1];
+                    one_hit.z = tot_gamma_pos[2];
+                    one_hit.r = tot_gamma_pos[3];
+                    one_hit.theta = tot_gamma_pos[4];
+                    one_hit.phi = tot_gamma_pos[5];
+                    tot_gamma_pos.clear();
+                    one_hit.e = header.tot_e;
+                    one_hit.seg = header.intpts[hit2].seg;
+                    one_hit.seg_ener = header.intpts[hit2].seg_ener;
+                    one_hit.tot_e = header.tot_e;
+                    one_hit.quad = hole_num;
+                    one_hit.crystal = crystal_num;
+                    event.push_back ( one_hit );
+
+                    timestamp_0 = header.timestamp;
+                }
+            }
+            if ( header.tot_e<515 )
+            {
+                for ( int thit2 = 0; thit2<header.num; thit2++ )
+                {
+
+                    weighted_x += header.intpts[thit2].x*header.intpts[thit2].e;
+                    weighted_y += header.intpts[thit2].y*header.intpts[thit2].e;
+                    weighted_z += header.intpts[thit2].z*header.intpts[thit2].e;
+                    weighted_e += header.intpts[thit2].e;
                 }
 
-                tot_energy += third_event[fff].e;
+                tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e );
 
+                one_hit.x = tot_gamma_pos[0];
+                one_hit.y = tot_gamma_pos[1];
+                one_hit.z = tot_gamma_pos[2];
+                one_hit.r = tot_gamma_pos[3];
+                one_hit.theta = tot_gamma_pos[4];
+                one_hit.phi = tot_gamma_pos[5];
+                tot_gamma_pos.clear();
+                one_hit.e = weighted_e;
+                one_hit.seg = 0;;
+                one_hit.seg_ener = 0;
+                one_hit.tot_e = header.tot_e;
+                one_hit.quad = hole_num;
+                one_hit.crystal = crystal_num;
+                event.push_back ( one_hit );
+
+                timestamp_0 = header.timestamp;
+                weighted_e = 0;
+                weighted_x = 0;
+                weighted_y = 0;
+                weighted_z = 0;
             }
-            Gamma.e = tot_energy;
-	  
-            Gamma.x = third_event[hit].x;
-            Gamma.y = third_event[hit].y;
-            Gamma.z = third_event[hit].z;
-            Gamma.seg = third_event[hit].seg;
-            Gamma.seg_ener = third_event[hit].seg_ener;
-            Gammas->push_back ( Gamma );
-            energy_temp.push_back ( Gamma.e );
 
-            tot_energy = 0;
         }
 
-        event.clear();
-        second_event.clear();
-        third_event.clear();
-	}
 
-        for ( int hit3=0; hit3<header.num; hit3++ )
+        b++; //add to the counter to see code progress
+
+        if ( ( int ) b%20000 == 0 )
         {
-            tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit3].x, header.intpts[hit3].y, header.intpts[hit3].z);
-            //cout<< "==============================================="<<endl;
-	    one_hit.x = tot_gamma_pos[0];
-	    //cout<<one_hit.x<<endl;
-             one_hit.y = tot_gamma_pos[1];
-	    //cout<<one_hit.y<<endl;
-            one_hit.z = tot_gamma_pos[2];
-	    //cout<<one_hit.z<<endl;
-            one_hit.r = tot_gamma_pos[3];
-            one_hit.theta = tot_gamma_pos[4];
-            one_hit.phi = tot_gamma_pos[5];
-            tot_gamma_pos.clear();
-            one_hit.e = header.intpts[hit3].e;
-	    //cout<<one_hit.e<<endl;
-            one_hit.seg = header.intpts[hit3].seg;
-            one_hit.seg_ener = header.intpts[hit3].seg_ener;
-            event.push_back ( one_hit );
-        }
-
-    
-    if ( timestamp_0 == -1 )
-    {
-        timestamp_0 = header.timestamp;
-
-        for ( int hit1=0; hit1<header.num; hit1++ )
-        {
-            if ( header.intpts[hit1].e == 0 )
-            {
-                continue;
-            }
-            tot_gamma_pos = Tot_Gam_Pos ( crystal_face, header.intpts[hit1].x, header.intpts[hit1].y, header.intpts[hit1].z );
-	    one_hit.x = tot_gamma_pos[0];
-	    //cout<<one_hit.x<<endl;
-             one_hit.y = tot_gamma_pos[1];
-	    //cout<<one_hit.y<<endl;
-            one_hit.z = tot_gamma_pos[2];
-	    //cout<<one_hit.z<<endl;
-            one_hit.r = tot_gamma_pos[3];
-            one_hit.theta = tot_gamma_pos[4];
-            one_hit.phi = tot_gamma_pos[5];
-            tot_gamma_pos.clear();
-            one_hit.e = header.intpts[hit1].e;
-	    //cout<<one_hit.e<<endl;
-            one_hit.seg = header.intpts[hit1].seg;
-            one_hit.seg_ener = header.intpts[hit1].seg_ener;
-            event.push_back ( one_hit );
-
+            cout<<"Event number: "<<b<<"\r"<<flush;
         }
     }
-    if ( delta_t>=0 && delta_t<event_build_time )
-    {
-        for ( int hit2=0; hit2<header.num; hit2++ )
-        {
-            if ( header.intpts[hit2].e == 0 )
-            {
-                continue;
-            }
-            tot_gamma_pos= Tot_Gam_Pos ( crystal_face, header.intpts[hit2].x, header.intpts[hit2].y, header.intpts[hit2].z ) ;
-	    one_hit.x = tot_gamma_pos[0];
-	    //cout<<one_hit.x<<endl;
-             one_hit.y = tot_gamma_pos[1];
-	    //cout<<one_hit.y<<endl;
-            one_hit.z = tot_gamma_pos[2];
-	    //cout<<one_hit.z<<endl;
-            one_hit.r = tot_gamma_pos[3];
-            one_hit.theta = tot_gamma_pos[4];
-            one_hit.phi = tot_gamma_pos[5];
-            tot_gamma_pos.clear();
-            one_hit.e = header.intpts[hit2].e;
-	    //cout<<one_hit.e<<endl;
-            one_hit.seg = header.intpts[hit2].seg;
-            one_hit.seg_ener = header.intpts[hit2].seg_ener;
-            event.push_back ( one_hit );
 
-        }
-    }
-    if ( delta_t == -1 )
-    {
-        continue;
+    cout<<"Finished running through file."<<endl;
 
-    }
+    tree->Fill();
+    tree->Write();
 
-    b++;
-    if ( ( int ) b%200 == 0 )
-    {
-        cout<<"Event number: "<<b<<"\r"<<flush;
-    }
-    delta_t = -1;
+    rootfile->Close();
 
-}
-
-cout<<"Finished running through file."<<endl;
-
-tree->Fill();
-tree->Write();
-
-rootfile->Close();
-
-return;
+    return;
 };
