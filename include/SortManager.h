@@ -24,6 +24,8 @@
 #include "GTMerge.h"
 
 #include "DGSProcessor.h"
+#include "GretProcessor.h"
+#include "GRProcessor.h"
 #include "GODProcessor.h"
 
 #include "GoddessConfig.h"

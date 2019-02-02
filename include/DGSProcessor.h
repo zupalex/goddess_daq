@@ -3,9 +3,9 @@
 
 #include "GEBSort.h"
 #include "GTMerge.h"
+#include "GRProcessor.h"
 
-class DGSProcessor
-{
+class DGSProcessor : public GRProcessor {
 private:
     int nGsGe;
 
@@ -25,16 +25,6 @@ private:
     float* ehioffset;
     float* ehibase;
     float* ehiPZ;
-
-    /* parameters */
-    double* angle;
-    double* anglePhi;
-
-    double* dopCorFac;
-    double* aCFac;
-
-    /* Other variables */
-    unsigned long long int  EvTimeStam0 = 0;
 
 public:
     DGSProcessor ( int nGsGe_, int* tlkup_, int* tid_, int* ng_, PARS* pars_ );
