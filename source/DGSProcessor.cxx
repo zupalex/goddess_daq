@@ -1,6 +1,7 @@
 #include "GammasphereAngles.h"
 
 #include "DGSProcessor.h"
+#include "GRProcessor.h"
 
 extern TH1D* ehi[MAXDETPOS + 1];
 
@@ -17,11 +18,11 @@ DGSProcessor::DGSProcessor ( int nGsGe_,  int* tlkup_, int* tid_, int* ng_, PARS
     ehibase = new float[nGsGe + 1];
     ehiPZ = new float[nGsGe + 1];
 
-    angle = new double[nGsGe];
-    anglePhi = new double[nGsGe];
+    GRProcessor::angle = new double[nGsGe];
+    GRProcessor::anglePhi = new double[nGsGe];
 
-    dopCorFac = new double[nGsGe];
-    aCFac = new double[nGsGe];
+    GRProcessor::dopCorFac = new double[nGsGe];
+    GRProcessor::aCFac = new double[nGsGe];
 
     tlkup = tlkup_;
     tid = tid_;
