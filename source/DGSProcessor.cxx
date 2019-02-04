@@ -1,33 +1,10 @@
-#include "GammasphereAngles.h"
-
 #include "DGSProcessor.h"
 #include "GRProcessor.h"
 
+#include "GammasphereAngles.h"
+
 extern TH1D* ehi[MAXDETPOS + 1];
 
-DGSProcessor::DGSProcessor ( int nGsGe_,  int* tlkup_, int* tid_, int* ng_, PARS* pars_ )
-{
-    nGsGe = nGsGe_;
-
-    pars = pars_;
-
-    M = 350.0;
-
-    ehigain = new float[nGsGe + 1];
-    ehioffset = new float[nGsGe + 1];
-    ehibase = new float[nGsGe + 1];
-    ehiPZ = new float[nGsGe + 1];
-
-    GRProcessor::angle = new double[nGsGe];
-    GRProcessor::anglePhi = new double[nGsGe];
-
-    GRProcessor::dopCorFac = new double[nGsGe];
-    GRProcessor::aCFac = new double[nGsGe];
-
-    tlkup = tlkup_;
-    tid = tid_;
-    ng = ng_;
-}
 
 void DGSProcessor::GetCal ( char* file )
 {
@@ -411,7 +388,7 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
                          theGEBEvent->ptgd[i]->timestamp );
             }
 
-            DGSEvDecompose_v3 ( ( unsigned int* ) theGEBEvent->ptinp[i], theGEBEvent->ptgd[i]->length / sizeof ( unsigned int ), &thedgsEvt[*ng] );
+            DGSProcessor::DGSEvDecompose_v3 ( ( unsigned int* ) theGEBEvent->ptinp[i], theGEBEvent->ptgd[i]->length / sizeof ( unsigned int ), &thedgsEvt[*ng] );
 
 //             std::cerr << "DGS event: theGEBEvent TS = " << theGEBEvent->ptgd[i]->timestamp << " / DGSEents TS = " << thedgsEvt[*ng].event_timestamp << "\n";
 
@@ -555,7 +532,6 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
 
 
 }
-
 /*-----------------------------------------------------------*/
 
 

@@ -90,8 +90,12 @@ public:
     int* tid;
     int ng;
 
+    GRProcessor* theGRProcessor;
     DGSProcessor* theDGSProcessor;
+    GretProcessor* theGretProcessor;
     DGSEVENT dgsEvt[MAXCOINEV];
+    GretProcessor::Gretina_header grEvt[MAXCOINEV];
+    GretProcessor::Gretina_Gamma_Ray grtrEvt[MAXCOINEV];
 
     int ShowStatus();
 

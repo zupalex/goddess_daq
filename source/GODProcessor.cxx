@@ -501,6 +501,191 @@ int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgs
 
 }
 
+int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, GRProcessor::Gretina_Gamma_Ray* grEvt )
+{
+    char str[128];
+    int j;
+    int ndssd;
+    int ndfma;
+    int nfp;
+    int nsubev;
+
+    /* prototypes */
+
+    int GebTypeStr ( int type, char str[] );
+
+//if(1)return(0);
+
+    if ( pars->CurEvNo <= pars->NumToPrint )
+    {
+        printf ( "entered BinGOD:\n" );
+    }
+
+    ndfma = 0;
+    ndssd = 0;
+    nsubev = 0;
+    nfp = 0;
+
+    *numDGOD = 0;
+
+    /* loop through the coincidence event and fish out GEB_TYPE_DFMA data */
+
+    for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
+    {
+
+        if ( gebEvt->ptgd[i]->type == 16 )
+        {
+
+            if ( pars->CurEvNo <= pars->NumToPrint )
+            {
+                GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                printf ( "bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str,
+                         gebEvt->ptgd[i]->timestamp );
+            }
+
+            DGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ),
+                              &dfmaEvt[nsubev] );
+
+            if ( dfmaEvt[nsubev].tpe == DSSD )
+            {
+                ndssd++;
+                ndfma++;
+            }
+            if ( dfmaEvt[nsubev].tpe == FP )
+            {
+                nfp++;
+                ndfma++;
+            }
+            nsubev++;
+            ( *numDGOD ) ++;
+
+        };
+
+    };
+
+    // histogram incremantation
+
+    for ( int i = 0; i < nsubev; i++ )
+    {
+
+        if ( !pars->noHists && dfmaEvt[i].tpe == DSSD )
+        {
+            h2_god_en->Fill ( dfmaEvt[i].ehi, dfmaEvt[i].tid );
+            h1_god_en->Fill ( dfmaEvt[i].ehi );
+        }
+    }
+
+    // time differences
+
+    double dTg_god;
+    dTg_god = 0.0;
+
+    for ( int i = 0; i < nsubev; i++ )
+    {
+        if ( ( dfmaEvt[i].LEDts > 0 ) && ( dfmaEvt[i].tpe == DSSD ) && ( *ng > 0 ) )
+        {
+
+            dTg_god = double ( grEvt[0].timestamp ) - double ( dfmaEvt[i].LEDts );
+            if ( !pars->noHists ) h2_dTg_god->Fill ( dTg_god, dfmaEvt[i].tid );
+
+        }
+    }
+
+    for ( int i = 0; i < nsubev; i++ )
+    {
+        for ( j = 0; j < *ng; j++ )
+        {
+
+            dTg_god = double ( grEvt[j].timestamp ) - double ( dfmaEvt[i].LEDts );
+            if ( !pars->noHists && ( dfmaEvt[i].tid == 10 ) && ( dTg_god > 260 ) & ( dTg_god < 290 ) )
+            {
+                h2_g_god->Fill ( grEvt[j].e, dfmaEvt[i].ehi );
+            }
+
+        }
+    }
+
+// start fma stuffs
+
+    unsigned int left = 0;
+    unsigned int right = 0;
+    unsigned int lr = 0;
+    unsigned int x = 0;
+
+    for ( int i = 0; i < nsubev; i++ )
+    {
+        if ( dfmaEvt[i].tpe == FP )
+        {
+            dfmaEvt[i].ehi = dfmaEvt[i].ehi / 30;
+            if ( dfmaEvt[i].tid == 1 )
+            {
+                left = dfmaEvt[i].ehi;
+            }
+            if ( dfmaEvt[i].tid == 2 )
+            {
+                right = dfmaEvt[i].ehi;
+            }
+        }
+
+    }
+
+    if ( ( left > 0 ) && ( right > 0 ) )
+    {
+        x = left - right + 8000;
+        lr = left + right;
+    }
+
+    if ( !pars->noHists ) h1_x->Fill ( x );
+
+// Si-FMA
+
+    unsigned int left_g = 0;
+    unsigned int right_g = 0;
+
+    for ( int i = 0; i < nsubev; i++ )
+    {
+        if ( ( dfmaEvt[i].LEDts > 0 ) && ( dfmaEvt[i].tpe == FP ) )
+        {
+
+            for ( j = 0; j < nsubev; j++ )
+            {
+                if ( ( dfmaEvt[j].tpe == DSSD ) && ( dfmaEvt[j].tid > 0 ) && ( dfmaEvt[j].tid < 107 ) )
+                {
+                    dTg_god = double ( dfmaEvt[j].LEDts ) - double ( dfmaEvt[i].LEDts );
+
+                    if ( ( dTg_god > 130 ) && ( dTg_god < 170 ) )
+                    {
+                        if ( dfmaEvt[i].tid == 1 )
+                        {
+                            left_g = dfmaEvt[i].ehi;
+                        }
+                        if ( dfmaEvt[i].tid == 2 )
+                        {
+                            right_g = dfmaEvt[i].ehi;
+                        }
+                        // Fill 1d gated x spectrum
+                        if ( !pars->noHists && ( left_g > 0 ) && ( right_g > 0 ) )
+                        {
+                            x = ( left_g - right_g + 8000 );
+                            h1_x_g->Fill ( x );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* done */
+
+    if ( pars->CurEvNo <= pars->NumToPrint )
+    {
+        printf ( "exit BinDGOD\n" );
+    }
+
+    return 0;
+
+}
+
 void GODProcessor::AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theagodEvt )
 {
     theagodEvt->channels.clear();
@@ -651,6 +836,98 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
 
 }
 
+int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, GRProcessor::Gretina_Gamma_Ray* grEvt )
+{
+    char str[128];
+
+    /* prototypes */
+
+    int GebTypeStr ( int type, char str[] );
+
+    if ( pars->CurEvNo <= pars->NumToPrint )
+    {
+        printf ( "entered BinAGOD:\n" );
+    }
+
+    *numAGOD = 0;
+
+    /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
+
+    for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
+    {
+        // look for analog marker 0x13 = 19
+        if ( gebEvt->ptgd[i]->type == 19 )
+        {
+            if ( pars->CurEvNo <= pars->NumToPrint )
+            {
+                GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
+            }
+
+            AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD] );
+
+//             std::cerr << "Analog ORRUBA event: gebEvt TS = " << gebEvt->ptgd[i]->timestamp << " / AGODEVENT TS = " << agodEvt[*numAGOD].timestamp << "\n";
+
+            ( *numAGOD ) ++;
+        }
+    }
+
+    // histogram incrementation
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
+    {
+        if ( !pars->noHists ) h1_agod_dTS->Fill ( ( long long ) ( agodEvt[i].timestamp - *lastTS ) );
+        *lastTS = agodEvt[i].timestamp;
+        for ( size_t j = 0; j < agodEvt[i].values.size(); j++ )
+        {
+            if ( !pars->noHists ) h2_agod_en->Fill ( agodEvt[i].values[j], agodEvt[i].channels[j] );
+            if ( !pars->noHists ) h1_agod_en->Fill ( agodEvt[i].values[j] );
+        }
+    }
+
+    // time differences
+
+    double dTg_agod;
+    dTg_agod = 0.0;
+
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
+    {
+        //printf("AGOD: %d %d %d %d\n", i, numAGOD, *ng, theagodEvt[i].values.size());
+        if ( *ng > 0 )
+        {
+            for ( size_t j = 0; j < agodEvt[i].values.size(); j++ )
+            {
+                dTg_agod = double ( grEvt[0].timestamp ) - double ( agodEvt[i].timestamp );
+                if ( !pars->noHists ) h2_dTg_agod->Fill ( dTg_agod, agodEvt[i].channels[j] );
+            }
+        }
+    }
+
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
+    {
+        for ( int j = 0; j < *ng; j++ )
+        {
+                dTg_agod = double ( grEvt[j].timestamp ) - double ( agodEvt[i].timestamp );
+                for ( size_t k = 0; k < agodEvt[i].values.size(); k++ )
+                {
+                    if ( ( agodEvt[i].channels[k] == 10 ) && ( dTg_agod > 407 ) & ( dTg_agod < 420 ) )
+                    {
+                        if ( !pars->noHists ) h2_g_agod->Fill ( grEvt[j].e, agodEvt[i].values[k] );
+                    }
+                }
+        }
+    }
+
+    /* done */
+
+    if ( pars->CurEvNo <= pars->NumToPrint )
+    {
+        printf ( "exit BinAGOD\n" );
+    }
+
+    return 0;
+
+}
+
 void GODProcessor::SupGOD()
 {
     godData = new GoddessData ( pars, gConf );
@@ -678,4 +955,27 @@ int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfm
     }
 
     return godData->Fill ( gebEvt, &dgsEvts, &dfmaEvts, &agodEvts );
+}
+int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, GRProcessor::Gretina_Gamma_Ray* grEvt)
+{
+    std::vector<AGODEVENT> agodEvts;
+    std::vector<DFMAEVENT> dfmaEvts;
+    std::vector<GRProcessor::Gretina_Gamma_Ray> grEvts;
+
+    for ( unsigned int i = 0; i < *numAGOD; i++ )
+    {
+        agodEvts.push_back ( agodEvt[i] );
+    }
+
+    for ( unsigned int i = 0; i < *numDGOD; i++ )
+    {
+        dfmaEvts.push_back ( dfmaEvt[i] );
+    }
+
+    for ( int i = 0; i < *ng; i++ )
+    {
+        grEvts.push_back ( grEvt[i] );
+    }
+
+    return godData->Fill ( gebEvt, &grEvts, &dfmaEvts, &agodEvts );
 }

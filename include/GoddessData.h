@@ -9,6 +9,7 @@
 #include "GoddessStruct.h"
 
 #include "GTMerge.h"
+#include "GretProcessor.h"
 #include "GEBSort.h"
 
 #include <vector>
@@ -25,7 +26,9 @@ class GoddessData
 		~GoddessData();
 
 		int Fill(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt);
+		int Fill(GEB_EVENT* gebEvt, std::vector<GRProcessor::Gretina_Gamma_Ray>* grEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvts);
 
+		
 	private:
 		struct GammaData
 		{
@@ -40,6 +43,7 @@ class GoddessData
 		unsigned long long firstTimestamp;
 		///The pointer to the vector of gamma information.
 		std::vector<GamData>* gamData;
+		std::vector<GretProcessor::Gretina_Gamma_Ray>* GretData;
 		///Pointer to the vector of silicon information.
 		std::vector<SiDataBase>* siData;
 		std::vector<SiDataDetailed>* siDataD;
@@ -65,7 +69,9 @@ class GoddessData
 		void InitGammaHists();
 
 		int FillTrees(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts);
+		int FillTrees(GEB_EVENT* gebEvt, std::vector<GretProcessor::Gretina_Gamma_Ray>* grEvts);
 		void FillHists(std::vector<DGSEVENT>* dgsEvts);
+		void FillHists(std::vector<GretProcessor::Gretina_Gamma_Ray>* grEvts);
 
 		///Map of all fired detectors in an event keyed by position ID.
 		std::map<std::string, Detector*> firedDets;

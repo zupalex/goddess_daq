@@ -7,38 +7,18 @@
 
 class DGSProcessor : public GRProcessor {
 private:
-    int nGsGe;
-
-    PARS* pars;
-
-    /* pointers to ROOT spectra */
-
-    TH1D* hEventCounter;
-    TH2F* hGeCounter, *hBGOCounter;
-    TH2F* hEhiRaw, *hEhiCln, *hEhiDrty;
-    TH2F* hGeBGO_DT;
-    TH2F* hTrB, *hFwB;//,*hE_TrB[NGE+1];
-
-    /* Gain Calibrtation */
-    float M; // changed from 350.0
-    float* ehigain;
-    float* ehioffset;
-    float* ehibase;
-    float* ehiPZ;
 
 public:
-    DGSProcessor ( int nGsGe_, int* tlkup_, int* tid_, int* ng_, PARS* pars_ );
-    ~DGSProcessor() {}
-
-    int* tlkup;
-    int* tid;
-    int* ng;
+    DGSProcessor ():GRProcessor( GRProcessor::nGsGe, GRProcessor::tlkup, GRProcessor::tid, GRProcessor::ng, GRProcessor::pars){};
+    ~DGSProcessor() {};
 
     void GetCal ( char* file );
     int SupDGS ();
 
     int DGSEvDecompose_v3 ( unsigned int* ev, int len, DGSEVENT* thedgsEvt );
-    int BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt );
+     int BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt );
+    
+    //int Bingr ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt );
 };
 
 #endif
