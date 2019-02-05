@@ -140,6 +140,7 @@ SortManager::SortManager()
 
     for ( int i = 0; i < MAXCOINEV; i++ )
     {
+
         buffHeader[i] = new GebData;
         buffData[i] = new char[50000];
 

@@ -110,6 +110,7 @@ int main(int argc, char** argv)
 	pars->triggerMode = "default";
 	pars->InputSrc = NOTDEF;
 	pars->HaveRootFileName = 0;
+	pars->sphere_split = -1.0;
 
 	strcpy(pars->ConfigFile, "Uninitialized");
 	strcpy(pars->GeomFile, "goddess.geom");
@@ -268,6 +269,11 @@ int main(int argc, char** argv)
 			j++;
 			pars->qqq5EnAdjustFile = (string) argv[j++];
 			printf("will apply a correction to the QQQ5 energies based on the following file: %s ...\n", pars->qqq5EnAdjustFile.c_str());
+		}
+		else if ((p = strstr(argv[j], "-sphere_split")) != NULL)
+		{
+		  j++;
+		  sscanf(argv[j++],"%f",&pars->sphere_split);
 		}
 		else if ((p = strstr(argv[j], "-nocalib")) != NULL)
 		{
@@ -497,8 +503,13 @@ int main(int argc, char** argv)
 			std::cerr << "SPECIFY IT OR CHECK THAT ONE EXISTS FOR THE RUN YOU'RE TRYING TO TREAT" << std::endl;
 			std::cerr << "Will now try to load the default config file \"goddess.config\"" << std::endl;
 
-			if (strcmp(backupConf, "goddess.config")) strcpy(pars->ConfigFile, "goddess.config");
-			else return -1;
+			if (strcmp(backupConf, "goddess.config"))
+			{cout<<"Do you make it here..."<<endl;
+			  strcpy(pars->ConfigFile, "goddess.config");
+			
+			cout<<"Read through config."<<endl;}
+			else {cout<<"has to return."<<endl; return -1;}
+			
 		}
 
 		printf("\nwill read config file from: %s ...\n", pars->ConfigFile);

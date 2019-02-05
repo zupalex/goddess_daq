@@ -24,7 +24,7 @@ Endcap Layer Spacing = 3.3
 # X: center of detector vs. center of the chamber
 # Y: distance detector to barrel mount outer radius
 # Z: start of active area compared to center of chamber)
-SuperX3 Offset = (0, 4.8, 3.7)
+SuperX3 Offset = (0, 11.55, 12.66)
 
 # For the QQQ5, the reference offset is for sector DA
 # X: tip of the QQQ5 arc circle vs. center of the chamber

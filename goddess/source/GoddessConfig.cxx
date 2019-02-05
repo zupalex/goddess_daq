@@ -29,6 +29,7 @@ GoddessConfig::GoddessConfig(unsigned int runNum, std::string positionFile, std:
 	ReadPosition(positionFile);
 	ReadConfig(configFile, sx3EnAdjustFName, qqq5EnAdjustFName);
 	ReadReacInfo(runNum);
+	cout<<"Finished Goddess Config function"<<endl;
 }
 
 GoddessConfig::~GoddessConfig()
@@ -544,6 +545,7 @@ void GoddessConfig::ReadReacInfo(unsigned int run)
 		if (!foundRange && begRange != string::npos && endRange != string::npos)
 		{
 			line = line.substr(begRange + 1, endRange - begRange - 1);
+			cout<<line<<endl;
 
 			runs_range.clear();
 
@@ -581,6 +583,7 @@ void GoddessConfig::ReadReacInfo(unsigned int run)
 
 				if (binary_search(runs_range.begin(), runs_range.end(), run)) foundRange = true;
 			}
+			//cout<<"Got to half through reac infos"<<endl;
 		}
 		else if (foundRange)
 		{
@@ -668,7 +671,6 @@ void GoddessConfig::ReadReacInfo(unsigned int run)
 		}
 	}
 }
-
 IonChamber * GoddessConfig::ReadIonChamberConfig(std::istringstream & lineStream)
 {
 	int numAnode, numScint, numDE, numEres;

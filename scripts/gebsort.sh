@@ -48,6 +48,9 @@ ReturnError()
     echo "-> userfilter[=folder_name] will apply the UserEventFilter to generate the root file."
     echo "                            if [=folder_name] is specified, a \"cleaned\" merged file will be generated in the specified folder"
     echo "______________________________________________________________________________________________________________________________________________________________"
+    echo "-> sphere_split will tell the code to make allowances for how far apart the Gretina sphere is. "
+    echo "               Gammasphere is default and set for -1. If no split, set to 0."
+    echo "______________________________________________________________________________________________________________________________________________________________"
 }
 
 if [ $# -lt 3 ] 
@@ -80,6 +83,8 @@ USERFILTERARG=""
 TRIGMODEARG=""
 
 SX3ENADJUSTARG=""
+
+SPHERESPLIT=""
 
 if [ "$1" = "default" ]; then
     INPUT_DIR="/mnt/hgfs/GODDESS_MERGED/merged"
@@ -142,6 +147,19 @@ COUNTER=$(($COUNTER + 1))
 
 	SIDETLVLFLAG="-siDetailLvl $SIDETLVLVAL"
 	echo "/!\\ will process the run with the Si Detectors Output Details set to level $SIDETLVLVAL/!\\"
+	
+    elif [ "$arg" != "${arg##sphere_split=}" ]; then
+
+	SPHERESPLIT="${arg##sphere_split=}"
+
+	if [ $SPHERESPLIT -lt 0 ]; then
+	    echo "INVALID VALUE SPECIFIED FOR nocalib ARGUMENT!!"
+	    ReturnError
+	    exit 1
+	fi
+
+	SPHERESPLIT="-sphere_split $SPHERESPLIT"
+      echo "/!\\ will set the Gretina sphere split to $SPHERESPLIT/!\\"
 	
     elif [ "$arg" = "nomapping" ]; then
 
@@ -265,5 +283,6 @@ do
 done
 
 #exit
+
 
 

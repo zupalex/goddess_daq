@@ -503,6 +503,10 @@ int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgs
 
 int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, GRProcessor::Gretina_Gamma_Ray* grEvt )
 {
+  
+  cout<<"Found BinDGOD"<<endl;
+  
+  
     char str[128];
     int j;
     int ndssd;
@@ -838,6 +842,7 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
 
 int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, GRProcessor::Gretina_Gamma_Ray* grEvt )
 {
+  cout<<"Found BinAGOD."<<endl;
     char str[128];
 
     /* prototypes */
@@ -958,6 +963,7 @@ int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfm
 }
 int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, GRProcessor::Gretina_Gamma_Ray* grEvt)
 {
+  cout<<"Found BinGOD"<<endl;
     std::vector<AGODEVENT> agodEvts;
     std::vector<DFMAEVENT> dfmaEvts;
     std::vector<GRProcessor::Gretina_Gamma_Ray> grEvts;

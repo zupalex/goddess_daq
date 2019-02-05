@@ -61,6 +61,8 @@ float GretProcessor::Angle_Between_Vect ( float x1, float y1, float z1, float x2
 
 int GretProcessor::Gret_Tracking ( GRProcessor::Gretina_header header, float sphere_split )
 {
+  
+  cout<<"Found Gret_Tracking"<<endl;
 
     //record initial info for branches
     crystalID.push_back ( header.crystal_id );
@@ -538,6 +540,8 @@ int GretProcessor::Gret_Tracking ( GRProcessor::Gretina_header header, float sph
 
 int GretProcessor::Bingr ( GEB_EVENT* theGEBEvent, GRProcessor::Gretina_header* theGretEvt )
 {
+  
+  cout<<"Found Bingr"<<endl;
     /* declarations */
 
     char str[128];

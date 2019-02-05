@@ -144,7 +144,7 @@ class PARS
 		bool noDoppler;
 		unsigned short ignoreThresholds;
 		unsigned short siDetailLvl;
-		float sphere_split = -1.;
+		float sphere_split;
 
 		std::string userFilter;
 		std::string triggerMode;
