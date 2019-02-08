@@ -38,14 +38,14 @@ class GODProcessor
 
 		int SupDGOD();
 		int DGODEvDecompose(unsigned int* ev, int len, DFMAEVENT* thedfmaEvt);
-		int BinDGOD(GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt);
+		int BinDGOD(GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt);
 
 		void AGODEvDecompose(unsigned int* ev, int len, AGODEVENT* theagodEvt);
 		void SupAGOD();
-		int BinAGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt);
+		int BinAGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt);
 
 		void SupGOD();
-		int BinGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt);
+		int BinGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt);
 };
 
 #endif

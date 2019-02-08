@@ -144,6 +144,8 @@ class PARS
 		bool noDoppler;
 		unsigned short ignoreThresholds;
 		unsigned short siDetailLvl;
+		int GammaProcessor;
+		float sphere_split;
 
 		std::string userFilter;
 		std::string triggerMode;
