@@ -104,6 +104,7 @@
 #define GEB_TYPE_AGOD          19
 
 #define MAX_GEB_TYPE           20
+#define MAXINPUTS		16
 
 // Binary data format
 
@@ -123,6 +124,65 @@ struct AGODEVENT
 		std::vector<unsigned short> channels;
 		std::vector<unsigned short> values;
 		unsigned long long timestamp;
+};
+
+struct GRETHEADER
+{
+    int type;
+    int crystal_id;
+    int num; //number of interaction points from decomp
+    float tot_e;
+    int core_e[4];
+    long long int timestamp;
+    long long trig_time;
+    float t0;
+    float cfd;
+    float chisq;
+    float norm_chisq;
+    float baseline;
+    float prestep;
+    float poststep;
+    int pad; //non0 gives error type
+    struct
+    {
+        float x;
+        float y;
+        float z;
+        float e;
+        int seg;
+        float seg_ener;
+    } inputs[MAXINPUTS];
+};
+
+struct GRETEVENT
+{
+		int timestamp;
+		int quad;
+		int crystal;
+		float theta;
+		float phi;
+		float e;
+		float x;
+		float y;
+		float z;
+		float raw_e;
+};
+
+struct GRETHIT
+{
+    float x;
+    float y;
+    float z;
+    float r;
+    float theta;
+    float phi;
+    float e;
+    int seg;
+    float seg_ener;
+    float raw_e;
+    int quad;
+    int crystal;
+    int timestamp;
 };
 
 struct DGSEVENT

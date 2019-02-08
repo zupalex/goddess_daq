@@ -24,7 +24,7 @@ class GoddessData
 		GoddessData(PARS* pars_, GoddessConfig* gconf_);
 		~GoddessData();
 
-		int Fill(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt);
+		int Fill(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvt, std::vector<GRETEVENT>* gretEvt);
 
 	private:
 		struct GammaData
@@ -45,7 +45,12 @@ class GoddessData
 		std::vector<SiDataDetailed>* siDataD;
 		///Pointer to the vector of ion chamber information.
 		std::vector<IonData>* ionData;
-
+		//Pointer to the vector of Gretina information.
+		std::vector<GretData>* gretdata;
+		
+		
+		//The pointer to the vector of gamma Gret sorted but not calibrated information.
+		std::vector<GretData>* gretdata_snc;
 		///The pointer to the vector of gamma sorted but not calibrated information.
 		std::vector<GamData>* gamData_snc;
 		///Pointer to the vector of silicon sorted but not calibrated information.
@@ -64,7 +69,7 @@ class GoddessData
 		void InitBB10Hists();
 		void InitGammaHists();
 
-		int FillTrees(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts);
+		int FillTrees(GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<GRETEVENT>* gretEvts);
 		void FillHists(std::vector<DGSEVENT>* dgsEvts);
 
 		///Map of all fired detectors in an event keyed by position ID.

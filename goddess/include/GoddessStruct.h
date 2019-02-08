@@ -117,6 +117,27 @@ struct GamData
     unsigned long long int time;
 };
 
+//structure of gamma ray data from Gretina
+
+struct GretData
+{
+  //The calibrated energy of the gamma
+  float en;
+  
+  //The number of the gamma ray detector
+  int num;
+  
+  //Position of gamma rays
+  float x;
+  float y;
+  float z;
+  
+  //Timestamp of the gamm;
+  unsigned long long int time;
+  
+  
+};
+
 ///Structure of silicon data from ORRUBA. This one is used when running geb_sort in default mode
 class SiDataBase
 {

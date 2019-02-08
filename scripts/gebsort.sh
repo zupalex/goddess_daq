@@ -48,6 +48,14 @@ ReturnError()
     echo "-> userfilter[=folder_name] will apply the UserEventFilter to generate the root file."
     echo "                            if [=folder_name] is specified, a \"cleaned\" merged file will be generated in the specified folder"
     echo "______________________________________________________________________________________________________________________________________________________________"
+    echo "-> GammaProcessor=mode handles Gamma Ray detector type"
+    echo "               mode==0 Gammasphere [default]															"
+    echo "		 mode==1 Gretina"
+    echo "______________________________________________________________________________________________________________________________________________________________"
+    echo "-> sphere_split will tell the code to make allowances for how far apart the Gretina sphere is. "
+    echo "               Default is 0. Ignore if for Gammasphere run."
+    echo "______________________________________________________________________________________________________________________________________________________________"
+    
 }
 
 if [ $# -lt 3 ] 
@@ -80,6 +88,10 @@ USERFILTERARG=""
 TRIGMODEARG=""
 
 SX3ENADJUSTARG=""
+
+GRPROCTYPE=""
+
+SPHERESPLIT=""
 
 if [ "$1" = "default" ]; then
     INPUT_DIR="/mnt/hgfs/GODDESS_MERGED/merged"
@@ -142,6 +154,32 @@ COUNTER=$(($COUNTER + 1))
 
 	SIDETLVLFLAG="-siDetailLvl $SIDETLVLVAL"
 	echo "/!\\ will process the run with the Si Detectors Output Details set to level $SIDETLVLVAL/!\\"
+	
+    elif [ "$arg" != "${arg##GammaProcessor=}" ]; then
+
+	GRPROCTYPE="${arg##GammaProcessor=}"
+
+	if [ $GRPROCTYPE -lt 0 -o $GRPROCTYPE -gt 1 ]; then
+	    echo "Guys. How hard is it to choose between Gammasphere and Gretina? Try again, but better this time."
+	    ReturnError
+	    exit 1
+	fi
+
+	GRPROCTYPE="-GammaProcessor $GRPROCTYPE"
+      echo "/!\\ will process the run with GammaProcessor set to: $GRPROCTYPE/!\\"
+	
+    elif [ "$arg" != "${arg##sphere_split=}" ]; then
+
+	SPHERESPLIT="${arg##sphere_split=}"
+
+	if [ $SPHERESPLIT -lt 0 ]; then
+	    echo "INVALID VALUE SPECIFIED FOR nocalib ARGUMENT!!"
+	    ReturnError
+	    exit 1
+	fi
+
+	SPHERESPLIT="-sphere_split $SPHERESPLIT"
+      echo "/!\\ will set the Gretina sphere split to $SPHERESPLIT/!\\"
 	
     elif [ "$arg" = "nomapping" ]; then
 
@@ -256,7 +294,7 @@ do
     fi
     
     time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
-    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $NODOPPLERFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $TRIGMODEARG\
+    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $NODOPPLERFLAG $IGNORETHRFLAG $SIDETLVLFLAG $GRPROCTYPE $SPHERESPLIT $USERFILTERARG $SX3ENADJUSTARG $TRIGMODEARG \
     -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     
     echo "GEBSort DONE at `date`"
@@ -265,5 +303,6 @@ do
 done
 
 #exit
+
 
 

@@ -24,6 +24,8 @@
 #include "GTMerge.h"
 
 #include "DGSProcessor.h"
+#include "GretProcessor.h"
+#include "GRProcessor.h"
 #include "GODProcessor.h"
 
 #include "GoddessConfig.h"
@@ -89,7 +91,10 @@ public:
     int ng;
 
     DGSProcessor* theDGSProcessor;
+    GretProcessor* theGretProcessor;
+    GRProcessor* theGRProcessor;
     DGSEVENT dgsEvt[MAXCOINEV];
+    GRETEVENT gretset[MAXCOINEV];
 
     int ShowStatus();
 
@@ -98,6 +103,9 @@ public:
     int GEBGetEv ( );
 
     bool GetWriteEventFlag();
+    
+//     int GammaProcessor;
+//     float sphere_split;
 };
 
 #endif

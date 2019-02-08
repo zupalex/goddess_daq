@@ -4,13 +4,29 @@
 #include "GEBSort.h"
 #include "GTMerge.h"
 
-class DGSProcessor
-{
+
+class DGSProcessor {
 private:
+    
     int nGsGe;
 
     PARS* pars;
+    
+        /* Gain Calibrtation */
+    float M; // changed from 350.0
 
+    float* ehigain;
+    float* ehioffset;
+    float* ehibase;
+    float* ehiPZ;
+    
+        /* parameters */
+    double* angle;
+    double* anglePhi;
+    double* dopCorFac;
+    double* aCFac;
+  
+  
     /* pointers to ROOT spectra */
 
     TH1D* hEventCounter;
@@ -19,30 +35,18 @@ private:
     TH2F* hGeBGO_DT;
     TH2F* hTrB, *hFwB;//,*hE_TrB[NGE+1];
 
-    /* Gain Calibrtation */
-    float M; // changed from 350.0
-    float* ehigain;
-    float* ehioffset;
-    float* ehibase;
-    float* ehiPZ;
-
-    /* parameters */
-    double* angle;
-    double* anglePhi;
-
-    double* dopCorFac;
-    double* aCFac;
-
     /* Other variables */
     unsigned long long int  EvTimeStam0 = 0;
 
 public:
-    DGSProcessor ( int nGsGe_, int* tlkup_, int* tid_, int* ng_, PARS* pars_ );
-    ~DGSProcessor() {}
+  
 
     int* tlkup;
     int* tid;
     int* ng;
+  
+    DGSProcessor ( int nGsGe_, int* tlkup_, int* tid_, int* ng_, PARS* pars_ );
+    ~DGSProcessor() {}
 
     void GetCal ( char* file );
     int SupDGS ();
