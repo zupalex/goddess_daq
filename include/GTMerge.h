@@ -156,7 +156,7 @@ struct GRETHEADER
 
 struct GRETEVENT
 {
-		int timestamp;
+		long long unsigned int timestamp;
 		int quad;
 		int crystal;
 		float theta;

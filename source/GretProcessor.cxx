@@ -7,7 +7,7 @@ GretProcessor::GretProcessor ( int nGsGe_, int* ng_, PARS* pars_ )
     pars = pars_;
 
     M = 350.0;
-    
+
     ng = ng_;
 
     angles_map[make_pair<int,int> ( 1,0 )] = make_pair<float,float> ( 35.3,19.58 );
@@ -221,16 +221,22 @@ vector< float > GretProcessor::Tot_Gam_Pos ( vector<float> new_face, float x, fl
     return new_pos;
 }
 
-int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split )
+int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split )
 {
-  int i = 0;
-  GRETHEADER* thegretHdr;
+    unsigned int i = 0;
+    GRETHEADER* thegretHdr = new GRETHEADER;
 
-  while (theGEBEvent->ptinp.size())
-  {
-    thegretHdr = (GRETHEADER*) theGEBEvent->ptinp[i];
-    
-    
+    event = new vector<GRETHIT>;
+    second_event = new vector<GRETHIT> ;
+    third_event = new vector<GRETHIT> ;
+
+    while ( i<theGEBEvent->ptinp.size() )
+    {
+      memcpy(thegretHdr, &theGEBEvent->ptinp[i], sizeof(GRETHEADER));
+
+        i++;
+
+
 
         //determine position of crystal
         hole_num = thegretHdr->crystal_id/4; //quad number.
@@ -287,7 +293,7 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
                     one_hit.raw_e = thegretHdr->tot_e;
                     one_hit.quad = hole_num;
                     one_hit.crystal = crystal_num;
-                    event.push_back ( one_hit );
+                    event->push_back ( one_hit );
 
                     timestamp_0 = thegretHdr->timestamp;
 
@@ -319,12 +325,12 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
                 one_hit.e = weighted_e;
                 //cout<<one_hit.e<<endl;
                 //one_hit.e = header.tot_e;
-                one_hit.seg = 0;;
+                one_hit.seg = 0;
                 one_hit.seg_ener = 0;
                 one_hit.raw_e = thegretHdr->tot_e;
                 one_hit.quad = hole_num;
                 one_hit.crystal = crystal_num;
-                event.push_back ( one_hit );
+                event->push_back ( one_hit );
 
                 timestamp_0 = thegretHdr->timestamp;
                 weighted_e = 0;
@@ -346,69 +352,69 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
 
 
 
-            for ( unsigned int interaction = 0; interaction<event.size(); interaction++ ) //find the highest energy of the sub gamma rays and use the highest energy as the first interaction
+            for ( unsigned int interaction = 0; interaction<event->size(); interaction++ ) //find the highest energy of the sub gamma rays and use the highest energy as the first interaction
             {
 
-                if ( event[interaction].e > highest_energy )
+                if ( event->at ( interaction ).e > highest_energy )
                 {
-                    highest_energy = event[interaction].e;
+                    highest_energy = event->at ( interaction ).e;
 
                     hit = interaction;
                 }
 
             }
 
-            tot_energy = event[hit].e; //set first interaction position as the pos of tot_e
+            tot_energy = event->at ( hit ).e; //set first interaction position as the pos of tot_e
 
 
-            for ( unsigned int p = 0; p<event.size(); p++ )
+            for ( unsigned int p = 0; p<event->size(); p++ )
             {
                 if ( p == hit ) //ignore the highest interaction
                 {
                     continue;
                 }
 
-                if ( event[p].quad == event[hit].quad && event[p].crystal == event[hit].crystal )
+                if ( event->at ( p ).quad == event->at ( hit ).quad && event->at ( p ).crystal == event->at ( hit ).crystal )
                 {
                     continue;
                 }
-                angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[p].x,event[p].y,event[p].z ); //determine how far away your sub gamma rays are. If within 15 degrees addback
+                angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( p ).x,event->at ( p ).y,event->at ( p ).z ); //determine how far away your sub gamma rays are. If within 15 degrees addback
                 //angle_between_hit = Scattering_Angle(highest_energy,event[i].e);
 
                 if ( angle_between_hit> 15 || angle_between_hit<-15 ) //outside of 15 degrees save for second gamma ray
                 {
-                    one_hit.x = event[p].x;
-                    one_hit.y = event[p].y;
-                    one_hit.z = event[p].z ;
-                    one_hit.r = event[p].r;
-                    one_hit.theta = event[p].theta;
-                    one_hit.phi = event[p].phi;
-                    one_hit.e = event[p].e;
-                    one_hit.seg = event[p].seg;
-                    one_hit.seg_ener = event[p].seg_ener;
-                    one_hit.raw_e = event[p].raw_e;
-                    one_hit.quad = event[p].quad;
-                    one_hit.crystal = event[p].crystal;
-                    second_event.push_back ( one_hit );
+                    one_hit.x = event->at ( p ).x;
+                    one_hit.y = event->at ( p ).y;
+                    one_hit.z = event->at ( p ).z ;
+                    one_hit.r = event->at ( p ).r;
+                    one_hit.theta = event->at ( p ).theta;
+                    one_hit.phi = event->at ( p ).phi;
+                    one_hit.e = event->at ( p ).e;
+                    one_hit.seg = event->at ( p ).seg;
+                    one_hit.seg_ener = event->at ( p ).seg_ener;
+                    one_hit.raw_e = event->at ( p ).raw_e;
+                    one_hit.quad = event->at ( p ).quad;
+                    one_hit.crystal = event->at ( p ).crystal;
+                    second_event->push_back ( one_hit );
 
                     continue;
                 }
 
-                tot_energy += event[p].e; //addback
+                tot_energy += event->at ( p ).e; //addback
 
             }
             Gamma.e = tot_energy;
 
 
-            thegretEvt->x = event[hit].x;
-            thegretEvt->y = event[hit].y;
-            thegretEvt->z = event[hit].z;
-            thegretEvt->timestamp = third_event[hit].timestamp;
-            thegretEvt->raw_e = third_event[hit].raw_e;
-            thegretEvt->quad = third_event[hit].quad;
-            thegretEvt->crystal = third_event[hit].crystal;
-            thegretEvt->theta = third_event[hit].theta;
-            thegretEvt->phi = third_event[hit].phi;
+            thegretEvt->x = event->at ( hit ).x;
+            thegretEvt->y = event->at ( hit ).y;
+            thegretEvt->z = event->at ( hit ).z;
+            thegretEvt->timestamp = third_event->at ( hit ).timestamp;
+            thegretEvt->raw_e = third_event->at ( hit ).raw_e;
+            thegretEvt->quad = third_event->at ( hit ).quad;
+            thegretEvt->crystal = third_event->at ( hit ).crystal;
+            thegretEvt->theta = third_event->at ( hit ).theta;
+            thegretEvt->phi = third_event->at ( hit ).phi;
 //             Gammas->push_back ( Gamma );
             //energy_temp.push_back ( Gamma.e );
 
@@ -420,61 +426,61 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
 
 
             //repeat above but for sub gamma rays saved for second event
-            if ( second_event.size() != 0 )
+            if ( second_event->size() != 0 )
             {
-                for ( unsigned int set = 0; set<second_event.size(); set++ )
+                for ( unsigned int set = 0; set<second_event->size(); set++ )
                 {
-                    if ( second_event[set].e > highest_energy )
+                    if ( second_event->at ( set ).e > highest_energy )
                     {
-                        highest_energy = second_event[set].e;
+                        highest_energy = second_event->at ( set ).e;
 
                         hit = set;
                     }
                 }
 
-                tot_energy = event[hit].e;
+                tot_energy = event->at ( hit ).e;
 
-                for ( unsigned int ff = 0; ff<second_event.size(); ff++ )
+                for ( unsigned int ff = 0; ff<second_event->size(); ff++ )
                 {
-                    if ( ff == hit || event[hit].e == highest_energy )
+                    if ( ff == hit || event->at ( hit ).e == highest_energy )
                     {
                         continue;
                     }
 
-                    if ( event[ff].quad == event[hit].quad && event[ff].crystal == event[hit].crystal )
+                    if ( event->at ( ff ).quad == event->at ( hit ).quad && event->at ( ff ).crystal == event->at ( hit ).crystal )
                     {
                         continue;
                     }
-                    angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[ff].x,event[ff].y,event[ff].z );
+                    angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( ff ).x,event->at ( ff ).y,event->at ( ff ).z );
                     if ( angle_between_hit> 15 || angle_between_hit<-15 )
                     {
-                        one_hit.x = second_event[ff].x;
-                        one_hit.y = second_event[ff].y;
-                        one_hit.z = second_event[ff].z ;
-                        one_hit.r = second_event[ff].r;
-                        one_hit.theta = second_event[ff].theta;
-                        one_hit.phi = second_event[ff].phi;
-                        one_hit.e = second_event[ff].e;
-                        one_hit.seg = second_event[ff].seg;
-                        one_hit.seg_ener = second_event[ff].seg_ener;
-                        third_event.push_back ( one_hit );
+                        one_hit.x = second_event->at ( ff ).x;
+                        one_hit.y = second_event->at ( ff ).y;
+                        one_hit.z = second_event->at ( ff ).z ;
+                        one_hit.r = second_event->at ( ff ).r;
+                        one_hit.theta = second_event->at ( ff ).theta;
+                        one_hit.phi = second_event->at ( ff ).phi;
+                        one_hit.e = second_event->at ( ff ).e;
+                        one_hit.seg = second_event->at ( ff ).seg;
+                        one_hit.seg_ener = second_event->at ( ff ).seg_ener;
+                        third_event->push_back ( one_hit );
 
                         continue;
                     }
 
-                    tot_energy += second_event[ff].e;
+                    tot_energy += second_event->at ( ff ).e;
                 }
                 thegretEvt->e = tot_energy;
 
-                thegretEvt->x = second_event[hit].x;
-                thegretEvt->y = second_event[hit].y;
-                thegretEvt->z = second_event[hit].z;
-                thegretEvt->timestamp = third_event[hit].timestamp;
-                thegretEvt->raw_e = third_event[hit].raw_e;
-                thegretEvt->quad = third_event[hit].quad;
-                thegretEvt->crystal = third_event[hit].crystal;
-                thegretEvt->theta = third_event[hit].theta;
-               thegretEvt->phi = third_event[hit].phi;
+                thegretEvt->x = second_event->at ( hit ).x;
+                thegretEvt->y = second_event->at ( hit ).y;
+                thegretEvt->z = second_event->at ( hit ).z;
+                thegretEvt->timestamp = third_event->at ( hit ).timestamp;
+                thegretEvt->raw_e = third_event->at ( hit ).raw_e;
+                thegretEvt->quad = third_event->at ( hit ).quad;
+                thegretEvt->crystal = third_event->at ( hit ).crystal;
+                thegretEvt->theta = third_event->at ( hit ).theta;
+                thegretEvt->phi = third_event->at ( hit ).phi;
 //                 Gammas->push_back ( Gamma );
                 //energy_temp.push_back ( Gamma.e );
 
@@ -484,52 +490,52 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
 
 
             //repeat again for the chance of a third event. However, do not keep for fourth event. Fourth event is very unlikely.
-            if ( third_event.size() != 0 )
+            if ( third_event->size() != 0 )
             {
-                for ( unsigned int settwo= 0; settwo<event.size(); settwo++ )
+                for ( unsigned int settwo= 0; settwo<event->size(); settwo++ )
                 {
-                    if ( event[settwo].e > highest_energy )
+                    if ( event->at ( settwo ).e > highest_energy )
                     {
-                        highest_energy = event[settwo].e;
+                        highest_energy = event->at ( settwo ).e;
 
                         hit = settwo;
                     }
                 }
 
-                tot_energy = event[hit].e;
+                tot_energy = event->at ( hit ).e;
 
-                for ( unsigned int fff = 0; fff<third_event.size(); fff++ )
+                for ( unsigned int fff = 0; fff<third_event->size(); fff++ )
                 {
                     if ( fff == hit )
                     {
                         continue;
                     }
 
-                    if ( event[fff].quad == event[hit].quad && event[fff].crystal == event[hit].crystal )
+                    if ( event->at ( fff ).quad == event->at ( fff ).quad && event->at ( fff ).crystal == event->at ( hit ).crystal )
                     {
                         continue;
                     }
-                    angle_between_hit = Angle_Between_Vect ( event[hit].x, event[hit].y, event[hit].z, event[fff].x,event[fff].y,event[fff].z );
+                    angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( fff ).x,event->at ( fff ).y,event->at ( fff ).z );
                     if ( angle_between_hit> 15 )
                     {
                         cout<<"Sub-gamma would be in a fourth event."<<endl;
                         continue;
                     }
 
-                    tot_energy += third_event[fff].e;
+                    tot_energy += third_event->at ( fff ).e;
 
                 }
                 thegretEvt->e = tot_energy;
 
-                thegretEvt->x = third_event[hit].x;
-                thegretEvt->y = third_event[hit].y;
-                thegretEvt->z = third_event[hit].z;
-                thegretEvt->timestamp = third_event[hit].timestamp;
-                thegretEvt->raw_e = third_event[hit].raw_e;
-                thegretEvt->quad = third_event[hit].quad;
-                thegretEvt->crystal = third_event[hit].crystal;
-                thegretEvt->theta = third_event[hit].theta;
-                thegretEvt->phi = third_event[hit].phi;
+                thegretEvt->x = third_event->at ( hit ).x;
+                thegretEvt->y = third_event->at ( hit ).y;
+                thegretEvt->z = third_event->at ( hit ).z;
+                thegretEvt->timestamp = third_event->at ( hit ).timestamp;
+                thegretEvt->raw_e = third_event->at ( hit ).raw_e;
+                thegretEvt->quad = third_event->at ( hit ).quad;
+                thegretEvt->crystal = third_event->at ( hit ).crystal;
+                thegretEvt->theta = third_event->at ( hit ).theta;
+                thegretEvt->phi = third_event->at ( hit ).phi;
 //                 Gammas->push_back ( Gamma );
                 //energy_temp.push_back ( Gamma.e );
 
@@ -537,9 +543,9 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
             }
 
             //clear vectors to use for next gamma ray sequence
-            event.clear();
-            second_event.clear();
-            third_event.clear();
+            event->clear();
+            second_event->clear();
+            third_event->clear();
 
             //save the information from the current header for the next gamma ray if over 100kev.
             for ( int hit3=0; hit3<thegretHdr->num; hit3++ )
@@ -567,7 +573,7 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
                     one_hit.raw_e = thegretHdr->tot_e;
                     one_hit.quad = hole_num;
                     one_hit.crystal = crystal_num;
-                    event.push_back ( one_hit );
+                    event->push_back ( one_hit );
 
                     timestamp_0 = thegretHdr->timestamp;
                 }
@@ -598,7 +604,7 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
                 one_hit.raw_e = thegretHdr->tot_e;
                 one_hit.quad = hole_num;
                 one_hit.crystal = crystal_num;
-                event.push_back ( one_hit );
+                event->push_back ( one_hit );
 
                 timestamp_0 = thegretHdr->timestamp;
                 weighted_e = 0;
@@ -639,7 +645,7 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
                     one_hit.raw_e = thegretHdr->tot_e;
                     one_hit.quad = hole_num;
                     one_hit.crystal = crystal_num;
-                    event.push_back ( one_hit );
+                    event->push_back ( one_hit );
 
                     timestamp_0 = thegretHdr->timestamp;
                 }
@@ -670,7 +676,7 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
                 one_hit.raw_e = thegretHdr->tot_e;
                 one_hit.quad = hole_num;
                 one_hit.crystal = crystal_num;
-                event.push_back ( one_hit );
+                event->push_back ( one_hit );
 
                 timestamp_0 = thegretHdr->timestamp;
                 weighted_e = 0;
@@ -680,20 +686,11 @@ int GretProcessor::Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt,
             }
 
         }
-
-        
-
-        b++; //add to the counter to see code progress
-
-        if ( ( int ) b%20000 == 0 )
-        {
-            cout<<"Event number: "<<b<<"\r"<<flush;
-        }
-}
+    }
 
 // thegretEvt = &Gammas->at(0);
 
-    return -1;
+    return 0;
 }
 
 int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split )
@@ -702,6 +699,8 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
 
     char str[128];
     //DGSEVENT dgsEvt[MAXCOINEV];
+
+    int RelEvT = 0;
 
     float Energy;
 
@@ -724,7 +723,7 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
 
     *ng = 0;
 
-   
+
 
     for ( unsigned int i = 0; i < theGEBEvent->ptgd.size(); i++ )
     {
@@ -741,7 +740,7 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
                          theGEBEvent->ptgd[i]->timestamp );
             }
 
-             Gret_Tracking ( (GEB_EVENT*) theGEBEvent, &thegretEvt[*ng], sphere_split );
+            Gret_Tracking ( ( GEB_EVENT* ) theGEBEvent, &thegretEvt[*ng], sphere_split );
 
 //             std::cerr << "DGS event: theGEBEvent TS = " << theGEBEvent->ptgd[i]->timestamp << " / DGSEents TS = " << thedgsEvt[*ng].event_timestamp << "\n";
 
@@ -751,10 +750,22 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
 
     // Initialize EvTimeStam0
 
+    //printf("Stat 1 \n");
+    if ( pars->CurEvNo < 100 )
+    {
+        printf ( "\n\nCurEvNo: %i", pars->CurEvNo );
+        for ( int i = 0; i < *ng; i++ )
+        {
+            printf ( "\n thedgsEvt[%i].event_timestamp: %llu", i, thegretEvt[i].timestamp );
+        }
+    }
+
     if ( EvTimeStam0 == 0 )
     {
         EvTimeStam0 = thegretEvt[0].timestamp;
     }
+    RelEvT = ( int ) ( ( thegretEvt[0].timestamp - EvTimeStam0 ) / 100000000 ); // overflow?
+    if ( !pars->noHists ) hEventCounter->Fill ( RelEvT );
 
 // GS ENERGY CALIBRATION
 
@@ -776,12 +787,12 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
         Energy = thegretEvt[i].e;
     }
 
-if ( pars->CurEvNo <= pars->NumToPrint )
-{
-    printf ( "exit bin_gret\n" );
-}
+    if ( pars->CurEvNo <= pars->NumToPrint )
+    {
+        printf ( "exit bin_gret\n" );
+    }
 
-return ( 0 );
+    return ( 0 );
 
 
 

@@ -78,7 +78,7 @@ int main ( int argc, char** argv )
     /* declarations */
     /*--------------*/
 
-    cout<<"Do you make it here?"<<endl;
+    //cout<<"Do you make it here?"<<endl;
 
     SortManager* theSortManager = SortManager::sinstance();
     PARS* pars = theSortManager->execParams;
