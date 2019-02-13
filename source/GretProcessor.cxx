@@ -224,126 +224,170 @@ vector< float > GretProcessor::Tot_Gam_Pos ( vector<float> new_face, float x, fl
 int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split )
 {
     unsigned int i = 0;
-    GRETHEADER* thegretHdr = new GRETHEADER;
+    GRETHEADER* thegretHdr;
+    char str[128];
+    int GebTypeStr ( int type, char str[] );
 
-    event = new vector<GRETHIT>;
-    second_event = new vector<GRETHIT> ;
-    third_event = new vector<GRETHIT> ;
+    vector<GRETHIT>* event = new vector<GRETHIT>;
+    vector<GRETHIT>* second_event = new vector<GRETHIT> ;
+    vector<GRETHIT>* third_event = new vector<GRETHIT> ;
 
-    while ( i<theGEBEvent->ptinp.size() )
+//     cerr<<event->size()<<endl;
+    while ( i<theGEBEvent->ptgd.size() )
     {
-      memcpy(thegretHdr, &theGEBEvent->ptinp[i], sizeof(GRETHEADER));
-
-        i++;
 
 
-
-        //determine position of crystal
-        hole_num = thegretHdr->crystal_id/4; //quad number.
-        crystal_num = thegretHdr->crystal_id%4; //crystal num 0-3 in quad
-        hole_det.first = hole_num;
-        hole_det.second = crystal_num;
-
-        itr = angles_map.find ( hole_det );
-        if ( itr != angles_map.end() )
+        if ( theGEBEvent->ptgd[i]->type == GEB_TYPE_DECOMP )
         {
-            theta_phi.first = itr->second.first;
-            theta_phi.second = itr->second.second;
-        }
-
-        crystal_face = Coor_Trans_Gretina ( R,theta_phi.first,theta_phi.second, sphere_split );
-
-
-
-        // if not the first timestamp in the file or a gamma ray below 100kev, compute delta_t
-        if ( timestamp_0 != -1 )
-        {
-            delta_t = ( thegretHdr->timestamp-timestamp_0 );
-        }
-
-
-        //if it is the first timestamp in the file or a gamma ray after a hit below 100kev
-        if ( timestamp_0 == -1 )
-        {
-            if ( thegretHdr->tot_e >515 ) //two methods for determining position based on tot_e. If above 515kev, use binary positions
+            if ( pars->CurEvNo <= pars->NumToPrint )
             {
-//
-                for ( int hit1=0; hit1<thegretHdr->num; hit1++ )
-                {
+//                 cerr<<"Spot suspect 1"<<endl;
+                GebTypeStr ( theGEBEvent->ptgd[i]->type, str );
+                printf ( "bin_mode1, %2i> %2i, %s, TS=%lli\n", i, theGEBEvent->ptgd[i]->type, str,
+                         theGEBEvent->ptgd[i]->timestamp );
+            }
 
-                    if ( thegretHdr->tot_e<100 ) //get rid of xray noise
+
+            //memcpy(thegretHdr, &theGEBEvent->ptinp[i], sizeof(GRETHEADER));
+            thegretHdr = ( GRETHEADER* ) theGEBEvent->ptinp[i];
+
+            i++;
+
+//             cerr<<"inside the while?"<<endl;
+// 	    /*cerr*/<<thegretHdr->timestamp<<endl;
+
+
+
+            //determine position of crystal
+            hole_num = thegretHdr->crystal_id/4; //quad number.
+            crystal_num = thegretHdr->crystal_id%4; //crystal num 0-3 in quad
+            hole_det.first = hole_num;
+            hole_det.second = crystal_num;
+
+            itr = angles_map.find ( hole_det );
+            if ( itr != angles_map.end() )
+            {
+                theta_phi.first = itr->second.first;
+                theta_phi.second = itr->second.second;
+            }
+
+            crystal_face = Coor_Trans_Gretina ( R,theta_phi.first,theta_phi.second, sphere_split );
+
+
+
+            // if not the first timestamp in the file or a gamma ray below 100kev, compute delta_t
+            if ( timestamp_0 != -1 )
+            {
+                delta_t = ( thegretHdr->timestamp-timestamp_0 );
+            }
+
+
+            //if it is the first timestamp in the file or a gamma ray after a hit below 100kev
+            if ( timestamp_0 == -1 )
+            {
+                if ( thegretHdr->tot_e<100 ) //get rid of xray noise
+                {
+// 			  cerr<<"low e"<<endl;
+                    continue;
+
+                }
+
+                if ( thegretHdr->tot_e >515 ) //two methods for determining position based on tot_e. If above 515kev, use binary positions
+                {
+//
+                    for ( int hit1=0; hit1<thegretHdr->num; hit1++ )
                     {
-                        continue;
+
+
+                        tot_gamma_pos = Tot_Gam_Pos ( crystal_face, thegretHdr->inputs[hit1].x, thegretHdr->inputs[hit1].y, thegretHdr->inputs[hit1].z ); //determine total pos of gamma ray with crystal face
+
+
+                        one_hit.x = tot_gamma_pos[0];
+                        one_hit.y = tot_gamma_pos[1];
+                        one_hit.z = tot_gamma_pos[2];
+                        one_hit.r = tot_gamma_pos[3];
+                        one_hit.theta = tot_gamma_pos[4];
+                        one_hit.phi = tot_gamma_pos[5];
+                        tot_gamma_pos.clear();
+                        one_hit.e = thegretHdr->inputs[hit1].e;
+                        one_hit.seg = thegretHdr->inputs[hit1].seg;
+                        one_hit.seg_ener = thegretHdr->inputs[hit1].seg_ener;
+                        one_hit.raw_e = thegretHdr->tot_e;
+                        one_hit.quad = hole_num;
+                        one_hit.crystal = crystal_num;
+                        one_hit.timestamp = thegretHdr->timestamp;
+                        event->push_back ( one_hit );
+
+                        timestamp_0 = thegretHdr->timestamp;
+// 			    cerr<<event->size()<<endl;
+
 
                     }
+                }
+                if ( thegretHdr->tot_e<515 ) //if crystal tot_e is below 515kev, must use a weighted energy position.
+                {
 
-                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, thegretHdr->inputs[hit1].x, thegretHdr->inputs[hit1].y, thegretHdr->inputs[hit1].z ); //determine total pos of gamma ray with crystal face
+                    for ( int whit1 = 0; whit1<thegretHdr->num; whit1++ ) //determine weighted energies by running through all the sub gamma rays
+                    {
 
+                        weighted_x += thegretHdr->inputs[whit1].x*thegretHdr->inputs[whit1].e;
+                        weighted_y += thegretHdr->inputs[whit1].y*thegretHdr->inputs[whit1].e;
+                        weighted_z += thegretHdr->inputs[whit1].z*thegretHdr->inputs[whit1].e;
+                        weighted_e += thegretHdr->inputs[whit1].e;
+                    }
+
+                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e ); //determine hit pos of weighted energy position from the target.
 
                     one_hit.x = tot_gamma_pos[0];
+                    //cout<<one_hit.x<<endl;
                     one_hit.y = tot_gamma_pos[1];
+                    //cout<<one_hit.y<<endl;
                     one_hit.z = tot_gamma_pos[2];
+                    //cout<<one_hit.z<<endl;
                     one_hit.r = tot_gamma_pos[3];
                     one_hit.theta = tot_gamma_pos[4];
                     one_hit.phi = tot_gamma_pos[5];
                     tot_gamma_pos.clear();
-                    one_hit.e = thegretHdr->inputs[hit1].e;
-                    one_hit.seg = thegretHdr->inputs[hit1].seg;
-                    one_hit.seg_ener = thegretHdr->inputs[hit1].seg_ener;
+                    one_hit.e = weighted_e;
+                    //cout<<one_hit.e<<endl;
+                    //one_hit.e = header.tot_e;
+                    one_hit.seg = 0;
+                    one_hit.seg_ener = 0;
                     one_hit.raw_e = thegretHdr->tot_e;
                     one_hit.quad = hole_num;
                     one_hit.crystal = crystal_num;
+                    one_hit.timestamp = thegretHdr->timestamp;
                     event->push_back ( one_hit );
+// 		        cerr<<event->size()<<endl;
+
 
                     timestamp_0 = thegretHdr->timestamp;
-
+                    weighted_e = 0;
+                    weighted_x = 0;
+                    weighted_y = 0;
+                    weighted_z = 0;
                 }
+
+//                 cerr<<"show me you get here"<<endl;
+// 		cerr<<event->size()<<endl;
             }
-            if ( thegretHdr->tot_e<515 ) //if crystal tot_e is below 515kev, must use a weighted energy position.
+
+
+            if ( delta_t > event_build_time || i == theGEBEvent->ptinp.size() ) // this is where the gamma ray addback addition ends. aka where delta_t is too high.
             {
-                for ( int whit1 = 0; whit1<thegretHdr->num; whit1++ ) //determine weighted energies by running through all the sub gamma rays
-                {
+// 	      cerr<<"You're not here are you"<<endl;
 
-                    weighted_x += thegretHdr->inputs[whit1].x*thegretHdr->inputs[whit1].e;
-                    weighted_y += thegretHdr->inputs[whit1].y*thegretHdr->inputs[whit1].e;
-                    weighted_z += thegretHdr->inputs[whit1].z*thegretHdr->inputs[whit1].e;
-                    weighted_e += thegretHdr->inputs[whit1].e;
+                if ( event->size() == 0 )
+                {
+                    continue;
                 }
 
-                tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e ); //determine hit pos of weighted energy position from the target.
 
-                one_hit.x = tot_gamma_pos[0];
-                //cout<<one_hit.x<<endl;
-                one_hit.y = tot_gamma_pos[1];
-                //cout<<one_hit.y<<endl;
-                one_hit.z = tot_gamma_pos[2];
-                //cout<<one_hit.z<<endl;
-                one_hit.r = tot_gamma_pos[3];
-                one_hit.theta = tot_gamma_pos[4];
-                one_hit.phi = tot_gamma_pos[5];
-                tot_gamma_pos.clear();
-                one_hit.e = weighted_e;
-                //cout<<one_hit.e<<endl;
-                //one_hit.e = header.tot_e;
-                one_hit.seg = 0;
-                one_hit.seg_ener = 0;
-                one_hit.raw_e = thegretHdr->tot_e;
-                one_hit.quad = hole_num;
-                one_hit.crystal = crystal_num;
-                event->push_back ( one_hit );
+// 	      cerr<<"Here 3."<<endl;
 
-                timestamp_0 = thegretHdr->timestamp;
-                weighted_e = 0;
-                weighted_x = 0;
-                weighted_y = 0;
-                weighted_z = 0;
-            }
-        }
-
-        if ( delta_t > event_build_time ) // this is where the gamma ray addback addition ends. aka where delta_t is too high.
-        {
-            highest_energy = 0;
-            hit = 0;
+//                 cerr<<"do I get to the tracking loops"<<endl;
+                highest_energy = 0;
+                hit = 0;
 
 
 //             ----------------------------------------------------
@@ -352,214 +396,260 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
 
 
 
-            for ( unsigned int interaction = 0; interaction<event->size(); interaction++ ) //find the highest energy of the sub gamma rays and use the highest energy as the first interaction
-            {
-
-                if ( event->at ( interaction ).e > highest_energy )
+                for ( unsigned int interaction = 0; interaction<event->size(); interaction++ ) //find the highest energy of the sub gamma rays and use the highest energy as the first interaction
                 {
-                    highest_energy = event->at ( interaction ).e;
+//                     cerr<<highest_energy<<endl;
 
-                    hit = interaction;
-                }
-
-            }
-
-            tot_energy = event->at ( hit ).e; //set first interaction position as the pos of tot_e
-
-
-            for ( unsigned int p = 0; p<event->size(); p++ )
-            {
-                if ( p == hit ) //ignore the highest interaction
-                {
-                    continue;
-                }
-
-                if ( event->at ( p ).quad == event->at ( hit ).quad && event->at ( p ).crystal == event->at ( hit ).crystal )
-                {
-                    continue;
-                }
-                angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( p ).x,event->at ( p ).y,event->at ( p ).z ); //determine how far away your sub gamma rays are. If within 15 degrees addback
-                //angle_between_hit = Scattering_Angle(highest_energy,event[i].e);
-
-                if ( angle_between_hit> 15 || angle_between_hit<-15 ) //outside of 15 degrees save for second gamma ray
-                {
-                    one_hit.x = event->at ( p ).x;
-                    one_hit.y = event->at ( p ).y;
-                    one_hit.z = event->at ( p ).z ;
-                    one_hit.r = event->at ( p ).r;
-                    one_hit.theta = event->at ( p ).theta;
-                    one_hit.phi = event->at ( p ).phi;
-                    one_hit.e = event->at ( p ).e;
-                    one_hit.seg = event->at ( p ).seg;
-                    one_hit.seg_ener = event->at ( p ).seg_ener;
-                    one_hit.raw_e = event->at ( p ).raw_e;
-                    one_hit.quad = event->at ( p ).quad;
-                    one_hit.crystal = event->at ( p ).crystal;
-                    second_event->push_back ( one_hit );
-
-                    continue;
-                }
-
-                tot_energy += event->at ( p ).e; //addback
-
-            }
-            Gamma.e = tot_energy;
-
-
-            thegretEvt->x = event->at ( hit ).x;
-            thegretEvt->y = event->at ( hit ).y;
-            thegretEvt->z = event->at ( hit ).z;
-            thegretEvt->timestamp = third_event->at ( hit ).timestamp;
-            thegretEvt->raw_e = third_event->at ( hit ).raw_e;
-            thegretEvt->quad = third_event->at ( hit ).quad;
-            thegretEvt->crystal = third_event->at ( hit ).crystal;
-            thegretEvt->theta = third_event->at ( hit ).theta;
-            thegretEvt->phi = third_event->at ( hit ).phi;
-//             Gammas->push_back ( Gamma );
-            //energy_temp.push_back ( Gamma.e );
-
-
-            //reset variables to zero so as to use in upcoming event
-            tot_energy = 0;
-            highest_energy = 0;
-
-
-
-            //repeat above but for sub gamma rays saved for second event
-            if ( second_event->size() != 0 )
-            {
-                for ( unsigned int set = 0; set<second_event->size(); set++ )
-                {
-                    if ( second_event->at ( set ).e > highest_energy )
+                    if ( event->at ( interaction ).e > highest_energy )
                     {
-                        highest_energy = second_event->at ( set ).e;
+                        highest_energy = event->at ( interaction ).e;
+//                         cerr<<highest_energy<<" "<<interaction<<endl;
 
-                        hit = set;
+                        hit = interaction;
                     }
+
                 }
 
-                tot_energy = event->at ( hit ).e;
+//                 cerr<<"I guess here?"<<endl;
+                tot_energy = event->at ( hit ).raw_e; //set first interaction position as the pos of tot_e
+//                 cerr<<"Is this really the funcing line?"<<endl;
 
-                for ( unsigned int ff = 0; ff<second_event->size(); ff++ )
+                for ( unsigned int p = 0; p<event->size(); p++ )
                 {
-                    if ( ff == hit || event->at ( hit ).e == highest_energy )
+//                     cerr<<"I'm so confused"<<endl;
+                    if ( event->size() > 1 && p == hit ) //ignore the highest interaction
                     {
                         continue;
                     }
 
-                    if ( event->at ( ff ).quad == event->at ( hit ).quad && event->at ( ff ).crystal == event->at ( hit ).crystal )
+                    if ( event->at ( p ).quad == event->at ( hit ).quad && event->at ( p ).crystal == event->at ( hit ).crystal )
                     {
                         continue;
                     }
-                    angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( ff ).x,event->at ( ff ).y,event->at ( ff ).z );
-                    if ( angle_between_hit> 15 || angle_between_hit<-15 )
+                    angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( p ).x,event->at ( p ).y,event->at ( p ).z ); //determine how far away your sub gamma rays are. If within 15 degrees addback
+                    //angle_between_hit = Scattering_Angle(highest_energy,event[i].e);
+
+                    if ( angle_between_hit> 15 || angle_between_hit<-15 ) //outside of 15 degrees save for second gamma ray
                     {
-                        one_hit.x = second_event->at ( ff ).x;
-                        one_hit.y = second_event->at ( ff ).y;
-                        one_hit.z = second_event->at ( ff ).z ;
-                        one_hit.r = second_event->at ( ff ).r;
-                        one_hit.theta = second_event->at ( ff ).theta;
-                        one_hit.phi = second_event->at ( ff ).phi;
-                        one_hit.e = second_event->at ( ff ).e;
-                        one_hit.seg = second_event->at ( ff ).seg;
-                        one_hit.seg_ener = second_event->at ( ff ).seg_ener;
-                        third_event->push_back ( one_hit );
+//                         cerr<<"/*what a*/bout here?"<<endl;
+                        one_hit.x = event->at ( p ).x;
+                        one_hit.y = event->at ( p ).y;
+                        one_hit.z = event->at ( p ).z ;
+                        one_hit.r = event->at ( p ).r;
+                        one_hit.theta = event->at ( p ).theta;
+                        one_hit.phi = event->at ( p ).phi;
+                        one_hit.e = event->at ( p ).e;
+                        one_hit.seg = event->at ( p ).seg;
+                        one_hit.seg_ener = event->at ( p ).seg_ener;
+                        one_hit.raw_e = event->at ( p ).raw_e;
+                        one_hit.quad = event->at ( p ).quad;
+                        one_hit.crystal = event->at ( p ).crystal;
+                        one_hit.timestamp = event->at ( p ).timestamp;
+                        second_event->push_back ( one_hit );
 
                         continue;
                     }
 
-                    tot_energy += second_event->at ( ff ).e;
+
+                    tot_energy += event->at ( p ).raw_e; //addback
+
                 }
+
                 thegretEvt->e = tot_energy;
 
-                thegretEvt->x = second_event->at ( hit ).x;
-                thegretEvt->y = second_event->at ( hit ).y;
-                thegretEvt->z = second_event->at ( hit ).z;
-                thegretEvt->timestamp = third_event->at ( hit ).timestamp;
-                thegretEvt->raw_e = third_event->at ( hit ).raw_e;
-                thegretEvt->quad = third_event->at ( hit ).quad;
-                thegretEvt->crystal = third_event->at ( hit ).crystal;
-                thegretEvt->theta = third_event->at ( hit ).theta;
-                thegretEvt->phi = third_event->at ( hit ).phi;
-//                 Gammas->push_back ( Gamma );
+                thegretEvt->x = event->at ( hit ).x;
+                thegretEvt->y = event->at ( hit ).y;
+                thegretEvt->z = event->at ( hit ).z;
+                thegretEvt->timestamp = event->at ( hit ).timestamp;
+                thegretEvt->raw_e = event->at ( hit ).raw_e;
+                thegretEvt->quad = event->at ( hit ).quad;
+                thegretEvt->crystal = event->at ( hit ).crystal;
+                thegretEvt->theta = event->at ( hit ).theta;
+                thegretEvt->phi = event->at ( hit ).phi;
+                Gammas.push_back ( thegretEvt );
                 //energy_temp.push_back ( Gamma.e );
 
+
+                //reset variables to zero so as to use in upcoming event
                 tot_energy = 0;
                 highest_energy = 0;
-            }
+
+//                 cerr<<"And here."<<endl;
 
 
-            //repeat again for the chance of a third event. However, do not keep for fourth event. Fourth event is very unlikely.
-            if ( third_event->size() != 0 )
-            {
-                for ( unsigned int settwo= 0; settwo<event->size(); settwo++ )
+                //repeat above but for sub gamma rays saved for second event
+                if ( second_event->size() != 0 )
                 {
-                    if ( event->at ( settwo ).e > highest_energy )
+                    for ( unsigned int set = 0; set<second_event->size(); set++ )
                     {
-                        highest_energy = event->at ( settwo ).e;
+                        if ( second_event->at ( set ).e > highest_energy )
+                        {
+                            highest_energy = second_event->at ( set ).e;
 
-                        hit = settwo;
+                            hit = set;
+                        }
                     }
+
+                    tot_energy = event->at ( hit ).raw_e;
+
+                    for ( unsigned int ff = 0; ff<second_event->size(); ff++ )
+                    {
+                        if ( ff == hit || event->at ( hit ).raw_e == highest_energy )
+                        {
+                            continue;
+                        }
+
+                        if ( event->at ( ff ).quad == event->at ( hit ).quad && event->at ( ff ).crystal == event->at ( hit ).crystal )
+                        {
+                            continue;
+                        }
+                        angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( ff ).x,event->at ( ff ).y,event->at ( ff ).z );
+                        if ( angle_between_hit> 15 || angle_between_hit<-15 )
+                        {
+                            one_hit.x = second_event->at ( ff ).x;
+                            one_hit.y = second_event->at ( ff ).y;
+                            one_hit.z = second_event->at ( ff ).z ;
+                            one_hit.r = second_event->at ( ff ).r;
+                            one_hit.theta = second_event->at ( ff ).theta;
+                            one_hit.phi = second_event->at ( ff ).phi;
+                            one_hit.e = second_event->at ( ff ).e;
+                            one_hit.seg = second_event->at ( ff ).seg;
+                            one_hit.seg_ener = second_event->at ( ff ).seg_ener;
+                            one_hit.raw_e = second_event->at ( ff ).raw_e;
+                            one_hit.quad = second_event->at ( ff ).quad;
+                            one_hit.crystal = second_event->at ( ff ).crystal;
+                            one_hit.timestamp = second_event->at ( ff ).timestamp;
+                            third_event->push_back ( one_hit );
+
+                            continue;
+                        }
+
+                        tot_energy += second_event->at ( ff ).raw_e;
+                    }
+
+                    thegretEvt->e = tot_energy;
+
+                    thegretEvt->x = second_event->at ( hit ).x;
+                    thegretEvt->y = second_event->at ( hit ).y;
+                    thegretEvt->z = second_event->at ( hit ).z;
+                    thegretEvt->timestamp = second_event->at ( hit ).timestamp;
+                    thegretEvt->raw_e = second_event->at ( hit ).raw_e;
+                    thegretEvt->quad = second_event->at ( hit ).quad;
+                    thegretEvt->crystal = second_event->at ( hit ).crystal;
+                    thegretEvt->theta = second_event->at ( hit ).theta;
+                    thegretEvt->phi = second_event->at ( hit ).phi;
+                    Gammas.push_back ( thegretEvt );
+                    //energy_temp.push_back ( Gamma.e );
+
+                    tot_energy = 0;
+                    highest_energy = 0;
+//                     cerr<<"and second."<<endl;
                 }
 
-                tot_energy = event->at ( hit ).e;
 
-                for ( unsigned int fff = 0; fff<third_event->size(); fff++ )
+                //repeat again for the chance of a third event. However, do not keep for fourth event. Fourth event is very unlikely.
+                if ( third_event->size() != 0 )
                 {
-                    if ( fff == hit )
+                    for ( unsigned int settwo= 0; settwo<event->size(); settwo++ )
                     {
-                        continue;
+                        if ( event->at ( settwo ).e > highest_energy )
+                        {
+                            highest_energy = event->at ( settwo ).e;
+
+                            hit = settwo;
+                        }
                     }
 
-                    if ( event->at ( fff ).quad == event->at ( fff ).quad && event->at ( fff ).crystal == event->at ( hit ).crystal )
-                    {
-                        continue;
-                    }
-                    angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( fff ).x,event->at ( fff ).y,event->at ( fff ).z );
-                    if ( angle_between_hit> 15 )
-                    {
-                        cout<<"Sub-gamma would be in a fourth event."<<endl;
-                        continue;
-                    }
+                    tot_energy = event->at ( hit ).raw_e;
 
-                    tot_energy += third_event->at ( fff ).e;
+                    for ( unsigned int fff = 0; fff<third_event->size(); fff++ )
+                    {
+                        if ( fff == hit )
+                        {
+                            continue;
+                        }
 
+                        if ( event->at ( fff ).quad == event->at ( fff ).quad && event->at ( fff ).crystal == event->at ( hit ).crystal )
+                        {
+                            continue;
+                        }
+                        angle_between_hit = Angle_Between_Vect ( event->at ( hit ).x, event->at ( hit ).y, event->at ( hit ).z, event->at ( fff ).x,event->at ( fff ).y,event->at ( fff ).z );
+                        if ( angle_between_hit> 15 )
+                        {
+                            continue;
+                        }
+
+                        tot_energy += third_event->at ( fff ).raw_e;
+
+                    }
+                    
+                    thegretEvt->e = tot_energy;
+
+                    thegretEvt->x = third_event->at ( hit ).x;
+                    thegretEvt->y = third_event->at ( hit ).y;
+                    thegretEvt->z = third_event->at ( hit ).z;
+                    thegretEvt->timestamp = third_event->at ( hit ).timestamp;
+                    thegretEvt->raw_e = third_event->at ( hit ).raw_e;
+                    thegretEvt->quad = third_event->at ( hit ).quad;
+                    thegretEvt->crystal = third_event->at ( hit ).crystal;
+                    thegretEvt->theta = third_event->at ( hit ).theta;
+                    thegretEvt->phi = third_event->at ( hit ).phi;
+                    Gammas.push_back ( thegretEvt );
+                    //energy_temp.push_back ( Gamma.e );
+
+                    tot_energy = 0;
                 }
-                thegretEvt->e = tot_energy;
 
-                thegretEvt->x = third_event->at ( hit ).x;
-                thegretEvt->y = third_event->at ( hit ).y;
-                thegretEvt->z = third_event->at ( hit ).z;
-                thegretEvt->timestamp = third_event->at ( hit ).timestamp;
-                thegretEvt->raw_e = third_event->at ( hit ).raw_e;
-                thegretEvt->quad = third_event->at ( hit ).quad;
-                thegretEvt->crystal = third_event->at ( hit ).crystal;
-                thegretEvt->theta = third_event->at ( hit ).theta;
-                thegretEvt->phi = third_event->at ( hit ).phi;
-//                 Gammas->push_back ( Gamma );
-                //energy_temp.push_back ( Gamma.e );
+                //clear vectors to use for next gamma ray sequence
+                event->clear();
+                second_event->clear();
+                third_event->clear();
+// 		cerr<<"show me I clear event"<<endl;
 
-                tot_energy = 0;
-            }
-
-            //clear vectors to use for next gamma ray sequence
-            event->clear();
-            second_event->clear();
-            third_event->clear();
-
-            //save the information from the current header for the next gamma ray if over 100kev.
-            for ( int hit3=0; hit3<thegretHdr->num; hit3++ )
-            {
-                if ( thegretHdr->tot_e<100 )
+                //save the information from the current header for the next gamma ray if over 100kev.
+                for ( int hit3=0; hit3<thegretHdr->num; hit3++ )
                 {
-                    continue;
-                    timestamp_0 = -1;
+                    if ( thegretHdr->tot_e<100 )
+                    {
+                        continue;
+                        timestamp_0 = -1;
+                    }
+
+                    if ( thegretHdr->tot_e > 515 )
+                    {
+
+                        tot_gamma_pos = Tot_Gam_Pos ( crystal_face, thegretHdr->inputs[hit3].x, thegretHdr->inputs[hit3].y, thegretHdr->inputs[hit3].z );
+                        one_hit.x = tot_gamma_pos[0];
+                        one_hit.y = tot_gamma_pos[1];
+                        one_hit.z = tot_gamma_pos[2];
+                        one_hit.r = tot_gamma_pos[3];
+                        one_hit.theta = tot_gamma_pos[4];
+                        one_hit.phi = tot_gamma_pos[5];
+                        tot_gamma_pos.clear();
+                        one_hit.e = thegretHdr->inputs[hit3].e;
+                        one_hit.seg = thegretHdr->inputs[hit3].seg;
+                        one_hit.seg_ener = thegretHdr->inputs[hit3].seg_ener;
+                        one_hit.raw_e = thegretHdr->tot_e;
+                        one_hit.quad = hole_num;
+                        one_hit.crystal = crystal_num;
+                        event->push_back ( one_hit );
+
+                        timestamp_0 = thegretHdr->timestamp;
+                    }
                 }
-
-                if ( thegretHdr->tot_e > 515 )
+                if ( thegretHdr->tot_e<515 )
                 {
+                    for ( int thit1 = 0; thit1<thegretHdr->num; thit1++ )
+                    {
 
-                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, thegretHdr->inputs[hit3].x, thegretHdr->inputs[hit3].y, thegretHdr->inputs[hit3].z );
+                        weighted_x += thegretHdr->inputs[thit1].x*thegretHdr->inputs[thit1].e;
+                        weighted_y += thegretHdr->inputs[thit1].y*thegretHdr->inputs[thit1].e;
+                        weighted_z += thegretHdr->inputs[thit1].z*thegretHdr->inputs[thit1].e;
+                        weighted_e += thegretHdr->inputs[thit1].e;
+                    }
+
+                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e );
+
                     one_hit.x = tot_gamma_pos[0];
                     one_hit.y = tot_gamma_pos[1];
                     one_hit.z = tot_gamma_pos[2];
@@ -567,71 +657,75 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                     one_hit.theta = tot_gamma_pos[4];
                     one_hit.phi = tot_gamma_pos[5];
                     tot_gamma_pos.clear();
-                    one_hit.e = thegretHdr->tot_e;
-                    one_hit.seg = thegretHdr->inputs[hit3].seg;
-                    one_hit.seg_ener = thegretHdr->inputs[hit3].seg_ener;
+                    one_hit.e = weighted_e;
+                    one_hit.seg = 0;
+                    one_hit.seg_ener = 0;
                     one_hit.raw_e = thegretHdr->tot_e;
                     one_hit.quad = hole_num;
                     one_hit.crystal = crystal_num;
                     event->push_back ( one_hit );
 
                     timestamp_0 = thegretHdr->timestamp;
-                }
-            }
-            if ( thegretHdr->tot_e<515 )
-            {
-                for ( int thit1 = 0; thit1<thegretHdr->num; thit1++ )
-                {
-
-                    weighted_x += thegretHdr->inputs[thit1].x*thegretHdr->inputs[thit1].e;
-                    weighted_y += thegretHdr->inputs[thit1].y*thegretHdr->inputs[thit1].e;
-                    weighted_z += thegretHdr->inputs[thit1].z*thegretHdr->inputs[thit1].e;
-                    weighted_e += thegretHdr->inputs[thit1].e;
+                    weighted_e = 0;
+                    weighted_x = 0;
+                    weighted_y = 0;
+                    weighted_z = 0;
                 }
 
-                tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e );
+                delta_t = -1;
 
-                one_hit.x = tot_gamma_pos[0];
-                one_hit.y = tot_gamma_pos[1];
-                one_hit.z = tot_gamma_pos[2];
-                one_hit.r = tot_gamma_pos[3];
-                one_hit.theta = tot_gamma_pos[4];
-                one_hit.phi = tot_gamma_pos[5];
-                tot_gamma_pos.clear();
-                one_hit.e = weighted_e;
-                one_hit.seg = 0;
-                one_hit.seg_ener = 0;
-                one_hit.raw_e = thegretHdr->tot_e;
-                one_hit.quad = hole_num;
-                one_hit.crystal = crystal_num;
-                event->push_back ( one_hit );
-
-                timestamp_0 = thegretHdr->timestamp;
-                weighted_e = 0;
-                weighted_x = 0;
-                weighted_y = 0;
-                weighted_z = 0;
             }
 
-            delta_t = -1;
-
-        }
-
-        //If delta_t is within event build time add to the current gamma ray
-        if ( delta_t>=0 && delta_t<event_build_time )
-        {
-
-            for ( int hit2=0; hit2<thegretHdr->num; hit2++ )
+            //If delta_t is within event build time add to the current gamma ray
+            if ( delta_t>=0 && delta_t<event_build_time )
             {
-                if ( thegretHdr->inputs[hit2].e == 0 )
+// 	      cerr<<"I sure hope you're not here."<<endl;
+
+// 	      cerr<<"here."<<endl;
+
+                for ( int hit2=0; hit2<thegretHdr->num; hit2++ )
                 {
-                    continue;
+                    if ( thegretHdr->inputs[hit2].e == 0 )
+                    {
+                        continue;
+                    }
+
+                    if ( thegretHdr->tot_e > 515 )
+                    {
+
+                        tot_gamma_pos = Tot_Gam_Pos ( crystal_face, thegretHdr->inputs[hit2].x, thegretHdr->inputs[hit2].y, thegretHdr->inputs[hit2].z );
+                        one_hit.x = tot_gamma_pos[0];
+                        one_hit.y = tot_gamma_pos[1];
+                        one_hit.z = tot_gamma_pos[2];
+                        one_hit.r = tot_gamma_pos[3];
+                        one_hit.theta = tot_gamma_pos[4];
+                        one_hit.phi = tot_gamma_pos[5];
+                        tot_gamma_pos.clear();
+                        one_hit.e = thegretHdr->inputs[hit2].e;
+                        one_hit.seg = thegretHdr->inputs[hit2].seg;
+                        one_hit.seg_ener = thegretHdr->inputs[hit2].seg_ener;
+                        one_hit.raw_e = thegretHdr->tot_e;
+                        one_hit.quad = hole_num;
+                        one_hit.crystal = crystal_num;
+                        one_hit.timestamp = thegretHdr->timestamp;
+                        event->push_back ( one_hit );
+
+                        timestamp_0 = thegretHdr->timestamp;
+                    }
                 }
-
-                if ( thegretHdr->tot_e > 515 )
+                if ( thegretHdr->tot_e<515 )
                 {
+                    for ( int thit2 = 0; thit2<thegretHdr->num; thit2++ )
+                    {
 
-                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, thegretHdr->inputs[hit2].x, thegretHdr->inputs[hit2].y, thegretHdr->inputs[hit2].z );
+                        weighted_x += thegretHdr->inputs[thit2].x*thegretHdr->inputs[thit2].e;
+                        weighted_y += thegretHdr->inputs[thit2].y*thegretHdr->inputs[thit2].e;
+                        weighted_z += thegretHdr->inputs[thit2].z*thegretHdr->inputs[thit2].e;
+                        weighted_e += thegretHdr->inputs[thit2].e;
+                    }
+
+                    tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e );
+
                     one_hit.x = tot_gamma_pos[0];
                     one_hit.y = tot_gamma_pos[1];
                     one_hit.z = tot_gamma_pos[2];
@@ -639,54 +733,33 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                     one_hit.theta = tot_gamma_pos[4];
                     one_hit.phi = tot_gamma_pos[5];
                     tot_gamma_pos.clear();
-                    one_hit.e = thegretHdr->tot_e;
-                    one_hit.seg = thegretHdr->inputs[hit2].seg;
-                    one_hit.seg_ener = thegretHdr->inputs[hit2].seg_ener;
+                    one_hit.e = weighted_e;
+                    one_hit.seg = 0;
+                    one_hit.seg_ener = 0;
                     one_hit.raw_e = thegretHdr->tot_e;
                     one_hit.quad = hole_num;
                     one_hit.crystal = crystal_num;
+                    one_hit.timestamp = thegretHdr->timestamp;
                     event->push_back ( one_hit );
 
                     timestamp_0 = thegretHdr->timestamp;
-                }
-            }
-            if ( thegretHdr->tot_e<515 )
-            {
-                for ( int thit2 = 0; thit2<thegretHdr->num; thit2++ )
-                {
-
-                    weighted_x += thegretHdr->inputs[thit2].x*thegretHdr->inputs[thit2].e;
-                    weighted_y += thegretHdr->inputs[thit2].y*thegretHdr->inputs[thit2].e;
-                    weighted_z += thegretHdr->inputs[thit2].z*thegretHdr->inputs[thit2].e;
-                    weighted_e += thegretHdr->inputs[thit2].e;
+                    weighted_e = 0;
+                    weighted_x = 0;
+                    weighted_y = 0;
+                    weighted_z = 0;
                 }
 
-                tot_gamma_pos = Tot_Gam_Pos ( crystal_face, weighted_x/weighted_e, weighted_y/weighted_e, weighted_z/weighted_e );
-
-                one_hit.x = tot_gamma_pos[0];
-                one_hit.y = tot_gamma_pos[1];
-                one_hit.z = tot_gamma_pos[2];
-                one_hit.r = tot_gamma_pos[3];
-                one_hit.theta = tot_gamma_pos[4];
-                one_hit.phi = tot_gamma_pos[5];
-                tot_gamma_pos.clear();
-                one_hit.e = weighted_e;
-                one_hit.seg = 0;;
-                one_hit.seg_ener = 0;
-                one_hit.raw_e = thegretHdr->tot_e;
-                one_hit.quad = hole_num;
-                one_hit.crystal = crystal_num;
-                event->push_back ( one_hit );
-
-                timestamp_0 = thegretHdr->timestamp;
-                weighted_e = 0;
-                weighted_x = 0;
-                weighted_y = 0;
-                weighted_z = 0;
+// 	      cerr<<"Here 2."<<endl;
             }
-
         }
+
     }
+
+
+//     cerr<<Gammas.size()<<endl;
+//     cerr<<"through tracking"<<endl;
+    timestamp_0 = -1;
+    delta_t = -1;
 
 // thegretEvt = &Gammas->at(0);
 
@@ -697,16 +770,15 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
 {
     /* declarations */
 
-    char str[128];
-    //DGSEVENT dgsEvt[MAXCOINEV];
-
-    int RelEvT = 0;
+//     cerr<<"The size of the thing is: "<<theGEBEvent->ptinp.size()<<endl;
 
     float Energy;
 
+
     /* prototypes */
 
-    int GebTypeStr ( int type, char str[] );
+//     char str[128];
+//     int GebTypeStr ( int type, char str[] );
 
     /* Print debug */
 
@@ -715,42 +787,34 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
         printf ( "entered bin_dgs:\n" );
     }
 
-//     std::cerr << "****************Entered bin_dgs****************\n";
-//     std::cerr << "theGEBEvent size = " << theGEBEvent->ptgd.size() << "\n";
-
-    /* loop through the coincidence event and fish out DGS data */
-    /* (gamma rays) count in ng */
 
     *ng = 0;
 
+//     cerr<<"What about here."<<endl;
+    Gret_Tracking ( theGEBEvent, thegretEvt, sphere_split );
+//     cerr<<"In tracking?"<<endl;
+//     cerr<<"show me in bingr"<<endl;
 
-
-    for ( unsigned int i = 0; i < theGEBEvent->ptgd.size(); i++ )
+    if ( Gammas.size() >=1 )
     {
-//       std::cerr << "Found theGEBEvent type " << theGEBEvent->ptgd[i]->type << " (DGS type is " << GEB_TYPE_DGS << ")\n";
-//       std::cerr << "--> length: " << theGEBEvent->ptgd[i]->length << "\n";
-//       std::cerr << "--> timestamp: " << theGEBEvent->ptgd[i]->timestamp << "\n";
-
-        if ( theGEBEvent->ptgd[i]->type == GEB_TYPE_DECOMP )
+        for ( unsigned int grs = 0; grs<Gammas.size(); grs++ )
         {
-            if ( pars->CurEvNo <= pars->NumToPrint )
-            {
-                GebTypeStr ( theGEBEvent->ptgd[i]->type, str );
-                printf ( "bin_mode1, %2i> %2i, %s, TS=%lli\n", i, theGEBEvent->ptgd[i]->type, str,
-                         theGEBEvent->ptgd[i]->timestamp );
-            }
-
-            Gret_Tracking ( ( GEB_EVENT* ) theGEBEvent, &thegretEvt[*ng], sphere_split );
-
-//             std::cerr << "DGS event: theGEBEvent TS = " << theGEBEvent->ptgd[i]->timestamp << " / DGSEents TS = " << thedgsEvt[*ng].event_timestamp << "\n";
+//             cerr<<"is the issue here?"<<endl;
+            thegretEvt[*ng + grs] = *Gammas[grs];
 
             ( *ng ) ++;
         }
     }
 
-    // Initialize EvTimeStam0
+    Gammas.clear();
+//     cerr<<"Do we clear Gammas"<<endl;
+//}
 
-    //printf("Stat 1 \n");
+//     }
+
+// Initialize EvTimeStam0
+
+//printf("Stat 1 \n");
     if ( pars->CurEvNo < 100 )
     {
         printf ( "\n\nCurEvNo: %i", pars->CurEvNo );
@@ -760,12 +824,15 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
         }
     }
 
+//     cerr<<"show me I made it through"<<endl;
+
     if ( EvTimeStam0 == 0 )
     {
         EvTimeStam0 = thegretEvt[0].timestamp;
     }
-    RelEvT = ( int ) ( ( thegretEvt[0].timestamp - EvTimeStam0 ) / 100000000 ); // overflow?
-    if ( !pars->noHists ) hEventCounter->Fill ( RelEvT );
+//     RelEvT = ( int ) ( ( thegretEvt[0].timestamp - EvTimeStam0 ) / 100000000 ); // overflow?
+//     if ( !pars->noHists ) hEventCounter->Fill ( RelEvT );
+//     cerr<<"tbh idk what this does...but here we are."<<endl;
 
 // GS ENERGY CALIBRATION
 
@@ -775,7 +842,6 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
 
     for ( int i = 0; i < *ng; i++ )
     {
-
         if ( pars->beta != 0 )
         {
 //                 std::cerr << "Beta used for Doppler Correction: " << pars->beta << std::endl;
@@ -785,12 +851,18 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
         }
 
         Energy = thegretEvt[i].e;
+
     }
+
+
+//     cerr<<"Before or after this"<<endl;
 
     if ( pars->CurEvNo <= pars->NumToPrint )
     {
         printf ( "exit bin_gret\n" );
     }
+
+//     cerr<<"return or"<<endl;
 
     return ( 0 );
 

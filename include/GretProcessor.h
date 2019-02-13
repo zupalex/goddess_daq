@@ -20,7 +20,6 @@ public:
     int32_t timestamp_0 = -1; //inital time for delta_t
     int32_t delta_t = -1; //computed length of gamma ray addback
     int32_t event_build_time = 25; //predetermined max gamma ray addback time
-    vector<GRETHIT>* event; //one gamma ray vector
     GRETHIT one_hit; //sub gamma ray struct
     float hole_num; //mount hole number for Gretina Quad
     float crystal_num; //crystal number in associated Quad 0-3
@@ -32,8 +31,8 @@ public:
     float highest_energy; //highest energy in gamma ray addback vector
     unsigned int hit; //the position of the highest energy sub gamma ray in the gamma ray addback vector
     float angle_between_hit; //angle between the determine first hit and the subsequent hits
-    vector<GRETHIT>* second_event; //vector for if there is a second gamma ray in the gamma ray addback vector outside of 15 degrees
-    vector<GRETHIT>* third_event; //see above, but if there is a third
+    //vector<GRETHIT>* second_event; //vector for if there is a second gamma ray in the gamma ray addback vector outside of 15 degrees
+    //vector<GRETHIT>* third_event; //see above, but if there is a third
     float weighted_x = 0; //weighted energy positon x
     float weighted_y = 0; //weighted energy position y
     float weighted_z = 0; //weighted energy position z
@@ -55,7 +54,7 @@ public:
     TH1D* hEventCounter;
 
     GRETEVENT Gamma;
-    vector<GRETEVENT>* Gammas;
+    vector<GRETEVENT*> Gammas;
     vector<float> energy_temp;
     float tot_energy;
     
