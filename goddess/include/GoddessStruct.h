@@ -125,7 +125,10 @@ struct GretData
   float en;
   
   //The number of the gamma ray detector
-  int num;
+  int crystal_num;
+  
+  //mult
+//   int mult;
   
   //Position of gamma rays
   float x;

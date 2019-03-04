@@ -1188,7 +1188,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
             GretData datum;
 
 
-            datum.num = gretEvts->at ( gretEvtnum ).quad*4 + gretEvts->at ( gretEvtnum ).crystal;
+            datum.crystal_num = gretEvts->at ( gretEvtnum ).quad*4 + gretEvts->at ( gretEvtnum ).crystal;
 
             datum.time = gretEvts->at ( gretEvtnum ).timestamp;
 
@@ -1217,7 +1217,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
             if ( pars->noMapping )
             {
                 GretData rawDatum;
-                rawDatum.num = gretEvts->at ( gretEvtnum ).quad*4 + gretEvts->at ( gretEvtnum ).crystal;
+                rawDatum.crystal_num = gretEvts->at ( gretEvtnum ).quad*4 + gretEvts->at ( gretEvtnum ).crystal;
                 rawDatum.en = gretEvts->at ( gretEvtnum ).raw_e;
 
                 rawDatum.x = gretEvts->at ( gretEvtnum ).x;
