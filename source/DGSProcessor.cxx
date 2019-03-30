@@ -426,6 +426,7 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
         printf ( "\n\nCurEvNo: %i", pars->CurEvNo );
         for ( int i = 0; i < *ng; i++ )
         {
+	  
             printf ( "\n thedgsEvt[%i].event_timestamp: %llu", i, thedgsEvt[i].event_timestamp );
         }
     }

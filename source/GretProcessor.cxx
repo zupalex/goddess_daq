@@ -820,7 +820,7 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float 
         printf ( "\n\nCurEvNo: %i", pars->CurEvNo );
         for ( int i = 0; i < *ng; i++ )
         {
-            printf ( "\n thedgsEvt[%i].event_timestamp: %llu", i, thegretEvt[i].timestamp );
+            printf ( "\n thegretEvt[%i].event_timestamp: %llu", i, thegretEvt[i].timestamp );
         }
     }
 

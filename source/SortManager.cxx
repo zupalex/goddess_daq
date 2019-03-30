@@ -1422,14 +1422,12 @@ int SortManager::GEBacq ( char* ChatFileName )
                 theGRProcessor->BinGR ( gebEvt, gretset, execParams->sphere_split );
             }
             
-	    
             theGODProcessor->BinDGOD ( gebEvt, dfmaEvt, dgsEvt, gretset );
             theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt, gretset );
-	    
+
 
             if ( theGODProcessor->BinGOD ( gebEvt, agodEvt, dfmaEvt, dgsEvt, gretset ) )
-            {
-	      
+            { 
                 userFlagedEvtCounter++;
 
                 if ( execParams->userFilter != "none" )
