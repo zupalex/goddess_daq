@@ -113,7 +113,7 @@ int main ( int argc, char** argv )
     pars->InputSrc = NOTDEF;
     pars->HaveRootFileName = 0;
     pars->GammaProcessor = 0;
-    pars->sphere_split = 0;
+    pars->sphere_split= {0.f,0.f,0.f};
 
     strcpy ( pars->ConfigFile, "Uninitialized" );
     strcpy ( pars->GeomFile, "goddess.geom" );
@@ -273,11 +273,11 @@ int main ( int argc, char** argv )
                 sscanf ( argv[j++], "%i", &pars->GammaProcessor );
                 printf ( "The GammaProcessor will be: %i", pars->GammaProcessor );
             }
-            else if ( ( p = strstr ( argv[j], "-sphere_split" ) ) != NULL )
+            else if ( ( p = strstr ( argv[j], "-_split" ) ) != NULL )
             {
                 j++;
-                sscanf ( argv[j++], "%f", &pars->sphere_split);
-                printf ( "The sphere split will be: %f", pars->sphere_split );
+//                 sscanf ( argv[j++], "%d", &pars->sphere_split);
+//                 printf ( "The sphere split will be: %d %d %d", pars->sphere_split );
             }
             else if ( ( p = strstr ( argv[j], "-qqq5enadjust" ) ) != NULL )
             {

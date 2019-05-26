@@ -162,18 +162,31 @@ GretProcessor::GretProcessor ( int nGsGe_, int* ng_, PARS* pars_ )
 
 }
 
-vector< float > GretProcessor::Coor_Trans_Gretina ( float radius, float theta, float phi, float sphere_split )
+vector< float > GretProcessor::Coor_Trans_Gretina ( float radius, float theta, float phi, vector<float> sphere_split )
 {
-
-
+  
+  float x_2=0;
+  float y_2=0;
+  float z_2=0;
+  
     float x_1 = radius*cos ( theta ) *sin ( phi );
     float y_1 = radius*sin ( theta ) *sin ( phi );
     float z_1 = radius* cos ( phi );
-
-    float d = sphere_split/2;
-    float x_2 = d; //remember to add a negative in the other part of the code for the opposite half of the sphere. aka cos90 vs cos180
-    float y_2 = 0;
-    float z_2 = 0;
+    
+    if (phi >= 190)
+    {
+    
+    x_2 = sphere_split[0];
+    y_2 = sphere_split[1];
+    z_2 = sphere_split[2];
+    }
+    
+    if (phi <= 165)
+    {
+      x_2 = sphere_split[3];
+      y_2 = sphere_split[4];
+      z_2 = sphere_split[5];
+    }
 
     vector<float> c = {x_1+x_2, y_1+y_2,z_1+z_2};
     //float r_f = (c[0]^2+c[1]^2+c[2]^2)^(1/2);
@@ -221,7 +234,7 @@ vector< float > GretProcessor::Tot_Gam_Pos ( vector<float> new_face, float x, fl
     return new_pos;
 }
 
-int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split )
+int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split )
 {
     unsigned int i = 0;
     GRETHEADER* thegretHdr;
@@ -766,7 +779,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
     return 0;
 }
 
-int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split )
+int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split )
 {
     /* declarations */
 
