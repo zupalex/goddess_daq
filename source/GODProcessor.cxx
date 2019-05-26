@@ -399,15 +399,19 @@ int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgs
     {
         if ( ( dfmaEvt[i].LEDts > 0 ) && ( dfmaEvt[i].tpe == DSSD ) && ( *ng > 0 ) )
         {
-	     if (pars->GammaProcessor == 0)
-	     {
-            dTg_god = double ( dgsEvt[0].event_timestamp ) - double ( dfmaEvt[i].LEDts );
-	     }
-	     else if (pars->GammaProcessor == 1)
-	     {
-	       dTg_god = double ( gretEvt[0].timestamp ) - double ( dfmaEvt[i].LEDts );
-	     }
-	     else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
+            if ( pars->GammaProcessor == 0 )
+            {
+                dTg_god = double ( dgsEvt[0].event_timestamp ) - double ( dfmaEvt[i].LEDts );
+            }
+            else if ( pars->GammaProcessor == 1 )
+            {
+                dTg_god = double ( gretEvt[0].timestamp ) - double ( dfmaEvt[i].LEDts );
+            }
+            else
+            {
+                cout<<"Not a viable gamma ray processor."<<endl;
+                return 1;
+            }
             if ( !pars->noHists ) h2_dTg_god->Fill ( dTg_god, dfmaEvt[i].tid );
 
         }
@@ -417,28 +421,36 @@ int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgs
     {
         for ( j = 0; j < *ng; j++ )
         {
-	    if (pars->GammaProcessor == 0)
-	    {
-            dTg_god = double ( dgsEvt[j].event_timestamp ) - double ( dfmaEvt[i].LEDts );
-	    }
-	    else if (pars->GammaProcessor == 1)
-	    {
-	      dTg_god = double ( gretEvt[j].timestamp ) - double ( dfmaEvt[i].LEDts );
-	      }
-	    else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
-	    
+            if ( pars->GammaProcessor == 0 )
+            {
+                dTg_god = double ( dgsEvt[j].event_timestamp ) - double ( dfmaEvt[i].LEDts );
+            }
+            else if ( pars->GammaProcessor == 1 )
+            {
+                dTg_god = double ( gretEvt[j].timestamp ) - double ( dfmaEvt[i].LEDts );
+            }
+            else
+            {
+                cout<<"Not a viable gamma ray processor."<<endl;
+                return 1;
+            }
+
             if ( !pars->noHists && ( dfmaEvt[i].tid == 10 ) && ( dTg_god > 260 ) & ( dTg_god < 290 ) )
 
             {
-	      if (pars->GammaProcessor==0)
-	      {
-                h2_g_god->Fill ( dgsEvt[j].ehi, dfmaEvt[i].ehi );
-	      }
-	      else if (pars->GammaProcessor ==1 )
-	      {
-		 h2_g_god->Fill ( gretEvt[j].e, dfmaEvt[i].ehi );
-	      }
-	      else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
+                if ( pars->GammaProcessor==0 )
+                {
+                    h2_g_god->Fill ( dgsEvt[j].ehi, dfmaEvt[i].ehi );
+                }
+                else if ( pars->GammaProcessor ==1 )
+                {
+                    h2_g_god->Fill ( gretEvt[j].e, dfmaEvt[i].ehi );
+                }
+                else
+                {
+                    cout<<"Not a viable gamma ray processor."<<endl;
+                    return 1;
+                }
             }
 
         }
@@ -589,27 +601,28 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
     int GebTypeStr ( int type, char str[] );
 
     if ( pars->CurEvNo <= pars->NumToPrint )
-
-    *numAGOD = 0;
-
-    /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
-
-    for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
     {
-        // look for analog marker 0x13 = 19
-        if ( gebEvt->ptgd[i]->type == 19 )
-        {
-            if ( pars->CurEvNo <= pars->NumToPrint )
-            {
-                GebTypeStr ( gebEvt->ptgd[i]->type, str );
-                //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
-            }
+        *numAGOD = 0;
 
-            AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD] );
+        /* loop through the coincidence event and fish out GEB_TYPE_AGOD data */
+
+        for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
+        {
+            // look for analog marker 0x13 = 19
+            if ( gebEvt->ptgd[i]->type == 19 )
+            {
+                if ( pars->CurEvNo <= pars->NumToPrint )
+                {
+                    GebTypeStr ( gebEvt->ptgd[i]->type, str );
+                    //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
+                }
+
+                AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD] );
 
 //             std::cerr << "Analog ORRUBA event: gebEvt TS = " << gebEvt->ptgd[i]->timestamp << " / AGODEVENT TS = " << agodEvt[*numAGOD].timestamp << "\n";
 
-            ( *numAGOD ) ++;
+                ( *numAGOD ) ++;
+            }
         }
     }
 
@@ -637,16 +650,20 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
         {
             for ( size_t j = 0; j < agodEvt[i].values.size(); j++ )
             {
-	      if (pars->GammaProcessor == 0)
-	      {
-                dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[i].timestamp );
-	      }
-	      else if (pars->GammaProcessor == 1)
-	      {
-		dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[i].timestamp );
-	      }
-	      else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
-	      
+                if ( pars->GammaProcessor == 0 )
+                {
+                    dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[i].timestamp );
+                }
+                else if ( pars->GammaProcessor == 1 )
+                {
+                    dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[i].timestamp );
+                }
+                else
+                {
+                    cout<<"Not a viable gamma ray processor."<<endl;
+                    return 1;
+                }
+
                 if ( !pars->noHists ) h2_dTg_agod->Fill ( dTg_agod, agodEvt[i].channels[j] );
             }
         }
@@ -656,32 +673,40 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
     {
         for ( int j = 0; j < *ng; j++ )
         {
-            if ( dgsEvt[j].tpe == GE || pars->GammaProcessor == 1)
+            if ( pars->GammaProcessor == 1 ||  dgsEvt[j].tpe == GE )
             {
-	      if (pars->GammaProcessor == 0)
-	      {
-                dTg_agod = double ( dgsEvt[j].event_timestamp ) - double ( agodEvt[i].timestamp );
-	      }
-	      
-	      else if (pars->GammaProcessor == 1)
-	      {
-		dTg_agod = double ( gretEvt[j].timestamp ) - double ( agodEvt[i].timestamp );
-	      }
-	      else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
-	      
+                if ( pars->GammaProcessor == 0 )
+                {
+                    dTg_agod = double ( dgsEvt[j].event_timestamp ) - double ( agodEvt[i].timestamp );
+                }
+
+                else if ( pars->GammaProcessor == 1 )
+                {
+                    dTg_agod = double ( gretEvt[j].timestamp ) - double ( agodEvt[i].timestamp );
+                }
+                else
+                {
+                    cout<<"Not a viable gamma ray processor."<<endl;
+                    return 1;
+                }
+
                 for ( size_t k = 0; k < agodEvt[i].values.size(); k++ )
                 {
                     if ( ( agodEvt[i].channels[k] == 10 ) && ( dTg_agod > 407 ) & ( dTg_agod < 420 ) )
                     {
-		      if (pars->GammaProcessor == 0)
-		      {
-                        if ( !pars->noHists ) h2_g_agod->Fill ( dgsEvt[j].ehi, agodEvt[i].values[k] );
-		      }
-		      else if (pars->GammaProcessor == 1)
-		      {
-                        if ( !pars->noHists ) h2_g_agod->Fill ( gretEvt[j].e, agodEvt[i].values[k] );
-		      }
-		      else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
+                        if ( pars->GammaProcessor == 0 )
+                        {
+                            if ( !pars->noHists ) h2_g_agod->Fill ( dgsEvt[j].ehi, agodEvt[i].values[k] );
+                        }
+                        else if ( pars->GammaProcessor == 1 )
+                        {
+                            if ( !pars->noHists ) h2_g_agod->Fill ( gretEvt[j].e, agodEvt[i].values[k] );
+                        }
+                        else
+                        {
+                            cout<<"Not a viable gamma ray processor."<<endl;
+                            return 1;
+                        }
                     }
                 }
             }
@@ -723,17 +748,20 @@ int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfm
 
     for ( int i = 0; i < *ng; i++ )
     {
-      if (pars->GammaProcessor == 0)
-      {
-        dgsEvts.push_back ( dgsEvt[i] );
-      }
-      else if (pars->GammaProcessor == 1)
-      {
-	gretEvts.push_back(gretEvt[i]);
-      }
-      
-      else {cout<<"Not a viable gamma ray processor."<<endl; return 1;}
-    }
+        if ( pars->GammaProcessor == 0 )
+        {
+            dgsEvts.push_back ( dgsEvt[i] );
+        }
+        else if ( pars->GammaProcessor == 1 )
+        {
+            gretEvts.push_back ( gretEvt[i] );
+        }
 
+        else
+        {
+            cout<<"Not a viable gamma ray processor."<<endl;
+            return 1;
+        }
+    }
     return godData->Fill ( gebEvt, &dgsEvts, &dfmaEvts, &agodEvts, &gretEvts );
 }
