@@ -52,8 +52,8 @@ ReturnError()
      echo "               mode==0 Gammasphere [default]															"
      echo "		 mode==1 Gretina"
      echo "______________________________________________________________________________________________________________________________________________________________"
-     echo "-> sphere_split will tell the code to make allowances for how far apart the Gretina sphere is. "
-     echo "               Default is 0. Ignore if for Gammasphere run."
+     echo "-> sphere_split will tell the code to make allowances for how far apart the Gretina sphere is. Enter as a vector<float> {x1,y1,z1,x2,y2,z2} in relation to target in ORRUBA"
+     echo "              Where x1,y1,z1 correspond with the east hemisphere and x2,y2,z2 correspond with the west hemisphere. Default is {0,0,0}. Ignore if for Gammasphere run."
      echo "______________________________________________________________________________________________________________________________________________________________"
     
 }

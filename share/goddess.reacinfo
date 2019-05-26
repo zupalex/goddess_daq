@@ -51,9 +51,54 @@ Gain Modifier QQQ5 = 1.0
 Gain Modifier SuperX3 = 1.0
 [end]
 
-[200 - 352]
+[200 - 266]
+Beam = 95Mo, Energy = 760.0
+Target = d, Type = C2D4, Thickness = 1.371, Density = 1063
+Ejectile = p
+Reaction Q-Value = 6.93
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[267-291]
 Beam = 95Mo, Energy = 760.0
 Target = d, Type = C2D4, Thickness = 0.170, Density = 1063
+Ejectile = p
+Reaction Q-Value = 6.93
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[294-322]
+Beam = 95Mo, Energy = 760.0
+Target = d, Type = C2D4, Thickness = 0.233, Density = 1063
+Ejectile = p
+Reaction Q-Value = 6.93
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[323-341]
+Beam = 95Mo, Energy = 760.0
+Target = d, Type = C2D4, Thickness = 0.235, Density = 1063
+Ejectile = p
+Reaction Q-Value = 6.93
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[342-349]
+Beam = 95Mo, Energy = 760.0
+Target = d, Type = C2D4, Thickness = 0.217, Density = 1063
+Ejectile = p
+Reaction Q-Value = 6.93
+Gain Modifier QQQ5 = 1.0
+Gain Modifier SuperX3 = 1.0
+[end]
+
+[350-349]
+Beam = 95Mo, Energy = 760.0
+Target = d, Type = C2D4, Thickness = 0.233, Density = 1063
 Ejectile = p
 Reaction Q-Value = 6.93
 Gain Modifier QQQ5 = 1.0

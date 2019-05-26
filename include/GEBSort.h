@@ -34,6 +34,7 @@
 #include "TSystem.h"
 #include "TCutG.h"
 #include "TTree.h"
+#include "TVector3.h"
 
 #include "TMapFile.h"
 
@@ -145,7 +146,7 @@ class PARS
 		unsigned short ignoreThresholds;
 		unsigned short siDetailLvl;
 		int GammaProcessor;
-		float sphere_split;
+		vector<float> sphere_split;
 
 		std::string userFilter;
 		std::string triggerMode;

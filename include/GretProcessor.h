@@ -58,15 +58,15 @@ public:
     vector<float> energy_temp;
     float tot_energy;
     
-    vector<float> Coor_Trans_Gretina ( float R, float theta, float phi, float sphere_split );
+    vector<float> Coor_Trans_Gretina ( float R, float theta, float phi, vector<float> sphere_split );
     
     vector<float> Tot_Gam_Pos ( vector<float> new_face, float x, float y, float z );
     
     float Angle_Between_Vect ( float x1, float y1, float z1, float x2, float y2, float z2 );
 
-    int Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split);
+    int Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split);
   
-    int BinGR(GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, float sphere_split );
+    int BinGR(GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split );
   
   
   
