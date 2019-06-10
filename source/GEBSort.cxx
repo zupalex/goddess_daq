@@ -78,7 +78,7 @@ int main ( int argc, char** argv )
     /* declarations */
     /*--------------*/
 
-    //cout<<"Do you make it here?"<<endl;
+    cout<<"Do you make it here?"<<endl;
 
     SortManager* theSortManager = SortManager::sinstance();
     PARS* pars = theSortManager->execParams;
@@ -161,6 +161,7 @@ int main ( int argc, char** argv )
         printf ( "help: see go file for examples of use of GEBSort" );
         exit ( 0 );
     };
+
 
     if ( argc > 1 ) while ( j < argc )
         {
@@ -272,7 +273,9 @@ int main ( int argc, char** argv )
                 j++;
                 sscanf ( argv[j++], "%i", &pars->GammaProcessor );
                 printf ( "The GammaProcessor will be: %i", pars->GammaProcessor );
+
             }
+            
             else if ( ( p = strstr ( argv[j], "-_split" ) ) != NULL )
             {
                 j++;
@@ -451,17 +454,31 @@ int main ( int argc, char** argv )
         };
 
     /* checking if the config file has been specified. If not then we auto-assign a config file based on the run number */
+    int treatedRun;
+    
     if ( strcmp ( pars->ConfigFile, "Uninitialized" ) == 0 )
     {
+      cerr<<"In if"<<endl;
         string inFileName = pars->GTSortInputFile;
 
+	if (pars->GammaProcessor != 1)
+	{
         short inRunPos1 = inFileName.find ( "run", 0 ) + 3;
         short inRunPos2 = inFileName.find ( ".gtd", 0 );
 
-        int treatedRun = stoi ( inFileName.substr ( inRunPos1, inRunPos2 - inRunPos1 ) );
+        treatedRun = stoi ( inFileName.substr ( inRunPos1, inRunPos2 - inRunPos1 ) );
         pars->runNumber = treatedRun;
 
         printf ( "\nConfig File left has not been initialized... Trying to retrieve it for run# %d\n", treatedRun );
+	
+	}
+
+	if (pars->GammaProcessor == 1)
+	{
+	  short inRunPos3 = inFileName.find("Run0",0)+4;
+	  treatedRun = stoi (inFileName.substr(inRunPos3,3));
+	  pars->runNumber = treatedRun;
+	}
 
         vector<string> configFileList;
         configFileList.clear();
@@ -506,6 +523,7 @@ int main ( int argc, char** argv )
 
             if ( configFileList[fItr] == "goddess.config" ) strcpy ( backupConf, "goddess.config" );
         }
+        
 
         if ( strcmp ( pars->ConfigFile, "Uninitialized" ) == 0 )
         {
@@ -531,5 +549,7 @@ int main ( int argc, char** argv )
         printf ( "you must specify a chat script\n" );
         return 0;
     }
+    
+    cerr<<"end of gebsort"<<endl;
 
 }

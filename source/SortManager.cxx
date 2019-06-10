@@ -737,6 +737,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     unsigned long long int firtsTSinEvent, dTS;
 
 //  ConnectionRetryCount = 10;
+    
+    //cerr<<"root spectra pointers"<<endl;
 
     /* root spectra pointers */
 
@@ -799,6 +801,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     execParams->multlo = 1;
     execParams->multhi = 20;
     execParams->requiretracked = 0;
+    
+    //cerr<<"gret rotation matrices"<<endl;
 
     /* get the GRETINA rotation matrices */
 
@@ -881,6 +885,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 //         printf ( "rz?: %10.5f %10.5f %10.5f\n", execParams->rotzx[j], execParams->rotzy[j], execParams->rotzz[j] );
 //     }
 
+    //cerr<<"read chat script"<<endl;
     /*------------------*/
     /* read chat script */
     /*------------------*/
@@ -942,6 +947,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     printf ( "input source is set up, supposedly\n" );
 
+    //cerr<<"lol sanety"<<endl;
     /*---------------------*/
     /* other sanety checks */
     /*---------------------*/
@@ -978,6 +984,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     printf ( "\n" );
     printf ( "executing ShareMemFileUserInit.h code\n" );
     printf ( "\n" );
+    
+   // cerr<<"create map file"<<endl;
 
     /*-----------------------------------*/
     /* if we are going to use the        */
@@ -1023,6 +1031,7 @@ int SortManager::GEBacq ( char* ChatFileName )
         printf ( "\n" );
     };
 
+   // cerr<<"delete command file"<<endl;
     /* delete any command file */
 
     sprintf ( str, "\\rm -f %s", CommandFileName );
@@ -1134,6 +1143,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     };
 
     TSfile = fopen ( "TS.list", "w" );
+    
+   // cerr<<"setup root spectra"<<endl;
 
     /*--------------------------------*/
     /* setup the root spectra we need */
@@ -1149,7 +1160,6 @@ int SortManager::GEBacq ( char* ChatFileName )
         execParams->histDir->cd();
     }
     /* spectra for different types of data */
-    cout<<"How about me?"<<endl;
 
     theGRProcessor = new GRProcessor ( 110, tlkup, tid, &ng, execParams );
     theGRProcessor->SupDGS();
@@ -1178,6 +1188,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     execParams->wlist = gDirectory->GetList();
 
     /* azi only in detector systems for now... */
+    //cerr<<"t shit"<<endl;
 
     if ( execParams->AGATA_data == 0 )
     {
@@ -1254,6 +1265,7 @@ int SortManager::GEBacq ( char* ChatFileName )
 //         }
     }
 
+    //cerr<<"setupsignal catcher"<<endl;
     /*----------------------*/
     /* setup signal catcher */
     /*----------------------*/
@@ -1300,6 +1312,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     inData.seekg ( 0, inData.beg );
 
     totBytesRead = 0;
+    
+    //cerr<<"get next event while"<<endl;
 
     while ( ( execParams->CurEvNo - execParams->firstEvent ) < execParams->nEvents && !inData.eof() )
     {
@@ -1407,21 +1421,28 @@ int SortManager::GEBacq ( char* ChatFileName )
 //             printf ( "debug quit\n" );
 //             exit ( 0 );
 
+//cerr<<"show me if you get here"<<endl;
+//cerr<< execParams->CurEvNo<< " "<<execParams->NumToPrint<<endl;
             if ( execParams->CurEvNo <= execParams->NumToPrint )
             {
+	      //cerr<<"no print?"<<endl;
                 printf ( "*end of event # %i\n", execParams->CurEvNo );
                 printf ( "+++++++++++++++++++++++++++++++\n" );
             }
 
             if ( execParams->GammaProcessor == 0 )
             {
+	      //cerr<<"in here"<<endl;
                 theGRProcessor->BinDgs ( gebEvt, dgsEvt );
             }
+            //cerr<<"out of here"<<endl;
             if ( execParams->GammaProcessor == 1 )
             {
+	      //cerr<<"in here"<<endl;
                 theGRProcessor->BinGR ( gebEvt, gretset, execParams->sphere_split );
             }
             
+            //cerr<<"out of here"<<endl;
             theGODProcessor->BinDGOD ( gebEvt, dfmaEvt, dgsEvt, gretset );
             theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt, gretset );
 
@@ -1440,6 +1461,8 @@ int SortManager::GEBacq ( char* ChatFileName )
                 }
             }
         }
+        
+        //cerr<<"after more gret shit"<<endl;
         //    assert (execParams->InputSrc == DISK);
 
         /*---------------------*/
@@ -1621,6 +1644,7 @@ int SortManager::GEBacq ( char* ChatFileName )
         }
     }
 
+    //cerr<<"after a stupid amount of else if"<<endl;
     cerr << "\n";
 
     cout << "\nTerminating Sorting Process because ";

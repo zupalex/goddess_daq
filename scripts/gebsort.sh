@@ -3,6 +3,7 @@
 ReturnError()
 {
     echo "-> USAGE: gebsort.sh <merged_dir> <run> <output_dir> <optional parameters (see list below)>"
+    echo "NOTE* if using GRETINA: specify <merged_dir> and <output_dir> as the directory with the file directories, not the one with Global.dat."
     echo ""
     echo "You can specify either a single run number, or a list enclosed in \" \" (example: \"114 115 117 120\")"
     echo ""
@@ -48,12 +49,10 @@ ReturnError()
     echo "-> userfilter[=folder_name] will apply the UserEventFilter to generate the root file."
     echo "                            if [=folder_name] is specified, a \"cleaned\" merged file will be generated in the specified folder"
     echo "______________________________________________________________________________________________________________________________________________________________"
-    echo "-> GammaProcessor=mode handles Gamma Ray detector type"
-     echo "               mode==0 Gammasphere [default]															"
-     echo "		 mode==1 Gretina"
+    echo "-> GammaProcessor = 1 if you're using GRETINA data."
      echo "______________________________________________________________________________________________________________________________________________________________"
      echo "-> sphere_split will tell the code to make allowances for how far apart the Gretina sphere is. Enter as a vector<float> {x1,y1,z1,x2,y2,z2} in relation to target in ORRUBA"
-     echo "              Where x1,y1,z1 correspond with the east hemisphere and x2,y2,z2 correspond with the west hemisphere. Default is {0,0,0}. Ignore if for Gammasphere run."
+     echo "              Where x1,y1,z1 correspond with the east hemisphere and x2,y2,z2 correspond with the west hemisphere. Default is {0,0,0,0,0,0}. Ignore if for Gammasphere run."
      echo "______________________________________________________________________________________________________________________________________________________________"
     
 }
@@ -164,7 +163,6 @@ COUNTER=$(($COUNTER + 1))
  	    ReturnError
  	    exit 1
  	fi
- 
  	GRPROCTYPE="-GammaProcessor $GRPROCTYPE"
        echo "/!\\ will process the run with GammaProcessor set to: $GRPROCTYPE/!\\"
  	
@@ -279,29 +277,55 @@ for run in `echo "$2"`
 do
     RUN=$run
 
-    if [ ! -e $INPUT_DIR/GEBMerged_run$RUN.gtd_000 ]; then
+    if [ "$GRPROCTYPE" =  "" ] || [ "$GRPROCTYPE" = "-GammaProcessor 0" ]; then
+      if [ ! -e $INPUT_DIR/GEBMerged_run$RUN.gtd_000 ]; then
 	echo "ERROR: Merged file not found! => Requested $INPUT_DIR/GEBMerged_run$RUN.gtd_000"	
+      exit 1
+      fi
+      if [ ! -e $OUTPUT_DIR/log ]; then
+	mkdir $OUTPUT_DIR/log
+      fi
+    fi
+    
+    if [ "$GRPROCTYPE" = "-GammaProcessor 1" ]; then
+      if [ ! -e $INPUT_DIR/Run0$RUN/Global.dat ]; then
+	echo "Error: Global.dat not found! => Requested $INPUT_DIR/Run0$RUN/Global.dat"
 	exit 1
+      fi
+      if [ ! -e $OUTPUT_DIR/Run0$RUN/sortlog ]; then
+	mkdir $OUTPUT_DIR/Run0$RUN/sortlog
+      fi
     fi
     
     echo "GEBSort started sorting run $RUN at `date`"
-    if [ ! -e $OUTPUT_DIR/log ]; then
-	mkdir $OUTPUT_DIR/log
-    fi
+
     
     if [ "$USERFILTERDIR" != "" ]; then
         USERFILTERARG="-userfilter $USERFILTERDIR/GEBMerged_run$RUN.gtd_000"
     fi
     
-    time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
-    $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $NODOPPLERFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $GRPROCTYPE $SPHERESPLIT $TRIGMODEARG \
-    -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
+    if [ "$GRPROCTYPE" = "" ] || [ "$GRPROCTYPE" = "-GammaProcessor 0" ]; then
+      time ./GEBSort_nogeb -input disk $INPUT_DIR/GEBMerged_run$RUN.gtd_000 -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
+      $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $NODOPPLERFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $GRPROCTYPE $SPHERESPLIT $TRIGMODEARG \
+      -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/log/GEBSort_current.log > $OUTPUT_DIR/log/GEBSort_run$RUN.log
     
-     $GRPROCTYPE $SPHERESPLIT need to put these back in list if need be
+     fi
+     
+     if [ "$GRPROCTYPE" = "-GammaProcessor 1" ]; then
+      time ./GEBSort_nogeb -input disk $INPUT_DIR/Run0$RUN/Global.dat -rootfile $OUTPUT_DIR/run$RUN$OUTPUTSUFFIX.root RECREATE \
+      $NEVENTSARG $GEOMFILEARG $CONFIGFILEARG $NOCALIBFLAG $NOMAPPINGFLAG $NOHISTSFLAG $NODOPPLERFLAG $IGNORETHRFLAG $SIDETLVLFLAG $USERFILTERARG $SX3ENADJUSTARG $GRPROCTYPE $SPHERESPLIT $TRIGMODEARG \
+      -chat chatfiles/GEBSort.chat | tee $OUTPUT_DIR/Run0$RUN/sortlog/GEBSort_current.log > $OUTPUT_DIR/Run0$RUN/sortlog/GEBSort_run$RUN.log
+    
+     fi
     
     echo "GEBSort DONE at `date`"
+    if [ "$GRPROCTYPE" = "" ]; then
+      tail -n 5 $OUTPUT_DIR/log/GEBSort_run$RUN.log
+    fi
     
-    tail -n 5 $OUTPUT_DIR/log/GEBSort_run$RUN.log
+    if [ "$GRPROCTYPE" = "-GammaProcessor 1" ]; then
+      tail -n 5 $OUTPUT_DIR/Run0$RUN/sortlog/GEBSort_run$RUN.log
+    fi
 done
 
 #exit

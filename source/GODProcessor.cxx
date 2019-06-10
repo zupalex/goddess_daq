@@ -656,7 +656,7 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
                 }
                 else if ( pars->GammaProcessor == 1 )
                 {
-                    dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[i].timestamp );
+                    dTg_agod = double ( gretEvt[0].timestamp ) - double ( agodEvt[i].timestamp );
                 }
                 else
                 {

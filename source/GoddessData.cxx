@@ -1178,7 +1178,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
             }
         }
     }
-    
+
 
     if ( pars->GammaProcessor == 1 )
     {
@@ -1256,7 +1256,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
 //std::cout << ionData->size() << '\n';
 
     int uff = ( !pars->userFilter.empty() ? GetWriteEventFlag ( gebEvt ) : 1 );
-    
+
     if ( uff == 1 )
     {
         tree->Fill();
@@ -1264,33 +1264,33 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
         if ( pars->noCalib == 2 ) sortedTree->Fill();
     }
 
-    if (pars->GammaProcessor == 0)
+    if ( pars->GammaProcessor == 0 )
     {
-    gamData->clear();
+        gamData->clear();
     }
     siData->clear();
     siDataD->clear();
     ionData->clear();
-    if (pars->GammaProcessor == 1)
+    if ( pars->GammaProcessor == 1 )
     {
-    gretdata->clear();
+        gretdata->clear();
     }
 
 
     if ( pars->noCalib == 2 )
     {
-      if (pars->GammaProcessor == 0)
-      {
-        gamData_snc->clear();
-      }
+        if ( pars->GammaProcessor == 0 )
+        {
+            gamData_snc->clear();
+        }
         siData_snc->clear();
         ionData_snc->clear();
-	if (pars->GammaProcessor == 1)
-	{
-        gretdata_snc->clear();
-	}
+        if ( pars->GammaProcessor == 1 )
+        {
+            gretdata_snc->clear();
+        }
     }
-    
+
     return uff;
 }
 
