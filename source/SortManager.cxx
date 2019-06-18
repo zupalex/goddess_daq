@@ -1421,28 +1421,21 @@ int SortManager::GEBacq ( char* ChatFileName )
 //             printf ( "debug quit\n" );
 //             exit ( 0 );
 
-//cerr<<"show me if you get here"<<endl;
-//cerr<< execParams->CurEvNo<< " "<<execParams->NumToPrint<<endl;
             if ( execParams->CurEvNo <= execParams->NumToPrint )
             {
-	      //cerr<<"no print?"<<endl;
                 printf ( "*end of event # %i\n", execParams->CurEvNo );
                 printf ( "+++++++++++++++++++++++++++++++\n" );
             }
 
             if ( execParams->GammaProcessor == 0 )
             {
-	      //cerr<<"in here"<<endl;
                 theGRProcessor->BinDgs ( gebEvt, dgsEvt );
             }
-            //cerr<<"out of here"<<endl;
-            if ( execParams->GammaProcessor == 1 )
+            else if ( execParams->GammaProcessor == 1 )
             {
-	      //cerr<<"in here"<<endl;
                 theGRProcessor->BinGR ( gebEvt, gretset, execParams->sphere_split );
             }
             
-            //cerr<<"out of here"<<endl;
             theGODProcessor->BinDGOD ( gebEvt, dfmaEvt, dgsEvt, gretset );
             theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt, gretset );
 

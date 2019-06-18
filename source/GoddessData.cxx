@@ -473,11 +473,14 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             if ( pars->noMapping )
             {
                 orrubaRaw->isDigital.push_back ( false );
+		
 
                 ChValPair newChValPair;
 
                 newChValPair.channel = channel;
                 newChValPair.value = value;
+		
+		//cerr<<channel<<endl;
 
                 orrubaRaw->data.push_back ( newChValPair );
             }

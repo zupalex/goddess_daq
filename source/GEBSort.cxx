@@ -473,7 +473,7 @@ int main ( int argc, char** argv )
 	
 	}
 
-	if (pars->GammaProcessor == 1)
+	else if (pars->GammaProcessor == 1)
 	{
 	  short inRunPos3 = inFileName.find("Run0",0)+4;
 	  treatedRun = stoi (inFileName.substr(inRunPos3,3));
