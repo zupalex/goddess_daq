@@ -2639,5 +2639,505 @@ void GoddessCalib::PosCalibHelp()
 	cout << endl;
 }
 
+// void GoddessCalib::QQQ5Calib ( string filename, string newfilename, bool isupstream, bool is2015 )
+// {
+//     TFile* originalfile = new TFile ( filename.c_str(),"read" );
+// 
+// 
+//     TTree* sorted = ( TTree* ) originalfile->Get ( "sorted" );
+// 
+//     if ( sorted == NULL )
+//     {
+// 
+//         sorted = ( TTree* ) originalfile->Get ( "trees/sorted" );
+// 
+//         if ( sorted == NULL )
+//         {
+//             return;
+//         }
+//     }
+//     
+//         TH2F* dig_hist1;
+//         TH2F* dig_hist2;
+//         TH2F* an_hist1;
+//         TH2F* an_hist2;
+// 
+//     if ( is2015 )
+//     {
+//         dig_hist1 = new TH2F ( "qqq5_hist_1","QQQ5 En vs Strip", 32,0,32,400,20000,200000 );
+//         dig_hist2 = new TH2F ( "qqq5_hist_2","QQQ5 En vs Strip", 32,0,32,400,20000,200000 );
+//         an_hist1 = new TH2F ( "qqq5_hist_3","QQQ5 En vs Strip", 32,0,32,400,200,5000 );
+//         an_hist2 = new TH2F ( "qqq5_hist_4","QQQ5 En vs Strip", 32,0,32,400,200,5000 );
+//     }
+// 
+//     else if ( !is2015 )
+//     {
+// 	dig_hist1 = new TH2F ( "qqq5_hist_1","QQQ5 En vs Strip", 32,0,32,400,200,5000 ); //these two are set up like the analog detectors
+//         dig_hist2 = new TH2F ( "qqq5_hist_2","QQQ5 En vs Strip", 32,0,32,400,200,5000 ); //they're only not named that way for ease of use with the 2015 campaign
+//         an_hist1 = new TH2F ( "qqq5_hist_3","QQQ5 En vs Strip", 32,0,32,400,200,5000 );
+//         an_hist2 = new TH2F ( "qqq5_hist_4","QQQ5 En vs Strip", 32,0,32,400,200,5000 );
+//     }
+// 
+//     vector<TH2F*> hists;
+// 
+//     int entries = sorted->GetEntries();
+// 
+//     vector<SiDataDetailed>* vectdata = new vector<SiDataDetailed>;
+//     sorted->SetBranchAddress ( "si",&vectdata );
+// 
+//     for ( int i = 0; i<entries; i++ )
+//     {
+//         sorted->GetEntry ( i );
+// 
+//         if ( i%2000==0 )
+//         {
+//             cout<<"Entries treated: "<<i<<"/"<<entries<<"\r"<<flush;
+//         }
+// 
+//         for ( int vdat = 0; vdat<vectdata->size(); vdat++ )
+//         {
+//             SiDataDetailed* dat = &vectdata->at ( vdat );
+// 
+//             if ( dat->isUpstream == isupstream && dat->isBarrel == 0 )
+//             {
+//                 if ( dat->sector == 0 )
+//                 {
+//                     for ( int striphit = 0; striphit<dat->E1.strip.p.size(); striphit++ )
+//                     {
+//                         dig_hist1->Fill ( dat->E1.strip.p.at ( striphit ),  dat->E1.en.p.at ( striphit ) );
+// 
+//                     }
+//                 }
+// 
+//                 else if ( dat->sector == 1 )
+//                 {
+//                     for ( int striphit2 = 0; striphit2<dat->E1.strip.p.size(); striphit2++ )
+//                     {
+//                         dig_hist2->Fill ( dat->E1.strip.p.at ( striphit2 ), dat->E1.en.p.at ( striphit2 ) );
+// 
+//                     }
+//                 }
+//                 else if ( dat->sector == 2 )
+//                 {
+//                     for ( int striphit3 = 0; striphit3<dat->E1.strip.p.size(); striphit3++ )
+//                     {
+//                         an_hist1->Fill ( dat->E1.strip.p.at ( striphit3 ), dat->E1.en.p.at ( striphit3 ) );
+// 
+//                     }
+//                 }
+//                 else if ( dat->sector == 3 )
+//                 {
+//                     for ( int striphit4 = 0; striphit4<dat->E1.strip.p.size(); striphit4++ )
+//                     {
+//                         an_hist2->Fill ( dat->E1.strip.p.at ( striphit4 ), dat->E1.en.p.at ( striphit4 ) );
+// 
+//                     }
+//                 }
+//             }
+// 
+// 
+//         }
+//     }
+// 
+//     TFile* newfile = new TFile ( newfilename.c_str(),"recreate" );
+// 
+//     dig_hist1->Write();
+//     dig_hist2->Write();
+//     an_hist1->Write();
+//     an_hist2->Write();
+// 
+//     newfile->Write();
+//     newfile->Close();
+// 
+// 
+// 
+//     return;
+// }
+// 
+// void GoddessCalib::QQQ5Project ( string originalfile, string newfilename, string isUpstream = "U" )
+// {
+//     TFile* file = new TFile ( originalfile.c_str(),"read" );
+//     TList* list = file->GetListOfKeys();
+//     if ( !list )
+//     {
+//         cout<<"No keys in file."<<endl;
+//     }
+// 
+//     TIter next ( list );
+//     TKey* key;
+//     TObject* obj;
+// 
+//     TH1* projection;
+//     TH2* hist;
+//     vector<TH1*> histvec;
+//     string slice;
+//     int b = 0;
+// 
+//     while ( ( key = ( TKey* ) next() ) )
+//     {
+//         obj = key->ReadObj();
+//         if ( obj->InheritsFrom ( "TH2" ) )
+//         {
+//             hist = ( TH2* ) obj;
+// 
+//             for ( int strip = 1; strip<33; strip++ )
+//             {
+//                 if ( strip<10 ) slice = isUpstream + to_string ( b ) + "0"+ to_string ( strip );
+//                 if ( strip>=10 ) slice = isUpstream + to_string ( b ) + to_string ( strip );
+// 
+//                 projection = hist ->ProjectionY ( slice.c_str(),strip,strip );
+// 
+//                 histvec.push_back ( projection );
+// 
+//             }
+//         }
+// 
+//         b++;
+//     }
+// 
+//     TFile* newfile = new TFile ( newfilename.c_str(),"recreate" );
+// 
+//     for ( int k = 0; k<histvec.size(); k++ )
+//     {
+//         histvec.at ( k )->Write();
+//     }
+// 
+//     newfile->Write();
+//     newfile->Close();
+// 
+//     return;
+// }
+// 
+// 
+// void GoddessCalib::QQQ5Fits ( string filename, string newfilename, bool isupstream = 1 )
+// {
+// 
+//     TFile* file = new TFile ( filename.c_str(),"read" );
+//     TList* list = file->GetListOfKeys();
+//     if ( !list )
+//     {
+//         cout<<"No keys in file."<<endl;
+//     }
+// 
+//     TIter next ( list );
+//     TKey* key;
+//     TObject* obj;
+// 
+//     TF1* fit_dig = new TF1 ( "fit_func",gaus_fit_peak,120000,180000,3 );
+//     TF1* fit_an = new TF1 ( "fit_func",gaus_fit_peak,2500,4000,3 );
+//     vector<Double_t> amps;
+//     vector<TH1*> peaksfound;
+//     //TSpectrum *spec;
+// 
+//     int b = 0;
+//     TH1* histo;
+//     TList *functions;
+//     TPolyMarker *pm;
+//     float amp;
+//     Double_t* ypeaks;
+//     Double_t* xpeaks;
+//     int name_prev = 0;
+//     string name_curr;
+//     int name_num;
+//     TH1D* notfound = new TH1D ( "empty","empty",400,0,10 );
+//     int skip=1;
+//     vector<float> afromfit;
+// 
+//     while ( ( key= ( TKey* ) next() ) )
+//     {
+//         obj = key->ReadObj();
+//         if ( obj->InheritsFrom ( "TH1" ) )
+//         {
+//             histo = ( TH1* ) obj;
+//             name_curr = ( string ) histo->GetName();
+//             name_curr = name_curr.substr ( name_curr.length()-1 );
+//             name_num = stoi ( name_curr );
+//             if ( name_num == 0 && name_prev == 9 )
+//             {
+//                 skip=0;
+//             }
+//             //cout<<"prev: "<<name_prev<<" curr: "<<name_num<<endl;
+//             if ( name_num != name_prev+1 || skip==0 )
+//             {
+//                 for ( int hm = 0; hm<name_num-name_prev+1; hm++ )
+//                 {
+//                     peaksfound.push_back ( notfound );
+//                     afromfit.push_back ( 1 );
+//                     amps.push_back ( 1 );
+//                 }
+//             }
+//             skip = 1;
+//             name_prev = name_num;
+//             histo->ShowPeaks ( 2,"",0.4 );
+//             functions = histo->GetListOfFunctions();
+//             pm= ( TPolyMarker* ) functions->FindObject ( "TPolyMarker" );
+//             if ( pm == NULL )
+//             {
+//                 amps.push_back ( 1 );
+//                 afromfit.push_back ( 1 );
+//                 peaksfound.push_back ( histo );
+//                 continue;
+//             }
+//             ypeaks = pm->GetY();
+//             xpeaks = pm->GetX();
+// 
+//             if ( xpeaks[0]<10000 )
+//             {
+//                 fit_an->SetParameters ( 1,ypeaks[0],xpeaks[0] );
+//                 histo->Fit ( fit_an,"M","",xpeaks[0]-50,xpeaks[0]+40 );
+//                 afromfit.push_back ( fit_an->GetParameter ( 2 ) );
+//             }
+//             else if ( xpeaks[0]>10000 )
+//             {
+//                 fit_dig->SetParameters ( 1,ypeaks[0],xpeaks[0] );
+//                 histo->Fit ( fit_dig,"M","",xpeaks[0]-2000,xpeaks[0]+2000 );
+//                 afromfit.push_back ( fit_dig->GetParameter ( 2 ) );
+//             }
+//             else
+//             {
+//                 afromfit.push_back ( 1 );
+//             }
+// 
+//             histo->Draw();
+//             amps.push_back ( xpeaks[0] );
+//             peaksfound.push_back ( histo );
+// 
+//         }
+// 
+// 
+//         b++;
+//     }
+// 
+//     Double_t lamp1 = 1;
+//     Double_t lamp2 = 1;
+//     Double_t lamp3 = 1;
+//     Double_t lamp4 = 1;
+//     Double_t corr;
+// 
+//     for ( int n = 0; n<amps.size(); n++ )
+//     {
+//         if ( n<32 && amps[n]>lamp1 ) lamp1 = amps[n];
+//         if ( n<64 && amps[n]>lamp2 ) lamp2 = amps[n];
+//         if ( n<96 && amps[n]>lamp3 ) lamp3 = amps[n];
+//         if ( n<128 && amps[n]>lamp4 ) lamp4 = amps[n];
+//     }
+// 
+//     vector<Double_t> corrections;
+//     vector<int> todo;
+// 
+//     for ( int c = 0; c<amps.size(); c++ )
+//     {
+//         if ( amps[c] == 1 )
+//         {
+//             corrections.push_back ( 0 );
+//             continue;
+//         }
+//         corrections.push_back ( 5.813/amps[c] );
+//         if ( c<64 && corrections[c]>0.0001 ) todo.push_back ( c );
+//         if ( c>=64 && corrections[c]>0.01 ) todo.push_back ( c );
+//     }
+//     cout<<"Do these by hand: "<<endl;
+//     int sector;
+//     int strip;
+// 
+//     for ( int td = 0; td<todo.size(); td++ )
+//     {
+//         sector = todo[td]/32;
+//         strip = todo[td] - 32*sector;
+// 
+//         cout<<"Sector: "<<sector<<"    Strip: "<<strip<<endl;
+// 
+//     }
+// 
+//     TFile* newfile = new TFile ( newfilename.c_str(),"recreate" );
+// 
+//     for ( int ff = 0; ff<peaksfound.size(); ff++ )
+//     {
+//         peaksfound[ff]->Write();
+//     }
+// 
+//     newfile->Write();
+//     newfile->Close();
+// 
+//     ofstream txtfile;
+//     string txtname = "QQQ5_Calibrations_isupstream_"+to_string ( isupstream ) +".txt";
+//     txtfile.open ( txtname.c_str() );
+//     txtfile<<"Calibrations for the QQQ5"<<endl;
+//     txtfile<<"Detector,Mean_by_polymarker,Correction_by_polymarker,Mean_by_fit,Correction_by_fit"<<endl;
+//     float correction_fit;
+//     for ( int h = 0; h<amps.size(); h++ )
+//     {
+//         if ( afromfit[h] == 1 )
+//         {
+//             correction_fit = 1;
+//         }
+//         else correction_fit = 5.813/afromfit[h];
+//         txtfile<<peaksfound[h]->GetName() <<","<<amps[h]<<","<<corrections[h]<<","<<afromfit[h]<<","<<correction_fit<<endl;;
+//     }
+// 
+//     txtfile.close();
+// 
+//     return;
+// }
+// 
+// void GoddessCalib::QQQ5UpdateConfig ( string calib_file, string config_file )
+// {
+//     ifstream qqq5calib ( calib_file.c_str() );
+//     string line;
+// 
+//     int pos_val;
+//     string val;
+//     vector<string> vals;
+//     string isUpstream;
+//     vector<string> isU;
+//     string sector;
+//     vector<string> sectors;
+//     string strip;
+//     vector<string> strips;
+//     int b = 0;
+//     int sec;
+//     int str;
+// 
+//     while ( getline ( qqq5calib,line ) )
+//     {
+//         b++;
+//         if ( b < 3 ) continue;
+//         if ( line.substr ( 0,5 ) == "empty" )
+//         {
+//             if ( strip == "32" )
+//             {
+//                 strip = "0";
+//                 sec = stoi ( sector ) + 1;
+//             }
+//             else
+//             {
+//                 sec = stoi ( sector );
+//                 str = stoi ( strip ) + 1;
+//             }
+// 
+//             sectors.push_back ( to_string ( sec ) );
+//             strips.push_back ( to_string ( str ) );
+//             isU.push_back ( "E" );
+//             vals.push_back ( "1" );
+//             continue;
+//         }
+//         isUpstream = line.substr ( 0,1 );
+//         isU.push_back ( isUpstream );
+//         sector = line.substr ( 1,1 );
+//         sectors.push_back ( sector );
+//         strip = line.substr ( 2,2 );
+//         strips.push_back ( strip );
+//         pos_val = line.find_last_of ( "," );
+//         val = line.substr ( pos_val+1 );
+//         //cout<<isUpstream<<" "<<sector<<" "<<strip<<endl;
+//         vals.push_back ( val );
+// 
+//     }
+// 
+//     ifstream config ( config_file.c_str() );
+// 
+//     string det;
+//     int pos;
+//     string layer;
+//     bool flag=0;
+//     string encal;
+//     string v_config;
+//     int num;
+//     int snum;
+//     string replacement;
+//     int sstrip;
+// 
+//     int cpos = config_file.find ( ".config" );
+//     string csub = config_file.substr ( 0,cpos );
+//     csub = csub + "_new.config";
+// 
+//     ofstream fileout ( csub.c_str() );
+// 
+// 
+//     while ( getline ( config,line ) )
+//     {
+//         if ( flag == 0 )
+//         {
+//             det = line.substr ( 0,4 );
+// 
+//             if ( det == "QQQ5" )
+//             {
+//                 pos = line.find ( "U" );
+//                 if ( pos == -1 )
+//                 {
+//                     pos = line.find ( "D" );
+//                     if ( pos == -1 )
+//                     {
+//                         cout<<"Not Upstream or Downstream. Error."<<endl;
+//                     }
+//                 }
+//                 isUpstream = line.substr ( pos,1 );
+//                 sector = line.substr ( pos+1,1 );
+//                 if ( sector == "A" ) sector = "0";
+//                 else if ( sector == "B" ) sector ="1";
+//                 else if ( sector == "C" ) sector = "2";
+//                 else if ( sector == "D" ) sector = "3";
+//                 else
+//                 {
+//                     cout<<"Sector is not viable."<<endl;
+//                 }
+// 
+//                 layer = line.substr ( pos+3,2 );
+//                 if ( layer == "E1" )
+//                 {
+//                     flag = 1;
+//                 }
+//             }
+//         }
+// 
+//         if ( flag == 1 )
+//         {
+//             encal = line.substr ( 0,7 );
+//             if ( encal == "enCal n" )
+//             {
+//                 flag = 0;
+//             }
+//             if ( encal == "enCal p" )
+//             {
+// 
+//                 strip = line.substr ( 8,2 );
+//                 num = stoi ( strip ) +1;
+//                 strip = to_string ( num );
+//                 if ( stoi ( strip ) <10 )
+//                 {
+//                     strip = "0"+strip.substr ( 0,1 );
+//                 }
+// 
+//                 num = line.find_last_of ( " " );
+//                 v_config = line.substr ( num+1 );
+//                 snum = stoi ( sector );
+//                 sstrip = stoi ( strip );
+// 
+//                 //cout<<"Strip from calib "<<strips[snum*32+s]<<" Strip from config "<<strip<<endl;
+//                 if ( isU[snum*32+sstrip-1] == isUpstream && sectors[snum*32+sstrip-1] ==  sector  && strips[snum*32+sstrip-1] == strip )
+//                 {
+//                     replacement = vals[snum*32+sstrip-1];
+//                     //cout<<line<<endl;
+//                     line.replace ( line.begin() +num+1,line.end(),replacement.begin(),replacement.end() );
+//                     //cout<<line<<endl;
+//                 }
+//                 else
+//                 {
+//                     continue;
+//                     //cout<<strips[snum*32+sstrip-1]<<" "<<strip<<" "<<sectors[snum*32+sstrip-1]<<" "<<sector<<" "<<isUpstream<<" "<<isU[snum*32+sstrip-1]<<endl;
+//                 }
+// 
+//             }
+//         }
+//         line += "\n";
+//         fileout<<line;
+//     }
+// 
+// 
+// 
+// 
+//     return;
+// }
+
 ClassImp(GoddessCalib)
 

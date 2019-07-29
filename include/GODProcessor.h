@@ -40,9 +40,9 @@ class GODProcessor
 		int DGODEvDecompose(unsigned int* ev, int len, DFMAEVENT* thedfmaEvt);
 		int BinDGOD(GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt);
 
-		void AGODEvDecompose(unsigned int* ev, int len, AGODEVENT* theagodEvt);
+		void AGODEvDecompose(unsigned int* ev, int len, AGODEVENT* theagodEvt, PARS* execParams);
 		void SupAGOD();
-		int BinAGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt);
+		int BinAGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt, PARS* execParams);
 
 		void SupGOD();
 		int BinGOD(GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt);

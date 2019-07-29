@@ -1,5 +1,64 @@
 #include "SortManager.h"
 
+#include <stdio.h>
+#include <signal.h>
+#include <stdio.h>
+#include <signal.h>
+#include <execinfo.h>
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <functional>
+ #include <cstdlib>
+#include <vector>
+
+#include <sys/resource.h>
+
+// struct sigcontext ctx;
+// 
+// void bt_sighandler(int sig) {
+// 
+//   void *trace[16];
+//   char **messages = (char **)NULL;
+//   int i, trace_size = 0;
+// 
+//   if (sig == SIGSEGV)
+//     printf("Got signal %d, faulty address is %p, "
+//            "from %p\n", sig, ctx.cr2, ctx.err);
+//   else
+//     printf("Got signal %d\n", sig);
+// 
+//   trace_size = backtrace(trace, 16);
+//   /* overwrite sigaction with caller's address */
+//   trace[1] = (void *)ctx.err;
+//   messages = backtrace_symbols(trace, trace_size);
+//   /* skip first stack frame (points here) */
+//   printf("[bt] Execution path:\n");
+//   for (i=1; i<trace_size; ++i)
+//   {
+//     printf("[bt] #%d %s\n", i, messages[i]);
+// 
+//     /* find first occurence of '(' or ' ' in message[i] and assume
+//      * everything before that is the file name. (Don't go beyond 0 though
+//      * (string terminator)*/
+//     size_t p = 0;
+//     while(messages[i][p] != '(' && messages[i][p] != ' '
+//             && messages[i][p] != 0)
+//         ++p;
+// 
+//     char syscom[256];
+//     sprintf(syscom,"addr2line %p -e %.*s", trace[i], p, messages[i]);
+//         //last parameter is the file name of the symbol
+//     system(syscom);
+//   }
+// 
+//   exit(0);
+// }
+
+
+
+
 using std::string;
 using std::vector;
 
@@ -74,11 +133,24 @@ TH1D* make1D ( const char* txt, int xln, int xlo, int xhi )
 
 int main ( int argc, char** argv )
 {
+  
+struct rlimit core_limit = { RLIM_INFINITY, RLIM_INFINITY };
+assert( setrlimit( RLIMIT_CORE, &core_limit ) == 0 ); 
+  
+//   /* Install our signal handler */
+//   struct sigaction sa;
+// 
+//   sa.sa_handler = bt_sighandler;
+//   sigemptyset(&sa.sa_mask);
+//   sa.sa_flags = SA_RESTART;
+// 
+//   sigaction(SIGSEGV, &sa, NULL);
+//   sigaction(SIGUSR1, &sa, NULL);
+
     /*--------------*/
     /* declarations */
     /*--------------*/
 
-    cout<<"Do you make it here?"<<endl;
 
     SortManager* theSortManager = SortManager::sinstance();
     PARS* pars = theSortManager->execParams;
@@ -458,7 +530,7 @@ int main ( int argc, char** argv )
     
     if ( strcmp ( pars->ConfigFile, "Uninitialized" ) == 0 )
     {
-      cerr<<"In if"<<endl;
+      
         string inFileName = pars->GTSortInputFile;
 
 	if (pars->GammaProcessor != 1)

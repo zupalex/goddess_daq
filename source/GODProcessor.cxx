@@ -537,23 +537,54 @@ int GODProcessor::BinDGOD ( GEB_EVENT* gebEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgs
 
 }
 
-void GODProcessor::AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theagodEvt )
+void GODProcessor::AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theagodEvt, PARS* execParams )
 {
+
     theagodEvt->channels.clear();
     theagodEvt->values.clear();
+    unsigned short channel;
+    unsigned short value;
 
     unsigned int readWords = 0;
     unsigned long long timestamp = 0;
     for ( int i = 0; i < len; i++ )
     {
         unsigned int datum = *ev++;
-        unsigned short channel = datum & 0xFFFF;
-        unsigned short value = ( datum >> 16 ) & 0xFFFF;
+
+        if ( execParams->GammaProcessor == 0 )
+        {
+            channel = datum & 0xFFFF;
+            value = ( datum >> 16 ) & 0xFFFF;
+        }
+        else if ( execParams->GammaProcessor == 1 )
+        {
+            channel = ( datum & 0x7FFF );
+            value = (datum >>16);
+
+        }
+        else
+        {
+            cerr<<"Invalid GammaProcessor. Could not assign channel number."<<endl;
+            return;
+        }
+
 
 
         if ( channel >= 1000 && channel <= 1003 )
         {
-            timestamp |= ( unsigned long long ) value << ( 16 * ( 246 - channel ) );
+            if ( execParams->GammaProcessor==0 )
+            {
+                timestamp |= ( unsigned long long ) value << ( 16 * ( 246 - channel ) );
+            }
+            else if ( execParams->GammaProcessor == 1 )
+            {
+                timestamp |= ( unsigned long long ) value << ( 16* ( channel-1000 ) );
+            }
+            else
+            {
+                cerr<<"Invalid GammaProcessor. Could not assign Timestamp for ldf."<<endl;
+                return;
+            }
         }
         else
         {
@@ -593,8 +624,9 @@ void GODProcessor::SupAGOD()
     }
 }
 
-int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt )
+int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt, PARS* execParams )
 {
+
     char str[128];
 
     /* prototypes */
@@ -620,7 +652,7 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
             //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
 
 
-            AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD] );
+            AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD], execParams );
 
 //             std::cerr << "Analog ORRUBA event: gebEvt TS = " << gebEvt->ptgd[i]->timestamp << " / AGODEVENT TS = " << agodEvt[*numAGOD].timestamp << "\n";
 
@@ -767,5 +799,7 @@ int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfm
             return 1;
         }
     }
+
+
     return godData->Fill ( gebEvt, &dgsEvts, &dfmaEvts, &agodEvts, &gretEvts );
 }

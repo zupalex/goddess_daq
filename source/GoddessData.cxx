@@ -12,8 +12,11 @@
 #include "BB10.h"
 #include "LiquidScint.h"
 
+
 #include <iostream>
 #include <fstream>
+#include <TSystem.h>
+ 
 
 double GoddessGraphEval ( TGraph* gr, double toEval, orrubaDet* det, float enear, float efar )
 {
@@ -151,10 +154,15 @@ GoddessData::GoddessData ( PARS* pars_, GoddessConfig* gconf_ )
         {
             tree->Branch ( "gam", &gamData );
         }
-        else if ( pars->GammaProcessor == 1 )
+	else if ( pars->GammaProcessor == 1 )
         {
             tree->Branch ( "gret", &gretdata );
         }
+        else 
+	{
+	  cerr<<"No viable GammaProcessor chosen."<<endl;
+	  return;
+	}
 
         if ( pars->siDetailLvl == 2 || pars->noCalib == 1 ) tree->Branch ( "si", &siDataD, 32000, 0 );
         else if ( pars->siDetailLvl == 1 ) tree->Branch ( "si", &siData, 32000, 0 );
@@ -174,6 +182,11 @@ GoddessData::GoddessData ( PARS* pars_, GoddessConfig* gconf_ )
         {
             gretdata_snc = new std::vector<GretData>;
         }
+        else
+	{
+	  cerr<<"No viable GammaProcessor chosen."<<endl;
+	  return;
+	}
         siData_snc = new std::vector<SiDataDetailed>;
         ionData_snc = new std::vector<IonData>;
 
@@ -186,7 +199,12 @@ GoddessData::GoddessData ( PARS* pars_, GoddessConfig* gconf_ )
         else if ( pars->GammaProcessor == 1 )
         {
             sortedTree->Branch ( "raw_gret", &gretdata_snc );
-        }
+        } 
+        else
+	{
+	  cerr<<"No viable GammaProcessor chosen."<<endl; 
+	  return;
+	}
         if ( pars->siDetailLvl > 0 ) sortedTree->Branch ( "si", &siData_snc, 32000, 0 );
         sortedTree->Branch ( "ic", &ionData_snc );
     }
@@ -204,6 +222,11 @@ GoddessData::GoddessData ( PARS* pars_, GoddessConfig* gconf_ )
         {
             rawTree->Branch ( "raw_gret", &gretdata );
         }
+        else
+	{
+	  cerr<<"No viable GammaProcessor chosen."<<endl;
+	  return;
+	}
     }
 
     if ( !pars->noHists )
@@ -430,6 +453,7 @@ void GoddessData::InitGammaHists()
 
 int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<DFMAEVENT>* dgodEvts, std::vector<AGODEVENT>* agodEvts, std::vector<GRETEVENT>* gretEvts )
 {
+  
     bool doCalibrate = ( pars->noCalib ) % 2 == 0;
 
     //Map of channels to suppress, This occurs if they were not found in the map, i.e. no detector is mapped to this channel in the config file
@@ -497,6 +521,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             }
 
             Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, pars->ignoreThresholds, timestamp );
+	    
 
             if ( !det )
             {
@@ -535,6 +560,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         }
     }
 
+    
     if ( !pars->noHists ) digitalMult->Fill ( dgodEvts->size() );
     // getting data from digital events
     for ( size_t i = 0; i < dgodEvts->size(); i++ )
@@ -609,17 +635,21 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
         firedDets[posID] = det;
     }
 
+    
     for ( auto detItr = siDets.begin(); detItr != siDets.end(); detItr++ )
     {
         detItr->second->SortAndCalibrate ( doCalibrate );
+	
     }
 
+    
     int userFilterFlag = 0;
 
     if ( pars->noCalib != -1 )
     {
         userFilterFlag = FillTrees ( gebEvt, dgsEvts, gretEvts );
     }
+
 
     if ( pars->noMapping )
     {
@@ -869,6 +899,7 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 
 int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<GRETEVENT>* gretEvts )
 {
+  
 //Reminder: pars->noCalib == ...
 //                          0 writes just the sorted and calibrated tree.
 //                          1 writes just the sorted but non calibrated tree.
@@ -1136,6 +1167,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
             }
         }
     }
+    
 
 //Loop over the DGS events
     if ( pars->GammaProcessor == 0 )
@@ -1223,6 +1255,8 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
                 GretData rawDatum;
                 rawDatum.crystal_num = gretEvts->at ( gretEvtnum ).quad*4 + gretEvts->at ( gretEvtnum ).crystal;
                 rawDatum.en = gretEvts->at ( gretEvtnum ).raw_e;
+		
+		cerr<<rawDatum.x<<" "<<rawDatum.y<<" "<<rawDatum.z<<endl;
 
                 rawDatum.x = gretEvts->at ( gretEvtnum ).x;
                 rawDatum.y = gretEvts->at ( gretEvtnum ).y;
@@ -1232,7 +1266,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
             }
         }
     }
-
+    
 //Deal with the ion chamber
     if ( firedDets.find ( "ion" ) != firedDets.end() )
     {
@@ -1248,24 +1282,32 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
             ionData_snc->push_back ( datum );
         }
     }
+
 //Deal with the neutron detectors
     for ( auto lsItr = liquidScints.begin(); lsItr != liquidScints.end(); ++lsItr )
     {
         //UNCOMMENT THIS OR DO SOMETHING HERE WHEN WE WANT TO USE IT
         //LiquidScint *liqDet = lsItr->second;
     }
+    
 
 //if (!gamData->empty() && !siData->empty()) tree->Fill();
 //std::cout << ionData->size() << '\n';
 
     int uff = ( !pars->userFilter.empty() ? GetWriteEventFlag ( gebEvt ) : 1 );
+    
 
     if ( uff == 1 )
     {
+//       gDebug = 2; 
+      //cerr<<"before fill"<<endl;
         tree->Fill();
+	
+	//cerr<<"After fill"<<endl;
 
         if ( pars->noCalib == 2 ) sortedTree->Fill();
     }
+
 
     if ( pars->GammaProcessor == 0 )
     {

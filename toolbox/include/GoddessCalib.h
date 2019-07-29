@@ -202,6 +202,10 @@ class GoddessCalib : public GoddessAnalysis {
 //                                         string betterFitMode = "chi2 < bestChi2 && sigma <= bestSigma && magn >= bestMagn && gaussIntegral >= bestGaussIntegral && rawIntegral >= bestRawIntegral" );
 
 		void LoadInternalCalib(string fileName);
+		void QQQ5UpdateConfig ( string calib_file, string config_file );
+		void QQQ5Fits ( string filename, string newfilename, bool isupstream = 1 );
+		void QQQ5Project ( string originalfile, string newfilename, string isUpstream = "U" );
+		void QQQ5Calib ( string filename, string newfilename, bool isupstream, bool is2015 );
 
 	ClassDef ( GoddessCalib, 1 )
 };

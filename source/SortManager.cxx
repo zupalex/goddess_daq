@@ -140,7 +140,9 @@ SortManager::SortManager()
 
     for ( int i = 0; i < MAXCOINEV; i++ )
     {
+
         buffHeader[i] = new GebData;
+
         buffData[i] = new char[50000];
 
 //         dfmaEvt[i] = new DFMAEVENT;
@@ -572,8 +574,8 @@ int SortManager::GEBGetEv()
             overflowGEBEv->ptinp.clear();
         }
 
-        inData.read ( ( char* ) buffHeader[coincCounter], sizeof ( GebData ) );
 
+        inData.read ( ( char* ) buffHeader[coincCounter], sizeof ( GebData ) );
         if ( inData.gcount() != sizeof ( GebData ) || inData.fail() )
         {
             printf ( "failed to read %lu bytes for header, got %li\n", sizeof ( GebData ), inData.gcount() );
@@ -581,6 +583,8 @@ int SortManager::GEBGetEv()
         }
 
         totBytesRead += sizeof ( GebData );
+
+
 
         if ( gebEvt->ptgd.size() == 0 && execParams->CurEvNo <= execParams->NumToPrint )
         {
@@ -737,7 +741,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     unsigned long long int firtsTSinEvent, dTS;
 
 //  ConnectionRetryCount = 10;
-    
+
     //cerr<<"root spectra pointers"<<endl;
 
     /* root spectra pointers */
@@ -801,7 +805,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     execParams->multlo = 1;
     execParams->multhi = 20;
     execParams->requiretracked = 0;
-    
+
     //cerr<<"gret rotation matrices"<<endl;
 
     /* get the GRETINA rotation matrices */
@@ -984,8 +988,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     printf ( "\n" );
     printf ( "executing ShareMemFileUserInit.h code\n" );
     printf ( "\n" );
-    
-   // cerr<<"create map file"<<endl;
+
+    // cerr<<"create map file"<<endl;
 
     /*-----------------------------------*/
     /* if we are going to use the        */
@@ -1031,7 +1035,7 @@ int SortManager::GEBacq ( char* ChatFileName )
         printf ( "\n" );
     };
 
-   // cerr<<"delete command file"<<endl;
+    // cerr<<"delete command file"<<endl;
     /* delete any command file */
 
     sprintf ( str, "\\rm -f %s", CommandFileName );
@@ -1143,8 +1147,8 @@ int SortManager::GEBacq ( char* ChatFileName )
     };
 
     TSfile = fopen ( "TS.list", "w" );
-    
-   // cerr<<"setup root spectra"<<endl;
+
+    // cerr<<"setup root spectra"<<endl;
 
     /*--------------------------------*/
     /* setup the root spectra we need */
@@ -1312,7 +1316,7 @@ int SortManager::GEBacq ( char* ChatFileName )
     inData.seekg ( 0, inData.beg );
 
     totBytesRead = 0;
-    
+
     //cerr<<"get next event while"<<endl;
 
     while ( ( execParams->CurEvNo - execParams->firstEvent ) < execParams->nEvents && !inData.eof() )
@@ -1427,6 +1431,7 @@ int SortManager::GEBacq ( char* ChatFileName )
                 printf ( "+++++++++++++++++++++++++++++++\n" );
             }
 
+
             if ( execParams->GammaProcessor == 0 )
             {
                 theGRProcessor->BinDgs ( gebEvt, dgsEvt );
@@ -1435,13 +1440,14 @@ int SortManager::GEBacq ( char* ChatFileName )
             {
                 theGRProcessor->BinGR ( gebEvt, gretset, execParams->sphere_split );
             }
-            
+
             theGODProcessor->BinDGOD ( gebEvt, dfmaEvt, dgsEvt, gretset );
-            theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt, gretset );
+            theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt, gretset, execParams );
+
 
 
             if ( theGODProcessor->BinGOD ( gebEvt, agodEvt, dfmaEvt, dgsEvt, gretset ) )
-            { 
+            {
                 userFlagedEvtCounter++;
 
                 if ( execParams->userFilter != "none" )
@@ -1454,7 +1460,7 @@ int SortManager::GEBacq ( char* ChatFileName )
                 }
             }
         }
-        
+
         //cerr<<"after more gret shit"<<endl;
         //    assert (execParams->InputSrc == DISK);
 

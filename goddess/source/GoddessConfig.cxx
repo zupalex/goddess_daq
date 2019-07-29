@@ -100,6 +100,7 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 	//Loop over every line in the config file
 	while (std::getline(mapFile, line))
 	{
+	  
 		lineCnt++;
 		//Remove comments
 		if (line.find('#') != std::string::npos) continue;
@@ -888,6 +889,7 @@ bool GoddessConfig::IsInsertable(short daqType, int daqCh, Detector* det_, int n
  */
 Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned int rawValue, int ignThr, unsigned long long timestamp /*=0*/)
 {
+
 	MapKey key = std::make_pair(daqType, digitizerCh);
 	auto mapItr = chMap.upper_bound(key);
 
@@ -953,6 +955,7 @@ Detector *GoddessConfig::SetRawValue(short daqType, short digitizerCh, unsigned 
 	}
 
 	det->SetTimeStamp(detCh, secondaryType, timestamp);
+	
 
 	return det;
 

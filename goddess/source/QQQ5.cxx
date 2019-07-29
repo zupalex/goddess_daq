@@ -197,6 +197,7 @@ void QQQ5::SortAndCalibrate(bool doCalibrate)
 		if (doCalibrate)
 		{
 			std::vector<std::vector<float>> calPars = GetEnParCal(true);
+			
 
 			enCalN.push_back(en_ * calPars[st_][1] + calPars[st_][0]);
 		}
