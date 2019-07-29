@@ -22,7 +22,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 if (CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -Wextra -Wshadow -Wno-unused-but-set-variable -pedantic")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -Wextra -Wshadow -Wno-unused-but-set-variable -pedantic")
 endif()
 
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
