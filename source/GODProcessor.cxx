@@ -555,11 +555,18 @@ void GODProcessor::AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theag
         {
             channel = datum & 0xFFFF;
             value = ( datum >> 16 ) & 0xFFFF;
+	    
         }
         else if ( execParams->GammaProcessor == 1 )
         {
-            channel = ( datum & 0x7FFF );
-            value = (datum >>16);
+//             channel = (datum- 0x8000) & 0xffff; 
+	    channel = ( datum & 0x7FFF ) & 0xffff;
+            value = ( datum >>16) & 0xffff;
+// 	  
+// 	  channel = (datum & 0x0000ffff);
+// 	  value = (datum & 0xffff0000) >>16;
+	    
+
 
         }
         else
@@ -588,8 +595,11 @@ void GODProcessor::AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theag
         }
         else
         {
+	  if (channel == 65535 || value == 65535) continue;
+	  
             theagodEvt->channels.push_back ( channel );
             theagodEvt->values.push_back ( value );
+	  
             readWords++;
         }
     }
@@ -641,35 +651,36 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
 
     *numAGOD = 0;
 
-    for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
+    for ( unsigned int l = 0; l < gebEvt->ptgd.size(); l++ )
     {
 
         // look for analog marker 0x13 = 19
-        if ( gebEvt->ptgd[i]->type == 19 )
+        if ( gebEvt->ptgd[l]->type == 19 )
         {
 
-            GebTypeStr ( gebEvt->ptgd[i]->type, str );
+            GebTypeStr ( gebEvt->ptgd[l]->type, str );
             //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
+           // cerr<<"before decompose"<<endl;
 
+            AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[l], gebEvt->ptgd[l]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD], execParams );
 
-            AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[i], gebEvt->ptgd[i]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD], execParams );
-
+            //cerr<<"after decompose."<<endl;
 //             std::cerr << "Analog ORRUBA event: gebEvt TS = " << gebEvt->ptgd[i]->timestamp << " / AGODEVENT TS = " << agodEvt[*numAGOD].timestamp << "\n";
 
             ( *numAGOD ) ++;
         }
     }
 
-
+//cerr<<"Before p pp"<<endl;
     // histogram incrementation
-    for ( unsigned int i = 0; i < *numAGOD; i++ )
+    for ( unsigned int p = 0; p < *numAGOD; p++ )
     {
-        if ( !pars->noHists ) h1_agod_dTS->Fill ( ( long long ) ( agodEvt[i].timestamp - *lastTS ) );
-        *lastTS = agodEvt[i].timestamp;
-        for ( size_t j = 0; j < agodEvt[i].values.size(); j++ )
+        if ( !pars->noHists ) h1_agod_dTS->Fill ( ( long long ) ( agodEvt[p].timestamp - *lastTS ) );
+        *lastTS = agodEvt[p].timestamp;
+        for ( size_t pp = 0; pp < agodEvt[p].values.size(); pp++ )
         {
-            if ( !pars->noHists ) h2_agod_en->Fill ( agodEvt[i].values[j], agodEvt[i].channels[j] );
-            if ( !pars->noHists ) h1_agod_en->Fill ( agodEvt[i].values[j] );
+            if ( !pars->noHists ) h2_agod_en->Fill ( agodEvt[p].values[pp], agodEvt[p].channels[pp] );
+            if ( !pars->noHists ) h1_agod_en->Fill ( agodEvt[p].values[pp] );
         }
     }
 
@@ -678,20 +689,21 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
     double dTg_agod;
     dTg_agod = 0.0;
 
-    for ( unsigned int i = 0; i < *numAGOD; i++ )
+    //cerr<<"Before wr."<<endl;
+    for ( unsigned int w = 0; w < *numAGOD; w++ )
     {
         //printf("AGOD: %d %d %d %d\n", i, numAGOD, *ng, theagodEvt[i].values.size());
         if ( *ng > 0 )
         {
-            for ( size_t j = 0; j < agodEvt[i].values.size(); j++ )
+            for ( size_t r = 0; r < agodEvt[w].values.size(); r++ )
             {
                 if ( pars->GammaProcessor == 0 )
                 {
-                    dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[i].timestamp );
+                    dTg_agod = double ( dgsEvt[0].event_timestamp ) - double ( agodEvt[w].timestamp );
                 }
                 else if ( pars->GammaProcessor == 1 )
                 {
-                    dTg_agod = double ( gretEvt[0].timestamp ) - double ( agodEvt[i].timestamp );
+                    dTg_agod = double ( gretEvt[0].timestamp ) - double ( agodEvt[w].timestamp );
                 }
                 else
                 {
@@ -699,11 +711,11 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
                     return 1;
                 }
 
-                if ( !pars->noHists ) h2_dTg_agod->Fill ( dTg_agod, agodEvt[i].channels[j] );
+                if ( !pars->noHists ) h2_dTg_agod->Fill ( dTg_agod, agodEvt[w].channels[r] );
             }
         }
     }
-
+//cerr<<"Before ij"<<endl;
     for ( unsigned int i = 0; i < *numAGOD; i++ )
     {
         for ( int j = 0; j < *ng; j++ )
@@ -748,7 +760,7 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
         }
     }
 
-
+//cerr<<"before CurEvNo."<<endl;
     /* done */
 
     if ( pars->CurEvNo <= pars->NumToPrint )
@@ -767,6 +779,7 @@ void GODProcessor::SupGOD()
 
 int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfmaEvt, DGSEVENT* dgsEvt, GRETEVENT* gretEvt )
 {
+//   cerr<<"In BinGod func."<<endl;
     std::vector<AGODEVENT> agodEvts;
     std::vector<DFMAEVENT> dfmaEvts;
     std::vector<DGSEVENT> dgsEvts;
@@ -775,6 +788,7 @@ int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfm
     for ( unsigned int i = 0; i < *numAGOD; i++ )
     {
         agodEvts.push_back ( agodEvt[i] );
+	
     }
 
     for ( unsigned int i = 0; i < *numDGOD; i++ )
@@ -799,7 +813,10 @@ int GODProcessor::BinGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DFMAEVENT* dfm
             return 1;
         }
     }
+    
+//     cerr<<"After gret event."<<endl;
 
 
     return godData->Fill ( gebEvt, &dgsEvts, &dfmaEvts, &agodEvts, &gretEvts );
 }
+

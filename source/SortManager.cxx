@@ -556,7 +556,7 @@ int SortManager::GEBGetEv()
         {
             execParams->curTS = overflowGEBEv->ptgd[0]->timestamp;
 
-            if ( startFilling || overflowGEBEv->ptgd[0]->type == 16 || overflowGEBEv->ptgd[0]->type == 19 )
+            if ( startFilling || overflowGEBEv->ptgd[0]->type == 16 || overflowGEBEv->ptgd[0]->type == 19 || overflowGEBEv->ptgd[0]->type == 1)
             {
                 *buffHeader[coincCounter] = * ( overflowGEBEv->ptgd[0] );
 
@@ -645,7 +645,7 @@ int SortManager::GEBGetEv()
 
         if ( ( long long ) ( TS - execParams->curTS ) < execParams->dTS )
         {
-            if ( !startFilling && ( buffHeader[coincCounter]->type == 16 || buffHeader[coincCounter]->type == 19 ) )
+            if ( !startFilling && ( buffHeader[coincCounter]->type == 16 || buffHeader[coincCounter]->type == 19 || buffHeader[coincCounter]->type == 1 ) )
             {
                 startFilling = true;
                 execParams->curTS = buffHeader[coincCounter]->timestamp;
@@ -1167,19 +1167,29 @@ int SortManager::GEBacq ( char* ChatFileName )
 
     theGRProcessor = new GRProcessor ( 110, tlkup, tid, &ng, execParams );
     theGRProcessor->SupDGS();
+    
+//     cerr<<"After GRProcessor"<<endl;
 
     if ( !execParams->noHists ) execParams->histDir->cd();
 
     theGODProcessor = new GODProcessor ( tlkup, tid, &ng, execParams, gConfig, &numDGOD, &numAGOD, &lastTS );
+//     cerr<<"After GODProcessor"<<endl;
+    
     theGODProcessor->SupDGOD();
+    
+//     cerr<<"After SupDGod."<<endl;
 
     if ( !execParams->noHists ) execParams->histDir->cd();
 
     theGODProcessor->SupAGOD();
+    
+//     cerr<<"After SupAGod"<<endl;
 
     if ( !execParams->noHists ) execParams->histDir->cd();
 
     theGODProcessor->SupGOD();
+    
+//     cerr<<"After SupGod"<<endl;
 
     if ( !execParams->noHists ) execParams->histDir->cd();
 
@@ -1439,29 +1449,37 @@ int SortManager::GEBacq ( char* ChatFileName )
             else if ( execParams->GammaProcessor == 1 )
             {
                 theGRProcessor->BinGR ( gebEvt, gretset, execParams->sphere_split );
+		
             }
+//             cerr<<"After BinGR"<<endl;
 
             theGODProcessor->BinDGOD ( gebEvt, dfmaEvt, dgsEvt, gretset );
+// 	    cerr<<"After BinDGOD"<<endl;
             theGODProcessor->BinAGOD ( gebEvt, agodEvt, dgsEvt, gretset, execParams );
-
-
+// 	    cerr<<"After BinAGOD"<<endl;
+	    
 
             if ( theGODProcessor->BinGOD ( gebEvt, agodEvt, dfmaEvt, dgsEvt, gretset ) )
             {
+// 	      cerr<<"In BindGod."<<endl;
                 userFlagedEvtCounter++;
 
                 if ( execParams->userFilter != "none" )
                 {
+// 		  cerr<<"UserFiler if."<<endl;
                     for ( unsigned int i = 0; i < gebEvt->ptgd.size(); i++ )
                     {
+// 		      cerr<<"reading ptgd"<<endl;
                         execParams->cleanedMerged.write ( ( char* ) gebEvt->ptgd[i], sizeof ( GebData ) );
+// 			cerr<<"After sizeof GebData."<<endl;
                         execParams->cleanedMerged.write ( gebEvt->ptinp[i], gebEvt->ptgd[i]->length );
                     }
                 }
             }
         }
 
-        //cerr<<"after more gret shit"<<endl;
+//         cerr<<"After if BinGod"<<endl;
+
         //    assert (execParams->InputSrc == DISK);
 
         /*---------------------*/
@@ -1744,11 +1762,16 @@ int SortManager::GEBacq ( char* ChatFileName )
 
         if ( !execParams->noHists )
         {
+// 	  cerr<<"Before hist dir."<<endl;
             execParams->histDir->Write ( 0, TObject::kOverwrite );
+// 	    cerr<<"Before write treedir"<<endl;
             execParams->treeDir->Write ( 0, TObject::kWriteDelete );
+// 	    cerr<<"After treedir"<<endl;
         }
 
+//         cerr<<"before file write"<<endl;
         execParams->f1->Write ( 0, TObject::kWriteDelete );
+// 	cerr<<"after f1 write."<<endl;
 
         execParams->f1->Flush();
         execParams->f1->Close();

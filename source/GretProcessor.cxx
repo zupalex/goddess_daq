@@ -164,28 +164,28 @@ GretProcessor::GretProcessor ( int nGsGe_, int* ng_, PARS* pars_ )
 
 vector< float > GretProcessor::Coor_Trans_Gretina ( float radius, float theta, float phi, vector<float> sphere_split )
 {
-  
-  float x_2=0;
-  float y_2=0;
-  float z_2=0;
-  
+
+    float x_2=0;
+    float y_2=0;
+    float z_2=0;
+
     float x_1 = radius*cos ( theta ) *sin ( phi );
     float y_1 = radius*sin ( theta ) *sin ( phi );
     float z_1 = radius* cos ( phi );
-    
-    if (phi >= 190)
+
+    if ( phi >= 190 )
     {
-    
-    x_2 = sphere_split[0];
-    y_2 = sphere_split[1];
-    z_2 = sphere_split[2];
+
+        x_2 = sphere_split[0];
+        y_2 = sphere_split[1];
+        z_2 = sphere_split[2];
     }
-    
-    if (phi <= 165)
+
+    if ( phi <= 165 )
     {
-      x_2 = sphere_split[3];
-      y_2 = sphere_split[4];
-      z_2 = sphere_split[5];
+        x_2 = sphere_split[3];
+        y_2 = sphere_split[4];
+        z_2 = sphere_split[5];
     }
 
     vector<float> c = {x_1+x_2, y_1+y_2,z_1+z_2};
@@ -234,6 +234,20 @@ vector< float > GretProcessor::Tot_Gam_Pos ( vector<float> new_face, float x, fl
     return new_pos;
 }
 
+float GretProcessor::DopplerCorrection ( float in_energy, float phi)
+{
+    float cor_energy = 0;
+
+    if ( pars->beta != 0 && in_energy< 513 && in_energy>508 )
+    {
+
+        cor_energy = in_energy * ( 1 - pars->beta * cos ( phi ) ) / sqrt ( 1 - pars->beta * pars->beta );
+    }
+
+    return cor_energy;
+}
+
+
 int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split )
 {
     unsigned int i = 0;
@@ -245,20 +259,23 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
     vector<GRETHIT>* second_event = new vector<GRETHIT> ;
     vector<GRETHIT>* third_event = new vector<GRETHIT> ;
 
-    //cerr<<theGEBEvent->ptgd.size()<<endl;
+
+
     while ( i<theGEBEvent->ptgd.size() )
     {
+//       cerr<<theGEBEvent->ptgd[i]->type<<endl;
+//       cerr<<theGEBEvent->ptgd[i]->length<<endl;
 
-      if (theGEBEvent->ptgd[i]->type == 19)
-      {
-	break;
-      }
+        if ( theGEBEvent->ptgd[i]->type != 1 )
+        {
+            break;
+        }
         if ( theGEBEvent->ptgd[i]->type == GEB_TYPE_DECOMP )
         {
-	  //cerr<<"hanging here?"<<endl;
+
             if ( pars->CurEvNo <= pars->NumToPrint )
             {
-//                 cerr<<"Spot suspect 1"<<endl;
+//
                 GebTypeStr ( theGEBEvent->ptgd[i]->type, str );
                 printf ( "bin_mode1, %2i> %2i, %s, TS=%lli\n", i, theGEBEvent->ptgd[i]->type, str,
                          theGEBEvent->ptgd[i]->timestamp );
@@ -270,7 +287,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
 
             i++;
 
-           // cerr<<"inside the while?"<<endl;
+            // cerr<<"inside the while?"<<endl;
 // 	    /*cerrD*/<<thegretHdr->timestamp<<endl;
 
 
@@ -336,7 +353,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                         event->push_back ( one_hit );
 
                         timestamp_0 = thegretHdr->timestamp;
-			    //cerr<<event->size()<<endl;
+                        //cerr<<event->size()<<endl;
 
 
                     }
@@ -375,7 +392,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                     one_hit.crystal = crystal_num;
                     one_hit.timestamp = thegretHdr->timestamp;
                     event->push_back ( one_hit );
-		        //cerr<<event->size()<<endl;
+                    //cerr<<event->size()<<endl;
 
 
                     timestamp_0 = thegretHdr->timestamp;
@@ -392,7 +409,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
 
             if ( delta_t > event_build_time || i == theGEBEvent->ptinp.size() ) // this is where the gamma ray addback addition ends. aka where delta_t is too high.
             {
-	      //cerr<<"You're not here are you"<<endl;
+                //cerr<<"You're not here are you"<<endl;
 
                 if ( event->size() == 0 )
                 {
@@ -400,7 +417,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                 }
 
 
-	      //err<<"Here 3."<<endl;
+                //err<<"Here 3."<<endl;
 
 //                 cerr<<"do I get to the tracking loops"<<endl;
                 highest_energy = 0;
@@ -472,7 +489,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
 
                 }
 
-                thegretEvt->e = tot_energy;
+                thegretEvt->e = DopplerCorrection ( tot_energy, event->at ( hit ).phi);
 
                 thegretEvt->x = event->at ( hit ).x;
                 thegretEvt->y = event->at ( hit ).y;
@@ -544,7 +561,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                         tot_energy += second_event->at ( ff ).raw_e;
                     }
 
-                    thegretEvt->e = tot_energy;
+                    thegretEvt->e  = DopplerCorrection ( tot_energy, second_event->at ( hit ).phi );
 
                     thegretEvt->x = second_event->at ( hit ).x;
                     thegretEvt->y = second_event->at ( hit ).y;
@@ -599,8 +616,9 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                         tot_energy += third_event->at ( fff ).raw_e;
 
                     }
-                    
-                    thegretEvt->e = tot_energy;
+
+
+                    thegretEvt->e = DopplerCorrection ( tot_energy, third_event->at ( hit ).phi );
 
                     thegretEvt->x = third_event->at ( hit ).x;
                     thegretEvt->y = third_event->at ( hit ).y;
@@ -621,7 +639,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                 event->clear();
                 second_event->clear();
                 third_event->clear();
-		//cerr<<"show me I clear event"<<endl;
+                //cerr<<"show me I clear event"<<endl;
 
                 //save the information from the current header for the next gamma ray if over 100kev.
                 for ( int hit3=0; hit3<thegretHdr->num; hit3++ )
@@ -696,7 +714,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
             //If delta_t is within event build time add to the current gamma ray
             if ( delta_t>=0 && delta_t<event_build_time )
             {
-	      //cerr<<"I sure hope you're not here."<<endl;
+                //cerr<<"I sure hope you're not here."<<endl;
 
 // 	      cerr<<"here."<<endl;
 
@@ -766,7 +784,7 @@ int GretProcessor::Gret_Tracking ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt
                     weighted_z = 0;
                 }
 
-	      //cerr<<"Here 2."<<endl;
+                //cerr<<"Here 2."<<endl;
             }
         }
 
@@ -806,15 +824,9 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector
 
 
     *ng = 0;
-    
-    //cerr<<"before tracking"<<endl;
 
-//     cerr<<"What about here."<<endl;
     Gret_Tracking ( theGEBEvent, thegretEvt, sphere_split );
-//     cerr<<"In tracking?"<<endl;
-//     cerr<<"show me in bingr"<<endl;
-    
-    //cerr<<"after tracking"<<endl;
+
 
     if ( Gammas.size() >=1 )
     {
@@ -828,7 +840,7 @@ int GretProcessor::BinGR ( GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector
     }
 
     Gammas.clear();
-//     cerr<<"Do we clear Gammas"<<endl;
+
 //}
 
 //     }

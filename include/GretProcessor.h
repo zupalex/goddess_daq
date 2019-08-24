@@ -67,6 +67,8 @@ public:
     int Gret_Tracking (GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split);
   
     int BinGR(GEB_EVENT* theGEBEvent, GRETEVENT* thegretEvt, vector<float> sphere_split );
+    
+    float DopplerCorrection ( float in_energy, float phi );
   
   
   

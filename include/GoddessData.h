@@ -160,7 +160,7 @@ class GoddessData
 		TTree* rawTree;
 
 		unsigned short DAQchannel;
-		float DAQCh_Energy[400];
+		float DAQCh_Energy[1200];
 
 		float timeFlag;
 
