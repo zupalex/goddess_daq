@@ -559,8 +559,8 @@ void GODProcessor::AGODEvDecompose ( unsigned int* ev, int len, AGODEVENT* theag
         }
         else if ( execParams->GammaProcessor == 1 )
         {
-//             channel = (datum- 0x8000) & 0xffff; 
-	    channel = ( datum & 0x7FFF ) & 0xffff;
+             channel = (datum- 0x8000) & 0xffff; 
+//	    channel = ( datum & 0x7FFF ) & 0xffff;
             value = ( datum >>16) & 0xffff;
 // 	  
 // 	  channel = (datum & 0x0000ffff);
@@ -657,10 +657,12 @@ int GODProcessor::BinAGOD ( GEB_EVENT* gebEvt, AGODEVENT* agodEvt, DGSEVENT* dgs
         // look for analog marker 0x13 = 19
         if ( gebEvt->ptgd[l]->type == 19 )
         {
+	    if ( pars->CurEvNo <= pars->NumToPrint )
+            {
+                GebTypeStr ( gebEvt->ptgd[l]->type, str );
+                //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
+            }
 
-            GebTypeStr ( gebEvt->ptgd[l]->type, str );
-            //printf ("bin_template, %2i> %2i, %s, TS=%lli\n", i, gebEvt->ptgd[i]->type, str, gebEvt->ptgd[i]->timestamp);
-           // cerr<<"before decompose"<<endl;
 
             AGODEvDecompose ( ( unsigned int* ) gebEvt->ptinp[l], gebEvt->ptgd[l]->length / sizeof ( unsigned int ), &agodEvt[*numAGOD], execParams );
 

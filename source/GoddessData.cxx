@@ -482,7 +482,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
     // getting data from analog events
 
-   for ( size_t i = 0; i < agodEvts->size(); i++ )
+    for ( size_t i = 0; i < agodEvts->size(); i++ )
     {
         AGODEVENT agodEvt = agodEvts->at ( i );
 
@@ -490,7 +490,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
         unsigned long long int timestamp = agodEvt.timestamp;
 
-       for ( size_t j = 0; j < agodEvt.values.size(); j++ )
+        for ( size_t j = 0; j < agodEvt.values.size(); j++ )
         {
 
             unsigned long int value = agodEvt.values[j];
@@ -499,7 +499,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             DAQchannel = channel;
             DAQCh_Energy[channel] = value;
 
-	    
+
 // 	    cerr<<"Channel: "<<channel<<endl;
 // 	    cerr<<"Value: "<<value<<endl;
 
@@ -513,7 +513,7 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
                 newChValPair.value = value;
 
                 orrubaRaw->data.push_back ( newChValPair );
-		
+
             }
 
             if ( !pars->noHists ) enRawA->Fill ( value, channel );
@@ -524,8 +524,8 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 //            	cerr << "Skipped " << GEB_TYPE_AGOD << " / " << channel << endl;
                 continue;
             }
-            
-             Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, pars->ignoreThresholds, timestamp );
+
+            Detector* det = config->SetRawValue ( GEB_TYPE_AGOD, channel, value, pars->ignoreThresholds, timestamp );
 
             if ( !det )
             {
@@ -542,13 +542,13 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
 
             if ( siDet )
             {
-	      
+
                 posID = siDet->GetPosID();
-		
+
                 //We only push the detector back onto the silicon stack if we haven't already added it.
                 if ( siDets.find ( posID ) == siDets.end() )
                 {
-		  siDets[posID] = siDet;
+                    siDets[posID] = siDet;
                     //siAnalogMult++;
                 }
             }
@@ -559,17 +559,17 @@ int GoddessData::Fill ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::
             }
             else if ( ionChamber_ )
             {
-	      if (pars->GammaProcessor == 0)
-	      {
-                posID = "ion";
-                ionChamber = ionChamber_;
-	      }
+                if ( pars->GammaProcessor == 0 )
+                {
+                    posID = "ion";
+                    ionChamber = ionChamber_;
+                }
             }
 
-//             firedDets[posID] = det;
-         }
+             firedDets[posID] = det;
+        }
     }
-    
+
 //     cerr<<"After agod fill."<<endl;
 
     if ( !pars->noHists ) digitalMult->Fill ( dgodEvts->size() );
@@ -911,6 +911,39 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<GRETEVENT>* gretEvts )
 {
 
+ GoddessReacInfos* reacinfo = new GoddessReacInfos (config->reacInfos);
+ 
+ if (reacinfo->beamA == 95 && reacinfo->beamZ == 42)
+ {
+    vector<SiDataBase>* sinew = new vector<SiDataBase>;
+    vector<SiDataDetailed>* sinewD = new vector<SiDataDetailed>;
+    vector<GamData>* newGam = new vector<GamData>;
+    int dif=0;
+
+    for (unsigned int sievt=0; sievt<siData->size(); sievt++ )
+    {
+        for ( unsigned int gamevt = 0; gamevt<gamData->size(); gamevt++ )
+        {
+	  dif = siData->at ( sievt ).time-gamData->at ( gamevt ).time;
+            if ( dif > -100 && dif < 50 )
+            {
+            sinew->push_back ( siData->at ( sievt ) );
+            sinewD->push_back ( siDataD->at ( sievt ) );
+            newGam->push_back ( gamData->at ( gamevt ) );
+	    }
+
+        }
+    }
+
+    siData->clear();
+    siDataD->clear();
+    gamData->clear();
+
+    siData = &sinew[0];
+    siDataD = &sinewD[0];
+    gamData = &newGam[0];
+ }
+
 //   cerr<<"In FillTrees."<<endl;
 
 //Reminder: pars->noCalib == ...
@@ -969,6 +1002,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
                     {
                         writeDetails = true;
                         SiDataDetailed newSiData;
+
 
                         if ( nc == 0 )
                         {
@@ -1355,5 +1389,6 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
 
     return uff;
 }
+
 
 
