@@ -911,38 +911,38 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<GRETEVENT>* gretEvts )
 {
 
- GoddessReacInfos* reacinfo = new GoddessReacInfos (config->reacInfos);
- 
- if (reacinfo->beamA == 95 && reacinfo->beamZ == 42)
- {
-    vector<SiDataBase>* sinew = new vector<SiDataBase>;
-    vector<SiDataDetailed>* sinewD = new vector<SiDataDetailed>;
-    vector<GamData>* newGam = new vector<GamData>;
-    int dif=0;
-
-    for (unsigned int sievt=0; sievt<siData->size(); sievt++ )
-    {
-        for ( unsigned int gamevt = 0; gamevt<gamData->size(); gamevt++ )
-        {
-	  dif = siData->at ( sievt ).time-gamData->at ( gamevt ).time;
-            if ( dif > -100 && dif < 50 )
-            {
-            sinew->push_back ( siData->at ( sievt ) );
-            sinewD->push_back ( siDataD->at ( sievt ) );
-            newGam->push_back ( gamData->at ( gamevt ) );
-	    }
-
-        }
-    }
-
-    siData->clear();
-    siDataD->clear();
-    gamData->clear();
-
-    siData = &sinew[0];
-    siDataD = &sinewD[0];
-    gamData = &newGam[0];
- }
+//  GoddessReacInfos* reacinfo = new GoddessReacInfos (config->reacInfos);
+//  
+//  if (reacinfo->beamA == 95 && reacinfo->beamZ == 42)
+//  {
+//     vector<SiDataBase>* sinew = new vector<SiDataBase>;
+//     vector<SiDataDetailed>* sinewD = new vector<SiDataDetailed>;
+//     vector<GamData>* newGam = new vector<GamData>;
+//     int dif=0;
+// 
+//     for (unsigned int sievt=0; sievt<siData->size(); sievt++ )
+//     {
+//         for ( unsigned int gamevt = 0; gamevt<gamData->size(); gamevt++ )
+//         {
+// 	  dif = siData->at ( sievt ).time-gamData->at ( gamevt ).time;
+//             if ( dif > -100 && dif < 50 )
+//             {
+//             sinew->push_back ( siData->at ( sievt ) );
+//             sinewD->push_back ( siDataD->at ( sievt ) );
+//             newGam->push_back ( gamData->at ( gamevt ) );
+// 	    }
+// 
+//         }
+ //     }
+// 
+//     siData->clear();
+//     siDataD->clear();
+//     gamData->clear();
+// 
+//     siData = &sinew[0];
+//     siDataD = &sinewD[0];
+//     gamData = &newGam[0];
+//  }
 
 //   cerr<<"In FillTrees."<<endl;
 
