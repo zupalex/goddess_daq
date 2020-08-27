@@ -127,7 +127,7 @@ GoddessData::GoddessData ( PARS* pars_, GoddessConfig* gconf_ )
     }
     if ( config->reacInfos.size() > 0 )
     {
-        GoddessReacInfos* godReacInf = new GoddessReacInfos ( config->reacInfos );
+       godReacInf = new GoddessReacInfos ( config->reacInfos );
         godReacInf->targetType = config->targetType;
         godReacInf->Write ( "GoddessReac" );
     }
@@ -910,15 +910,13 @@ void GoddessData::FillHists ( std::vector<DGSEVENT>* dgsEvts )
 
 int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, std::vector<GRETEVENT>* gretEvts )
 {
-
-//  GoddessReacInfos* reacinfo = new GoddessReacInfos (config->reacInfos);
-//  
-//  if (reacinfo->beamA == 95 && reacinfo->beamZ == 42)
+  
+//    godReacInf = new GoddessReacInfos ( config->reacInfos );
+//   
+//  if (godReacInf->beamA == 95 && godReacInf->beamZ == 42)
 //  {
-//     vector<SiDataBase>* sinew = new vector<SiDataBase>;
-//     vector<SiDataDetailed>* sinewD = new vector<SiDataDetailed>;
-//     vector<GamData>* newGam = new vector<GamData>;
 //     int dif=0;
+//     int b = 0;
 // 
 //     for (unsigned int sievt=0; sievt<siData->size(); sievt++ )
 //     {
@@ -927,21 +925,24 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
 // 	  dif = siData->at ( sievt ).time-gamData->at ( gamevt ).time;
 //             if ( dif > -100 && dif < 50 )
 //             {
-//             sinew->push_back ( siData->at ( sievt ) );
-//             sinewD->push_back ( siDataD->at ( sievt ) );
-//             newGam->push_back ( gamData->at ( gamevt ) );
+// 	      
+//             sinew[b]=( siData->at ( sievt ) );
+//             sinewD[b]=( siDataD->at ( sievt ) );
+//             newGam[b]= ( gamData->at ( gamevt ) );
+// 	    
+// 	    b++;
 // 	    }
 // 
 //         }
- //     }
+//      }
 // 
 //     siData->clear();
 //     siDataD->clear();
 //     gamData->clear();
 // 
-//     siData = &sinew[0];
-//     siDataD = &sinewD[0];
-//     gamData = &newGam[0];
+//     siData->insert(siData->begin(),begin(sinew),&sinew[b]);
+//     siDataD->insert(siDataD->begin(),begin(sinewD),&sinewD[b]);
+//     gamData->insert(gamData->begin(),begin(newGam),&newGam[b]);
 //  }
 
 //   cerr<<"In FillTrees."<<endl;

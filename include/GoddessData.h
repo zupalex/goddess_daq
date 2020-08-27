@@ -62,7 +62,13 @@ class GoddessData
 		ORRUBARawData* orrubaRaw;
 		///The pointer to the vector containing channel/value pairs to store in the raw tree for GAMMASPHERE (digital)
 		std::vector<GSRawData>* gsRaw;
+		
+	      SiDataBase sinew[500];
+	      SiDataDetailed sinewD[500];
+	      GamData newGam[500];
 
+	       GoddessReacInfos* godReacInf;
+	       
 		void InitLiquidScintHists();
 		void InitSuperX3Hists();
 		void InitQQQ5Hists();

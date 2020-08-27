@@ -1,4 +1,5 @@
 #include "GoddessGeomUtils.h"
+#include "Sort_TimeDif.h"
 #include <TIterator.h>
 
 GoddessGeomUtils* gGU = new GoddessGeomUtils();
@@ -467,6 +468,8 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal(void* args)
 				else gri = gAD.localReacInfo;
 
 				string detKey;
+				
+				string detKey2;
 
 				float qval;
 
@@ -480,9 +483,11 @@ void* GoddessGeomUtils::RecalculateAngleAndQVal(void* args)
 					qval = SiDataBase::QValue(gri, energy * gri->sX3EnGain, angle);
 
 					detKey = Form("vsA_new_geom_SX3%s%d", (gAD.isUpstream ? "U" : "D"), gAD.sector);
+					detKey2 = Form("vsGS_new_geom_SX3%s%d", (gAD.isUpstream ? "U" : "D"), gAD.sector);
 
 					hEpvsA_SX3_NewGeom[(string) "Ep" + detKey + commonKey]->Fill(angle * TMath::RadToDeg(), energy * gri->sX3EnGain);
 					hExvsA_SX3_NewGeom[(string) "Ex" + detKey + commonKey]->Fill(angle * TMath::RadToDeg(), reacInfo->qValGsGs - qval);
+					hExvsGS_NewGeom[(string) "Ex" + detKey2 + commonKey]->Fill(reacInfo->qValGsGs-qval,gAD.gam_energy->at(0));
 				}
 				else
 				{
@@ -658,6 +663,13 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 
 	TVector3 qqq5sPos[2][4];
 	TVector3 sX3sPos[2][12];
+	
+	ignoreSectorsList.clear();
+	int array[26] = {0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 5, 4 + 6, 4 + 7, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 9, 16 + 4 + 10, 16 + 4 + 11, 16 + 0, 16 + 1, 16 + 2, 16 + 3};
+	for (int dumb = 0; dumb<26; dumb++)
+	{
+	  ignoreSectorsList.push_back(array[dumb]);
+	}
 
 	for (unsigned int q = 0; q < qqq5Offsets.size(); q++)
 	{
@@ -725,6 +737,12 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 									500, 4000, -20, 20);
 						}
 						hEx_NewGeom[histKey]->Reset();
+						
+// 						histKey = "Ex_vs_GS" + commonName;
+// 						if (hExvsGS_NewGeom.find(histKey) == hExvsGS_NewGeom.end())
+// 						{
+// 						  hExvsGS_NewGeom[histKey] = new TH2F(histKey.c_str(),((string)
+// 						}
 
 						for (int up = 0; up < 2; up++)
 						{
@@ -884,18 +902,26 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 //     GoddessReacInfos* gri;
 //     //     double angle;
 //     TVector3* pos = new TVector3();
+	
+	si_struct* sidata = new si_struct;
+	inTree->SetBranchAddress("si",&sidata);
+	gam_struct* gamdata = new gam_struct;
+	inTree->SetBranchAddress("gam",&gamdata);
+	
 
-	inTree->SetBranchAddress("isBarrel", &(gAD.isBarrel));
-	inTree->SetBranchAddress("isUpstream", &(gAD.isUpstream));
-	inTree->SetBranchAddress("sector_strip", &(gAD.sector_strip));
-	inTree->SetBranchAddress("energy", &(gAD.initialEnergy));
-//     inTree->SetBranchAddress ( "angle", &angle );
-	inTree->SetBranchAddress("pos", &(gAD.pos));
+// 	inTree->SetBranchAddress("isBarrel", &(sidata->isBarrel));
+// 	inTree->SetBranchAddress("isUpstream", &(sidata->isUpstream));
+// 	inTree->SetBranchAddress("sector_strip", &(sidata->sector_strip));
+// 	inTree->SetBranchAddress("energy", &(sidata->energy));
+// //     inTree->SetBranchAddress ( "angle", &angle );
+// 	inTree->SetBranchAddress("pos", &(sidata->pos));
+// 
+// 	inTree->SetBranchAddress("gam_energy", &(gamdata->gam_energy));
+// 	inTree->SetBranchAddress("crystal_num", &(gamdata->crystal_num));
+	
 
-	inTree->SetBranchAddress("gam_energy", &(gAD.gam_energy));
-	inTree->SetBranchAddress("crystal_num", &(gAD.crystal_num));
+	for (int ev = 0; ev<nEntries; ev++)
 
-	for (long long int ev = 0; ev < nEntries; ev++)
 	{
 		if (ev % 10000 == 0)
 		{
@@ -904,6 +930,24 @@ void GoddessGeomUtils::GetQValWithNewGeometry(string filename, string treeName, 
 		}
 
 		inTree->GetEntry(ev);
+		
+		gAD.isUpstream = sidata->isUpstream;
+		gAD.isBarrel = sidata->isBarrel;
+		gAD.sector_strip = sidata->sector_strip;
+		gAD.initialEnergy = sidata->energy;
+		gAD.pos = &sidata->pos;
+		
+// 		cout<<sidata->isUpstream<<endl;
+// 		cout<<sidata->isBarrel<<endl;
+// 		cout<<sidata->sector_strip<<endl;
+// 		cout<<sidata->energy<<endl;
+// 		cout<<sidata->pos.X()<<endl;
+// 		cout<<"----------------------------------"<<endl;
+
+		gAD.gam_energy = &gamdata->gam_energy;
+		gAD.crystal_num = &gamdata->crystal_num;
+		
+ 
 
 		gAD.sector = floor(gAD.sector_strip);
 

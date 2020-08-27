@@ -50,6 +50,7 @@ GoddessConfig::~GoddessConfig()
  *  enCal p 0 1 2 3
  *  enCal p 1 1 2 3
  *  enCal resStrip 0 1 2 3
+ *  jumpCal resStrip 0 1 2 3
  *  posCal resStrip 0 1 2 3
  *
  * This configuration example defines a superX3 detector with serial number 1234-56
@@ -63,6 +64,7 @@ GoddessConfig::~GoddessConfig()
  *  detectors.
  * \note For resistive strips (superX3) the first calibration parameters are end to end gain matching offset and slopes
  * \note SuperX3 strip energy calibration parameters (i.e. slope and offset) are entered in after "enCal resStrip"
+ * \note SuperX3 strip jump calibration parameters (i.e. end to end strip and energy correction) are entered after "jumpCal resStrip"
  * \note SuperX3 strip position calibration parameters are entered in after "posCal resStrip"
  *
  * Also supported, is an ion detector with a built-in scintillator. An example of a
@@ -298,6 +300,7 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 			bool posCal = false;
 			bool timeCal = false;
 			bool thresh = false;
+			bool jumpCal = false;
 
 			if (calType == "posCal")
 			{
@@ -310,6 +313,18 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 				}
 
 				posCal = true;
+			}
+			else if (calType == "jumpCal")
+			{
+			  	if (!(detType == "superX3" && subType == "resStrip"))
+				{
+					std::cerr << " WARNING: Ignoring jump calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum
+							<< "\n";
+					prevPos = mapFile.tellg();
+					continue;
+				}
+
+				jumpCal = true;
 			}
 			else if (calType == "timeCal")
 			{
@@ -426,6 +441,10 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 			{
 				std::cout << " Pos. ";
 			}
+			else if (jumpCal)
+			{
+			  std::cout<<" Jump";
+			}
 			else
 			{
 				std::cout << " En. ";
@@ -481,6 +500,10 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 					if (posCal)
 					{
 						((superX3 *) det)->SetStripPosCalibPars(detChannel, calParams);
+					}
+					else if (jumpCal)
+					{
+					  ((superX3 *) det)->SetStripJumpCalibPars(detChannel, calParams);
 					}
 					else
 					{

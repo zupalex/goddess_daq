@@ -109,8 +109,7 @@ class GoddessGeomUtils: public GoddessAnalysis
 
 		// sector ID in this case are sector number + 4 if superX3 + 16 if upstream
 		vector<int> ignoreSectorsList =
-		{	0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 6, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 1, 16 + 4 + 2, 16 + 4 + 3, 16 + 4
-			+ 4, 16 + 4 + 5, 16 + 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 10};
+		{	0, 1, 2, 3, 4 + 0, 4 + 1, 4 + 2, 4 + 3, 4 + 6, 4 + 8, 4 + 9, 4 + 10, 4 + 11, 16 + 4 + 2, 16 + 4 + 3, 16 + 4 + 4, 16 + 4 + 5, 16 + 4 + 6, 16 + 4 + 7, 16 + 4 + 8, 16 + 4 + 10, 16 + 4 + 11, 16 + 0, 16 + 1, 16 + 2, 16 + 3};
 
 		void SetIgnoreSectors(bool /*turn_off*/)
 		{}

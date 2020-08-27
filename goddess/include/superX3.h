@@ -58,6 +58,8 @@ private:
 
     ///Vector containing position calibration polynomial parameters.
     std::vector<float> parPosCal[4]; //!
+    //Vector containing jump calibration polynomial parameters.
+    std::vector<float>jumpCal[4];
     ///Vector containing strip energy calibration polynomial parameters.
     std::vector<float> parStripEnCal[4]; //!
 
@@ -77,14 +79,26 @@ public:
 
     double activeLength;
     double activeWidth;
+    
+    //Vector containing sections for jump Cal
+    float left_to_right_section[8];
+    //Vector containing overlap for jump Cal
+    float overlap[4];
+    //Vector of energy corrections for Jump Cal
+    float y_corr[4];
 
     ///Calculate the position on the resistive strip detectors.
     void UpdatePosition ( int strip );
 
     ///Assign a vector of float to the calibration parameters of the specified strip.
     void SetStripPosCalibPars ( int strip, std::vector<float> );
+    //Assign a vector of float to the calibration parameters of the specified strip
+    void SetStripJumpCalibPars ( int strip, std::vector<float>);
     ///Assign a vector of float to the calibration parameters of the specified strip.
     void SetStripEnCalibPars ( int strip, std::vector<float> );
+    
+    //Function to find overlap for jump_cal
+    void GetOverlap (std::vector<float>);
 
     ///Return the strip in which the specified contact is attached.
     static int GetStrip ( int contact );
@@ -181,6 +195,11 @@ public:
     std::vector<float>* GetResStripParCal()
     {
         return parStripEnCal;
+    }
+    
+    std::vector<float>* GetJumpCal()
+    {
+      return jumpCal;
     }
     ///Return the contact for the near end of the strip.
     static unsigned short GetNearContact ( unsigned short strip );

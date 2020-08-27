@@ -76,17 +76,17 @@ void superX3::Clear()
 	eventPos.SetXYZ(0, 0, 0);
 }
 
-/**Both the raw and calibrated positions are calculated as well as the energy
- * deposited in the strip. The energy is computed as
- * \f$ E = N + \sum_i p_i * F^i \f$, where \f$N\f$ and \f$F\f$ are the near and far
- * contacts respectively and \f$p_i\f$ is the ith coefficient of the polynomial
- * calibration function.
- *
- * \note The event position is only computed in the p strip multiplicity is 1. The
- * higher multiplicity events are not currently supported.
- *
- *  \param[in] strip The number of the strip to update the position.
- */
+// /**Both the raw and calibrated positions are calculated as well as the energy
+//  * deposited in the strip. The energy is computed as
+//  * \f$ E = N + \sum_i p_i * F^i \f$, where \f$N\f$ and \f$F\f$ are the near and far
+//  * contacts respectively and \f$p_i\f$ is the ith coefficient of the polynomial
+//  * calibration function.
+//  *
+//  * \note The event position is only computed in the p strip multiplicity is 1. The
+//  * higher multiplicity events are not currently supported.
+//  *
+//  *  \param[in] strip The number of the strip to update the position.
+//  */
 void superX3::UpdatePosition(int strip)
 {
 	//Compute the near and far contacts
@@ -189,6 +189,23 @@ void superX3::SetStripPosCalibPars(int strip, std::vector<float> pars)
 	parPosCal[strip] = pars;
 }
 
+void superX3::SetStripJumpCalibPars(int strip, std::vector<float> pars)
+{
+  	if (!ValidStrip(strip))
+	{
+		fprintf( stderr, "ERROR: Unable to assign strip position calibration parameters!\n");
+		return;
+	}
+
+	if (pars.size() != 13)
+	{
+		std::cerr << "ERROR: Number of calibration parameters specified for SX3 jump calibration incorrect (Expected >1, got " << pars.size() << ")"
+				<< std::endl;
+	}
+
+	jumpCal[strip] = pars;
+}
+
 void superX3::SetStripEnCalibPars(int strip, std::vector<float> pars)
 {
 	if (!ValidStrip(strip))
@@ -221,7 +238,8 @@ void superX3::SetGeomParams(map<string, double> geomInfos_)
 }
 
 /**This method is called when a contact energy is updated. We call the parent
- * siDet::SetRawValue to handle storing the raw and calibrated value. If the update
+ * siDet::SetRawValue to handle storing the raw and calibrated value. If the 
+ * 
  * was a p type contact we check if another p contact in the same strip has been set
  * and if so we make a call to compute the position the event occurred in the strip.
  *
@@ -450,6 +468,68 @@ float superX3::GetEnSum(bool nType, bool calibrated)
 	return enSum;
 }
 
+void superX3::GetOverlap(vector< float > jumpcals)
+{
+    
+    for (int i = 1; i<13; i++)
+    {
+      if (i == 3 || i == 6 || i == 9 || i == 12) 
+      {
+	if (i == 3)
+	{
+	y_corr[0] = jumpcals.at(i);
+	}
+	else if (i == 6)
+	{
+	  y_corr[1] = jumpcals.at(i);
+	}
+	else if (i == 9)
+	{
+	  y_corr[2] = jumpcals.at(i);
+	}
+	else
+	{
+	  y_corr[3] = jumpcals.at(i);
+	}
+	
+      }
+      else
+      {
+	if (i == 1 || i == 2)
+	{
+	left_to_right_section[i-1] = jumpcals.at(i);
+	} 
+	else if (i == 4 || i == 5)
+	{
+	  left_to_right_section[i-2] = jumpcals.at(i);
+	}
+	else if ( i ==7 || i == 8)
+	{
+	  left_to_right_section[i-3] = jumpcals.at(i);
+	}
+	else
+	{
+	  left_to_right_section[i-4] = jumpcals.at(i);
+	}
+	
+      }
+    }
+  
+  for (int n = 0; n < 4; n++)
+  {
+    if (left_to_right_section[n*2+1] == -2) overlap[n] = 0;
+    else if (left_to_right_section[n*2+1] > left_to_right_section[n*2+2])
+    {
+     overlap[n] = 1;
+    }
+    else overlap[n] = 0;
+  }
+  
+  overlap[3] = 0;
+  
+  return;
+}
+
 void superX3::SortAndCalibrate(bool doCalibrate)
 {
 	siDet::ValueMap enPMap, enNMap;
@@ -504,14 +584,100 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 
 				en_near = en_near * resStripParCal[st_].at(1) + resStripParCal[st_].at(0) / 2.;
 				en_far = en_far * resStripParCal[st_].at(1) + resStripParCal[st_].at(0) / 2.;
+				
+				std::vector<float>* resStrpJumpCal = GetJumpCal();
+				
+				GetOverlap(resStrpJumpCal[st_]);
+	
+				float o_en = (en_near+en_far);
+				float o_pos = (en_near-en_far)/(o_en);
+				
+// 				cerr<<resStrpJumpCal[st_].at(0)<<endl;
+				
+			  if (resStrpJumpCal[st_].at(0) != -1 && o_en != 0.0)
+			    {
+				for (int w_sec = 0; w_sec<resStrpJumpCal[st_].at(0); w_sec++)
+				  {
+				    
+				    if (left_to_right_section[w_sec*2] == -2) continue;
 
-				if (en_near > 0.0 && en_far > 0.0)
-				{
+				    else if (o_pos > left_to_right_section[w_sec*2] && o_pos < left_to_right_section[w_sec*2+1])
+	    
+				      {
+					
+					if (w_sec%2 ==0)
+					  {
+					    if (overlap[w_sec]==1)
+					      {
+						if (o_pos>left_to_right_section[w_sec*2+2]) 
+						{
+						  continue;
+						}
+					      }
+					    else if (w_sec-1 >0 && overlap[w_sec-1] == 1)
+					      {
+						if (o_pos<left_to_right_section[w_sec*2-1])
+						{
+						  continue;
+						}
+					      }
+					    if (y_corr[w_sec] != 0 && y_corr[w_sec] != -2)
+					      {
+// // 						cerr<<y_corr[w_sec]<<setprecision(6)<<endl;
+						en_near = en_near*y_corr[w_sec];
+						en_far = en_far*y_corr[w_sec];
+						enNearCal.push_back(en_near);
+						enFarCal.push_back(en_far);
+						
+					      }
+// 					      enNearCal.push_back(en_near);
+// 					enFarCal.push_back(en_far);
+					   }
+				else if (w_sec %2 !=0)
+				  {
+				    
+				    if (overlap[w_sec-1]==1)
+				      {
+					if (o_pos<left_to_right_section[w_sec*2-1])
+					{
+					  continue;
+					}
+				      }
+				    else if (w_sec<4 && overlap[w_sec] == 1)
+				      {
+					if (o_pos>left_to_right_section[w_sec*2+2]) 
+					{
+					continue;
+					}
+				      }
+				    if (y_corr[w_sec] != 0 && y_corr[w_sec] !=-2) 
+				      {
+// 					cerr<<y_corr[w_sec]<<endl;
+					en_near = en_near*y_corr[w_sec];
+					en_far = en_far*y_corr[w_sec];
+					enNearCal.push_back(en_near);
+					enFarCal.push_back(en_far);
+					
+				      }
+				      
+// 				      enNearCal.push_back(en_near);
+// 					enFarCal.push_back(en_far);
+				     }
+				    }
+	
+				  }
+			    }
+			    else{
+			      if (en_near > 0.0 && en_far > 0.0) 
+			    {
 					enNearCal.push_back(en_near);
 					enFarCal.push_back(en_far);
 				}
-			}
+			    }
+		    }
 		}
+		
+		
 	}
 
 	enNMap = GetRawEn(true);
@@ -657,17 +823,18 @@ TVector3 superX3::GetEventPosition(bool calibrated)
 	GetMaxHitInfo(&pStripHit, nullptr, &nStripHit, nullptr, calibrated);
 
 	float eNear, eFar;
-
+	
 	eNear = GetNearEn(calibrated);
 	eFar = GetFarEn(calibrated);
-
+	
 	float recenter = (parPosCal[pStripHit].at(1) + parPosCal[pStripHit].at(0)) / 2.;
 
 	float normalize = parPosCal[pStripHit].at(1) - parPosCal[pStripHit].at(0);
 
 	normalize = (normalize < 0.01) ? 1 : normalize;
 
-	float zRes = (((eNear - eFar) / (eNear + eFar)) - recenter) / normalize;
+	float zRes = (((eNear-eFar)/(eNear+eFar)) - recenter)/ normalize;	
+
 
 	if (!upStream) zRes *= -1;
 
