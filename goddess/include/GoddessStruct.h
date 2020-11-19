@@ -214,6 +214,10 @@ public:
      * Use ESumLayer() method instead.
      */
     std::vector<int> stripMax;
+    
+    
+    //Vector containing the position correction from -1 to 1 of calibrated or uncalibrated data (dependent on sort). Use to check your calibration.
+    std::vector<float>PosCh_SX3;
 
     std::vector<unsigned long long int> timestampMax;
 
@@ -342,7 +346,7 @@ public:
     SiDetEnStripInfo E1;
     ///Object containing the info on the E2 layer
     SiDetEnStripInfo E2;
-
+    
     /// \cond This is just for ROOT and doesn't need to be documented
     ClassDef ( SiDataDetailed, 1 )
     /// \endcond

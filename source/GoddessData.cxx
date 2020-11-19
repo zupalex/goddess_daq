@@ -972,14 +972,18 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
         {
             writeDetails = true;
         }
+        
+
 
         if ( pars->siDetailLvl > 0 )
         {
+	  
             for ( auto detItr = siDets.begin(); detItr != siDets.end(); ++detItr )
             {
+	      
                 orrubaDet* det = detItr->second;
 
-                //Skip detectors with no contacts above threshold.
+//                 Skip detectors with no contacts above threshold.
                 if ( ( pars->noCalib == 0 || ( pars->noCalib > 0 && pars->ignoreThresholds == 0 ) ) && det->GetContactMult ( doCalibrate ) == 0 )
                 {
                     continue;
@@ -1060,7 +1064,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
 
                 std::vector<int>* stripP = 0;
                 std::vector<int>* stripN = 0;
-
+		
                 std::vector<unsigned long long int>* tsP = 0;
                 std::vector<unsigned long long int>* tsN = 0;
 
@@ -1074,7 +1078,8 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
                 unsigned long long int tsMaxN = 0;
 
                 float enear_tot = 0.0, efar_tot = 0.0;
-
+		
+  
                 if ( writeDetails )
                 {
                     switch ( det->GetDepth() )
@@ -1104,7 +1109,7 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
                         datum->SetMemberAddress ( "E2_ts_n", &tsN );
                         break;
                     }
-
+		  
                     det->GetHitsInfo ( "front strips", stripP );
                     det->GetHitsInfo ( "back strips", stripN );
 
@@ -1162,9 +1167,31 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
                         }
                     }
                 }
+                
+               float posch = 0;
+	       //float sz = 0;
+                   
+		   if (doCalibrate)
+		   {
+		      posch = det->GetPosCh(true);
+		      datum->PosCh_SX3.push_back(posch);
+		    }
+		    
+		   else
+		   {
+		      posch = det->GetPosCh(false);
+		      datum->PosCh_SX3.push_back(posch);
+		    }
 
-                eSumP = det->GetEnSum ( false, doCalibrate );
-                eSumN = det->GetEnSum ( true, doCalibrate );
+                eSumP = det->GetEnSum ( false, doCalibrate, posch );
+                eSumN = det->GetEnSum ( true, doCalibrate, posch );
+		
+// 		if (doCalibrate)
+// 		{
+// 		  posch = det->UpdatePosCh(posch);
+// 		  sz = datum->PosCh_SX3.size()-1;
+// 		  datum->PosCh_SX3[sz] = posch;
+// 		}
 
                 det->GetMaxHitInfo ( &stripMaxP, &tsMaxP, &stripMaxN, &tsMaxN, doCalibrate );
 

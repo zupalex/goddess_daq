@@ -37,9 +37,9 @@ private:
     TimeMap timeNMap;
 
     ///The calibration parameters for p type contacts
-    std::vector<std::vector<float>> parEnCalP; //!
+    std::vector<std::vector<double>> parEnCalP; //!
     ///The calibration parameters for n type contacts
-    std::vector<std::vector<float>> parEnCalN; //!
+    std::vector<std::vector<double>> parEnCalN; //!
 
     ///The threshold values for the p-type contact in channel number.
     std::vector<int> threshP;
@@ -66,7 +66,9 @@ public:
     ///Set the timestamp for the channel.
     virtual void SetTimeStamp ( unsigned int contact, bool contactType, unsigned long long timestamp );
 
-    virtual float GetEnSum ( bool nType = false, bool calibrated = true ) = 0;
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true, float pos = 0 ) = 0;
+    virtual float GetPosCh (bool calibrated = true) = 0;
+    virtual float UpdatePosCh (float posch = 0) = 0;
     virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true ) = 0;
 
     virtual void SortAndCalibrate ( bool doCalibrate = true ) = 0;
@@ -93,7 +95,7 @@ public:
     int GetNumChannels ( bool nType );
 
     ///Specify the polynomial calibration parameters of the specified contact.
-    bool SetEnergyCalib ( std::vector<float> par, int contact, bool contactType = siDet::pType );
+    bool SetEnergyCalib ( std::vector<double> par, int contact, bool contactType = siDet::pType );
 
     ///Specify the thresholds for each channel.
     bool SetThresholds ( std::vector<int> thresholds, bool contactType = siDet::pType, int thrSize = 0 );
@@ -105,7 +107,7 @@ public:
 
     TimeMap GetTsMap ( bool nType );
 
-    std::vector<std::vector<float>> GetEnParCal ( bool nType = false );
+    std::vector<std::vector<double>> GetEnParCal ( bool nType = false );
 
     ///Get a map of the thresholds.
     std::vector<int> GetThresholds ( bool nType );

@@ -34,11 +34,11 @@ private:
     float E;
 
     ///The polynomial calibration parameters for the anode.
-    std::vector<std::vector<float>> parAnodeEnCal; //!
+    std::vector<std::vector<double>> parAnodeEnCal; //!
     ///The polynomial calibration parameters for the scintillator.
-    std::vector<std::vector<float>> parScintEnCal; //!
+    std::vector<std::vector<double>> parScintEnCal; //!
     ///The polynomial calibration parameters for the scintillator time properties.
-    std::vector<std::vector<float>> parScintTimeCal; //!
+    std::vector<std::vector<double>> parScintTimeCal; //!
 
 public:
     ///Default constructor.
@@ -49,9 +49,9 @@ public:
     ///Clear the event.
     void Clear();
 
-    void SetAnodeEnCalPars(int ch, std::vector<float> pars);
-    void SetScintEnCalPars(int ch, std::vector<float> pars);
-    void SetScintTimeCalPars(int ch, std::vector<float> pars);
+    void SetAnodeEnCalPars(int ch, std::vector<double> pars);
+    void SetScintEnCalPars(int ch, std::vector<double> pars);
+    void SetScintTimeCalPars(int ch, std::vector<double> pars);
 
     ///Set the raw energy of the contact and compute the calibrated value.
     virtual void SetRawValue(unsigned int channel, bool scintType, unsigned int rawValue, int ignThr);

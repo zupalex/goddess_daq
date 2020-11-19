@@ -87,7 +87,12 @@ public:
     virtual int GetContactMult ( bool contactType, bool calibrated );
 
     ///Returns the sum of the energies gathered on the front (back if nType is true) side.
-    virtual float GetEnSum ( bool nType = false, bool calibrated = true );
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true, float pos = 0 );
+    
+    //for BB10 and QQQ5 only returns zero
+    virtual float GetPosCh(bool calibrated = true);
+    
+    virtual float UpdatePosCh (float posch = 0);
 
     ///Assign the proper strip number (and calibrate in energy)
     virtual void SortAndCalibrate ( bool doCalibrate = true );

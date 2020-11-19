@@ -137,7 +137,7 @@ void siDet::SetTimeStamp ( unsigned int contact, bool contactType, unsigned long
     }
 }
 
-std::vector< std::vector< float > > siDet::GetEnParCal ( bool nType )
+std::vector< std::vector< double > > siDet::GetEnParCal ( bool nType )
 {
     if ( nType ) return parEnCalN;
     else return parEnCalP;
@@ -170,7 +170,7 @@ float siDet::GetCalEnergy ( int contact, bool nType/*=false*/ )
 /*
  * \return True if successful.
  */
-bool siDet::SetEnergyCalib ( std::vector<float> par, int contact, bool nType/*=false*/ )
+bool siDet::SetEnergyCalib ( std::vector<double> par, int contact, bool nType/*=false*/ )
 {
     if ( !ValidContact ( contact, nType ) )
     {

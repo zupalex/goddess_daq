@@ -172,7 +172,7 @@ unsigned short superX3::GetFarContact(unsigned short strip)
 	return strip > 1 ? 2 * strip : 2 * strip + 1;
 }
 
-void superX3::SetStripPosCalibPars(int strip, std::vector<float> pars)
+void superX3::SetStripPosCalibPars(int strip, std::vector<double> pars)
 {
 	if (!ValidStrip(strip))
 	{
@@ -189,11 +189,11 @@ void superX3::SetStripPosCalibPars(int strip, std::vector<float> pars)
 	parPosCal[strip] = pars;
 }
 
-void superX3::SetStripJumpCalibPars(int strip, std::vector<float> pars)
+void superX3::SetStripJumpCalibPars(int strip, std::vector<double> pars)
 {
   	if (!ValidStrip(strip))
 	{
-		fprintf( stderr, "ERROR: Unable to assign strip position calibration parameters!\n");
+		fprintf( stderr, "ERROR: Unable to assign strip jump calibration parameters!\n");
 		return;
 	}
 
@@ -206,7 +206,24 @@ void superX3::SetStripJumpCalibPars(int strip, std::vector<float> pars)
 	jumpCal[strip] = pars;
 }
 
-void superX3::SetStripEnCalibPars(int strip, std::vector<float> pars)
+void superX3::SetStripBracesCalibPars(int strip, std::vector<double> pars)
+{
+  	if (!ValidStrip(strip))
+	{
+		fprintf( stderr, "ERROR: Unable to assign strip braces calibration parameters!\n");
+		return;
+	}
+
+	if (pars.size() != 21)
+	{
+		std::cerr << "ERROR: Number of calibration parameters specified for SX3 braces calibration incorrect (Expected >1, got " << pars.size() << ")"
+				<< std::endl;
+	}
+
+	bracesCal[strip] = pars;
+}
+
+void superX3::SetStripEnCalibPars(int strip, std::vector<double> pars)
 {
 	if (!ValidStrip(strip))
 	{
@@ -434,7 +451,7 @@ std::vector<float> superX3::GetResEn(bool calibrated)
 	return resEn;
 }
 
-float superX3::GetEnSum(bool nType, bool calibrated)
+float superX3::GetEnSum(bool nType, bool calibrated, float pos)
 {
 	float enSum = 0;
 
@@ -463,12 +480,68 @@ float superX3::GetEnSum(bool nType, bool calibrated)
 		enSum += toSum->at(i);
 	}
 
+	
 	if (deletePtr) delete (toSum);
+	
+	
+	
+	std::vector<double>* resStripBracesCal = GetBracesCal();
+	
+// 	cerr<<resStripBracesCal->size()<<endl;
+	
+// 	cerr<<resStripBracesCal->at(0)<<endl;
+	
+	if (pos !=0 && resStripBracesCal->at(0) != -1)
+	{
+	  for (int sec = 0; sec<4; sec++)
+	  {
+	    if (resStripBracesCal->at(sec*5+1) == 0) continue;
+	    
+// 	    	cerr<<resStripBracesCal->at(0)<<","<<resStripBracesCal->at(1)<<","<<resStripBracesCal->at(2)<<","<<resStripBracesCal->at(3)<<","<<resStripBracesCal->at(4)<<","<<resStripBracesCal->at(5)<<endl;
+
+	    
+	  if (pos>=resStripBracesCal->at(sec*5+1) && pos<=resStripBracesCal->at(sec*5+2))
+	  {
+	  enSum = (resStripBracesCal->at(0)/(resStripBracesCal->at(sec*5+3) + pos*resStripBracesCal->at(sec*5+4) + pow(pos,2)*resStripBracesCal->at(sec*5+5)))*enSum;
+	   //energy = (energy/(y_int + pos*par1 + pow(pos,2)*par2))*energy;
+	  }
+	  }
+	}
+	
+	
 
 	return enSum;
 }
 
-void superX3::GetOverlap(vector< float > jumpcals)
+float superX3::UpdatePosCh(float pos)
+{
+  float posch = 0;
+  
+  std::vector<double>* resStripBracesCal = GetBracesCal();
+  
+  	if (pos !=0 && resStripBracesCal->at(0) != -1)
+	{
+	  for (int sec = 0; sec<4; sec++)
+	  {
+	    if (resStripBracesCal->at(sec*5+1) == 0) continue;
+	    
+// 	    	cerr<<resStripBracesCal->at(0)<<","<<resStripBracesCal->at(1)<<","<<resStripBracesCal->at(2)<<","<<resStripBracesCal->at(3)<<","<<resStripBracesCal->at(4)<<","<<resStripBracesCal->at(5)<<endl;
+
+	    
+	  if (pos>=resStripBracesCal->at(sec*5+1) && pos<=resStripBracesCal->at(sec*5+2))
+	  {
+  
+	    posch = pos; //((resStripBracesCal->at(sec*5+3) + pos*resStripBracesCal->at(sec*5+4) + pow(pos,2)*resStripBracesCal->at(sec*5+5))/resStripBracesCal.at(0))*pos;
+	  }
+	  }
+	}
+  
+  return posch;
+}
+
+
+
+void superX3::GetOverlap(vector< double > jumpcals)
 {
     
     for (int i = 1; i<13; i++)
@@ -518,6 +591,7 @@ void superX3::GetOverlap(vector< float > jumpcals)
   for (int n = 0; n < 4; n++)
   {
     if (left_to_right_section[n*2+1] == -2) overlap[n] = 0;
+    else if (left_to_right_section[(n+1)*2] == -2) overlap[n] = 0;
     else if (left_to_right_section[n*2+1] > left_to_right_section[n*2+2])
     {
      overlap[n] = 1;
@@ -575,38 +649,44 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 
 			if (doCalibrate)
 			{
-				std::vector<std::vector<float>> calPars = GetEnParCal(false);
+				std::vector<std::vector<double>> calPars = GetEnParCal(false);
 
 				en_near = en_near * calPars[nearStrip][1] - calPars[nearStrip][0];
 				en_far = en_far * calPars[farStrip][1] - calPars[farStrip][0];
 
-				std::vector<float>* resStripParCal = GetResStripParCal();
+				std::vector<double>* resStripParCal = GetResStripParCal();
 
 				en_near = en_near * resStripParCal[st_].at(1) + resStripParCal[st_].at(0) / 2.;
 				en_far = en_far * resStripParCal[st_].at(1) + resStripParCal[st_].at(0) / 2.;
 				
-				std::vector<float>* resStrpJumpCal = GetJumpCal();
+				
+				std::vector<double>* resStrpJumpCal = GetJumpCal();
+				
 				
 				GetOverlap(resStrpJumpCal[st_]);
+
 	
-				float o_en = (en_near+en_far);
-				float o_pos = (en_near-en_far)/(o_en);
-				
-// 				cerr<<resStrpJumpCal[st_].at(0)<<endl;
+				double o_en = (en_near+en_far);
+				double o_pos = (en_near-en_far)/(o_en);
+
+
 				
 			  if (resStrpJumpCal[st_].at(0) != -1 && o_en != 0.0)
 			    {
 				for (int w_sec = 0; w_sec<resStrpJumpCal[st_].at(0); w_sec++)
 				  {
 				    
-				    if (left_to_right_section[w_sec*2] == -2) continue;
+				    if (left_to_right_section[w_sec*2] == -2) {continue;}
 
 				    else if (o_pos > left_to_right_section[w_sec*2] && o_pos < left_to_right_section[w_sec*2+1])
 	    
 				      {
 					
+					
 					if (w_sec%2 ==0)
 					  {
+					    if (w_sec>1 && w_sec <4){
+					    
 					    if (overlap[w_sec]==1)
 					      {
 						if (o_pos>left_to_right_section[w_sec*2+2]) 
@@ -614,58 +694,103 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 						  continue;
 						}
 					      }
-					    else if (w_sec-1 >0 && overlap[w_sec-1] == 1)
+					    if (overlap[w_sec-1] == 1)
 					      {
 						if (o_pos<left_to_right_section[w_sec*2-1])
+						{
+						  
+						  continue;
+						}
+					      }
+					    }
+					    else if (w_sec<2)
+					    {
+					   if (overlap[w_sec]==1)
+					      {
+						if (o_pos>left_to_right_section[w_sec*2+2]) 
 						{
 						  continue;
 						}
 					      }
+// 					   else if (w_sec-1 >0 && overlap[w_sec-1] == 1)
+// 					      {
+// 						if (o_pos<left_to_right_section[w_sec*2-1])
+// 						{
+// 						  continue;
+// 						}
+// 					      }
+					    }
 					    if (y_corr[w_sec] != 0 && y_corr[w_sec] != -2)
 					      {
-// // 						cerr<<y_corr[w_sec]<<setprecision(6)<<endl;
+
 						en_near = en_near*y_corr[w_sec];
 						en_far = en_far*y_corr[w_sec];
 						enNearCal.push_back(en_near);
 						enFarCal.push_back(en_far);
-						
+// 						
 					      }
-// 					      enNearCal.push_back(en_near);
-// 					enFarCal.push_back(en_far);
+
 					   }
 				else if (w_sec %2 !=0)
 				  {
 				    
+				    if (w_sec>1 && w_sec<4){
 				    if (overlap[w_sec-1]==1)
+				      {
+					if (o_pos>left_to_right_section[w_sec*2+1])
+					{
+					  continue;
+					}
+					else if (o_pos<left_to_right_section[w_sec*2-1])
+					{
+					  continue;
+				      }
+				      }
+// 				    if (w_sec<4 && overlap[w_sec] == 1)
+// 				      {
+// 					if (o_pos>left_to_right_section[w_sec*2+2]) 
+// 					{
+// 					continue;
+// 					}
+// 				      }
+				    }
+				    else if(w_sec<2)
+				    {
+				     if (overlap[w_sec-1]==1)
 				      {
 					if (o_pos<left_to_right_section[w_sec*2-1])
 					{
 					  continue;
 					}
 				      }
-				    else if (w_sec<4 && overlap[w_sec] == 1)
+				   if (overlap[w_sec] == 1)
 				      {
 					if (o_pos>left_to_right_section[w_sec*2+2]) 
 					{
+					  
 					continue;
 					}
 				      }
-				    if (y_corr[w_sec] != 0 && y_corr[w_sec] !=-2) 
+				    }
+				      if (y_corr[w_sec] != 0 && y_corr[w_sec] !=-2) 
 				      {
-// 					cerr<<y_corr[w_sec]<<endl;
+// 
 					en_near = en_near*y_corr[w_sec];
 					en_far = en_far*y_corr[w_sec];
+// 					
 					enNearCal.push_back(en_near);
-					enFarCal.push_back(en_far);
-					
+ 					enFarCal.push_back(en_far);
+// 					
+// 					
 				      }
 				      
 // 				      enNearCal.push_back(en_near);
 // 					enFarCal.push_back(en_far);
 				     }
 				    }
-	
+// 	
 				  }
+ 				  
 			    }
 			    else{
 			      if (en_near > 0.0 && en_far > 0.0) 
@@ -674,12 +799,13 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 					enFarCal.push_back(en_far);
 				}
 			    }
+			    
 		    }
 		}
 		
 		
-	}
-
+ 	}
+ 	
 	enNMap = GetRawEn(true);
 
 	for (auto stripItr = enNMap.begin(); stripItr != enNMap.end(); ++stripItr)
@@ -693,11 +819,12 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 
 		if (doCalibrate)
 		{
-			std::vector<std::vector<float>> calPars = GetEnParCal(true);
+			std::vector<std::vector<double>> calPars = GetEnParCal(true);
 
 			enCalN.push_back(en_ * calPars[st_][1] + calPars[st_][0]);
 		}
 	}
+	
 }
 
 int superX3::GetContactMult(bool calibrated)
@@ -787,6 +914,7 @@ void superX3::GetMaxHitInfo(int* stripMaxP, long long unsigned int* timeSampMaxP
 
 	for (unsigned int i = 0; i < energiesNear_->size(); i++)
 	{
+	  if (energiesNear_->size() != energiesFar_->size()) continue;
 		if (energiesNear_->at(i) + energiesFar_->at(i) > enMax)
 		{
 			if (stripMaxP != nullptr) *stripMaxP = stripsP.at(i);
@@ -843,6 +971,47 @@ TVector3 superX3::GetEventPosition(bool calibrated)
 	TVector3 interactionPos = pStripCenterPos[pStripHit] + zResPos;
 
 	return interactionPos;
+}
+
+float superX3::GetPosCh(bool calibrated)
+{
+  float posch = 0;
+  
+  vector<float> toPosCh; 
+  
+  vector<float>* nEn =0;
+  vector<float>* fEn = 0;
+  
+  if (calibrated)
+  {
+    nEn = &enNearCal;
+    fEn = &enFarCal;
+  }
+  else if (!calibrated)
+  {
+    nEn = &enNearRaw;
+    fEn = &enFarRaw;
+  }
+
+  if (nEn->size() != fEn->size() || nEn->size()==0)
+  {
+
+    return posch;
+//       posch = (nEn->at(0)-fEn->at(0))/(nEn->at(0)+fEn->at(0));
+      
+  }
+  	int pStripHit, nStripHit;
+	GetMaxHitInfo(&pStripHit, nullptr, &nStripHit, nullptr, calibrated);
+
+	float eNear, eFar;	
+	eNear = GetNearEn(calibrated);
+	eFar = GetFarEn(calibrated);	
+	float recenter = (parPosCal[pStripHit].at(1) + parPosCal[pStripHit].at(0)) / 2.;
+
+	float normalize = parPosCal[pStripHit].at(1) - parPosCal[pStripHit].at(0);
+	normalize = (normalize < 0.01) ? 1 : normalize;
+	posch = ((((eNear-eFar)/(eNear+eFar)) - recenter)/ normalize)*75;
+  return posch;
 }
 
 ClassImp(superX3)

@@ -57,11 +57,13 @@ private:
     TVector3 eventPos;
 
     ///Vector containing position calibration polynomial parameters.
-    std::vector<float> parPosCal[4]; //!
+    std::vector<double> parPosCal[4]; //!
     //Vector containing jump calibration polynomial parameters.
-    std::vector<float>jumpCal[4];
+    std::vector<double>jumpCal[4];
+    //Vector containing braces calibration polynomial parameters
+    std::vector<double>bracesCal[4];
     ///Vector containing strip energy calibration polynomial parameters.
-    std::vector<float> parStripEnCal[4]; //!
+    std::vector<double> parStripEnCal[4]; //!
 
     ///Construct array of bin edges.
     void ConstructBins();
@@ -91,14 +93,16 @@ public:
     void UpdatePosition ( int strip );
 
     ///Assign a vector of float to the calibration parameters of the specified strip.
-    void SetStripPosCalibPars ( int strip, std::vector<float> );
+    void SetStripPosCalibPars ( int strip, std::vector<double> );
     //Assign a vector of float to the calibration parameters of the specified strip
-    void SetStripJumpCalibPars ( int strip, std::vector<float>);
+    void SetStripJumpCalibPars ( int strip, std::vector<double>);
+    //Assign a vector of float to the calibration parameters of the specified strip
+    void SetStripBracesCalibPars ( int strip, std::vector<double>);
     ///Assign a vector of float to the calibration parameters of the specified strip.
-    void SetStripEnCalibPars ( int strip, std::vector<float> );
+    void SetStripEnCalibPars ( int strip, std::vector<double> );
     
     //Function to find overlap for jump_cal
-    void GetOverlap (std::vector<float>);
+    void GetOverlap (std::vector<double>);
 
     ///Return the strip in which the specified contact is attached.
     static int GetStrip ( int contact );
@@ -164,7 +168,9 @@ public:
         return binsPolar;
     };
 
-    virtual float GetEnSum ( bool nType = false, bool calibrated = true );
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true, float pos = 0);
+    virtual float GetPosCh (bool calibrated = true);
+    virtual float UpdatePosCh(float posch = 0);
     std::vector<float> GetResEn ( bool calibrated = true );
     float GetNearEn ( bool calibrated = true );
     float GetFarEn ( bool calibrated = true );
@@ -192,14 +198,19 @@ public:
     ///Return the computed event position.
     TVector3 GetEventPosition ( bool calibrated = true );
     ///Return the vector containing resistive strip energy calibration polynomial parameters.
-    std::vector<float>* GetResStripParCal()
+    std::vector<double>* GetResStripParCal()
     {
         return parStripEnCal;
     }
     
-    std::vector<float>* GetJumpCal()
+    std::vector<double>* GetJumpCal()
     {
       return jumpCal;
+    }
+    
+    std::vector<double>* GetBracesCal()
+    {
+      return bracesCal;
     }
     ///Return the contact for the near end of the strip.
     static unsigned short GetNearContact ( unsigned short strip );

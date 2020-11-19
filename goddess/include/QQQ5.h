@@ -135,8 +135,10 @@ public:
     ///Return the number of fired contacts above threhsold for the specified type.
     virtual int GetContactMult ( bool contactType, bool calibrated );
 
-    virtual float GetEnSum ( bool nType = false, bool calibrated = true );
-
+    virtual float GetEnSum ( bool nType = false, bool calibrated = true, float pos = 0 );
+    virtual float GetPosCh(bool calibrated = true);
+    virtual float UpdatePosCh (float posch = 0);
+  
     virtual void SortAndCalibrate ( bool doCalibrate = true );
 
     ///Return the computed event position.

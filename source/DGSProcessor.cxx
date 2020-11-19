@@ -470,7 +470,7 @@ int DGSProcessor::BinDgs ( GEB_EVENT* theGEBEvent, DGSEVENT* thedgsEvt )
                 if ( thedgsEvt[j].tpe == BGO && thedgsEvt[j].tid == gsid )    // BGO & GE in coincidence
                 {
                     tdiff = ( int ) ( thedgsEvt[i].event_timestamp - thedgsEvt[j].event_timestamp );
-//                     if ( !pars->noHists ) hGeBGO_DT->Fill ( tdiff, gsid );
+//                     if ( !pars->noHists ) hGeBGO_DT->Fill ( tdiFff, gsid );
                     if ( abs ( tdiff ) <= 50 )
                     {
                         thedgsEvt[i].flag = 1;    // Mark as Dirty Ge

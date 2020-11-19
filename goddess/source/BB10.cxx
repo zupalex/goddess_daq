@@ -79,7 +79,7 @@ void BB10::SetEnShiftVsPosGraph ( std::string graphFileName )
     }
 }
 
-float BB10::GetEnSum ( bool nType, bool calibrated )
+float BB10::GetEnSum ( bool nType, bool calibrated, float pos )
 {
     float enSum = 0.0;
 
@@ -93,8 +93,28 @@ float BB10::GetEnSum ( bool nType, bool calibrated )
     {
         enSum += toSum->at ( i );
     }
+    
+    enSum += pos;
 
     return enSum;
+}
+
+float BB10::GetPosCh(bool calibrated)
+{
+  float posch = 0;
+  if (calibrated){
+  posch = 0;
+  }
+  else posch =0;
+  
+  return posch;
+}
+
+float BB10::UpdatePosCh(float posch)
+{
+  float pos = posch * 0;
+  
+  return pos;
 }
 
 void BB10::SortAndCalibrate ( bool doCalibrate )
@@ -118,7 +138,7 @@ void BB10::SortAndCalibrate ( bool doCalibrate )
 
         if ( doCalibrate )
         {
-            std::vector<std::vector<float>> calPars = GetEnParCal ( false );
+            std::vector<std::vector<double>> calPars = GetEnParCal ( false );
 
             enCalP.push_back ( en_ * calPars[st_][1] + calPars[st_][0] );
         }

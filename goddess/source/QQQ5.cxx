@@ -136,7 +136,7 @@ void QQQ5::SetRawValue(unsigned int contact, bool nType, int rawValue, int ignTh
 	siDet::SetRawValue(contact, nType, rawValue, ignThr);
 }
 
-float QQQ5::GetEnSum(bool nType, bool calibrated)
+float QQQ5::GetEnSum(bool nType, bool calibrated, float pos)
 {
 	float enSum = 0.0;
 
@@ -152,6 +152,8 @@ float QQQ5::GetEnSum(bool nType, bool calibrated)
 	{
 		enSum += toSum->at(i);
 	}
+	
+	enSum += pos;
 
 	return enSum;
 }
@@ -179,7 +181,7 @@ void QQQ5::SortAndCalibrate(bool doCalibrate)
 
 		if (doCalibrate)
 		{
-			std::vector<std::vector<float>> calPars = GetEnParCal(false);
+			std::vector<std::vector<double>> calPars = GetEnParCal(false);
 
 			enCalP.push_back(en_ * calPars[st_][1] + calPars[st_][0]);
 		}
@@ -196,7 +198,7 @@ void QQQ5::SortAndCalibrate(bool doCalibrate)
 
 		if (doCalibrate)
 		{
-			std::vector<std::vector<float>> calPars = GetEnParCal(true);
+			std::vector<std::vector<double>> calPars = GetEnParCal(true);
 			
 
 			enCalN.push_back(en_ * calPars[st_][1] + calPars[st_][0]);
@@ -237,6 +239,24 @@ std::vector<float> QQQ5::GetHitsInfo(std::string info, std::vector<float>* dest)
 	if (dest != nullptr) *dest = request;
 
 	return request;
+}
+
+float QQQ5::GetPosCh(bool calibrated)
+{
+  float posch = 0;
+  if (calibrated){
+  posch = 0;
+  }
+  else posch =0;
+  
+  return posch;
+}
+
+float QQQ5::UpdatePosCh(float posch)
+{
+  float pos = posch*0;
+  
+  return pos;
 }
 
 std::vector<int> QQQ5::GetHitsInfo(std::string info, std::vector<int>* dest)

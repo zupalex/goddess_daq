@@ -139,21 +139,21 @@ bool IonChamber::ValidScint ( size_t ch )
     return true;
 }
 
-void IonChamber::SetAnodeEnCalPars ( int ch, std::vector<float> pars )
+void IonChamber::SetAnodeEnCalPars ( int ch, std::vector<double> pars )
 {
     if ( ValidAnode ( ch ) )
     {
         parAnodeEnCal.at ( ch ) = pars;
     }
 }
-void IonChamber::SetScintEnCalPars ( int ch, std::vector<float> pars )
+void IonChamber::SetScintEnCalPars ( int ch, std::vector<double> pars )
 {
     if ( ValidScint ( ch ) )
     {
         parScintEnCal.at ( ch ) = pars;
     }
 }
-void IonChamber::SetScintTimeCalPars ( int ch, std::vector<float> pars )
+void IonChamber::SetScintTimeCalPars ( int ch, std::vector<double> pars )
 {
     if ( ValidScint ( ch ) )
     {

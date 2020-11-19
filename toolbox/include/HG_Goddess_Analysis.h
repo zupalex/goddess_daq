@@ -1,0 +1,10 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include "TMath.h"
+#include "TPolyMarker.h"
+#include "TSpectrum.h"
+#include "goddess_analysis_macros.h"
+#include "GoddessAnalysis.h"
+#include "TVector3.h"

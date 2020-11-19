@@ -51,6 +51,7 @@ GoddessConfig::~GoddessConfig()
  *  enCal p 1 1 2 3
  *  enCal resStrip 0 1 2 3
  *  jumpCal resStrip 0 1 2 3
+ *  braces restrip 0 1 2 3
  *  posCal resStrip 0 1 2 3
  *
  * This configuration example defines a superX3 detector with serial number 1234-56
@@ -65,6 +66,7 @@ GoddessConfig::~GoddessConfig()
  * \note For resistive strips (superX3) the first calibration parameters are end to end gain matching offset and slopes
  * \note SuperX3 strip energy calibration parameters (i.e. slope and offset) are entered in after "enCal resStrip"
  * \note SuperX3 strip jump calibration parameters (i.e. end to end strip and energy correction) are entered after "jumpCal resStrip"
+ * \note SuperX3 strip smile calibration parameters (i.e. ballistic deficet correction) are entered after "braces resStrip"
  * \note SuperX3 strip position calibration parameters are entered in after "posCal resStrip"
  *
  * Also supported, is an ion detector with a built-in scintillator. An example of a
@@ -301,6 +303,7 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 			bool timeCal = false;
 			bool thresh = false;
 			bool jumpCal = false;
+			bool braces = false;
 
 			if (calType == "posCal")
 			{
@@ -325,6 +328,19 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 				}
 
 				jumpCal = true;
+			}
+			else if (calType == "bracesCal")
+			{
+			  if (!(detType == "superX3" && subType == "resStrip"))
+				{
+					std::cerr << " WARNING: Ignoring smile calibration specified for " << subType << "-type part of " << detType << " detector " << serialNum
+							<< "\n";
+					prevPos = mapFile.tellg();
+					continue;
+				}
+
+				braces = true;
+			  
 			}
 			else if (calType == "timeCal")
 			{
@@ -428,8 +444,8 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 			}
 
 			//Get the calibration parameters
-			float param;
-			std::vector<float> calParams;
+			double param;
+			std::vector<double> calParams;
 
 			while (line_Stream >> param)
 			{
@@ -444,6 +460,10 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 			else if (jumpCal)
 			{
 			  std::cout<<" Jump";
+			}
+			else if (braces)
+			{
+			  std::cout<<"braces";
 			}
 			else
 			{
@@ -504,6 +524,10 @@ void GoddessConfig::ReadConfig(std::string filename, std::string sx3EnAdjustFNam
 					else if (jumpCal)
 					{
 					  ((superX3 *) det)->SetStripJumpCalibPars(detChannel, calParams);
+					}
+					else if (braces)
+					{
+					  ((superX3 *) det)->SetStripBracesCalibPars(detChannel, calParams);
 					}
 					else
 					{
