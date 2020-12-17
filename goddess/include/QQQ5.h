@@ -136,7 +136,7 @@ public:
     virtual int GetContactMult ( bool contactType, bool calibrated );
 
     virtual float GetEnSum ( bool nType = false, bool calibrated = true, float pos = 0 );
-    virtual float GetPosCh(bool calibrated = true);
+    virtual float GetPosCh(bool calibrated = true, bool in_encal = false, float e_near = 0, float e_far =0);
     virtual float UpdatePosCh (float posch = 0);
   
     virtual void SortAndCalibrate ( bool doCalibrate = true );

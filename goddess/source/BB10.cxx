@@ -99,7 +99,7 @@ float BB10::GetEnSum ( bool nType, bool calibrated, float pos )
     return enSum;
 }
 
-float BB10::GetPosCh(bool calibrated)
+float BB10::GetPosCh(bool calibrated, bool in_encal, float e_near, float e_far)
 {
   float posch = 0;
   if (calibrated){

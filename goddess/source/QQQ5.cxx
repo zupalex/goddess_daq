@@ -241,7 +241,7 @@ std::vector<float> QQQ5::GetHitsInfo(std::string info, std::vector<float>* dest)
 	return request;
 }
 
-float QQQ5::GetPosCh(bool calibrated)
+float QQQ5::GetPosCh(bool calibrated, bool in_encal, float e_near, float e_far)
 {
   float posch = 0;
   if (calibrated){

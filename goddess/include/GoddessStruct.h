@@ -169,6 +169,9 @@ public:
 
     ///Method which can be used within the root Draw command to plot the sum of the energies collected in a specific layer and a specific side.
     virtual float ESumLayer ( unsigned short layer = 1, bool isNType = false ) const;
+    
+    //Method to obtain PosCh in order. 
+    virtual float PosChLayer(unsigned short layer = 1, bool isNType = false) const;
 
     ///Method which can be used within the root Draw command to plot the multiplicity of a specific layer and a specific side.
     virtual int MultLayer ( unsigned short layer = 1, bool isNType = false ) const;

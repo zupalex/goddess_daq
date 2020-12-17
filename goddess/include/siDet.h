@@ -67,7 +67,7 @@ public:
     virtual void SetTimeStamp ( unsigned int contact, bool contactType, unsigned long long timestamp );
 
     virtual float GetEnSum ( bool nType = false, bool calibrated = true, float pos = 0 ) = 0;
-    virtual float GetPosCh (bool calibrated = true) = 0;
+    virtual float GetPosCh (bool calibrated = true, bool in_encal = false, float e_near = 0, float e_far = 0) = 0;
     virtual float UpdatePosCh (float posch = 0) = 0;
     virtual void GetMaxHitInfo ( int* stripMaxP, long long unsigned int* timeSampMaxP, int* stripMaxN, long long unsigned int* timeSampMaxN, bool calibrated = true ) = 0;
 

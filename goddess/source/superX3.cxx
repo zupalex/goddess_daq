@@ -439,12 +439,14 @@ std::vector<float> superX3::GetResEn(bool calibrated)
 		toSumNear = &enNearRaw;
 		toSumFar = &enFarRaw;
 	}
+	
 
 	if (toSumNear->size() == toSumFar->size())
 	{
 		for (unsigned int i = 0; i < (*toSumNear).size(); i++)
 		{
 			resEn.push_back(toSumNear->at(i) + toSumFar->at(i));
+			
 		}
 	}
 
@@ -454,6 +456,8 @@ std::vector<float> superX3::GetResEn(bool calibrated)
 float superX3::GetEnSum(bool nType, bool calibrated, float pos)
 {
 	float enSum = 0;
+	
+	pos = 0;
 
 	std::vector<float>* toSum;
 
@@ -478,37 +482,33 @@ float superX3::GetEnSum(bool nType, bool calibrated, float pos)
 	for (unsigned int i = 0; i < (*toSum).size(); i++)
 	{
 		enSum += toSum->at(i);
+		
+// 		if (sector == 0) cerr<<enSum<<endl;
 	}
-
 	
 	if (deletePtr) delete (toSum);
 	
-	
-	
-	std::vector<double>* resStripBracesCal = GetBracesCal();
-	
-// 	cerr<<resStripBracesCal->size()<<endl;
-	
-// 	cerr<<resStripBracesCal->at(0)<<endl;
-	
-	if (pos !=0 && resStripBracesCal->at(0) != -1)
-	{
-	  for (int sec = 0; sec<4; sec++)
-	  {
-	    if (resStripBracesCal->at(sec*5+1) == 0) continue;
-	    
-// 	    	cerr<<resStripBracesCal->at(0)<<","<<resStripBracesCal->at(1)<<","<<resStripBracesCal->at(2)<<","<<resStripBracesCal->at(3)<<","<<resStripBracesCal->at(4)<<","<<resStripBracesCal->at(5)<<endl;
-
-	    
-	  if (pos>=resStripBracesCal->at(sec*5+1) && pos<=resStripBracesCal->at(sec*5+2))
-	  {
-	  enSum = (resStripBracesCal->at(0)/(resStripBracesCal->at(sec*5+3) + pos*resStripBracesCal->at(sec*5+4) + pow(pos,2)*resStripBracesCal->at(sec*5+5)))*enSum;
-	   //energy = (energy/(y_int + pos*par1 + pow(pos,2)*par2))*energy;
-	  }
-	  }
-	}
-	
-	
+// 	vector<float> test; 
+// 	if (sector == 0 && !nType) {
+// 	
+// 	if (enSum>200)
+// 		{
+// 		  
+// 		  cerr<<"========================================="<<endl;
+// 		  cerr<<enSum<<endl;
+// 		  cerr<<calibrated<<endl;
+// 		  test = GetResEn(true);
+// 		  cerr<<test.size()<<endl;
+// // 		  for (unsigned int f = 0; f<(*toSum).size();f++)
+// // 		  {
+// // 		    cerr<<toSum->at(f)<<endl;
+// // 		  }
+// 		  for (unsigned int h = 0; h<test.size();h++)
+// 		  {
+// 		    cerr<<test.at(h)<<endl;
+// 		  }
+// 		}
+// 	}
 
 	return enSum;
 }
@@ -668,11 +668,22 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 	
 				double o_en = (en_near+en_far);
 				double o_pos = (en_near-en_far)/(o_en);
+				
+				
+				std::vector<double>* resStripBracesCal = GetBracesCal();
+				vector<float> en_vn;
+				vector<float> en_vf;
+				float pos = 0;
 
 
 				
 			  if (resStrpJumpCal[st_].at(0) != -1 && o_en != 0.0)
 			    {
+			      
+// 			      /*cerr<<"jump if"<<endl;
+			      	en_vf.clear();
+				en_vn.clear();
+			      
 				for (int w_sec = 0; w_sec<resStrpJumpCal[st_].at(0); w_sec++)
 				  {
 				    
@@ -725,9 +736,16 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 
 						en_near = en_near*y_corr[w_sec];
 						en_far = en_far*y_corr[w_sec];
-						enNearCal.push_back(en_near);
-						enFarCal.push_back(en_far);
-// 						
+						    
+						if (resStripBracesCal[st_].at(0) == -1)
+						  {
+						    enNearCal.push_back(en_near);
+						    enFarCal.push_back(en_far);
+						   }
+						else{
+						    en_vn.push_back(en_near);
+						    en_vf.push_back(en_far);
+						    }
 					      }
 
 					   }
@@ -777,29 +795,72 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 // 
 					en_near = en_near*y_corr[w_sec];
 					en_far = en_far*y_corr[w_sec];
-// 					
+					
+					if (resStripBracesCal[st_].at(0) == -1)
+					{
 					enNearCal.push_back(en_near);
  					enFarCal.push_back(en_far);
-// 					
-// 					
+					}
+					else{
+					en_vn.push_back(en_near);
+					en_vf.push_back(en_far);
+
+					}
 				      }
-				      
-// 				      enNearCal.push_back(en_near);
-// 					enFarCal.push_back(en_far);
+
 				     }
 				    }
-// 	
 				  }
- 				  
 			    }
-			    else{
+			    	  
+				  
+// 				  cerr<<pos<<endl;
+			  if (resStripBracesCal[st_].at(0) != -1 && en_vn.size()!=0)
+			      {
+				//cerr<<"Braces if"<<endl;
+				
+				for (unsigned int en_push = 0; en_push<en_vn.size(); en_push++)
+				  {
+				    pos = GetPosCh(0,1,en_vn.at(en_push),en_vf.at(en_push));
+				    
+				      for (int sec = 0; sec<4; sec++)
+					{
+					  if (resStripBracesCal[st_].at(sec*5+1) == 0) continue;
+
+	    
+					  if (pos>=resStripBracesCal[st_].at(sec*5+1) && pos<=resStripBracesCal[st_].at(sec*5+2))
+					    {
+						       
+					      float enn =  en_vn.at(en_push);
+					      float enf = en_vf.at(en_push);
+					      
+					      
+					      enn = (resStripBracesCal[st_].at(0)/(resStripBracesCal[st_].at(sec*5+3) + pos*resStripBracesCal[st_].at(sec*5+4) + pow(pos,2)*resStripBracesCal[st_].at(sec*5+5)))*enn;
+					      enf = (resStripBracesCal[st_].at(0)/(resStripBracesCal[st_].at(sec*5+3) + pos*resStripBracesCal[st_].at(sec*5+4) + pow(pos,2)*resStripBracesCal[st_].at(sec*5+5)))*enf;
+						
+// 					      int sector = GetSector();
+						      if (enn + enf >60)
+						      {
+						      cerr<<enn<<endl;
+						      cerr<<enf<<endl;
+						      }
+						enNearCal.push_back(enn);
+						enFarCal.push_back(enf);
+						 }
+							
+					}
+				      }
+				  } 
+
+			   else if (resStrpJumpCal[st_].at(0) == -1 && resStripBracesCal[st_].at(0) == -1){
+// 			     
 			      if (en_near > 0.0 && en_far > 0.0) 
 			    {
 					enNearCal.push_back(en_near);
 					enFarCal.push_back(en_far);
 				}
 			    }
-			    
+// 			    cerr<<"after"<<endl;
 		    }
 		}
 		
@@ -973,44 +1034,41 @@ TVector3 superX3::GetEventPosition(bool calibrated)
 	return interactionPos;
 }
 
-float superX3::GetPosCh(bool calibrated)
+float superX3::GetPosCh(bool calibrated, bool in_encal, float e_near, float e_far)
 {
   float posch = 0;
   
-  vector<float> toPosCh; 
+  float nEn = 0;
+  float fEn = 0;
   
-  vector<float>* nEn =0;
-  vector<float>* fEn = 0;
-  
-  if (calibrated)
+  if (!in_encal)
   {
-    nEn = &enNearCal;
-    fEn = &enFarCal;
+    nEn = GetNearEn(calibrated);
+    fEn = GetFarEn(calibrated);
   }
-  else if (!calibrated)
+  else
   {
-    nEn = &enNearRaw;
-    fEn = &enFarRaw;
+    nEn = e_near;
+    fEn = e_far;
   }
 
-  if (nEn->size() != fEn->size() || nEn->size()==0)
+  if (nEn == 0 || fEn ==0)
   {
-
+    posch = 0;
     return posch;
-//       posch = (nEn->at(0)-fEn->at(0))/(nEn->at(0)+fEn->at(0));
-      
   }
   	int pStripHit, nStripHit;
 	GetMaxHitInfo(&pStripHit, nullptr, &nStripHit, nullptr, calibrated);
-
-	float eNear, eFar;	
-	eNear = GetNearEn(calibrated);
-	eFar = GetFarEn(calibrated);	
+	float eNear, eFar;
+	eNear = nEn;
+	eFar = fEn;	
 	float recenter = (parPosCal[pStripHit].at(1) + parPosCal[pStripHit].at(0)) / 2.;
 
 	float normalize = parPosCal[pStripHit].at(1) - parPosCal[pStripHit].at(0);
 	normalize = (normalize < 0.01) ? 1 : normalize;
-	posch = ((((eNear-eFar)/(eNear+eFar)) - recenter)/ normalize)*75;
+	posch = ((((eNear-eFar)/(eNear+eFar)) - recenter)/ normalize)*activeLength;
+
+	
   return posch;
 }
 

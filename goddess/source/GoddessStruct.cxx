@@ -95,6 +95,22 @@ float SiDataBase::ESumLayer(short unsigned int layer, bool isNType) const
 	return 0.0;
 }
 
+float SiDataBase::PosChLayer(short unsigned int layer, bool isNType) const
+{
+	if (PosCh_SX3.size() > 0)
+	{
+		for (unsigned short i = 0; i < PosCh_SX3.size(); i++)
+		{
+			if (stripMax[i] >= (layer * 100 + 300 * isNType) && stripMax[i] < (layer * 100 + 300 * isNType) + 100)
+			{
+				return PosCh_SX3[i];
+			}
+		}
+	}
+
+	return 0.0;
+}
+
 int SiDataBase::MultLayer(short unsigned int layer, bool isNType) const
 {
 	if (mult.size() > 0)

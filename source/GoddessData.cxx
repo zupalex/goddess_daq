@@ -1170,28 +1170,23 @@ int GoddessData::FillTrees ( GEB_EVENT* gebEvt, std::vector<DGSEVENT>* dgsEvts, 
                 
                float posch = 0;
 	       //float sz = 0;
-                   
-		   if (doCalibrate)
+//                    cerr<<"God_Data"<<endl;
+		if (doCalibrate)
 		   {
-		      posch = det->GetPosCh(true);
+		      posch = det->GetPosCh(true,false);
 		      datum->PosCh_SX3.push_back(posch);
 		    }
 		    
 		   else
 		   {
-		      posch = det->GetPosCh(false);
+		      posch = det->GetPosCh(false,false);
 		      datum->PosCh_SX3.push_back(posch);
-		    }
+		   }
 
                 eSumP = det->GetEnSum ( false, doCalibrate, posch );
                 eSumN = det->GetEnSum ( true, doCalibrate, posch );
 		
-// 		if (doCalibrate)
-// 		{
-// 		  posch = det->UpdatePosCh(posch);
-// 		  sz = datum->PosCh_SX3.size()-1;
-// 		  datum->PosCh_SX3[sz] = posch;
-// 		}
+		
 
                 det->GetMaxHitInfo ( &stripMaxP, &tsMaxP, &stripMaxN, &tsMaxN, doCalibrate );
 
