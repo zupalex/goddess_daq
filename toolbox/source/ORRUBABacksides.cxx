@@ -700,7 +700,7 @@ void NearvFar ( string filenames, string newname, string treename, bool isbarrel
 
         if ( treename=="god" )
         {
-            hist = new TH2F ( histname.c_str(),"Near v. Far",400,0,10,400,0,10 );
+            hist = new TH2F ( histname.c_str(),"Near v. Far",400,0,200000,400,0,200000 );
 
             if ( position )
             {

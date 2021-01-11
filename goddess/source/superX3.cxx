@@ -812,6 +812,17 @@ void superX3::SortAndCalibrate(bool doCalibrate)
 				    }
 				  }
 			    }
+			    else if (resStrpJumpCal[st_].at(0) == -1 && resStripBracesCal[st_].at(0) != -1)
+			    {
+			      en_vn.clear();
+			      en_vf.clear();
+			      
+			      if (en_near>0.0 && en_far>0.0)
+			      {
+				en_vn.push_back(en_near);
+				en_vf.push_back(en_far);
+			      }
+			    }
 			    	  
 				  
 // 				  cerr<<pos<<endl;
@@ -1062,11 +1073,11 @@ float superX3::GetPosCh(bool calibrated, bool in_encal, float e_near, float e_fa
 	float eNear, eFar;
 	eNear = nEn;
 	eFar = fEn;	
-	float recenter = (parPosCal[pStripHit].at(1) + parPosCal[pStripHit].at(0)) / 2.;
+	//float recenter = (parPosCal[pStripHit].at(1) + parPosCal[pStripHit].at(0)) / 2.;
 
-	float normalize = parPosCal[pStripHit].at(1) - parPosCal[pStripHit].at(0);
-	normalize = (normalize < 0.01) ? 1 : normalize;
-	posch = ((((eNear-eFar)/(eNear+eFar)) - recenter)/ normalize)*activeLength;
+	//float normalize = parPosCal[pStripHit].at(1) - parPosCal[pStripHit].at(0);
+	//normalize = (normalize < 0.01) ? 1 : normalize;
+	posch = ((eNear-eFar)/(eNear+eFar))*activeLength;
 
 	
   return posch;
